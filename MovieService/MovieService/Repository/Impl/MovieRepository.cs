@@ -2,8 +2,9 @@
 using MovieService.Data;
 using MovieService.Helpers;
 using MovieService.Models;
+using MovieService.Repository.Interface;
 
-namespace MovieService.Repository
+namespace MovieService.Repository.Impl
 {
     public class MovieRepository : IMovieRepository
     {

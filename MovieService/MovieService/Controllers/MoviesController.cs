@@ -2,7 +2,7 @@
 using MovieService.DTOs.Request;
 using MovieService.DTOs.Response;
 using MovieService.Helpers;
-using MovieService.Service;
+using MovieService.Service.Interface;
 
 namespace MovieService.Controllers
 {

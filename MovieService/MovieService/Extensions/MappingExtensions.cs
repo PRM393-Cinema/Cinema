@@ -1,7 +1,8 @@
 ﻿using MovieService.DTOs.Response;
+using MovieService.Helpers;
 using MovieService.Models;
 
-namespace MovieService.Helpers
+namespace MovieService.Extensions
 {
     public static class MappingExtensions
     {

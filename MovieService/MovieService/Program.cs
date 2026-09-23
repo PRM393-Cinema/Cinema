@@ -2,19 +2,35 @@
 using Microsoft.OpenApi.Models;
 using MovieService.Data;
 using MovieService.Exception;
-using MovieService.Repository;
-using MovieService.Service;
-using Swashbuckle.AspNetCore.Annotations;
+using MovieService.Repository.Impl;
+using MovieService.Repository.Interface;
+using MovieService.Service.Interface;
+using ShowtimeService.Data;
+using ShowtimeService.Repository.Impl;
+using ShowtimeService.Repository.Interface;
+using ShowtimeService.Service.Impl;
+using ShowtimeService.Service.Interface;
 
 var builder = WebApplication.CreateBuilder(args);
 
 //====== DATABASE ======
 builder.Services.AddDbContext<MovieDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("MovieDb")));
+
+builder.Services.AddDbContext<ShowtimeDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("ShowtimeDb")));
 
 //===== REPOSITORY & SERVICE======
 builder.Services.AddScoped<IMovieRepository, MovieRepository>();
-builder.Services.AddScoped<IMovieService, MovieService.Service.MovieService>();
+builder.Services.AddScoped<IShowtimeRepository, ShowtimeRepository>();
+builder.Services.AddScoped<IRoomRepository, RoomRepository>();
+builder.Services.AddScoped<ISeatRepository, SeatRepository>();
+
+builder.Services.AddScoped<IMovieService, MovieService.Service.Impl.MovieService>();
+builder.Services.AddScoped<IShowtimeService, ShowtimeService.Service.Impl.ShowtimeService>();
+builder.Services.AddScoped<IRoomService, RoomService>();
+builder.Services.AddScoped<ISeatService, SeatService>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 // Add services to the container.
 
@@ -29,9 +45,9 @@ builder.Services.AddSwaggerGen(options =>
         "v1",
         new()
         {
-            Title = "MOVIE API",
+            Title = "CINEMA API",
             Version = "v1",
-            Description = "API for Movie Service",
+            Description = "API for Cinema Service",
         });
 
     options.AddSecurityDefinition(
@@ -74,7 +90,7 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Movie Service API v1");
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Cinema Service API v1");
         c.RoutePrefix = "swagger"; // Truy cập tại: https://localhost:port/swagger
     });
 }

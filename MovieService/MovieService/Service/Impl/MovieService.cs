@@ -1,11 +1,13 @@
 ﻿using MovieService.DTOs.Request;
 using MovieService.DTOs.Response;
 using MovieService.Exception;
+using MovieService.Extensions;
 using MovieService.Helpers;
 using MovieService.Models;
-using MovieService.Repository;
+using MovieService.Repository.Interface;
+using MovieService.Service.Interface;
 
-namespace MovieService.Service
+namespace MovieService.Service.Impl
 {
     public class MovieService : IMovieService
     {
