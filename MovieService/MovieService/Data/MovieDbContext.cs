@@ -28,7 +28,7 @@ public partial class MovieDbContext : DbContext
                 .AddJsonFile("appsettings.json", true, true)
                 .Build();
 
-            string connectionString = configuration.GetConnectionString("DefaultConnection");
+            string connectionString = configuration.GetConnectionString("MovieDb");
 
             // Sử dụng đúng provider bạn đang dùng, ví dụ SQL Server:
             optionsBuilder.UseNpgsql(connectionString);
