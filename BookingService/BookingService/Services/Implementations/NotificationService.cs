@@ -74,7 +74,7 @@ namespace BookingService.Services.Implementations
                     Type = request.Type!.Trim().ToUpperInvariant(),
                     Content = request.Content,
                     Status = "PENDING",
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now
                 });
 
             return notification.ToResponse();
@@ -106,7 +106,7 @@ namespace BookingService.Services.Implementations
                     Content = request.Content,
                     Status = "PENDING",
                     EventId = eventId,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now
                 });
         }
 
@@ -140,7 +140,7 @@ namespace BookingService.Services.Implementations
                     RecipientEmail = email.RecipientEmail.Trim(),
                     Status = "PENDING",
                     EventId = eventId,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now
                 };
 
                 notification = await _notificationRepository.AddAsync(
@@ -158,7 +158,7 @@ namespace BookingService.Services.Implementations
                 await _emailSender.SendAsync(email);
 
                 notification.Status = "SENT";
-                notification.SentAt = DateTime.UtcNow;
+                notification.SentAt = DateTime.Now;
                 notification.ErrorMessage = null;
                 await _notificationRepository.UpdateAsync(notification);
             }

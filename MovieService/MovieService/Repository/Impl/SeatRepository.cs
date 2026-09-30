@@ -28,6 +28,16 @@ namespace ShowtimeService.Repository.Impl
             return await _context.Seats.FindAsync(seatId);
         }
 
+        public async Task<List<Seat>> GetSeatsByIdsAsync(IEnumerable<long> seatIds)
+        {
+            var ids = seatIds.Distinct().ToList();
+
+            return await _context.Seats
+                .AsNoTracking()
+                .Where(s => ids.Contains(s.Id))
+                .ToListAsync();
+        }
+
         public async Task<Seat?> UpdateSeatAsync(long seatId, Seat seat)
         {
             var existingSeat = await _context.Seats.FindAsync(seatId);

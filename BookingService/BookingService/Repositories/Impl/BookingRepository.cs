@@ -163,8 +163,8 @@ namespace BookingService.Repositories.Impl
             return await _context.Bookings
                 .FromSqlInterpolated($@"
             SELECT *
-            FROM ""Bookings""
-            WHERE ""Id"" = {id}
+            FROM bookings
+            WHERE id = {id}
             FOR UPDATE")
                 .AsTracking()
                 .FirstOrDefaultAsync();

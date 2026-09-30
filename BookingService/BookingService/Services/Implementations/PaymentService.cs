@@ -133,7 +133,7 @@ namespace BookingService.Services.Implementations
                     Amount = booking.TotalAmount,
                     Method = request.Method!.Trim().ToUpperInvariant(),
                     Status = "PENDING",
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now
                 });
 
                 booking.PaymentId = payment.Id;
@@ -243,7 +243,7 @@ namespace BookingService.Services.Implementations
                     Method = "PAYOS",
                     Status = "PENDING",
                     TransactionRef = orderCode.ToString(),
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now
                 });
 
                 booking.PaymentId = payment.Id;
@@ -320,7 +320,7 @@ namespace BookingService.Services.Implementations
                 payment.Status = "FAILED";
             }
 
-            payment.UpdatedAt = DateTime.UtcNow;
+            payment.UpdatedAt = DateTime.Now;
             await _paymentRepository.UpdateAsync(payment);
 
             return payment.ToResponse();
@@ -361,7 +361,7 @@ namespace BookingService.Services.Implementations
                     "Only PENDING bookings can be paid.");
             }
 
-            if (booking.ExpiresAt.HasValue && booking.ExpiresAt <= DateTime.UtcNow)
+            if (booking.ExpiresAt.HasValue && booking.ExpiresAt <= DateTime.Now)
             {
                 throw new BusinessException("Booking has expired.");
             }
@@ -382,7 +382,7 @@ namespace BookingService.Services.Implementations
         {
             for (var attempt = 0; attempt < 5; attempt++)
             {
-                var code = $"PAY-{DateTime.UtcNow:yyyyMMddHHmmss}-{Random.Shared.Next(100000, 999999)}";
+                var code = $"PAY-{DateTime.Now:yyyyMMddHHmmss}-{Random.Shared.Next(100000, 999999)}";
 
                 if (!await _paymentRepository.ExistsByPaymentCodeAsync(code))
                 {

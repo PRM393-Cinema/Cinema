@@ -10,6 +10,8 @@ using BookingService.Validators;
 using BookingService.Clients.Interfaces;
 using BookingService.DTOs;
 using System.Text.Encodings.Web;
+using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace BookingService.Services.Implementations
 {
@@ -170,14 +172,16 @@ namespace BookingService.Services.Implementations
                 seatId => seatMap[seatId].Price);
 
             var expiresAt =
-                DateTime.UtcNow.AddMinutes(10);
+                DateTime.Now.AddMinutes(10);
 
             await using var transaction =
                 await _context.Database.BeginTransactionAsync();
 
             try
             {
-                var reservations = new List<SeatReservation>();
+                // Khóa (FOR UPDATE) các dòng giữ chỗ đã có của những ghế được chọn.
+                // Ghế chưa từng được giữ ở suất chiếu này thì chưa có dòng nào -> coi là còn trống.
+                var existingReservations = new Dictionary<long, SeatReservation>();
 
                 foreach (var seatId in seatIds)
                 {
@@ -185,12 +189,11 @@ namespace BookingService.Services.Implementations
                         await _seatReservationRepository
                             .GetByShowtimeIdAndSeatIdForUpdateAsync(
                                 showtimeId,
-                                (long)seatId);
+                                seatId);
 
                     if (reservation == null)
                     {
-                        throw new InvalidOperationException(
-                            $"Seat {seatId} is not available for this showtime.");
+                        continue;
                     }
 
                     var status = reservation.Status
@@ -205,13 +208,13 @@ namespace BookingService.Services.Implementations
 
                     if (status == "HELD" &&
                         reservation.HeldUntil.HasValue &&
-                        reservation.HeldUntil.Value > DateTime.UtcNow)
+                        reservation.HeldUntil.Value > DateTime.Now)
                     {
                         throw new InvalidOperationException(
                             $"Seat {seatId} is currently held.");
                     }
 
-                    reservations.Add(reservation);
+                    existingReservations[seatId] = reservation;
                 }
 
                 var booking = new Booking
@@ -221,7 +224,9 @@ namespace BookingService.Services.Implementations
                     Status = "PENDING",
                     TotalAmount = totalAmount,
                     BookingCode = GenerateBookingCode(),
-                    CreatedAt = DateTime.UtcNow,
+                    MovieTitle = request.MovieTitle,
+                    ShowTime = request.ShowTime,
+                    CreatedAt = DateTime.Now,
                     ExpiresAt = expiresAt
                 };
 
@@ -229,14 +234,14 @@ namespace BookingService.Services.Implementations
                     await _bookingRepository
                         .CreateBookingAsync(booking);
 
-                foreach (var reservation in reservations)
+                foreach (var seatId in seatIds)
                 {
-                    var seatInfo = seatMap[reservation.SeatId];
+                    var seatInfo = seatMap[seatId];
 
                     var bookingSeat = new BookingSeat
                     {
                         BookingId = booking.Id,
-                        SeatId = reservation.SeatId,
+                        SeatId = seatId,
                         SeatLabel = seatInfo.SeatLabel,
                         Price = seatInfo.Price
                     };
@@ -244,17 +249,45 @@ namespace BookingService.Services.Implementations
                     await _bookingSeatRepository
                         .AddAsync(bookingSeat);
 
-                    reservation.Status = "HELD";
-                    reservation.HeldUntil = expiresAt;
-                    reservation.BookingId = booking.Id;
+                    if (existingReservations.TryGetValue(seatId, out var reservation))
+                    {
+                        reservation.Status = "HELD";
+                        reservation.HeldUntil = expiresAt;
+                        reservation.BookingId = booking.Id;
 
-                    await _seatReservationRepository
-                        .UpdateAsync(reservation);
+                        await _seatReservationRepository
+                            .UpdateAsync(reservation);
+                    }
+                    else
+                    {
+                        // Unique constraint uq_seat_per_showtime chặn trường hợp
+                        // hai booking cùng giữ một ghế mới tại cùng thời điểm.
+                        await _seatReservationRepository
+                            .AddAsync(new SeatReservation
+                            {
+                                ShowtimeId = showtimeId,
+                                SeatId = seatId,
+                                Status = "HELD",
+                                HeldUntil = expiresAt,
+                                BookingId = booking.Id
+                            });
+                    }
                 }
 
                 await transaction.CommitAsync();
 
                 return await MapBookingAsync(booking);
+            }
+            catch (DbUpdateException ex) when (
+                ex.InnerException is PostgresException
+                {
+                    SqlState: PostgresErrorCodes.UniqueViolation
+                })
+            {
+                await transaction.RollbackAsync();
+
+                throw new InvalidOperationException(
+                    "One or more selected seats were just taken by another booking. Please choose again.");
             }
             catch
             {
@@ -293,7 +326,7 @@ namespace BookingService.Services.Implementations
                 }
 
                 if (booking.ExpiresAt.HasValue &&
-                    booking.ExpiresAt.Value <= DateTime.UtcNow)
+                    booking.ExpiresAt.Value <= DateTime.Now)
                 {
                     booking.Status = "EXPIRED";
 
@@ -591,7 +624,7 @@ namespace BookingService.Services.Implementations
 
         private static string GenerateBookingCode()
         {
-            return $"BK-{DateTime.UtcNow:yyyyMMddHHmmss}-{Random.Shared.Next(100000, 999999)}";
+            return $"BK-{DateTime.Now:yyyyMMddHHmmss}-{Random.Shared.Next(100000, 999999)}";
         }
     }
 }

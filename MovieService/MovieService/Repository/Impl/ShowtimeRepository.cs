@@ -35,7 +35,9 @@ namespace ShowtimeService.Repository.Impl
                 MovieId = request.MovieId,
                 RoomId = request.RoomId,
                 StartTime = request.StartTime,
-                EndTime = request.EndTime
+                EndTime = request.EndTime,
+                Price = request.Price,
+                Status = string.IsNullOrWhiteSpace(request.Status) ? "OPEN" : request.Status
             };
 
             _context.Showtimes.Add(showtime);

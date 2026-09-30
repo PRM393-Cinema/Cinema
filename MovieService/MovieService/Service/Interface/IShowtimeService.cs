@@ -14,5 +14,6 @@ namespace ShowtimeService.Service.Interface
         Task<PagedResult<ShowtimeResponse>> GetOpenShowtimesAsync(int pageNumber, int pageSize, string sortBy, string sortDir);
         Task<PagedResult<ShowtimeResponse>> GetShowtimesByMovieAsync(long movieId, int pageNumber, int pageSize, string sortBy, string sortDir);
         Task<PagedResult<ShowtimeResponse>> GetShowtimesByDateRangeAsync(DateTime start, DateTime end, int pageNumber, int pageSize, string sortBy, string sortDir);
+        Task<List<ShowtimeSeatResponse>> GetSeatsForBookingAsync(long showtimeId, List<long> seatIds);
     }
 }

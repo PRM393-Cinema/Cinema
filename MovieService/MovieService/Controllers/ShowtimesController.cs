@@ -45,6 +45,19 @@ namespace ShowtimeService.Controllers
             return Ok(result);
         }
 
+        // POST: api/showtimes/{showtimeId}/seats
+        // Dùng cho BookingService: trả nhãn ghế + giá của các ghế được chọn trong suất chiếu.
+        [HttpPost("{showtimeId:long}/seats")]
+        public async Task<ActionResult<List<ShowtimeSeatResponse>>> GetSeatsForBooking(
+            long showtimeId,
+            [FromBody] List<long> seatIds)
+        {
+            var result = await _showtimeService
+                .GetSeatsForBookingAsync(showtimeId, seatIds);
+
+            return Ok(result);
+        }
+
         // POST: api/showtimes
         [HttpPost]
         public async Task<ActionResult<ShowtimeResponse>> CreateShowtime(

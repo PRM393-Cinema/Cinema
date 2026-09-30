@@ -14,7 +14,9 @@ namespace ShowtimeService.Extensions
                 MovieId = showtime.MovieId,
                 RoomId = showtime.RoomId,
                 StartTime = showtime.StartTime,
-                EndTime = showtime.EndTime
+                EndTime = showtime.EndTime,
+                Price = showtime.Price,
+                Status = showtime.Status
             };
         }
 

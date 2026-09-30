@@ -59,15 +59,15 @@ namespace BookingService.Repositories.Impl
         //            sr.SeatId == seatId);
         //}
 
-        //public async Task<SeatReservation> AddAsync(
-        //    SeatReservation seatReservation)
-        //{
-        //    _context.SeatReservations.Add(seatReservation);
+        public async Task<SeatReservation> AddAsync(
+            SeatReservation seatReservation)
+        {
+            _context.SeatReservations.Add(seatReservation);
 
-        //    await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
 
-        //    return seatReservation;
-        //}
+            return seatReservation;
+        }
 
         public async Task UpdateAsync(
             SeatReservation seatReservation)
@@ -122,9 +122,9 @@ namespace BookingService.Repositories.Impl
             return await _context.SeatReservations
                 .FromSqlInterpolated($@"
             SELECT *
-            FROM ""SeatReservations""
-            WHERE ""ShowtimeId"" = {showtimeId}
-              AND ""SeatId"" = {seatId}
+            FROM seat_reservations
+            WHERE showtime_id = {showtimeId}
+              AND seat_id = {seatId}
             FOR UPDATE")
                 .AsTracking()
                 .FirstOrDefaultAsync();

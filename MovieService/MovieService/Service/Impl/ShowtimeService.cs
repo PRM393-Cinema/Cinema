@@ -11,11 +11,62 @@ namespace ShowtimeService.Service.Impl
     public class ShowtimeService : IShowtimeService
     {
         private readonly IShowtimeRepository _showtimeRepository;
+        private readonly ISeatRepository _seatRepository;
 
         public ShowtimeService(
-            IShowtimeRepository showtimeRepository)
+            IShowtimeRepository showtimeRepository,
+            ISeatRepository seatRepository)
         {
             _showtimeRepository = showtimeRepository;
+            _seatRepository = seatRepository;
+        }
+
+        // ======= GET SEATS FOR BOOKING (BookingService gọi sang) =======
+        public async Task<List<ShowtimeSeatResponse>> GetSeatsForBookingAsync(
+            long showtimeId,
+            List<long> seatIds)
+        {
+            if (seatIds == null || seatIds.Count == 0)
+            {
+                throw new BusinessException("At least one seat id is required.");
+            }
+
+            var showtime = await _showtimeRepository.GetShowtimeByIdAsync(showtimeId)
+                ?? throw new NotFoundException($"Showtime with ID {showtimeId} was not found.");
+
+            if (!string.Equals(showtime.Status, "OPEN", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new BusinessException($"Showtime with ID {showtimeId} is not open for booking.");
+            }
+
+            if (showtime.StartTime <= DateTime.Now)
+            {
+                throw new BusinessException($"Showtime with ID {showtimeId} has already started.");
+            }
+
+            var requestedIds = seatIds.Distinct().ToList();
+            var seats = await _seatRepository.GetSeatsByIdsAsync(requestedIds);
+
+            var invalidIds = requestedIds
+                .Except(seats.Where(s => s.RoomId == showtime.RoomId).Select(s => s.Id))
+                .ToList();
+
+            if (invalidIds.Count > 0)
+            {
+                throw new BusinessException(
+                    $"Seat(s) {string.Join(", ", invalidIds)} do not belong to the room of showtime {showtimeId}.");
+            }
+
+            // Giá ghế = giá suất chiếu (khớp dữ liệu hiện có: booking_seats.price = showtimes.price).
+            return seats
+                .OrderBy(s => requestedIds.IndexOf(s.Id))
+                .Select(s => new ShowtimeSeatResponse
+                {
+                    SeatId = s.Id,
+                    SeatLabel = $"{s.SeatRow}{s.SeatNumber}",
+                    Price = showtime.Price
+                })
+                .ToList();
         }
 
         public async Task<PagedResult<ShowtimeResponse>> GetAllShowtimesAsync(
