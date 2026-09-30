@@ -1,0 +1,39 @@
+@Gateway = http://localhost:5000
+
+### Health check của gateway
+GET {{Gateway}}/health
+
+### Đăng nhập qua gateway (tài khoản seed: admin@cinema.com / 123456)
+POST {{Gateway}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@cinema.com",
+  "password": "123456"
+}
+
+### Thông tin người dùng hiện tại (cần Bearer token)
+GET {{Gateway}}/api/v1/auth/me
+Authorization: Bearer <access_token>
+
+### Danh sách phim (không cần đăng nhập)
+GET {{Gateway}}/api/v1/movies?page=1&size=5
+
+### Suất chiếu còn mở (không cần đăng nhập)
+GET {{Gateway}}/api/showtimes/open
+
+### Tạo phim (chỉ ROLE_ADMIN)
+POST {{Gateway}}/api/v1/movies
+Content-Type: application/json
+Authorization: Bearer <access_token>
+
+{
+  "title": "Tên phim",
+  "description": "Mô tả",
+  "durationMinutes": 120,
+  "releaseDate": "2026-12-25"
+}
+
+### Lịch sử booking của user (cần đăng nhập, BookingService kiểm tra quyền sở hữu)
+GET {{Gateway}}/api/v1/bookings/user/3
+Authorization: Bearer <access_token>
