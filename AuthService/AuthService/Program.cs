@@ -123,7 +123,8 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
     });
 }
 
-app.UseHttpsRedirection();
+// Không redirect sang HTTPS: service chạy sau API Gateway (HTTPS kết thúc ở gateway),
+// redirect 307 sẽ khiến client gọi thẳng vào service, đi vòng qua gateway.
 
 app.UseAuthentication();
 app.UseAuthorization();
