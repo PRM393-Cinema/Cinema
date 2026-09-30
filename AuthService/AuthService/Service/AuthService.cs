@@ -15,6 +15,7 @@ namespace AuthService.Service
         private readonly IRefreshTokenRepository _refreshTokenRepository;
         private readonly IJwtService _jwtService;
         private readonly JwtOptions _jwtOptions;
+        private readonly ILogger<AuthService> _logger;
 
         // Người dùng tự đăng ký luôn là khách hàng
         private const string DefaultRole = "ROLE_CUSTOMER";
@@ -23,12 +24,14 @@ namespace AuthService.Service
             IUserRepository userRepository,
             IRefreshTokenRepository refreshTokenRepository,
             IJwtService jwtService,
-            IOptions<JwtOptions> jwtOptions)
+            IOptions<JwtOptions> jwtOptions,
+            ILogger<AuthService> logger)
         {
             _userRepository = userRepository;
             _refreshTokenRepository = refreshTokenRepository;
             _jwtService = jwtService;
             _jwtOptions = jwtOptions.Value;
+            _logger = logger;
         }
 
         // ======= REGISTER =======
@@ -117,6 +120,8 @@ namespace AuthService.Service
             {
                 stored.Revoked = true;
                 await _refreshTokenRepository.SaveChangesAsync();
+
+                await CleanUpStaleTokensAsync(stored.UserId);
             }
         }
 
@@ -153,6 +158,9 @@ namespace AuthService.Service
             // Lưu một lần: gồm cả việc thu hồi token cũ (nếu có) và token mới
             await _refreshTokenRepository.SaveChangesAsync();
 
+            // Token cũ vừa bị thu hồi (khi refresh) cũng được dọn luôn ở bước này
+            await CleanUpStaleTokensAsync(user.UserId);
+
             return new AuthResponse
             {
                 AccessToken = accessToken,
@@ -161,6 +169,21 @@ namespace AuthService.Service
                 ExpiresAt = expiresAt,
                 User = user.ToResponse()
             };
+        }
+
+        // ======= HELPER: dọn refresh token đã hết hạn / đã thu hồi =======
+        // Giữ bảng refresh_tokens không phình mãi. Token còn hạn được giữ lại (đăng nhập nhiều thiết bị).
+        // Chỉ là dọn dẹp: lỗi ở đây không được làm hỏng đăng nhập/đăng xuất.
+        private async Task CleanUpStaleTokensAsync(long userId)
+        {
+            try
+            {
+                await _refreshTokenRepository.DeleteExpiredOrRevokedAsync(userId, DateTime.Now);
+            }
+            catch (System.Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not clean up stale refresh tokens for user {UserId}", userId);
+            }
         }
     }
 }
