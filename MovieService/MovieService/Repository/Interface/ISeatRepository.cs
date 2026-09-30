@@ -6,6 +6,7 @@ namespace ShowtimeService.Repository.Interface
     public interface ISeatRepository
     {
         Task<PagedList<Seat>> GetSeatsByRoomAsync(long roomId, int pageNumber, int pageSize, string sortBy, string sortDir);
+        Task<List<Seat>> GetAllSeatsByRoomAsync(long roomId);
         Task<Seat?> GetSeatByIdAsync(long seatId);
         Task<List<Seat>> GetSeatsByIdsAsync(IEnumerable<long> seatIds);
         Task<PagedList<Seat>> GenerateSeatsAsync (long roomId, int rows, int seatsPerRow);
