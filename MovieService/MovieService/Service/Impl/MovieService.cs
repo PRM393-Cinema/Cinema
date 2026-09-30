@@ -106,11 +106,15 @@ namespace MovieService.Service.Impl
             var movie = new Movie
             {
                 Title = title,
-                Description = request.Description.Trim(),
+                Description = request.Description?.Trim(),
                 DurationMinutes = request.DurationMinutes,
+                Genre = request.Genre?.Trim(),
+                Language = request.Language?.Trim(),
                 ReleaseDate = DateOnly.FromDateTime(request.ReleaseDate), // FIX: Convert DateTime to DateOnly
+                PosterUrl = request.PosterUrl?.Trim(),
+                TrailerUrl = request.TrailerUrl?.Trim(),
                 Status = "ACTIVE", // Đặt mặc định trạng thái
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.Now
             };
 
             await _movieRepository.CreateMovieAsync(movie);
@@ -135,7 +139,11 @@ namespace MovieService.Service.Impl
             movie.Title = title;
             movie.Description = request.Description?.Trim() ?? string.Empty;
             movie.DurationMinutes = request.DurationMinutes;
+            movie.Genre = request.Genre?.Trim();
+            movie.Language = request.Language?.Trim();
             movie.ReleaseDate = DateOnly.FromDateTime(request.ReleaseDate);
+            movie.PosterUrl = request.PosterUrl?.Trim();
+            movie.TrailerUrl = request.TrailerUrl?.Trim();
 
             await _movieRepository.UpdateMovieAsync(movie);
             await _movieRepository.SaveChangesAsync();

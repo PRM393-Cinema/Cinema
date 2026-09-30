@@ -14,7 +14,11 @@ namespace MovieService.Extensions
                 Title = movie.Title,
                 Description = movie.Description,
                 DurationMinutes = movie.DurationMinutes,
+                Genre = movie.Genre,
+                Language = movie.Language,
                 ReleaseDate = movie.ReleaseDate.Value,
+                PosterUrl = movie.PosterUrl,
+                TrailerUrl = movie.TrailerUrl,
                 Status = movie.Status,
                 CreatedAt = movie.CreatedAt
             };
