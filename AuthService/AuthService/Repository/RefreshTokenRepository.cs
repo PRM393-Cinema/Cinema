@@ -26,6 +26,14 @@ namespace AuthService.Repository
             await _context.RefreshTokens.AddAsync(token);
         }
 
+        // Xóa thẳng dưới DB (không qua change tracker) các token đã hết hạn hoặc đã thu hồi của user
+        public async Task<int> DeleteExpiredOrRevokedAsync(long userId, DateTime now)
+        {
+            return await _context.RefreshTokens
+                .Where(rt => rt.UserId == userId && (rt.Revoked || rt.ExpiresAt < now))
+                .ExecuteDeleteAsync();
+        }
+
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();
