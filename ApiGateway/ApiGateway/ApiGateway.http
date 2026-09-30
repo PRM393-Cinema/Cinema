@@ -22,6 +22,10 @@ GET {{Gateway}}/api/v1/movies?page=1&size=5
 ### Suất chiếu còn mở (không cần đăng nhập)
 GET {{Gateway}}/api/showtimes/open
 
+### Sơ đồ ghế của phòng (cần đăng nhập, mọi role)
+GET {{Gateway}}/api/seats/room/1
+Authorization: Bearer <access_token>
+
 ### Tạo phim (chỉ ROLE_ADMIN)
 POST {{Gateway}}/api/v1/movies
 Content-Type: application/json

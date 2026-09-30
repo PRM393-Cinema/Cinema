@@ -24,6 +24,26 @@ namespace ShowtimeService.Service.Impl
             _showtimeRepository = showtimeRepository;
         }
 
+        public async Task<List<SeatResponse>> GetSeatsByRoomAsync(long roomId)
+        {
+            if (roomId <= 0)
+            {
+                throw new BusinessException("Room ID must be greater than 0.");
+            }
+
+            var room = await _roomRepository.GetRoomByIdAsync(roomId);
+
+            if (room == null)
+            {
+                throw new NotFoundException(
+                    $"Room with ID {roomId} was not found.");
+            }
+
+            var seats = await _seatRepository.GetAllSeatsByRoomAsync(roomId);
+
+            return seats.Select(s => s.ToResponse()).ToList();
+        }
+
         public async Task<SeatResponse?> GetSeatByIdAsync(long seatId)
         {
             if (seatId <= 0)

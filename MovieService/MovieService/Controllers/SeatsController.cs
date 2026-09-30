@@ -28,6 +28,18 @@ namespace MovieService.Controllers
             return Ok(result);
         }
 
+        // GET: api/seats/room/{roomId}
+        // Sơ đồ ghế của phòng: trả toàn bộ ghế, sắp theo hàng rồi số ghế
+        [HttpGet("room/{roomId:long}")]
+        public async Task<ActionResult<List<SeatResponse>>> GetSeatsByRoom(
+            long roomId)
+        {
+            var result = await _seatService
+                .GetSeatsByRoomAsync(roomId);
+
+            return Ok(result);
+        }
+
         // POST: api/seats/generate
         [HttpPost("generate")]
         public async Task<ActionResult<SeatResponse>> GenerateSeats(

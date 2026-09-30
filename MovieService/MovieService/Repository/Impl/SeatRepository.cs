@@ -23,6 +23,19 @@ namespace ShowtimeService.Repository.Impl
             return await PagedList<Seat>.CreateAsync(query, pageNumber, pageSize);
         }
 
+        // Toàn bộ ghế của phòng (không phân trang) để vẽ sơ đồ ghế — số lượng bị giới hạn bởi sức chứa phòng.
+        // Sắp theo độ dài tên hàng trước để hàng "AA" đứng sau "Z".
+        public async Task<List<Seat>> GetAllSeatsByRoomAsync(long roomId)
+        {
+            return await _context.Seats
+                .AsNoTracking()
+                .Where(s => s.RoomId == roomId)
+                .OrderBy(s => s.SeatRow.Length)
+                .ThenBy(s => s.SeatRow)
+                .ThenBy(s => s.SeatNumber)
+                .ToListAsync();
+        }
+
         public async Task<Seat?> GetSeatByIdAsync(long seatId)
         {
             return await _context.Seats.FindAsync(seatId);

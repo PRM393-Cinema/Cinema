@@ -11,6 +11,7 @@ namespace ShowtimeService.Extensions
             return new SeatResponse
             {
                 Id = seat.Id,
+                RoomId = seat.RoomId,
                 SeatRow = seat.SeatRow,
                 SeatNumber = seat.SeatNumber,
                 SeatType = seat.SeatType
