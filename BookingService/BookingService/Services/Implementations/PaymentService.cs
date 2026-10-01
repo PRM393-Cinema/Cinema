@@ -15,17 +15,20 @@ namespace BookingService.Services.Implementations
     {
         private readonly IPaymentRepository _paymentRepository;
         private readonly IBookingRepository _bookingRepository;
+        private readonly IBookingService _bookingService;
         private readonly IPayOsClient _payOsClient;
         private readonly TransactionManager _transactionManager;
 
         public PaymentService(
             IPaymentRepository paymentRepository,
             IBookingRepository bookingRepository,
+            IBookingService bookingService,
             IPayOsClient payOsClient,
             TransactionManager transactionManager)
         {
             _paymentRepository = paymentRepository;
             _bookingRepository = bookingRepository;
+            _bookingService = bookingService;
             _payOsClient = payOsClient;
             _transactionManager = transactionManager;
         }
@@ -92,6 +95,20 @@ namespace BookingService.Services.Implementations
         public async Task<PaymentResponse> GetPaymentByIdAsync(long id)
         {
             var payment = await GetPaymentAsync(id);
+            return payment.ToResponse();
+        }
+
+        public async Task<PaymentResponse> GetPaymentByOrderCodeAsync(long orderCode)
+        {
+            var payment = await _paymentRepository.GetByTransactionRefAsync(
+                orderCode.ToString());
+
+            if (payment == null)
+            {
+                throw new KeyNotFoundException(
+                    $"Payment for PayOS order {orderCode} was not found.");
+            }
+
             return payment.ToResponse();
         }
 
@@ -267,7 +284,9 @@ namespace BookingService.Services.Implementations
             }
         }
 
-        public async Task<PaymentResponse> ProcessPaymentAsync(long id)
+        public async Task<PaymentResponse> ProcessPaymentAsync(
+            long id,
+            string? recipientEmail)
         {
             var payment = await GetPaymentAsync(id);
 
@@ -278,7 +297,7 @@ namespace BookingService.Services.Implementations
                     "Only PayOS payments can be processed through this endpoint.");
             }
 
-            return await VerifyPayOsPaymentAsync(orderCode);
+            return await VerifyPayOsPaymentAsync(orderCode, recipientEmail);
         }
 
         public Task<PaymentResponse> RefundPaymentAsync(
@@ -292,7 +311,8 @@ namespace BookingService.Services.Implementations
         }
 
         public async Task<PaymentResponse> VerifyPayOsPaymentAsync(
-            long orderCode)
+            long orderCode,
+            string? recipientEmail)
         {
             var payment = await _paymentRepository.GetByTransactionRefAsync(
                 orderCode.ToString());
@@ -303,25 +323,33 @@ namespace BookingService.Services.Implementations
                     $"Payment for PayOS order {orderCode} was not found.");
             }
 
-            if (payment.Status is "SUCCESS" or "FAILED")
+            if (payment.Status == "PENDING")
             {
-                return payment.ToResponse();
+                var status = await _payOsClient.GetPaymentStatusAsync(orderCode);
+                var normalizedStatus = status.Status.Trim().ToUpperInvariant();
+
+                if (normalizedStatus == "PAID")
+                {
+                    payment.Status = "SUCCESS";
+                }
+                else if (normalizedStatus is "CANCELLED" or "EXPIRED")
+                {
+                    payment.Status = "FAILED";
+                }
+
+                payment.UpdatedAt = DateTime.Now;
+                await _paymentRepository.UpdateAsync(payment);
             }
 
-            var status = await _payOsClient.GetPaymentStatusAsync(orderCode);
-            var normalizedStatus = status.Status.Trim().ToUpperInvariant();
-
-            if (normalizedStatus == "PAID")
+            // PayOS xác nhận đã nhận tiền thì hệ thống mới xác nhận booking. Gọi lại nhiều lần
+            // vẫn an toàn (booking đã CONFIRMED thì bỏ qua), nên nếu lần trước lỗi giữa chừng
+            // thì lần xác minh sau sẽ xác nhận bù.
+            if (payment.Status == "SUCCESS")
             {
-                payment.Status = "SUCCESS";
+                await _bookingService.ConfirmPaidBookingAsync(
+                    payment.BookingId,
+                    recipientEmail);
             }
-            else if (normalizedStatus is "CANCELLED" or "EXPIRED")
-            {
-                payment.Status = "FAILED";
-            }
-
-            payment.UpdatedAt = DateTime.Now;
-            await _paymentRepository.UpdateAsync(payment);
 
             return payment.ToResponse();
         }

@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using MovieService.Configuration;
 using MovieService.Helpers;
 using ShowtimeService.DTOs.Request;
 using ShowtimeService.DTOs.Response;
@@ -19,6 +21,7 @@ namespace ShowtimeService.Controllers
 
         // GET: api/showtimes
         [HttpGet]
+        [AllowAnonymous]
         public async Task<ActionResult<PagedResult<ShowtimeResponse>>> GetAllShowtimes(
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 10,
@@ -36,6 +39,7 @@ namespace ShowtimeService.Controllers
 
         // GET: api/showtimes/{showtimeId}
         [HttpGet("{showtimeId:long}")]
+        [AllowAnonymous]
         public async Task<ActionResult<ShowtimeResponse>> GetShowtimeById(
             long showtimeId)
         {
@@ -47,7 +51,9 @@ namespace ShowtimeService.Controllers
 
         // POST: api/showtimes/{showtimeId}/seats
         // Dùng cho BookingService: trả nhãn ghế + giá của các ghế được chọn trong suất chiếu.
+        // BookingService gọi thẳng (không qua gateway) kèm token của người đang đặt vé -> chỉ cần đã đăng nhập.
         [HttpPost("{showtimeId:long}/seats")]
+        [Authorize]
         public async Task<ActionResult<List<ShowtimeSeatResponse>>> GetSeatsForBooking(
             long showtimeId,
             [FromBody] List<long> seatIds)
@@ -60,6 +66,7 @@ namespace ShowtimeService.Controllers
 
         // POST: api/showtimes
         [HttpPost]
+        [Authorize(Policy = AuthorizationPolicies.StaffOrAdmin)]
         public async Task<ActionResult<ShowtimeResponse>> CreateShowtime(
             [FromBody] ShowtimeRequest request)
         {
@@ -74,6 +81,7 @@ namespace ShowtimeService.Controllers
 
         // PUT: api/showtimes/{showtimeId}
         [HttpPut("{showtimeId:long}")]
+        [Authorize(Policy = AuthorizationPolicies.StaffOrAdmin)]
         public async Task<ActionResult<ShowtimeResponse>> UpdateShowtime(
             long showtimeId,
             [FromBody] ShowtimeRequest request)
@@ -86,6 +94,7 @@ namespace ShowtimeService.Controllers
 
         // DELETE: api/showtimes/{showtimeId}
         [HttpDelete("{showtimeId:long}")]
+        [Authorize(Policy = AuthorizationPolicies.StaffOrAdmin)]
         public async Task<IActionResult> DeleteShowtime(
             long showtimeId)
         {
@@ -96,6 +105,7 @@ namespace ShowtimeService.Controllers
 
         // GET: api/showtimes/open
         [HttpGet("open")]
+        [AllowAnonymous]
         public async Task<ActionResult<PagedResult<ShowtimeResponse>>> GetOpenShowtimes(
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 10,
@@ -113,6 +123,7 @@ namespace ShowtimeService.Controllers
 
         // GET: api/showtimes/movie/{movieId}
         [HttpGet("movie/{movieId:long}")]
+        [AllowAnonymous]
         public async Task<ActionResult<PagedResult<ShowtimeResponse>>> GetShowtimesByMovie(
             long movieId,
             [FromQuery] int pageNumber = 1,
@@ -132,6 +143,7 @@ namespace ShowtimeService.Controllers
 
         // GET: api/showtimes/date-range
         [HttpGet("date-range")]
+        [Authorize(Policy = AuthorizationPolicies.StaffOrAdmin)]
         public async Task<ActionResult<PagedResult<ShowtimeResponse>>> GetShowtimesByDateRange(
             [FromQuery] DateTime start,
             [FromQuery] DateTime end,
