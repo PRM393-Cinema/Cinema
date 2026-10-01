@@ -1,0 +1,15 @@
+name: cinema_fe
+description: Mobile cinema booking app.
+publish_to: none
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.8.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_secure_storage: ^11.2.0
+
+flutter:
+  uses-material-design: true
