@@ -14,7 +14,7 @@
 | Mã OTP xác thực email | AuthService | Đăng ký, gửi lại mã |
 | Chào mừng | AuthService | Xác thực email thành công |
 | Mã OTP đặt lại mật khẩu | AuthService | Quên mật khẩu |
-| Xác nhận đặt vé | BookingService | `POST /api/v1/bookings/{id}/confirm` thành công |
+| Xác nhận đặt vé | BookingService | Booking được xác nhận: PayOS báo đã thanh toán, hoặc Staff xác nhận tại quầy |
 
 Hai service dùng chung **một tài khoản Gmail** với cùng bộ key `Smtp:*`.
 
@@ -113,7 +113,12 @@ Khi đó chuyển sang màn hình OTP, gọi `resend-verification` để lấy m
 
 ### Email xác nhận đặt vé
 
-Đã có sẵn: `POST /api/v1/bookings/{id}/confirm?paymentMethod=...&recipientEmail=<email khách>`. Sau khi xác nhận, BookingService gửi email chi tiết vé. Gửi lỗi không làm hỏng booking, trạng thái gửi xem ở `/api/v1/notifications`.
+BookingService gửi email chi tiết vé ngay khi booking được xác nhận:
+
+- **Khách thanh toán PayOS:** sau khi trả tiền xong, app gọi `POST /api/v1/payments/payos/{orderCode}/verify`. PayOS báo đã nhận tiền thì booking tự chuyển sang CONFIRMED và email vé được gửi về **email trong token** của khách. Muốn gửi tới email khác thì thêm `?recipientEmail=...`. Khách không tự gọi `/bookings/{id}/confirm` được.
+- **Staff xác nhận tại quầy** (khách trả tiền mặt): `POST /api/v1/bookings/{id}/confirm?paymentMethod=CASH&recipientEmail=<email khách>`.
+
+Gửi email lỗi không làm hỏng booking, trạng thái gửi xem ở `/api/v1/notifications`. Gọi xác minh lại nhiều lần cũng không gửi trùng email.
 
 ### Mã lỗi
 
