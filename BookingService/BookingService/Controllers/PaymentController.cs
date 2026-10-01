@@ -102,18 +102,38 @@ namespace BookingService.Controllers
             return Ok(result);
         }
 
+        // Khách gọi sau khi thanh toán xong trên trang PayOS. PayOS báo đã nhận tiền
+        // thì booking được xác nhận tự động và email vé được gửi đi.
         [HttpPost("payos/{orderCode:long}/verify")]
         public async Task<ActionResult<PaymentResponse>> VerifyPayOs(
-            long orderCode)
+            long orderCode,
+            [FromQuery] string? recipientEmail = null)
         {
-            return Ok(await _paymentService.VerifyPayOsPaymentAsync(orderCode));
+            var payment = await _paymentService.GetPaymentByOrderCodeAsync(orderCode);
+            var isOwner = payment.UserId == User.GetCurrentUserId();
+
+            if (!isOwner && !User.IsStaffOrAdmin())
+            {
+                return Forbid();
+            }
+
+            // Không truyền email thì gửi vé về email trong token của chính khách
+            if (string.IsNullOrWhiteSpace(recipientEmail) && isOwner)
+            {
+                recipientEmail = User.GetEmail();
+            }
+
+            return Ok(await _paymentService.VerifyPayOsPaymentAsync(
+                orderCode, recipientEmail));
         }
 
         [HttpPost("{id:long}/process")]
         [Authorize(Policy = AuthorizationPolicies.StaffOrAdmin)]
-        public async Task<ActionResult<PaymentResponse>> Process(long id)
+        public async Task<ActionResult<PaymentResponse>> Process(
+            long id,
+            [FromQuery] string? recipientEmail = null)
         {
-            return Ok(await _paymentService.ProcessPaymentAsync(id));
+            return Ok(await _paymentService.ProcessPaymentAsync(id, recipientEmail));
         }
 
         [HttpPost("{id:long}/refund")]

@@ -302,10 +302,27 @@ namespace BookingService.Services.Implementations
             }
         }
 
-        public async Task<BookingResponse> ConfirmBookingAsync(
+        // Staff/Admin xác nhận tay tại quầy (vd: khách trả tiền mặt).
+        public Task<BookingResponse> ConfirmBookingAsync(
             long id,
             string paymentMethod,
             string recipientEmail)
+        {
+            return ConfirmAsync(id, paidOnline: false, recipientEmail);
+        }
+
+        // Hệ thống tự xác nhận sau khi PayOS báo đã thanh toán (khách không tự xác nhận được).
+        public Task<BookingResponse> ConfirmPaidBookingAsync(
+            long id,
+            string? recipientEmail)
+        {
+            return ConfirmAsync(id, paidOnline: true, recipientEmail);
+        }
+
+        private async Task<BookingResponse> ConfirmAsync(
+            long id,
+            bool paidOnline,
+            string? recipientEmail)
         {
             await using var transaction =
                 await _context.Database.BeginTransactionAsync();
@@ -322,16 +339,40 @@ namespace BookingService.Services.Implementations
                         $"Booking with id {id} was not found.");
                 }
 
-                if (!string.Equals(
-                        booking.Status,
-                        "PENDING",
-                        StringComparison.OrdinalIgnoreCase))
+                var status = booking.Status
+                    .Trim()
+                    .ToUpperInvariant();
+
+                var seats =
+                    await _bookingSeatRepository
+                        .GetByBookingIdAsync(booking.Id);
+
+                // Xác minh thanh toán có thể bị gọi lại (app mở lại, bấm thử lại):
+                // booking đã xác nhận thì trả về luôn thay vì báo lỗi.
+                if (paidOnline && status == "CONFIRMED")
                 {
-                    throw new InvalidOperationException(
-                        "Only PENDING bookings can be confirmed.");
+                    await transaction.CommitAsync();
+
+                    await SendConfirmationEmailAsync(
+                        booking,
+                        seats,
+                        recipientEmail);
+
+                    return booking.ToResponse(
+                        seats.Select(x => x.ToResponse()).ToList());
                 }
 
-                if (booking.ExpiresAt.HasValue &&
+                if (status != "PENDING")
+                {
+                    throw new InvalidOperationException(paidOnline
+                        ? $"Payment succeeded but booking {booking.BookingCode} is {status} and cannot be confirmed. Please contact the cinema for a refund."
+                        : "Only PENDING bookings can be confirmed.");
+                }
+
+                // Xác nhận tay: quá thời gian giữ chỗ là hết hạn. Đã trả tiền online thì vẫn
+                // xác nhận được nếu ghế chưa bị booking khác lấy mất (kiểm tra ngay bên dưới).
+                if (!paidOnline &&
+                    booking.ExpiresAt.HasValue &&
                     booking.ExpiresAt.Value <= DateTime.Now)
                 {
                     booking.Status = "EXPIRED";
@@ -346,20 +387,7 @@ namespace BookingService.Services.Implementations
                         "Booking has expired.");
                 }
 
-                /*
-                 * Payment should be processed before
-                 * changing booking to CONFIRMED.
-                 */
-
-                booking.Status = "CONFIRMED";
-
-                await _bookingRepository.UpdateBookingAsync(
-                    booking.Id,
-                    booking);
-
-                var seats =
-                    await _bookingSeatRepository
-                        .GetByBookingIdAsync(booking.Id);
+                var reservations = new List<(BookingSeat Seat, SeatReservation? Reservation)>();
 
                 foreach (var seat in seats)
                 {
@@ -369,20 +397,57 @@ namespace BookingService.Services.Implementations
                                 booking.ShowtimeId,
                                 seat.SeatId);
 
-                    if (reservation == null)
+                    reservations.Add((seat, reservation));
+                }
+
+                var lost = reservations.FirstOrDefault(
+                    x => !IsHeldBy(x.Reservation, booking.Id));
+
+                if (lost.Seat != null)
+                {
+                    if (!paidOnline)
                     {
-                        throw new InvalidOperationException(
-                            $"Reservation for seat {seat.SeatId} was not found.");
+                        throw new InvalidOperationException(lost.Reservation == null
+                            ? $"Reservation for seat {lost.Seat.SeatId} was not found."
+                            : $"Seat {lost.Seat.SeatId} is not held by this booking.");
                     }
 
-                    if (reservation.Status != "HELD" ||
-                        reservation.BookingId != booking.Id)
+                    // Trả tiền sau khi hết giờ giữ chỗ và ghế đã thuộc booking khác:
+                    // nhả các ghế còn giữ, chuyển booking sang EXPIRED để rạp hoàn tiền.
+                    foreach (var (_, reservation) in reservations)
                     {
-                        throw new InvalidOperationException(
-                            $"Seat {seat.SeatId} is not held by this booking.");
+                        if (IsHeldBy(reservation, booking.Id))
+                        {
+                            reservation!.Status = "EXPIRED";
+                            reservation.HeldUntil = null;
+                            reservation.BookingId = null;
+
+                            await _seatReservationRepository
+                                .UpdateAsync(reservation);
+                        }
                     }
 
-                    reservation.Status = "BOOKED";
+                    booking.Status = "EXPIRED";
+
+                    await _bookingRepository.UpdateBookingAsync(
+                        booking.Id,
+                        booking);
+
+                    await transaction.CommitAsync();
+
+                    throw new InvalidOperationException(
+                        $"Payment succeeded but seat {lost.Seat.SeatLabel} is no longer held for booking {booking.BookingCode}. Please contact the cinema for a refund.");
+                }
+
+                booking.Status = "CONFIRMED";
+
+                await _bookingRepository.UpdateBookingAsync(
+                    booking.Id,
+                    booking);
+
+                foreach (var (_, reservation) in reservations)
+                {
+                    reservation!.Status = "BOOKED";
                     reservation.HeldUntil = null;
 
                     await _seatReservationRepository
@@ -391,33 +456,13 @@ namespace BookingService.Services.Implementations
 
                 await transaction.CommitAsync();
 
-                var response = booking.ToResponse(
+                await SendConfirmationEmailAsync(
+                    booking,
+                    seats,
+                    recipientEmail);
+
+                return booking.ToResponse(
                     seats.Select(x => x.ToResponse()).ToList());
-
-                // Notification is deliberately sent after the booking
-                // transaction commits. Email/notification downtime must not
-                // rollback a successful booking or payment transaction.
-                try
-                {
-                    await _notificationService.SendNotificationFromEventAsync(
-                        $"BOOKING_OK:{booking.Id}",
-                        booking.UserId,
-                        booking.Id,
-                        "BOOKING_CONFIRMED",
-                        BuildBookingConfirmationEmail(
-                            booking,
-                            seats,
-                            recipientEmail));
-                }
-                catch (Exception exception)
-                {
-                    _logger.LogWarning(
-                        exception,
-                        "Booking {BookingId} was confirmed but confirmation email could not be sent.",
-                        booking.Id);
-                }
-
-                return response;
             }
             catch
             {
@@ -429,6 +474,49 @@ namespace BookingService.Services.Implementations
                 }
 
                 throw;
+            }
+        }
+
+        private static bool IsHeldBy(SeatReservation? reservation, long bookingId)
+        {
+            return reservation is { Status: "HELD" } &&
+                   reservation.BookingId == bookingId;
+        }
+
+        // Notification is deliberately sent after the booking transaction commits.
+        // Email/notification downtime must not rollback a successful booking or payment.
+        // The event id is fixed per booking, so repeated calls never send duplicates.
+        private async Task SendConfirmationEmailAsync(
+            Booking booking,
+            IEnumerable<BookingSeat> seats,
+            string? recipientEmail)
+        {
+            if (string.IsNullOrWhiteSpace(recipientEmail))
+            {
+                _logger.LogWarning(
+                    "Booking {BookingId} is confirmed but no recipient email was given, confirmation email was not sent.",
+                    booking.Id);
+                return;
+            }
+
+            try
+            {
+                await _notificationService.SendNotificationFromEventAsync(
+                    $"BOOKING_OK:{booking.Id}",
+                    booking.UserId,
+                    booking.Id,
+                    "BOOKING_CONFIRMED",
+                    BuildBookingConfirmationEmail(
+                        booking,
+                        seats,
+                        recipientEmail));
+            }
+            catch (Exception exception)
+            {
+                _logger.LogWarning(
+                    exception,
+                    "Booking {BookingId} was confirmed but confirmation email could not be sent.",
+                    booking.Id);
             }
         }
 

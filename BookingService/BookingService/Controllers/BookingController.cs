@@ -124,7 +124,11 @@ namespace BookingService.Controllers
                 result);
         }
 
+        // Xác nhận tay tại quầy (vd: khách trả tiền mặt): chỉ Staff/Admin.
+        // Khách thanh toán PayOS thì booking được xác nhận tự động khi xác minh thanh toán thành công
+        // (POST /api/v1/payments/payos/{orderCode}/verify), khách không tự xác nhận được.
         [HttpPost("{id:long}/confirm")]
+        [Authorize(Policy = AuthorizationPolicies.StaffOrAdmin)]
         public async Task<ActionResult<BookingResponse>> Confirm(
             long id,
             [FromQuery] string paymentMethod,
@@ -135,14 +139,6 @@ namespace BookingService.Controllers
             {
                 return BadRequest(
                     "Payment method and recipient email are required.");
-            }
-
-            var existingBooking = await _bookingService.GetBookingByIdAsync(id);
-
-            if (!User.IsStaffOrAdmin() &&
-                existingBooking.UserId != User.GetCurrentUserId())
-            {
-                return Forbid();
             }
 
             var result = await _bookingService.ConfirmBookingAsync(
