@@ -4,6 +4,7 @@
 > - **Không bao giờ** ghi key/mật khẩu thật vào `appsettings.json` hay commit lên Git.
 > - Mỗi người tự đặt key trên máy mình bằng **User Secrets** (chạy script ở [mục 3](#3-cài-đặt-nhanh-bằng-powershell-khuyên-dùng) là xong).
 > - **JWT key phải giống hệt nhau** ở AuthService, BookingService và ApiGateway (trên cùng một máy).
+> - Chạy bằng **Docker** thì không cần User Secrets — xem [DOCKER.md](DOCKER.md) (key đặt trong file `.env`).
 
 ---
 

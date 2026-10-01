@@ -1,0 +1,12 @@
+**/bin/
+**/obj/
+**/.vs/
+**/*.user
+**/Properties/launchSettings.json
+.git
+.vscode
+.idea
+.env
+docs
+docker
+*.md

@@ -19,7 +19,7 @@ namespace BookingService.Mapping
                 TotalAmount = booking.TotalAmount,
                 PaymentId = booking.PaymentId,
                 MovieTitle = booking.MovieTitle,
-                ShowTime = (DateTime)booking.ShowTime,
+                ShowTime = booking.ShowTime,
                 ExpiresAt = booking.ExpiresAt,
                 CreatedAt = booking.CreatedAt,
                 Seats = seats ?? new List<BookingSeatResponse>()

@@ -1,0 +1,103 @@
+# Chạy toàn bộ backend bằng một lệnh:  docker compose up -d --build
+# Hướng dẫn chi tiết: docs/DOCKER.md   |   Key/mật khẩu đặt trong file .env (copy từ .env.example)
+name: cinema
+
+x-dotnet-service: &dotnet-service
+  restart: unless-stopped
+  depends_on:
+    postgres:
+      condition: service_healthy
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env (copy from .env.example)}
+      TZ: Asia/Ho_Chi_Minh
+      PGTZ: Asia/Ho_Chi_Minh
+    ports:
+      - "5433:5432" # 5433 để không trùng PostgreSQL cài sẵn trên máy (5432)
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ${DB_SCRIPTS_DIR:-../Project-Cinema-DB}:/db-scripts:ro
+      - ./docker/postgres/init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh:ro
+    healthcheck:
+      # Chỉ "healthy" khi server thật đã chạy và DB cuối cùng đã được tạo xong
+      test: ["CMD-SHELL", "PGPASSWORD=\"$$POSTGRES_PASSWORD\" psql -h localhost -U postgres -d cinema_notification_db -c 'SELECT 1' > /dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+    restart: unless-stopped
+
+  auth-service:
+    <<: *dotnet-service
+    build:
+      context: .
+      dockerfile: AuthService/AuthService/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      TZ: Asia/Ho_Chi_Minh
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=cinema_auth_db;Username=postgres;Password=${POSTGRES_PASSWORD}
+      Jwt__SecretKey: ${JWT_SECRET_KEY:?Set JWT_SECRET_KEY in .env (at least 32 characters)}
+    ports:
+      - "5100:8080"
+
+  movie-service:
+    <<: *dotnet-service
+    build:
+      context: .
+      dockerfile: MovieService/MovieService/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      TZ: Asia/Ho_Chi_Minh
+      ConnectionStrings__MovieDb: Host=postgres;Port=5432;Database=cinema_movie_db;Username=postgres;Password=${POSTGRES_PASSWORD}
+      ConnectionStrings__ShowtimeDb: Host=postgres;Port=5432;Database=cinema_showtime_db;Username=postgres;Password=${POSTGRES_PASSWORD}
+    ports:
+      - "5168:8080"
+
+  booking-service:
+    <<: *dotnet-service
+    build:
+      context: .
+      dockerfile: BookingService/BookingService/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      TZ: Asia/Ho_Chi_Minh
+      ConnectionStrings__BookingDb: Host=postgres;Port=5432;Database=cinema_booking_db;Username=postgres;Password=${POSTGRES_PASSWORD}
+      ConnectionStrings__NotificationDb: Host=postgres;Port=5432;Database=cinema_notification_db;Username=postgres;Password=${POSTGRES_PASSWORD}
+      ConnectionStrings__PaymentDb: Host=postgres;Port=5432;Database=cinema_payment_db;Username=postgres;Password=${POSTGRES_PASSWORD}
+      Jwt__SecretKey: ${JWT_SECRET_KEY}
+      ShowtimeService__BaseUrl: http://movie-service:8080/
+      PayOS__ClientId: ${PAYOS_CLIENT_ID:-}
+      PayOS__ApiKey: ${PAYOS_API_KEY:-}
+      PayOS__ChecksumKey: ${PAYOS_CHECKSUM_KEY:-}
+      Smtp__Host: ${SMTP_HOST:-}
+      Smtp__Username: ${SMTP_USERNAME:-}
+      Smtp__Password: ${SMTP_PASSWORD:-}
+      Smtp__FromEmail: ${SMTP_FROM_EMAIL:-}
+    ports:
+      - "5063:8080"
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: ApiGateway/ApiGateway/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      TZ: Asia/Ho_Chi_Minh
+      Jwt__SecretKey: ${JWT_SECRET_KEY}
+      ReverseProxy__Clusters__auth-cluster__Destinations__auth-service__Address: http://auth-service:8080/
+      ReverseProxy__Clusters__movie-cluster__Destinations__movie-service__Address: http://movie-service:8080/
+      ReverseProxy__Clusters__booking-cluster__Destinations__booking-service__Address: http://booking-service:8080/
+    ports:
+      - "5000:8080"
+    depends_on:
+      - auth-service
+      - movie-service
+      - booking-service
+    restart: unless-stopped
+
+volumes:
+  pgdata:

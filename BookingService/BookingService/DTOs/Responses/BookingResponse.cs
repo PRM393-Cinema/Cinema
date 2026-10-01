@@ -18,7 +18,7 @@
 
         public string? MovieTitle { get; set; }
 
-        public DateTime ShowTime { get; set; }
+        public DateTime? ShowTime { get; set; }
 
         public DateTime? ExpiresAt { get; set; }
 

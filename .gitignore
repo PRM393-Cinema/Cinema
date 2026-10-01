@@ -85,6 +85,7 @@ PublishScripts/
 # secrets.json
 *.pfx
 *.key
+.env
 
 ## Hệ điều hành
 Thumbs.db
