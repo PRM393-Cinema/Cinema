@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using BookingService.Data;
+using BookingService.Clients.Handlers;
 using BookingService.Clients.Implementations;
 using BookingService.Clients.Interfaces;
 using BookingService.Configuration;
@@ -97,6 +98,10 @@ builder.Services.AddAuthorization(options =>
 
 builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
 
+// MovieService yêu cầu JWT: gọi sang đó kèm token của người dùng đang thao tác
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddTransient<ForwardAuthorizationHandler>();
+
 builder.Services.AddHttpClient<IShowtimeClient, ShowtimeClient>(client =>
 {
     var baseUrl = builder.Configuration["ShowtimeService:BaseUrl"];
@@ -108,7 +113,8 @@ builder.Services.AddHttpClient<IShowtimeClient, ShowtimeClient>(client =>
     }
 
     client.BaseAddress = new Uri(baseUrl);
-});
+})
+.AddHttpMessageHandler<ForwardAuthorizationHandler>();
 
 builder.Services.AddHttpClient<IPayOsClient, PayOsClient>(client =>
 {

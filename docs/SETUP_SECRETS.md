@@ -3,7 +3,7 @@
 > **TL;DR**
 > - **Không bao giờ** ghi key/mật khẩu thật vào `appsettings.json` hay commit lên Git.
 > - Mỗi người tự đặt key trên máy mình bằng **User Secrets** (chạy script ở [mục 3](#3-cài-đặt-nhanh-bằng-powershell-khuyên-dùng) là xong).
-> - **JWT key phải giống hệt nhau** ở AuthService, BookingService và ApiGateway (trên cùng một máy).
+> - **JWT key phải giống hệt nhau** ở AuthService, MovieService, BookingService và ApiGateway (trên cùng một máy).
 > - Chạy bằng **Docker** thì không cần User Secrets — xem [DOCKER.md](DOCKER.md) (key đặt trong file `.env`).
 
 ---
@@ -13,12 +13,12 @@
 | Service | Thư mục | Cổng http / https | Key cần đặt |
 |---|---|---|---|
 | AuthService | `AuthService/AuthService` | 5100 / 7100 | `ConnectionStrings:DefaultConnection`, `Jwt:SecretKey` |
-| MovieService | `MovieService/MovieService` | 5168 / 7253 | `ConnectionStrings:MovieDb`, `ConnectionStrings:ShowtimeDb` |
+| MovieService | `MovieService/MovieService` | 5168 / 7253 | `ConnectionStrings:MovieDb`, `ConnectionStrings:ShowtimeDb`, `Jwt:SecretKey` |
 | BookingService | `BookingService/BookingService` | 5063 / 7116 | `ConnectionStrings:BookingDb`, `ConnectionStrings:NotificationDb`, `ConnectionStrings:PaymentDb`, `Jwt:SecretKey`<br>Tuỳ chọn: `PayOS:*`, `Smtp:*` |
 | ApiGateway | `ApiGateway/ApiGateway` | 5000 / 7000 | `Jwt:SecretKey` |
 
 Ghi chú:
-- MovieService **không cần** JWT key — nó không tự xác thực, việc phân quyền do ApiGateway đảm nhận.
+- Mọi service đều tự kiểm tra JWT và quyền (lớp bảo vệ thứ hai sau ApiGateway), nên gọi thẳng vào cổng của service cũng không bỏ qua được phân quyền.
 - `Jwt:Issuer` (`CinemaAuthService`) và `Jwt:Audience` (`CinemaClients`) đã có sẵn trong `appsettings.json`, không phải bí mật.
 - BookingService gọi thẳng MovieService qua `ShowtimeService:BaseUrl` = `http://localhost:5168/` (đã có trong `appsettings.json`) — MovieService phải đang chạy thì mới tạo booking được.
 
@@ -37,12 +37,12 @@ Ghi chú:
 
 ## 3. Cài đặt nhanh bằng PowerShell (khuyên dùng)
 
-Mở PowerShell **trong thư mục `Cinema_BE`**, sửa dòng `$PG` thành mật khẩu user `postgres` trên máy bạn, rồi chạy cả khối. Script tự sinh một JWT key ngẫu nhiên và đặt **cùng một key** cho cả 3 service cần dùng.
+Mở PowerShell **trong thư mục `Cinema_BE`**, sửa dòng `$PG` thành mật khẩu user `postgres` trên máy bạn, rồi chạy cả khối. Script tự sinh một JWT key ngẫu nhiên và đặt **cùng một key** cho cả 4 service.
 
 ```powershell
 $PG = "<mat_khau_postgres_cua_ban>"
 
-# Sinh JWT key ngẫu nhiên 64 ký tự hex (dùng chung cho Auth, Booking, Gateway)
+# Sinh JWT key ngẫu nhiên 64 ký tự hex (dùng chung cho Auth, Movie, Booking, Gateway)
 $bytes = New-Object byte[] 32
 [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
 $JWT = -join ($bytes | ForEach-Object { $_.ToString("x2") })
@@ -54,6 +54,7 @@ dotnet user-secrets set "Jwt:SecretKey" $JWT --project AuthService/AuthService
 # MovieService
 dotnet user-secrets set "ConnectionStrings:MovieDb" "Host=localhost;Port=5432;Database=cinema_movie_db;Username=postgres;Password=$PG" --project MovieService/MovieService
 dotnet user-secrets set "ConnectionStrings:ShowtimeDb" "Host=localhost;Port=5432;Database=cinema_showtime_db;Username=postgres;Password=$PG" --project MovieService/MovieService
+dotnet user-secrets set "Jwt:SecretKey" $JWT --project MovieService/MovieService
 
 # BookingService
 dotnet user-secrets set "ConnectionStrings:BookingDb" "Host=localhost;Port=5432;Database=cinema_booking_db;Username=postgres;Password=$PG" --project BookingService/BookingService
@@ -65,11 +66,17 @@ dotnet user-secrets set "Jwt:SecretKey" $JWT --project BookingService/BookingSer
 dotnet user-secrets set "Jwt:SecretKey" $JWT --project ApiGateway/ApiGateway
 ```
 
-> Chạy lại script lúc nào cũng được: nó sinh JWT key mới và cập nhật đồng loạt cả 3 service. Token cũ sẽ hết hiệu lực, chỉ cần đăng nhập lại.
+> Chạy lại script lúc nào cũng được: nó sinh JWT key mới và cập nhật đồng loạt cả 4 service. Token cũ sẽ hết hiệu lực, chỉ cần đăng nhập lại.
+>
+> Đã cài secrets từ trước, chỉ thiếu key cho MovieService: chép key đang dùng của AuthService sang (không in key ra màn hình):
+> ```powershell
+> $JWT = (dotnet user-secrets list --project AuthService/AuthService | Select-String '^Jwt:SecretKey = ').Line -replace '^Jwt:SecretKey = ', ''
+> dotnet user-secrets set "Jwt:SecretKey" $JWT --project MovieService/MovieService
+> ```
 
 ## 4. Cách khác: dùng Visual Studio
 
-Chuột phải vào project → **Manage User Secrets** → dán nội dung tương ứng vào `secrets.json` rồi lưu. Nhớ dùng **cùng một JWT key** cho cả 3 service (có thể tạo key bằng 3 dòng "Sinh JWT key" ở mục 3).
+Chuột phải vào project → **Manage User Secrets** → dán nội dung tương ứng vào `secrets.json` rồi lưu. Nhớ dùng **cùng một JWT key** cho cả 4 service (có thể tạo key bằng 3 dòng "Sinh JWT key" ở mục 3).
 
 **AuthService**
 ```json
@@ -83,7 +90,8 @@ Chuột phải vào project → **Manage User Secrets** → dán nội dung tư�
 ```json
 {
   "ConnectionStrings:MovieDb": "Host=localhost;Port=5432;Database=cinema_movie_db;Username=postgres;Password=<mat_khau>",
-  "ConnectionStrings:ShowtimeDb": "Host=localhost;Port=5432;Database=cinema_showtime_db;Username=postgres;Password=<mat_khau>"
+  "ConnectionStrings:ShowtimeDb": "Host=localhost;Port=5432;Database=cinema_showtime_db;Username=postgres;Password=<mat_khau>",
+  "Jwt:SecretKey": "<jwt_key_dung_chung>"
 }
 ```
 
@@ -157,10 +165,11 @@ Các connection string ở trên trỏ tới 6 database tạo từ repo **Projec
 |---|---|---|
 | `28P01: password authentication failed for user "postgres"` | Connection string đang dùng mật khẩu mẫu trong `appsettings.json` | Đặt connection string bằng User Secrets (mục 3) |
 | Service không khởi động được: `Jwt:SecretKey chưa được cấu hình…` / `Jwt:SecretKey must be configured with at least 32 characters` | Chưa đặt JWT key hoặc key ngắn hơn 32 ký tự | Đặt `Jwt:SecretKey` (mục 3) |
-| Đăng nhập được nhưng gọi API khác báo **401** "Token không hợp lệ hoặc đã hết hạn" | JWT key giữa AuthService và Gateway/BookingService **không giống nhau** | Chạy lại script mục 3 để cả 3 dùng chung một key, rồi đăng nhập lại |
+| Đăng nhập được nhưng gọi API khác báo **401** "Token không hợp lệ hoặc đã hết hạn" | JWT key giữa AuthService và Gateway/Movie/BookingService **không giống nhau** | Chạy lại script mục 3 để cả 4 dùng chung một key, rồi đăng nhập lại |
 | `42703: column n.error_message does not exist` (API notification lỗi 500) | DB tạo từ bản SQL cũ | Chạy script migration (mục 7) |
 | MovieService lỗi kết nối DB dù đã cài secret | Đang dùng key cũ `ConnectionStrings:DefaultConnection` (MovieService đã đổi sang `MovieDb` + `ShowtimeDb`) | Đặt lại 2 key mới (mục 3) |
 | Tạo booking báo **502** "Showtime service is unavailable" | MovieService chưa chạy ở cổng 5168 | Chạy MovieService trước |
+| Tạo booking báo **502** "Showtime service rejected the request (401)" | `Jwt:SecretKey` của MovieService khác BookingService | Đặt cùng một key cho MovieService (mục 3) |
 | `character with byte sequence … in encoding "WIN1252"` khi chạy file SQL | psql trên Windows mặc định dùng WIN1252 | Đặt `$env:PGCLIENTENCODING = "UTF8"` trước khi chạy |
 
 ## 9. Quy tắc bảo mật

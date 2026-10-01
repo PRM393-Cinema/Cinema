@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using MovieService.Configuration;
 using MovieService.DTOs.Request;
 using MovieService.DTOs.Response;
 using MovieService.Helpers;
@@ -18,6 +20,7 @@ namespace MovieService.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<ActionResult<PagedResult<MovieResponse>>> GetAllMovies(
             [FromQuery] int page = 1,
             [FromQuery] int size = 10,
@@ -29,6 +32,7 @@ namespace MovieService.Controllers
         }
 
         [HttpGet("{id:long}")]
+        [AllowAnonymous]
         public async Task<ActionResult<MovieResponse>> GetMovieById(long id)
         {
             var movie = await _movieService.GetMovieByIdAsync(id);
@@ -36,6 +40,7 @@ namespace MovieService.Controllers
         }
 
         [HttpGet("status/{status}")]
+        [AllowAnonymous]
         public async Task<ActionResult<PagedResult<MovieResponse>>> GetByStatus(
             string status,
             [FromQuery] int page = 1,
@@ -48,6 +53,7 @@ namespace MovieService.Controllers
         }
 
         [HttpGet("search")]
+        [AllowAnonymous]
         public async Task<ActionResult<PagedResult<MovieResponse>>> SearchMovies(
             [FromQuery] string keyword,
             [FromQuery] int page = 1,
@@ -60,6 +66,7 @@ namespace MovieService.Controllers
         }
 
         [HttpPost]
+        [Authorize(Policy = AuthorizationPolicies.AdminOnly)]
         public async Task<ActionResult<MovieResponse>> CreateMovie([FromBody] MovieRequest request)
         {
             var result = await _movieService.CreateMovieAsync(request);
@@ -68,6 +75,7 @@ namespace MovieService.Controllers
         }
 
         [HttpPut("{id:long}")]
+        [Authorize(Policy = AuthorizationPolicies.AdminOnly)]
         public async Task<ActionResult<MovieResponse>> UpdateMovie(long id, [FromBody] MovieRequest request)
         {
             var result = await _movieService.UpdateMovieAsync(id, request);
@@ -75,6 +83,7 @@ namespace MovieService.Controllers
         }
 
         [HttpDelete("{id:long}")]
+        [Authorize(Policy = AuthorizationPolicies.AdminOnly)]
         public async Task<IActionResult> DeleteMovie(long id)
         {
             await _movieService.DeleteMovieAsync(id);

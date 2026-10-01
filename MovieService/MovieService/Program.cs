@@ -1,5 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Security.Claims;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using MovieService.Configuration;
 using MovieService.Data;
 using MovieService.Exception;
 using MovieService.Repository.Impl;
@@ -35,6 +41,49 @@ builder.Services.AddScoped<IShowtimeService, ShowtimeService.Service.Impl.Showti
 builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<ISeatService, SeatService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+//====== JWT: tự kiểm tra token do AuthService cấp (lớp bảo vệ thứ hai, phòng khi gọi thẳng vào service, bỏ qua gateway) ======
+var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()
+    ?? throw new InvalidOperationException("Thiếu cấu hình 'Jwt' trong configuration.");
+
+if (string.IsNullOrWhiteSpace(jwtOptions.SecretKey) || jwtOptions.SecretKey.Length < 32)
+{
+    throw new InvalidOperationException(
+        "Jwt:SecretKey chưa được cấu hình hoặc quá ngắn (cần >= 32 ký tự, giống hệt key của AuthService). " +
+        "Hãy đặt bằng User Secrets: dotnet user-secrets set \"Jwt:SecretKey\" \"<key dùng chung>\".");
+}
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtOptions.Issuer,
+            ValidAudience = jwtOptions.Audience,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SecretKey)),
+            ClockSkew = TimeSpan.Zero,
+            RoleClaimType = ClaimTypes.Role
+        };
+    });
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(AuthorizationPolicies.AdminOnly,
+        policy => policy.RequireRole("ROLE_ADMIN"));
+
+    options.AddPolicy(AuthorizationPolicies.StaffOrAdmin,
+        policy => policy.RequireRole("ROLE_STAFF", "ROLE_ADMIN"));
+
+    // Mặc định endpoint nào cũng phải đăng nhập; API công khai phải ghi rõ [AllowAnonymous]
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+});
 
 // Add services to the container.
 
@@ -109,6 +158,7 @@ if (app.Environment.IsDevelopment())
 // Không redirect sang HTTPS: service chạy sau API Gateway (HTTPS kết thúc ở gateway),
 // redirect 307 sẽ khiến client gọi thẳng vào service, đi vòng qua gateway.
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
