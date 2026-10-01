@@ -19,11 +19,27 @@ namespace AuthService.Controllers
             _authService = authService;
         }
 
-        // POST /api/v1/auth/register
+        // POST /api/v1/auth/register  (gửi OTP xác thực về email, chưa trả token)
         [HttpPost("register")]
-        public async Task<ActionResult<AuthResponse>> Register([FromBody] RegisterRequest request)
+        public async Task<ActionResult<OtpSentResponse>> Register([FromBody] RegisterRequest request)
         {
             var result = await _authService.RegisterAsync(request);
+            return Ok(result);
+        }
+
+        // POST /api/v1/auth/verify-email  (đúng OTP -> kích hoạt tài khoản, trả token như đăng nhập)
+        [HttpPost("verify-email")]
+        public async Task<ActionResult<AuthResponse>> VerifyEmail([FromBody] VerifyEmailRequest request)
+        {
+            var result = await _authService.VerifyEmailAsync(request);
+            return Ok(result);
+        }
+
+        // POST /api/v1/auth/resend-verification
+        [HttpPost("resend-verification")]
+        public async Task<ActionResult<OtpSentResponse>> ResendVerification([FromBody] EmailRequest request)
+        {
+            var result = await _authService.ResendVerificationOtpAsync(request.Email);
             return Ok(result);
         }
 
@@ -33,6 +49,22 @@ namespace AuthService.Controllers
         {
             var result = await _authService.LoginAsync(request);
             return Ok(result);
+        }
+
+        // POST /api/v1/auth/forgot-password
+        [HttpPost("forgot-password")]
+        public async Task<ActionResult<OtpSentResponse>> ForgotPassword([FromBody] EmailRequest request)
+        {
+            var result = await _authService.ForgotPasswordAsync(request.Email);
+            return Ok(result);
+        }
+
+        // POST /api/v1/auth/reset-password
+        [HttpPost("reset-password")]
+        public async Task<ActionResult<MessageResponse>> ResetPassword([FromBody] ResetPasswordRequest request)
+        {
+            await _authService.ResetPasswordAsync(request);
+            return Ok(new MessageResponse { Message = "Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại." });
         }
 
         // POST /api/v1/auth/refresh

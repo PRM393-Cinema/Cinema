@@ -22,6 +22,8 @@ public partial class AuthDbContext : DbContext
 
     public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
 
+    public virtual DbSet<OtpCode> OtpCodes { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         if (!optionsBuilder.IsConfigured)
@@ -63,6 +65,8 @@ public partial class AuthDbContext : DbContext
             entity.Property(e => e.Enabled)
                 .HasDefaultValue(true)
                 .HasColumnName("enabled");
+            entity.Property(e => e.EmailVerified)
+                .HasColumnName("email_verified");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")
@@ -121,6 +125,37 @@ public partial class AuthDbContext : DbContext
             entity.HasOne(rt => rt.User)
                 .WithMany(u => u.RefreshTokens)
                 .HasForeignKey(rt => rt.UserId);
+        });
+
+        modelBuilder.Entity<OtpCode>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("otp_codes_pkey");
+
+            entity.ToTable("otp_codes");
+
+            entity.HasIndex(e => new { e.UserId, e.Purpose }, "idx_otp_codes_user_purpose");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.Purpose)
+                .HasMaxLength(30)
+                .HasColumnName("purpose");
+            entity.Property(e => e.CodeHash)
+                .HasMaxLength(255)
+                .HasColumnName("code_hash");
+            entity.Property(e => e.ExpiresAt)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("expires_at");
+            entity.Property(e => e.Attempts).HasColumnName("attempts");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("created_at");
+
+            entity.HasOne(o => o.User)
+                .WithMany(u => u.OtpCodes)
+                .HasForeignKey(o => o.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         OnModelCreatingPartial(modelBuilder);

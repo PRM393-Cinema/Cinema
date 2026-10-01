@@ -34,6 +34,14 @@ namespace AuthService.Repository
                 .ExecuteDeleteAsync();
         }
 
+        // Xóa toàn bộ refresh token của user = đăng xuất mọi thiết bị (vd: sau khi đặt lại mật khẩu)
+        public async Task<int> DeleteAllByUserIdAsync(long userId)
+        {
+            return await _context.RefreshTokens
+                .Where(rt => rt.UserId == userId)
+                .ExecuteDeleteAsync();
+        }
+
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();

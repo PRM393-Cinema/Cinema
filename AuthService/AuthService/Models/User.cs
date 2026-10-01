@@ -17,9 +17,13 @@ public partial class User
 
     public bool Enabled { get; set; } = true;
 
+    public bool EmailVerified { get; set; }
+
     public DateTime CreatedAt { get; set; }
 
     public ICollection<Role> Roles { get; set; } = new List<Role>();
 
     public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+
+    public ICollection<OtpCode> OtpCodes { get; set; } = new List<OtpCode>();
 }

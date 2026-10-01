@@ -7,6 +7,7 @@ namespace AuthService.DTOs.Response
         public string? FullName { get; set; }
         public string? Phone { get; set; }
         public bool Enabled { get; set; }
+        public bool EmailVerified { get; set; }
         public DateTime CreatedAt { get; set; }
         public List<string> Roles { get; set; } = new();
     }
