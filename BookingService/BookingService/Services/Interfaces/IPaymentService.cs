@@ -28,9 +28,13 @@ namespace BookingService.Services.Interfaces
 
         Task<PaymentResponse> GetPaymentByIdAsync(long id);
 
+        Task<PaymentResponse> GetPaymentByOrderCodeAsync(long orderCode);
+
         Task<PaymentResponse> CreatePaymentAsync(PaymentRequest request);
 
-        Task<PaymentResponse> ProcessPaymentAsync(long id);
+        Task<PaymentResponse> ProcessPaymentAsync(
+            long id,
+            string? recipientEmail);
 
         Task<PaymentResponse> RefundPaymentAsync(
             long id,
@@ -39,7 +43,9 @@ namespace BookingService.Services.Interfaces
         Task<PayOsCheckoutResponse> CreatePayOsPaymentAsync(
             PayOsCreateRequest request);
 
+        // PayOS báo đã thanh toán -> payment SUCCESS và booking được xác nhận tự động
         Task<PaymentResponse> VerifyPayOsPaymentAsync(
-            long orderCode);
+            long orderCode,
+            string? recipientEmail);
     }
 }

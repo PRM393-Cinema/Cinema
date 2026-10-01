@@ -37,11 +37,13 @@ docker compose up -d --build
 
 | Thành phần | Địa chỉ trên máy |
 |---|---|
-| **API Gateway (Flutter gọi vào đây)** | `http://localhost:5000` — Android emulator: `http://10.0.2.2:5000` |
+| **API Gateway (Flutter gọi vào đây)** | `http://localhost:5000` — Android emulator: `http://10.0.2.2:5000` — điện thoại thật cùng wifi: `http://<IP máy>:5000` |
 | Swagger AuthService | `http://localhost:5100/swagger` |
 | Swagger MovieService | `http://localhost:5168/swagger` |
 | Swagger BookingService | `http://localhost:5063/swagger` |
 | PostgreSQL (pgAdmin/DBeaver) | `localhost:5433`, user `postgres`, mật khẩu = `POSTGRES_PASSWORD` trong `.env` |
+
+> Chỉ **gateway** mở cho máy khác trong mạng. Các service và PostgreSQL chỉ nghe ở `127.0.0.1`: trên máy mình vẫn mở Swagger/pgAdmin bình thường, còn máy khác cùng wifi không gọi thẳng vào được (phải đi qua gateway, nơi kiểm tra quyền và giới hạn số request).
 
 Tài khoản seed (mật khẩu `123456`): `admin@cinema.com`, `nhanvien1@cinema.com`, `khachhang1@gmail.com`.
 

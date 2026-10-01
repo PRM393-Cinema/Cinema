@@ -61,3 +61,37 @@ Authorization: Bearer <access_token>
 ### Lịch sử booking của user (cần đăng nhập, BookingService kiểm tra quyền sở hữu)
 GET {{Gateway}}/api/v1/bookings/user/3
 Authorization: Bearer <access_token>
+
+### ----- Luồng khách đặt vé + thanh toán PayOS -----
+### 1. Tạo booking (giữ ghế 10 phút)
+POST {{Gateway}}/api/v1/bookings
+Content-Type: application/json
+Authorization: Bearer <access_token_khach>
+
+{
+  "userId": 3,
+  "showtimeId": 1,
+  "seats": [ { "seatId": 1 }, { "seatId": 2 } ]
+}
+
+### 2. Tạo link thanh toán PayOS (amount = totalAmount của booking) -> mở checkoutUrl cho khách trả tiền
+POST {{Gateway}}/api/v1/payments/payos/checkout
+Content-Type: application/json
+Authorization: Bearer <access_token_khach>
+
+{
+  "bookingId": 1,
+  "userId": 3,
+  "amount": 180000,
+  "returnUrl": "https://example.com/payment/return",
+  "cancelUrl": "https://example.com/payment/cancel"
+}
+
+### 3. Khách quay lại app -> xác minh thanh toán. PayOS báo đã trả tiền thì booking tự CONFIRMED
+###    và email vé gửi về email trong token (khách KHÔNG tự gọi /confirm được nữa)
+POST {{Gateway}}/api/v1/payments/payos/<orderCode>/verify
+Authorization: Bearer <access_token_khach>
+
+### Staff/Admin xác nhận tay tại quầy (khách trả tiền mặt) — khách gọi sẽ bị 403
+POST {{Gateway}}/api/v1/bookings/1/confirm?paymentMethod=CASH&recipientEmail=khachhang1@gmail.com
+Authorization: Bearer <access_token_staff>

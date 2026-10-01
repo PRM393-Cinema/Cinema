@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using MovieService.Configuration;
 using MovieService.Helpers;
 using ShowtimeService.DTOs.Request;
 using ShowtimeService.DTOs.Response;
@@ -19,6 +21,7 @@ namespace MovieService.Controllers
 
         // GET: api/seats/{seatId}
         [HttpGet("{seatId:long}")]
+        [Authorize(Policy = AuthorizationPolicies.StaffOrAdmin)]
         public async Task<ActionResult<SeatResponse>> GetSeatById(
             long seatId)
         {
@@ -31,6 +34,7 @@ namespace MovieService.Controllers
         // GET: api/seats/room/{roomId}
         // Sơ đồ ghế của phòng: trả toàn bộ ghế, sắp theo hàng rồi số ghế
         [HttpGet("room/{roomId:long}")]
+        [Authorize]
         public async Task<ActionResult<List<SeatResponse>>> GetSeatsByRoom(
             long roomId)
         {
@@ -42,6 +46,7 @@ namespace MovieService.Controllers
 
         // POST: api/seats/generate
         [HttpPost("generate")]
+        [Authorize(Policy = AuthorizationPolicies.StaffOrAdmin)]
         public async Task<ActionResult<SeatResponse>> GenerateSeats(
             [FromBody] GenerateSeatRequest request)
         {
@@ -53,6 +58,7 @@ namespace MovieService.Controllers
 
         // PUT: api/seats/{seatId}/type
         [HttpPut("{seatId:long}/type")]
+        [Authorize(Policy = AuthorizationPolicies.StaffOrAdmin)]
         public async Task<ActionResult<SeatResponse>> UpdateSeatType(
             long seatId,
             [FromBody] UpdateSeatTypeRequest request)
@@ -65,6 +71,7 @@ namespace MovieService.Controllers
 
         // DELETE: api/seats/{seatId}
         [HttpDelete("{seatId:long}")]
+        [Authorize(Policy = AuthorizationPolicies.AdminOnly)]
         public async Task<IActionResult> DeleteSeat(
             long seatId)
         {

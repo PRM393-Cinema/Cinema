@@ -51,6 +51,9 @@ public class ShowtimeClient : IShowtimeClient
                 detail ?? $"Showtime with ID {showtimeId} was not found."),
             HttpStatusCode.BadRequest => new BusinessException(
                 detail ?? "One or more selected seats are invalid for this showtime."),
+            HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden => new ExternalServiceException(
+                $"Showtime service rejected the request ({(int)response.StatusCode}). " +
+                "Check that Jwt:SecretKey is the same in MovieService and BookingService."),
             _ => new ExternalServiceException(
                 $"Showtime service returned status {(int)response.StatusCode}.")
         };

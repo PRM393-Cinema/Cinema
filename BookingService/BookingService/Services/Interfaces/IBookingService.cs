@@ -44,6 +44,14 @@ namespace BookingService.Services.Interfaces
             string paymentMethod,
             string recipientEmail);
 
+        /// <summary>
+        /// Hệ thống tự xác nhận booking sau khi thanh toán online thành công.
+        /// Gọi lại nhiều lần vẫn an toàn: booking đã CONFIRMED thì trả về luôn.
+        /// </summary>
+        Task<BookingResponse> ConfirmPaidBookingAsync(
+            long id,
+            string? recipientEmail);
+
         Task<BookingResponse> CancelBookingAsync(
             long id,
             bool manager);

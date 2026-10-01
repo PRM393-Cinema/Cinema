@@ -25,5 +25,11 @@ namespace BookingService.Helpers
 
             return userId;
         }
+
+        public static string? GetEmail(this ClaimsPrincipal user)
+        {
+            return user.FindFirstValue(ClaimTypes.Email) ??
+                   user.FindFirstValue("email");
+        }
     }
 }

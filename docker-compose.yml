@@ -24,7 +24,8 @@ services:
       TZ: Asia/Ho_Chi_Minh
       PGTZ: Asia/Ho_Chi_Minh
     ports:
-      - "5433:5432" # 5433 để không trùng PostgreSQL cài sẵn trên máy (5432)
+      # 5433 để không trùng PostgreSQL cài sẵn trên máy (5432). Chỉ mở cho máy này (127.0.0.1), máy khác trong mạng không kết nối được
+      - "127.0.0.1:5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ${DB_SCRIPTS_DIR:-../Project-Cinema-DB}:/db-scripts:ro
@@ -50,7 +51,8 @@ services:
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=cinema_auth_db;Username=postgres;Password=${POSTGRES_PASSWORD}
       Jwt__SecretKey: ${JWT_SECRET_KEY:?Set JWT_SECRET_KEY in .env (at least 32 characters)}
     ports:
-      - "5100:8080"
+      # Service chỉ mở cho máy này (Swagger, debug); client bên ngoài phải đi qua api-gateway
+      - "127.0.0.1:5100:8080"
 
   movie-service:
     <<: *dotnet-service
@@ -62,8 +64,9 @@ services:
       TZ: Asia/Ho_Chi_Minh
       ConnectionStrings__MovieDb: Host=postgres;Port=5432;Database=cinema_movie_db;Username=postgres;Password=${POSTGRES_PASSWORD}
       ConnectionStrings__ShowtimeDb: Host=postgres;Port=5432;Database=cinema_showtime_db;Username=postgres;Password=${POSTGRES_PASSWORD}
+      Jwt__SecretKey: ${JWT_SECRET_KEY}
     ports:
-      - "5168:8080"
+      - "127.0.0.1:5168:8080"
 
   booking-service:
     <<: *dotnet-service
@@ -83,7 +86,7 @@ services:
       PayOS__ApiKey: ${PAYOS_API_KEY:-}
       PayOS__ChecksumKey: ${PAYOS_CHECKSUM_KEY:-}
     ports:
-      - "5063:8080"
+      - "127.0.0.1:5063:8080"
 
   api-gateway:
     build:
@@ -97,6 +100,7 @@ services:
       ReverseProxy__Clusters__movie-cluster__Destinations__movie-service__Address: http://movie-service:8080/
       ReverseProxy__Clusters__booking-cluster__Destinations__booking-service__Address: http://booking-service:8080/
     ports:
+      # Gateway mở cho cả mạng LAN để điện thoại thật gọi được: http://<IP máy>:5000
       - "5000:8080"
     depends_on:
       - auth-service

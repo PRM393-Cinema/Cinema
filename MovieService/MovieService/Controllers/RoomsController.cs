@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using MovieService.Configuration;
 using MovieService.Helpers;
 using ShowtimeService.DTOs.Request;
 using ShowtimeService.DTOs.Response;
@@ -8,6 +10,7 @@ namespace MovieService.Controllers
 {
     [ApiController]
     [Route("api/rooms")]
+    [Authorize(Policy = AuthorizationPolicies.StaffOrAdmin)]
     public class RoomsController : ControllerBase
     {
         private readonly IRoomService _roomService;
@@ -47,6 +50,7 @@ namespace MovieService.Controllers
 
         // POST: api/rooms
         [HttpPost]
+        [Authorize(Policy = AuthorizationPolicies.AdminOnly)]
         public async Task<ActionResult<RoomResponse>> CreateRoom(
             [FromBody] RoomRequest request)
         {
@@ -61,6 +65,7 @@ namespace MovieService.Controllers
 
         // PUT: api/rooms/{roomId}
         [HttpPut("{roomId:long}")]
+        [Authorize(Policy = AuthorizationPolicies.AdminOnly)]
         public async Task<ActionResult<RoomResponse>> UpdateRoom(
             long roomId,
             [FromBody] RoomRequest request)
@@ -73,6 +78,7 @@ namespace MovieService.Controllers
 
         // DELETE: api/rooms/{roomId}
         [HttpDelete("{roomId:long}")]
+        [Authorize(Policy = AuthorizationPolicies.AdminOnly)]
         public async Task<IActionResult> DeleteRoom(
             long roomId)
         {
