@@ -291,7 +291,13 @@ namespace BookingService.Services.Implementations
             }
             catch
             {
-                await transaction.RollbackAsync();
+                // Lỗi xảy ra sau khi đã commit (CurrentTransaction = null) thì không rollback nữa,
+                // để giữ nguyên lỗi gốc thay vì lỗi "This NpgsqlTransaction has completed".
+                if (_context.Database.CurrentTransaction is not null)
+                {
+                    await transaction.RollbackAsync();
+                }
+
                 throw;
             }
         }
@@ -415,7 +421,13 @@ namespace BookingService.Services.Implementations
             }
             catch
             {
-                await transaction.RollbackAsync();
+                // Lỗi xảy ra sau khi đã commit (CurrentTransaction = null) thì không rollback nữa,
+                // để giữ nguyên lỗi gốc thay vì lỗi "This NpgsqlTransaction has completed".
+                if (_context.Database.CurrentTransaction is not null)
+                {
+                    await transaction.RollbackAsync();
+                }
+
                 throw;
             }
         }
@@ -508,7 +520,13 @@ namespace BookingService.Services.Implementations
             }
             catch
             {
-                await transaction.RollbackAsync();
+                // Lỗi xảy ra sau khi đã commit (CurrentTransaction = null) thì không rollback nữa,
+                // để giữ nguyên lỗi gốc thay vì lỗi "This NpgsqlTransaction has completed".
+                if (_context.Database.CurrentTransaction is not null)
+                {
+                    await transaction.RollbackAsync();
+                }
+
                 throw;
             }
         }
