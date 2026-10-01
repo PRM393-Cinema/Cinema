@@ -146,6 +146,11 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Cinema Service API v1");
         c.RoutePrefix = "swagger"; // Truy cập tại: https://localhost:port/swagger
     });
+
+    // Mở http://localhost:<port>/ là vào thẳng Swagger (AllowAnonymous vì mặc định mọi endpoint cần đăng nhập)
+    app.MapGet("/", () => Results.Redirect("/swagger"))
+        .AllowAnonymous()
+        .ExcludeFromDescription();
 }
 
 // Configure the HTTP request pipeline.

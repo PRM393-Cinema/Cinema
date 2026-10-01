@@ -200,6 +200,11 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Booking Service API v1");
         c.RoutePrefix = "swagger"; // Truy cập tại: https://localhost:port/swagger
     });
+
+    // Mở http://localhost:<port>/ là vào thẳng Swagger
+    app.MapGet("/", () => Results.Redirect("/swagger"))
+        .AllowAnonymous()
+        .ExcludeFromDescription();
 }
 
 // Configure the HTTP request pipeline.
