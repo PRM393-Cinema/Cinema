@@ -8,6 +8,13 @@ x-dotnet-service: &dotnet-service
     postgres:
       condition: service_healthy
 
+# Gmail gửi OTP (AuthService) và email đặt vé (BookingService), xem docs/EMAIL_SETUP.md
+x-smtp-env: &smtp-env
+  Smtp__Host: ${SMTP_HOST:-}
+  Smtp__Username: ${SMTP_USERNAME:-}
+  Smtp__Password: ${SMTP_PASSWORD:-}
+  Smtp__FromEmail: ${SMTP_FROM_EMAIL:-}
+
 services:
   postgres:
     image: postgres:17-alpine
@@ -38,6 +45,7 @@ services:
       context: .
       dockerfile: AuthService/AuthService/Dockerfile
     environment:
+      <<: *smtp-env
       ASPNETCORE_ENVIRONMENT: Development
       TZ: Asia/Ho_Chi_Minh
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=cinema_auth_db;Username=postgres;Password=${POSTGRES_PASSWORD}
@@ -66,6 +74,7 @@ services:
       context: .
       dockerfile: BookingService/BookingService/Dockerfile
     environment:
+      <<: *smtp-env
       ASPNETCORE_ENVIRONMENT: Development
       TZ: Asia/Ho_Chi_Minh
       ConnectionStrings__BookingDb: Host=postgres;Port=5432;Database=cinema_booking_db;Username=postgres;Password=${POSTGRES_PASSWORD}
@@ -76,10 +85,6 @@ services:
       PayOS__ClientId: ${PAYOS_CLIENT_ID:-}
       PayOS__ApiKey: ${PAYOS_API_KEY:-}
       PayOS__ChecksumKey: ${PAYOS_CHECKSUM_KEY:-}
-      Smtp__Host: ${SMTP_HOST:-}
-      Smtp__Username: ${SMTP_USERNAME:-}
-      Smtp__Password: ${SMTP_PASSWORD:-}
-      Smtp__FromEmail: ${SMTP_FROM_EMAIL:-}
     ports:
       - "127.0.0.1:5063:8080"
 

@@ -5,9 +5,17 @@ namespace AuthService.Service
 {
     public interface IAuthService
     {
-        Task<AuthResponse> RegisterAsync(RegisterRequest request);
+        Task<OtpSentResponse> RegisterAsync(RegisterRequest request);
+
+        Task<AuthResponse> VerifyEmailAsync(VerifyEmailRequest request);
+
+        Task<OtpSentResponse> ResendVerificationOtpAsync(string email);
 
         Task<AuthResponse> LoginAsync(LoginRequest request);
+
+        Task<OtpSentResponse> ForgotPasswordAsync(string email);
+
+        Task ResetPasswordAsync(ResetPasswordRequest request);
 
         Task<AuthResponse> RefreshTokenAsync(string refreshToken);
 

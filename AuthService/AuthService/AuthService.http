@@ -1,6 +1,7 @@
 @AuthService_HostAddress = http://localhost:5100
 
-### Đăng ký tài khoản mới (mặc định ROLE_CUSTOMER)
+### Đăng ký tài khoản mới (mặc định ROLE_CUSTOMER) -> gửi OTP xác thực về email, chưa trả token
+# Chưa cấu hình SMTP (Development): mã OTP được in ra console của AuthService
 POST {{AuthService_HostAddress}}/api/v1/auth/register
 Content-Type: application/json
 
@@ -9,6 +10,42 @@ Content-Type: application/json
   "password": "123456",
   "fullName": "Người Dùng Mới",
   "phone": "0900000000"
+}
+
+### Xác thực email bằng OTP (kèm mật khẩu đã đăng ký) -> trả token như đăng nhập
+POST {{AuthService_HostAddress}}/api/v1/auth/verify-email
+Content-Type: application/json
+
+{
+  "email": "newuser@gmail.com",
+  "otp": "<ma_otp_6_so>",
+  "password": "123456"
+}
+
+### Gửi lại OTP xác thực email (chờ 60 giây giữa 2 lần gửi)
+POST {{AuthService_HostAddress}}/api/v1/auth/resend-verification
+Content-Type: application/json
+
+{
+  "email": "newuser@gmail.com"
+}
+
+### Quên mật khẩu -> gửi OTP đặt lại mật khẩu (luôn trả 200)
+POST {{AuthService_HostAddress}}/api/v1/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "newuser@gmail.com"
+}
+
+### Đặt lại mật khẩu bằng OTP (đăng xuất mọi thiết bị)
+POST {{AuthService_HostAddress}}/api/v1/auth/reset-password
+Content-Type: application/json
+
+{
+  "email": "newuser@gmail.com",
+  "otp": "<ma_otp_6_so>",
+  "newPassword": "matkhaumoi"
 }
 
 ### Đăng nhập (tài khoản seed: admin@cinema.com / 123456)

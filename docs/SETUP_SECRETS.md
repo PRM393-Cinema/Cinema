@@ -5,6 +5,7 @@
 > - Mỗi người tự đặt key trên máy mình bằng **User Secrets** (chạy script ở [mục 3](#3-cài-đặt-nhanh-bằng-powershell-khuyên-dùng) là xong).
 > - **JWT key phải giống hệt nhau** ở AuthService, MovieService, BookingService và ApiGateway (trên cùng một máy).
 > - Chạy bằng **Docker** thì không cần User Secrets — xem [DOCKER.md](DOCKER.md) (key đặt trong file `.env`).
+> - Gửi email OTP / xác nhận đặt vé bằng Gmail: xem [EMAIL_SETUP.md](EMAIL_SETUP.md).
 
 ---
 
@@ -12,7 +13,7 @@
 
 | Service | Thư mục | Cổng http / https | Key cần đặt |
 |---|---|---|---|
-| AuthService | `AuthService/AuthService` | 5100 / 7100 | `ConnectionStrings:DefaultConnection`, `Jwt:SecretKey` |
+| AuthService | `AuthService/AuthService` | 5100 / 7100 | `ConnectionStrings:DefaultConnection`, `Jwt:SecretKey`<br>Tuỳ chọn: `Smtp:*` |
 | MovieService | `MovieService/MovieService` | 5168 / 7253 | `ConnectionStrings:MovieDb`, `ConnectionStrings:ShowtimeDb`, `Jwt:SecretKey` |
 | BookingService | `BookingService/BookingService` | 5063 / 7116 | `ConnectionStrings:BookingDb`, `ConnectionStrings:NotificationDb`, `ConnectionStrings:PaymentDb`, `Jwt:SecretKey`<br>Tuỳ chọn: `PayOS:*`, `Smtp:*` |
 | ApiGateway | `ApiGateway/ApiGateway` | 5000 / 7000 | `Jwt:SecretKey` |
@@ -120,14 +121,15 @@ dotnet user-secrets remove "Jwt:SecretKey" --project AuthService/AuthService  # 
 dotnet user-secrets clear --project AuthService/AuthService                # xoá hết
 ```
 
-## 6. PayOS & SMTP (tuỳ chọn, chỉ BookingService)
+## 6. PayOS & SMTP (tuỳ chọn)
 
-Không đặt thì các luồng khác vẫn chạy bình thường, chỉ riêng 2 tính năng này báo lỗi:
+Không đặt thì các luồng khác vẫn chạy bình thường, chỉ riêng 2 tính năng này bị ảnh hưởng:
 
 | Thiếu | Hiện tượng |
 |---|---|
-| PayOS | `POST /api/v1/payments/payos/checkout` trả **502** "PayOS credentials are not configured." |
-| SMTP | Booking vẫn xác nhận được, nhưng notification chuyển sang `FAILED` với lỗi "SMTP email settings are not configured." |
+| PayOS (BookingService) | `POST /api/v1/payments/payos/checkout` trả **502** "PayOS credentials are not configured." |
+| SMTP (AuthService) | Development: email OTP / chào mừng không được gửi mà in ra log (vẫn lấy được mã OTP để test). Môi trường khác: API gửi OTP trả **503** |
+| SMTP (BookingService) | Booking vẫn xác nhận được, nhưng notification chuyển sang `FAILED` với lỗi "SMTP email settings are not configured." |
 
 **PayOS** — xin key từ người quản lý tài khoản PayOS của nhóm (**gửi riêng, không dán vào group chat**):
 ```powershell
@@ -136,13 +138,7 @@ dotnet user-secrets set "PayOS:ApiKey" "<api_key>" --project BookingService/Book
 dotnet user-secrets set "PayOS:ChecksumKey" "<checksum_key>" --project BookingService/BookingService
 ```
 
-**SMTP (ví dụ Gmail)** — tài khoản Google cần bật xác minh 2 bước và tạo **App Password** (Google Account → Security → App passwords). `Port` 587 và `EnableSsl` true đã có sẵn trong `appsettings.json`.
-```powershell
-dotnet user-secrets set "Smtp:Host" "smtp.gmail.com" --project BookingService/BookingService
-dotnet user-secrets set "Smtp:Username" "<gmail_cua_ban>" --project BookingService/BookingService
-dotnet user-secrets set "Smtp:Password" "<app_password_16_ky_tu>" --project BookingService/BookingService
-dotnet user-secrets set "Smtp:FromEmail" "<gmail_cua_ban>" --project BookingService/BookingService
-```
+**SMTP (Gmail)**: AuthService và BookingService dùng chung một tài khoản Gmail với **App Password**. Cách tạo App Password và script đặt key cho cả hai service nằm trong [EMAIL_SETUP.md](EMAIL_SETUP.md#3-cấu-hình).
 
 ## 7. Database
 
@@ -157,7 +153,9 @@ Các connection string ở trên trỏ tới 6 database tạo từ repo **Projec
       & $psql -h localhost -U postgres -d "cinema_${db}_db" -f "cinema_${db}_db.sql"
   }
   ```
-- **DB đã tạo từ bản SQL cũ** (trước 30/09/2026): chạy thêm 2 script trong `Project-Cinema-DB/migrations/` — `2026-09-30_cinema_notification_db.sql` trên `cinema_notification_db` và `2026-09-30_cinema_booking_db.sql` trên `cinema_booking_db`. Chạy nhiều lần vẫn an toàn.
+- **DB đã tạo từ bản SQL cũ**: chạy thêm các script trong `Project-Cinema-DB/migrations/` (chạy nhiều lần vẫn an toàn):
+  - Tạo trước 30/09/2026: `2026-09-30_cinema_notification_db.sql` trên `cinema_notification_db` và `2026-09-30_cinema_booking_db.sql` trên `cinema_booking_db`.
+  - Tạo trước 01/10/2026: `2026-10-01_cinema_auth_db.sql` trên `cinema_auth_db` (xác thực email + bảng OTP).
 
 ## 8. Lỗi thường gặp
 
@@ -167,6 +165,8 @@ Các connection string ở trên trỏ tới 6 database tạo từ repo **Projec
 | Service không khởi động được: `Jwt:SecretKey chưa được cấu hình…` / `Jwt:SecretKey must be configured with at least 32 characters` | Chưa đặt JWT key hoặc key ngắn hơn 32 ký tự | Đặt `Jwt:SecretKey` (mục 3) |
 | Đăng nhập được nhưng gọi API khác báo **401** "Token không hợp lệ hoặc đã hết hạn" | JWT key giữa AuthService và Gateway/Movie/BookingService **không giống nhau** | Chạy lại script mục 3 để cả 4 dùng chung một key, rồi đăng nhập lại |
 | `42703: column n.error_message does not exist` (API notification lỗi 500) | DB tạo từ bản SQL cũ | Chạy script migration (mục 7) |
+| `42703: column u.email_verified does not exist` (đăng nhập/đăng ký lỗi 500) | DB auth tạo từ bản SQL cũ | Chạy `2026-10-01_cinema_auth_db.sql` (mục 7) |
+| Đăng nhập tài khoản mới đăng ký bị **403** `EMAIL_NOT_VERIFIED` | Chưa nhập OTP xác thực email | Nhập OTP. Chưa cấu hình SMTP thì mã nằm trong log AuthService ([EMAIL_SETUP.md](EMAIL_SETUP.md)) |
 | MovieService lỗi kết nối DB dù đã cài secret | Đang dùng key cũ `ConnectionStrings:DefaultConnection` (MovieService đã đổi sang `MovieDb` + `ShowtimeDb`) | Đặt lại 2 key mới (mục 3) |
 | Tạo booking báo **502** "Showtime service is unavailable" | MovieService chưa chạy ở cổng 5168 | Chạy MovieService trước |
 | Tạo booking báo **502** "Showtime service rejected the request (401)" | `Jwt:SecretKey` của MovieService khác BookingService | Đặt cùng một key cho MovieService (mục 3) |
@@ -184,7 +184,7 @@ Các connection string ở trên trỏ tới 6 database tạo từ repo **Projec
 1. Thứ tự khởi động: **AuthService → MovieService → BookingService → ApiGateway** (profile `http` hay `https` đều được).
 2. Mở `http://localhost:5000/health` → thấy `Healthy` là gateway đã chạy.
 3. Flutter gọi qua gateway: `http://localhost:5000` (Android emulator dùng `http://10.0.2.2:5000`).
-4. Tài khoản seed (mật khẩu đều là `123456`):
+4. Tài khoản seed (mật khẩu đều là `123456`, email đã xác thực sẵn):
 
 | Email | Role |
 |---|---|

@@ -7,6 +7,7 @@ namespace AuthService.Repository
         Task<RefreshToken?> GetByTokenAsync(string token);
         Task AddAsync(RefreshToken token);
         Task<int> DeleteExpiredOrRevokedAsync(long userId, DateTime now);
+        Task<int> DeleteAllByUserIdAsync(long userId);
         Task SaveChangesAsync();
     }
 }

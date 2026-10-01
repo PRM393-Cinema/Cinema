@@ -23,6 +23,9 @@ namespace AuthService.Exception
             {
                 NotFoundException => (StatusCodes.Status404NotFound, "Resource Not Found"),
                 UnauthorizedException => (StatusCodes.Status401Unauthorized, "Unauthorized"),
+                ForbiddenException => (StatusCodes.Status403Forbidden, "Forbidden"),
+                TooManyRequestsException => (StatusCodes.Status429TooManyRequests, "Too Many Requests"),
+                ServiceUnavailableException => (StatusCodes.Status503ServiceUnavailable, "Service Unavailable"),
                 BusinessException => (StatusCodes.Status400BadRequest, "Bad Request"),
                 _ => (StatusCodes.Status500InternalServerError, "Server Error")
             };
@@ -34,6 +37,16 @@ namespace AuthService.Exception
                 Detail = exception.Message,
                 Instance = httpContext.Request.Path
             };
+
+            if (exception is ForbiddenException { ErrorCode: not null } forbidden)
+            {
+                problemDetails.Extensions["errorCode"] = forbidden.ErrorCode;
+            }
+
+            if (exception is TooManyRequestsException tooManyRequests)
+            {
+                httpContext.Response.Headers.RetryAfter = tooManyRequests.RetryAfterSeconds.ToString();
+            }
 
             httpContext.Response.StatusCode = statusCode;
             await httpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);

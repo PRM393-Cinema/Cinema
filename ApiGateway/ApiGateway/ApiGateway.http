@@ -12,6 +12,26 @@ Content-Type: application/json
   "password": "123456"
 }
 
+### Đăng ký qua gateway -> OTP gửi về email (chưa cấu hình SMTP thì xem log AuthService)
+POST {{Gateway}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "email": "newuser@gmail.com",
+  "password": "123456",
+  "fullName": "Người Dùng Mới"
+}
+
+### Xác thực email bằng OTP -> trả token như đăng nhập
+POST {{Gateway}}/api/v1/auth/verify-email
+Content-Type: application/json
+
+{
+  "email": "newuser@gmail.com",
+  "otp": "<ma_otp_6_so>",
+  "password": "123456"
+}
+
 ### Thông tin người dùng hiện tại (cần Bearer token)
 GET {{Gateway}}/api/v1/auth/me
 Authorization: Bearer <access_token>
