@@ -7,6 +7,8 @@ using BookingService.Configuration;
 using BookingService.Exceptions;
 using BookingService.Health;
 using BookingService.Helpers;
+using BookingService.Messaging;
+using BookingService.Messaging.Handlers;
 using BookingService.Repositories.Impl;
 using BookingService.Repositories.Interfaces;
 using BookingService.Services.Implementations;
@@ -49,6 +51,8 @@ builder.Services.Configure<JwtOptions>(
     builder.Configuration.GetSection("Jwt"));
 builder.Services.Configure<BookingExpiryOptions>(
     builder.Configuration.GetSection("BookingExpiry"));
+builder.Services.Configure<RefundPolicyOptions>(
+    builder.Configuration.GetSection("RefundPolicy"));
 
 var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()
     ?? throw new InvalidOperationException(
@@ -174,19 +178,45 @@ builder.Services.AddScoped<IBookingSeatRepository, BookingSeatRepository>();
 builder.Services.AddScoped<ISeatReservationRepository, SeatReservationRepository>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
+builder.Services.AddScoped<IRefundRepository, RefundRepository>();
 
 builder.Services.AddScoped<IBookingService, BookingService.Services.Implementations.BookingService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<IRefundService, RefundService>();
 
 // Job nền: booking PENDING quá 10 phút chưa thanh toán -> EXPIRED, nhả ghế
 builder.Services.AddHostedService<BookingExpiryWorker>();
+
+//====== RABBITMQ (SRS §13.1): outbox + publisher + consumer, chi tiết docs/MESSAGING.md ======
+builder.Services
+    .AddRabbitMqMessaging(builder.Configuration)
+    // Gửi event đã ghi trong outbox của 2 database lên RabbitMQ
+    .AddOutboxPublisher<BookingDbContext>(builder.Configuration)
+    .AddOutboxPublisher<PaymentDbContext>(builder.Configuration)
+    // Gửi email cho khách theo event (FR-NOTI-06)
+    .AddEventConsumer<NotificationEventHandler>(
+        builder.Configuration,
+        "booking-service.notifications",
+        "booking.*", "payment.*")
+    // Booking hết hạn / bị huỷ: cập nhật payment, tạo yêu cầu hoàn tiền
+    .AddEventConsumer<PaymentBookingEventsHandler>(
+        builder.Configuration,
+        "booking-service.payment-updates",
+        EventTypes.BookingCancelled, EventTypes.BookingExpired)
+    // MovieService huỷ suất chiếu: huỷ các booking của suất đó
+    .AddEventConsumer<ShowtimeCancelledHandler>(
+        builder.Configuration,
+        "booking-service.showtime-cancelled",
+        EventTypes.ShowtimeCancelled);
 
 //====== HEALTH CHECK ======
 builder.Services.AddHealthChecks()
     .AddCheck<DbContextHealthCheck<BookingDbContext>>("booking-db", timeout: TimeSpan.FromSeconds(5))
     .AddCheck<DbContextHealthCheck<PaymentDbContext>>("payment-db", timeout: TimeSpan.FromSeconds(5))
-    .AddCheck<DbContextHealthCheck<NotificationDbContext>>("notification-db", timeout: TimeSpan.FromSeconds(5));
+    .AddCheck<DbContextHealthCheck<NotificationDbContext>>("notification-db", timeout: TimeSpan.FromSeconds(5))
+    // RabbitMQ dừng chỉ báo Degraded: đặt vé / thanh toán vẫn chạy, event chờ trong outbox
+    .AddCheck<RabbitMqHealthCheck>("rabbitmq", timeout: TimeSpan.FromSeconds(5));
 
 builder.Services.AddControllers();
 

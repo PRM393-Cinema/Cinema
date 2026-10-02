@@ -17,9 +17,16 @@ public partial class Payment
 
     public string? Method { get; set; }
 
-    public string Status { get; set; } = null!; // PENDING/ SUCCESS/ FAILED
+    public string Status { get; set; } = null!; // PENDING / SUCCESS / FAILED / REFUND_PENDING / REFUNDED
 
     public string? TransactionRef { get; set; }
+
+    // Tài khoản khách đã chuyển tiền (PayOS webhook), Staff dùng khi chuyển khoản hoàn tiền
+    public string? PayerAccountNumber { get; set; }
+
+    public string? PayerAccountName { get; set; }
+
+    public string? PayerBankName { get; set; }
 
     public DateTime CreatedAt { get; set; }
 

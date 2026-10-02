@@ -162,6 +162,18 @@ namespace BookingService.Repositories.Impl
                 .ToListAsync();
         }
 
+        public async Task<List<long>> GetActiveBookingIdsByShowtimeAsync(long showtimeId)
+        {
+            return await _context.Bookings
+                .AsNoTracking()
+                .Where(b =>
+                    b.ShowtimeId == showtimeId &&
+                    (b.Status == "PENDING" || b.Status == "CONFIRMED"))
+                .OrderBy(b => b.Id)
+                .Select(b => b.Id)
+                .ToListAsync();
+        }
+
         public async Task<List<long>> GetOverduePendingBookingIdsAsync(DateTime now, int take)
         {
             return await _context.Bookings

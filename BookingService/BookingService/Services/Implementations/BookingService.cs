@@ -1,17 +1,18 @@
-﻿using BookingService.Data;
+﻿using BookingService.Configuration;
+using BookingService.Data;
 using BookingService.DTOs.Requests;
 using BookingService.DTOs.Responses;
 using BookingService.Exceptions;
 using BookingService.Helpers;
 using BookingService.Mapping;
+using BookingService.Messaging;
 using BookingService.Models;
 using BookingService.Repositories.Interfaces;
 using BookingService.Services.Interfaces;
 using BookingService.Validators;
 using BookingService.Clients.Interfaces;
-using BookingService.DTOs;
-using System.Text.Encodings.Web;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Npgsql;
 
 namespace BookingService.Services.Implementations
@@ -26,7 +27,8 @@ namespace BookingService.Services.Implementations
         private readonly IBookingSeatRepository _bookingSeatRepository;
         private readonly ISeatReservationRepository _seatReservationRepository;
         private readonly IShowtimeClient _showtimeClient;
-        private readonly INotificationService _notificationService;
+        private readonly OutboxWriter<BookingDbContext> _outbox;
+        private readonly RefundPolicyOptions _refundPolicy;
         private readonly ILogger<BookingService> _logger;
 
         public BookingService(
@@ -35,7 +37,8 @@ namespace BookingService.Services.Implementations
             IBookingSeatRepository bookingSeatRepository,
             ISeatReservationRepository seatReservationRepository,
             IShowtimeClient showtimeClient,
-            INotificationService notificationService,
+            OutboxWriter<BookingDbContext> outbox,
+            IOptions<RefundPolicyOptions> refundPolicy,
             ILogger<BookingService> logger)
         {
             _context = context;
@@ -43,7 +46,8 @@ namespace BookingService.Services.Implementations
             _bookingSeatRepository = bookingSeatRepository;
             _seatReservationRepository = seatReservationRepository;
             _showtimeClient = showtimeClient;
-            _notificationService = notificationService;
+            _outbox = outbox;
+            _refundPolicy = refundPolicy.Value;
             _logger = logger;
         }
 
@@ -249,6 +253,8 @@ namespace BookingService.Services.Implementations
                     await _bookingRepository
                         .CreateBookingAsync(booking);
 
+                var bookingSeats = new List<BookingSeat>();
+
                 foreach (var seatId in seatIds)
                 {
                     var seatInfo = seatMap[seatId];
@@ -263,6 +269,8 @@ namespace BookingService.Services.Implementations
 
                     await _bookingSeatRepository
                         .AddAsync(bookingSeat);
+
+                    bookingSeats.Add(bookingSeat);
 
                     if (existingReservations.TryGetValue(seatId, out var reservation))
                     {
@@ -289,6 +297,11 @@ namespace BookingService.Services.Implementations
                     }
                 }
 
+                _outbox.Add(
+                    EventTypes.BookingCreated,
+                    EventFactory.Booking(booking, bookingSeats));
+
+                await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
                 return await MapBookingAsync(booking);
@@ -337,8 +350,12 @@ namespace BookingService.Services.Implementations
                 if (booking.ExpiresAt.HasValue &&
                     booking.ExpiresAt.Value <= DateTime.Now)
                 {
-                    await ReleaseSeatsAsync(booking, "EXPIRED", includeBooked: false);
+                    var releasedSeats = await ReleaseSeatsAsync(booking, "EXPIRED", includeBooked: false);
                     booking.Status = "EXPIRED";
+
+                    _outbox.Add(
+                        EventTypes.BookingExpired,
+                        EventFactory.Booking(booking, releasedSeats, previousStatus: "PENDING"));
 
                     await _bookingRepository.UpdateBookingAsync(
                         booking.Id,
@@ -366,14 +383,9 @@ namespace BookingService.Services.Implementations
                         : $"Seat {lost.Seat.SeatLabel} is not held by this booking.");
                 }
 
-                await MarkConfirmedAsync(booking, reservations);
+                await MarkConfirmedAsync(booking, seats, reservations, recipientEmail);
 
                 await transaction.CommitAsync();
-
-                await SendConfirmationEmailAsync(
-                    booking,
-                    seats,
-                    recipientEmail ?? booking.CustomerEmail);
 
                 return booking.ToResponse(
                     seats.Select(x => x.ToResponse()).ToList());
@@ -414,11 +426,6 @@ namespace BookingService.Services.Implementations
                 {
                     await transaction.CommitAsync();
 
-                    await SendConfirmationEmailAsync(
-                        booking,
-                        seats,
-                        recipientEmail ?? booking.CustomerEmail);
-
                     return booking.ToResponse(
                         seats.Select(x => x.ToResponse()).ToList());
                 }
@@ -426,7 +433,7 @@ namespace BookingService.Services.Implementations
                 if (status is not ("PENDING" or "EXPIRED"))
                 {
                     throw new ConflictException(
-                        $"Payment succeeded but booking {booking.BookingCode} is {status} and cannot be confirmed. Please contact the cinema for a refund.");
+                        $"Payment succeeded but booking {booking.BookingCode} is {status} and cannot be confirmed.");
                 }
 
                 var reservations = await LockReservationsAsync(booking, seats);
@@ -440,11 +447,19 @@ namespace BookingService.Services.Implementations
 
                 if (lost.Seat != null)
                 {
-                    // Nhả các ghế còn giữ, chuyển booking sang EXPIRED để rạp hoàn tiền.
+                    // Nhả các ghế còn giữ, chuyển booking sang EXPIRED; tiền đã trả được hoàn (phía payment xử lý)
                     if (status == "PENDING")
                     {
                         await ReleaseSeatsAsync(booking, "EXPIRED", includeBooked: false);
                         booking.Status = "EXPIRED";
+
+                        _outbox.Add(
+                            EventTypes.BookingExpired,
+                            EventFactory.Booking(
+                                booking,
+                                seats,
+                                previousStatus: "PENDING",
+                                reason: $"ghế {lost.Seat.SeatLabel} đã có người khác đặt"));
 
                         await _bookingRepository.UpdateBookingAsync(
                             booking.Id,
@@ -454,17 +469,12 @@ namespace BookingService.Services.Implementations
                     await transaction.CommitAsync();
 
                     throw new ConflictException(
-                        $"Payment succeeded but seat {lost.Seat.SeatLabel} is no longer available for booking {booking.BookingCode}. Please contact the cinema for a refund.");
+                        $"Payment succeeded but seat {lost.Seat.SeatLabel} is no longer available for booking {booking.BookingCode}.");
                 }
 
-                await MarkConfirmedAsync(booking, reservations);
+                await MarkConfirmedAsync(booking, seats, reservations, recipientEmail);
 
                 await transaction.CommitAsync();
-
-                await SendConfirmationEmailAsync(
-                    booking,
-                    seats,
-                    recipientEmail ?? booking.CustomerEmail);
 
                 return booking.ToResponse(
                     seats.Select(x => x.ToResponse()).ToList());
@@ -474,7 +484,7 @@ namespace BookingService.Services.Implementations
                 await transaction.RollbackAsync();
 
                 throw new ConflictException(
-                    "Payment succeeded but one or more seats were just taken by another booking. Please contact the cinema for a refund.");
+                    "Payment succeeded but one or more seats were just taken by another booking.");
             }
             catch
             {
@@ -487,9 +497,13 @@ namespace BookingService.Services.Implementations
             }
         }
 
+        // Khách: huỷ booking chưa thanh toán; booking đã thanh toán chỉ huỷ được khi còn đủ thời gian
+        // trước giờ chiếu (RefundPolicy:CustomerCancelBeforeHours). Staff/Admin huỷ được mọi lúc.
+        // Booking đã thanh toán bị huỷ: phía payment nhận booking.cancelled và tạo yêu cầu hoàn 100%.
         public async Task<BookingResponse> CancelBookingAsync(
             long id,
-            bool manager)
+            bool manager,
+            string? reason = null)
         {
             await using var transaction =
                 await _context.Database.BeginTransactionAsync();
@@ -511,21 +525,20 @@ namespace BookingService.Services.Implementations
                         "Expired booking cannot be cancelled.");
                 }
 
-                if (!manager && status != "PENDING")
+                if (!manager && status == "CONFIRMED")
+                {
+                    EnsureCustomerCanCancelPaidBooking(booking);
+                }
+                else if (!manager && status != "PENDING")
                 {
                     throw new ConflictException(
                         "This booking cannot be cancelled.");
                 }
 
-                // Huỷ booking đã xác nhận thì nhả cả ghế đã bán để người khác đặt được
-                var seats = await ReleaseSeatsAsync(booking, "AVAILABLE", includeBooked: true);
-
-                booking.Status = "CANCELLED";
-                booking.ExpiresAt = null;
-
-                await _bookingRepository.UpdateBookingAsync(
-                    booking.Id,
-                    booking);
+                var seats = await CancelLockedBookingAsync(
+                    booking,
+                    reason,
+                    manager ? "STAFF" : "CUSTOMER");
 
                 await transaction.CommitAsync();
 
@@ -562,16 +575,44 @@ namespace BookingService.Services.Implementations
                 return;
             }
 
-            await ReleaseSeatsAsync(booking, "AVAILABLE", includeBooked: false);
-
-            booking.Status = "CANCELLED";
-            booking.ExpiresAt = null;
-
-            await _bookingRepository.UpdateBookingAsync(
-                booking.Id,
-                booking);
+            await CancelLockedBookingAsync(booking, "Khách huỷ thanh toán", "CUSTOMER");
 
             await transaction.CommitAsync();
+        }
+
+        // Suất chiếu bị huỷ (event showtime.cancelled): huỷ mọi booking PENDING / CONFIRMED của suất đó.
+        // Gọi lại vẫn an toàn vì booking đã huỷ thì bỏ qua.
+        public async Task<int> CancelBookingsOfShowtimeAsync(long showtimeId, string reason)
+        {
+            var bookingIds =
+                await _bookingRepository
+                    .GetActiveBookingIdsByShowtimeAsync(showtimeId);
+
+            var cancelled = 0;
+
+            foreach (var id in bookingIds)
+            {
+                await using var transaction =
+                    await _context.Database.BeginTransactionAsync();
+
+                var booking =
+                    await _bookingRepository
+                        .GetBookingByIdForUpdateAsync(id);
+
+                if (booking == null ||
+                    NormalizeStatus(booking) is not ("PENDING" or "CONFIRMED"))
+                {
+                    await transaction.CommitAsync();
+                    continue;
+                }
+
+                await CancelLockedBookingAsync(booking, reason, "SYSTEM");
+
+                await transaction.CommitAsync();
+                cancelled++;
+            }
+
+            return cancelled;
         }
 
         // Job chạy nền gọi định kỳ: booking PENDING quá hạn giữ ghế -> EXPIRED, nhả ghế.
@@ -609,6 +650,10 @@ namespace BookingService.Services.Implementations
 
                 booking.Status = "EXPIRED";
 
+                _outbox.Add(
+                    EventTypes.BookingExpired,
+                    EventFactory.Booking(booking, seats, previousStatus: "PENDING"));
+
                 await _bookingRepository.UpdateBookingAsync(
                     booking.Id,
                     booking);
@@ -627,6 +672,47 @@ namespace BookingService.Services.Implementations
         {
             return await _bookingRepository
                 .GetOccupiedSeatIdsAsync(showtimeId, DateTime.Now);
+        }
+
+        private void EnsureCustomerCanCancelPaidBooking(Booking booking)
+        {
+            var hours = _refundPolicy.CustomerCancelBeforeHours;
+
+            if (!booking.ShowTime.HasValue ||
+                booking.ShowTime.Value - DateTime.Now < TimeSpan.FromHours(hours))
+            {
+                throw new ConflictException(
+                    $"Paid bookings can only be cancelled at least {hours} hours before the showtime. Please contact the cinema.");
+            }
+        }
+
+        // Huỷ booking đã khoá: nhả ghế (cả ghế đã bán), CANCELLED, ghi event booking.cancelled
+        private async Task<List<BookingSeat>> CancelLockedBookingAsync(
+            Booking booking,
+            string? reason,
+            string cancelledBy)
+        {
+            var previousStatus = NormalizeStatus(booking);
+
+            var seats = await ReleaseSeatsAsync(booking, "AVAILABLE", includeBooked: true);
+
+            booking.Status = "CANCELLED";
+            booking.ExpiresAt = null;
+
+            _outbox.Add(
+                EventTypes.BookingCancelled,
+                EventFactory.Booking(
+                    booking,
+                    seats,
+                    previousStatus,
+                    string.IsNullOrWhiteSpace(reason) ? null : reason.Trim(),
+                    cancelledBy));
+
+            await _bookingRepository.UpdateBookingAsync(
+                booking.Id,
+                booking);
+
+            return seats;
         }
 
         private async Task<Booking> GetBookingForUpdateAsync(long id)
@@ -664,11 +750,16 @@ namespace BookingService.Services.Implementations
             return reservations;
         }
 
-        // Chốt ghế: BOOKED cho booking này (ghế chưa có dòng giữ chỗ thì tạo mới), booking -> CONFIRMED
+        // Chốt ghế: BOOKED cho booking này (ghế chưa có dòng giữ chỗ thì tạo mới), booking -> CONFIRMED,
+        // ghi event booking.confirmed (Notification gửi email vé sau khi commit)
         private async Task MarkConfirmedAsync(
             Booking booking,
-            List<(BookingSeat Seat, SeatReservation? Reservation)> reservations)
+            List<BookingSeat> seats,
+            List<(BookingSeat Seat, SeatReservation? Reservation)> reservations,
+            string? recipientEmail)
         {
+            var previousStatus = NormalizeStatus(booking);
+
             foreach (var (seat, reservation) in reservations)
             {
                 if (reservation == null)
@@ -695,6 +786,14 @@ namespace BookingService.Services.Implementations
 
             booking.Status = "CONFIRMED";
             booking.ExpiresAt = null;
+
+            _outbox.Add(
+                EventTypes.BookingConfirmed,
+                EventFactory.Booking(
+                    booking,
+                    seats,
+                    previousStatus,
+                    recipientEmail: string.IsNullOrWhiteSpace(recipientEmail) ? null : recipientEmail.Trim()));
 
             await _bookingRepository.UpdateBookingAsync(
                 booking.Id,
@@ -766,83 +865,6 @@ namespace BookingService.Services.Implementations
             return ex.InnerException is PostgresException
             {
                 SqlState: PostgresErrorCodes.UniqueViolation
-            };
-        }
-
-        // Notification is deliberately sent after the booking transaction commits.
-        // Email/notification downtime must not rollback a successful booking or payment.
-        // The event id is fixed per booking, so repeated calls never send duplicates.
-        private async Task SendConfirmationEmailAsync(
-            Booking booking,
-            IEnumerable<BookingSeat> seats,
-            string? recipientEmail)
-        {
-            if (string.IsNullOrWhiteSpace(recipientEmail))
-            {
-                _logger.LogWarning(
-                    "Booking {BookingId} is confirmed but no recipient email was given, confirmation email was not sent.",
-                    booking.Id);
-                return;
-            }
-
-            try
-            {
-                await _notificationService.SendNotificationFromEventAsync(
-                    $"BOOKING_OK:{booking.Id}",
-                    booking.UserId,
-                    booking.Id,
-                    "BOOKING_CONFIRMED",
-                    BuildBookingConfirmationEmail(
-                        booking,
-                        seats,
-                        recipientEmail));
-            }
-            catch (Exception exception)
-            {
-                _logger.LogWarning(
-                    exception,
-                    "Booking {BookingId} was confirmed but confirmation email could not be sent.",
-                    booking.Id);
-            }
-        }
-
-        private static EmailMessage BuildBookingConfirmationEmail(
-            Booking booking,
-            IEnumerable<BookingSeat> seats,
-            string recipientEmail)
-        {
-            var encoder = HtmlEncoder.Default;
-            var movieTitle = encoder.Encode(
-                booking.MovieTitle ?? "Mobile Cinema");
-            var bookingCode = encoder.Encode(booking.BookingCode);
-            var showTime = booking.ShowTime?.ToString("dd/MM/yyyy HH:mm") ??
-                "Chưa cập nhật";
-            var seatList = string.Join(
-                ", ",
-                seats.Select(seat => encoder.Encode(seat.SeatLabel)));
-
-            var content = $"""
-                <html>
-                  <body style="font-family:Arial,sans-serif;color:#202124;line-height:1.5">
-                    <h2>Đặt vé thành công</h2>
-                    <p>Đơn đặt vé <strong>{bookingCode}</strong> của bạn đã được xác nhận.</p>
-                    <p><strong>Phim:</strong> {movieTitle}<br/>
-                       <strong>Suất chiếu:</strong> {encoder.Encode(showTime)}<br/>
-                       <strong>Ghế:</strong> {seatList}<br/>
-                       <strong>Tổng tiền:</strong> {booking.TotalAmount:N0} VND</p>
-                    <div style="background:#fff3cd;border:1px solid #ffecb5;padding:12px;margin:16px 0;color:#664d03">
-                      <strong>ĐẶC BIỆT LƯU Ý:</strong> Vui lòng có mặt trước giờ chiếu ít nhất 15 phút và xuất trình mã đặt vé khi đến rạp.
-                    </div>
-                    <p>Cảm ơn bạn đã sử dụng Mobile Cinema.</p>
-                  </body>
-                </html>
-                """;
-
-            return new EmailMessage
-            {
-                RecipientEmail = recipientEmail,
-                Subject = $"Xác nhận đặt vé {booking.BookingCode}",
-                Content = content
             };
         }
 

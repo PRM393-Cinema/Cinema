@@ -23,5 +23,6 @@ namespace BookingService.Repositories.Interfaces
         Task<List<long>> GetOccupiedSeatIdsAsync(long showtimeId, DateTime now);
         Task<Booking?> GetBookingByIdForUpdateAsync(long id);
         Task<List<long>> GetOverduePendingBookingIdsAsync(DateTime now, int take);
+        Task<List<long>> GetActiveBookingIdsByShowtimeAsync(long showtimeId);
     }
 }

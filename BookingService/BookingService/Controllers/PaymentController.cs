@@ -16,13 +16,16 @@ namespace BookingService.Controllers
     {
         private readonly IPaymentService _paymentService;
         private readonly IBookingService _bookingService;
+        private readonly IRefundService _refundService;
 
         public PaymentController(
             IPaymentService paymentService,
-            IBookingService bookingService)
+            IBookingService bookingService,
+            IRefundService refundService)
         {
             _paymentService = paymentService;
             _bookingService = bookingService;
+            _refundService = refundService;
         }
 
         [HttpGet]
@@ -167,14 +170,68 @@ namespace BookingService.Controllers
             return Ok(await _paymentService.ProcessPaymentAsync(id, recipientEmail));
         }
 
+        // ----- Hoàn tiền (FR-PAY-06) -----
+
+        // Staff/Admin hoàn tiền một payment đã thanh toán: booking còn hiệu lực thì huỷ luôn, tạo yêu cầu hoàn 100%
         [HttpPost("{id:long}/refund")]
         [Authorize(Policy = AuthorizationPolicies.StaffOrAdmin)]
-        public async Task<ActionResult<PaymentResponse>> Refund(
+        public async Task<ActionResult<RefundResponse>> Refund(
             long id,
-            [FromQuery] string fallbackRecipientEmail = "")
+            [FromQuery] string? reason = null)
         {
-            return Ok(await _paymentService.RefundPaymentAsync(
-                id, fallbackRecipientEmail));
+            return Ok(await _paymentService.RefundPaymentAsync(id, reason));
+        }
+
+        // Yêu cầu hoàn tiền của một payment (chủ payment hoặc Staff/Admin)
+        [HttpGet("{id:long}/refund")]
+        public async Task<ActionResult<RefundResponse>> GetRefundOfPayment(long id)
+        {
+            var payment = await _paymentService.GetPaymentByIdAsync(id);
+
+            if (!User.IsStaffOrAdmin() && payment.UserId != User.GetCurrentUserId())
+            {
+                return Forbid();
+            }
+
+            return Ok(await _refundService.GetRefundByPaymentIdAsync(id));
+        }
+
+        // Danh sách yêu cầu hoàn tiền, lọc theo status (PENDING = cần chuyển khoản trả khách)
+        [HttpGet("refunds")]
+        [Authorize(Policy = AuthorizationPolicies.StaffOrAdmin)]
+        public async Task<ActionResult<PagedResult<RefundResponse>>> GetRefunds(
+            [FromQuery] string? status = null,
+            [FromQuery] int page = 1,
+            [FromQuery] int size = 10)
+        {
+            return Ok(await _refundService.GetRefundsAsync(status, page, size));
+        }
+
+        [HttpGet("refunds/{refundId:long}")]
+        public async Task<ActionResult<RefundResponse>> GetRefund(long refundId)
+        {
+            var refund = await _refundService.GetRefundByIdAsync(refundId);
+
+            if (!User.IsStaffOrAdmin() && refund.UserId != User.GetCurrentUserId())
+            {
+                return Forbid();
+            }
+
+            return Ok(refund);
+        }
+
+        // Staff đã chuyển khoản trả khách: ghi mã giao dịch, payment -> REFUNDED, khách nhận email
+        [HttpPost("refunds/{refundId:long}/complete")]
+        [Authorize(Policy = AuthorizationPolicies.StaffOrAdmin)]
+        public async Task<ActionResult<RefundResponse>> CompleteRefund(
+            long refundId,
+            [FromBody] CompleteRefundRequest request)
+        {
+            return Ok(await _refundService.CompleteRefundAsync(
+                refundId,
+                request.TransactionRef!,
+                request.Note,
+                User.GetCurrentUserId()));
         }
 
     }

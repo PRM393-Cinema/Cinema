@@ -1,11 +1,13 @@
 ﻿using System.Text.Json;
 using BookingService.Clients.Interfaces;
 using BookingService.Configuration;
+using BookingService.Data;
 using BookingService.DTOs.Requests;
 using BookingService.DTOs.Responses;
 using BookingService.Exceptions;
 using BookingService.Helpers;
 using BookingService.Mapping;
+using BookingService.Messaging;
 using BookingService.Models;
 using BookingService.Repositories.Interfaces;
 using BookingService.Services.Interfaces;
@@ -21,6 +23,8 @@ namespace BookingService.Services.Implementations
         private readonly IBookingService _bookingService;
         private readonly IPayOsClient _payOsClient;
         private readonly TransactionManager _transactionManager;
+        private readonly IRefundService _refundService;
+        private readonly OutboxWriter<PaymentDbContext> _outbox;
         private readonly PayOsOptions _payOsOptions;
         private readonly ILogger<PaymentService> _logger;
 
@@ -30,6 +34,8 @@ namespace BookingService.Services.Implementations
             IBookingService bookingService,
             IPayOsClient payOsClient,
             TransactionManager transactionManager,
+            IRefundService refundService,
+            OutboxWriter<PaymentDbContext> outbox,
             IOptions<PayOsOptions> payOsOptions,
             ILogger<PaymentService> logger)
         {
@@ -38,6 +44,8 @@ namespace BookingService.Services.Implementations
             _bookingService = bookingService;
             _payOsClient = payOsClient;
             _transactionManager = transactionManager;
+            _refundService = refundService;
+            _outbox = outbox;
             _payOsOptions = payOsOptions.Value;
             _logger = logger;
         }
@@ -151,7 +159,7 @@ namespace BookingService.Services.Implementations
                         "This booking already has a payment.");
                 }
 
-                var payment = await _paymentRepository.AddAsync(new Payment
+                var payment = await AddPaymentAsync(new Payment
                 {
                     PaymentCode = await GeneratePaymentCodeAsync(),
                     BookingId = booking.Id,
@@ -160,7 +168,7 @@ namespace BookingService.Services.Implementations
                     Method = request.Method!.Trim().ToUpperInvariant(),
                     Status = "PENDING",
                     CreatedAt = DateTime.Now
-                });
+                }, booking);
 
                 booking.PaymentId = payment.Id;
                 await _bookingRepository.UpdateBookingAsync(
@@ -261,7 +269,7 @@ namespace BookingService.Services.Implementations
                     request.CancelUrl!,
                     booking.ExpiresAt);
 
-                var payment = await _paymentRepository.AddAsync(new Payment
+                var payment = await AddPaymentAsync(new Payment
                 {
                     PaymentCode = await GeneratePaymentCodeAsync(),
                     BookingId = booking.Id,
@@ -271,7 +279,7 @@ namespace BookingService.Services.Implementations
                     Status = "PENDING",
                     TransactionRef = orderCode.ToString(),
                     CreatedAt = DateTime.Now
-                });
+                }, booking);
 
                 booking.PaymentId = payment.Id;
                 await _bookingRepository.UpdateBookingAsync(
@@ -310,14 +318,33 @@ namespace BookingService.Services.Implementations
             return await VerifyPayOsPaymentAsync(orderCode, recipientEmail);
         }
 
-        public Task<PaymentResponse> RefundPaymentAsync(
+        // Staff/Admin hoàn tiền một payment đã thanh toán (FR-PAY-06). Booking còn hiệu lực thì huỷ luôn
+        // (nhả ghế), rồi tạo yêu cầu hoàn 100%. PayOS không có API hoàn tiền: Staff chuyển khoản trả khách
+        // rồi xác nhận bằng POST /api/v1/payments/refunds/{refundId}/complete.
+        public async Task<RefundResponse> RefundPaymentAsync(
             long id,
-            string fallbackRecipientEmail)
+            string? reason)
         {
-            // PayOS refund requires a separate merchant-side refund flow and
-            // must not be simulated by changing the local status only.
-            throw new BusinessException(
-                "PayOS refund is not available through this service yet.");
+            var payment = await GetPaymentAsync(id);
+
+            if (payment.Status is not ("SUCCESS" or "REFUND_PENDING" or "REFUNDED"))
+            {
+                throw new ConflictException(
+                    $"Payment {payment.PaymentCode} is {payment.Status}, only paid payments can be refunded.");
+            }
+
+            var refundReason = string.IsNullOrWhiteSpace(reason)
+                ? "Hoàn tiền theo yêu cầu của rạp"
+                : reason.Trim();
+
+            var booking = await _bookingRepository.GetBookingByIdAsync(payment.BookingId);
+
+            if (booking is { Status: "PENDING" or "CONFIRMED" })
+            {
+                await _bookingService.CancelBookingAsync(booking.Id, manager: true, refundReason);
+            }
+
+            return await _refundService.RequestRefundAsync(payment.Id, refundReason);
         }
 
         public async Task<PaymentResponse> VerifyPayOsPaymentAsync(
@@ -346,9 +373,7 @@ namespace BookingService.Services.Implementations
                 else if (normalizedStatus is "CANCELLED" or "EXPIRED" &&
                          payment.Status == "PENDING")
                 {
-                    payment.Status = "FAILED";
-                    payment.UpdatedAt = DateTime.Now;
-                    await _paymentRepository.UpdateAsync(payment);
+                    await MarkPaymentFailedAsync(payment, $"PayOS payment is {normalizedStatus}.");
 
                     // Khách bấm huỷ trên trang PayOS: nhả ghế ngay, không chờ hết 10 phút
                     if (normalizedStatus == "CANCELLED")
@@ -363,12 +388,10 @@ namespace BookingService.Services.Implementations
             // thì lần xác minh sau sẽ xác nhận bù.
             if (payment.Status == "SUCCESS")
             {
-                await _bookingService.ConfirmPaidBookingAsync(
-                    payment.BookingId,
-                    recipientEmail);
+                await ConfirmBookingOrRefundAsync(payment, recipientEmail);
             }
 
-            return payment.ToResponse();
+            return (await GetPaymentAsync(payment.Id)).ToResponse();
         }
 
         public async Task<PayOsWebhookResult> HandlePayOsWebhookAsync(JsonElement body)
@@ -428,17 +451,67 @@ namespace BookingService.Services.Implementations
                 return Accepted("Ignored: amount does not match the payment.");
             }
 
+            // Tài khoản khách đã chuyển tiền: dùng khi cần hoàn tiền
+            payment.PayerAccountNumber ??= Limit(GetString(data, "counterAccountNumber"), 50);
+            payment.PayerAccountName ??= Limit(GetString(data, "counterAccountName"), 150);
+            payment.PayerBankName ??= Limit(
+                GetString(data, "counterAccountBankName") ?? GetString(data, "counterAccountBankId"),
+                100);
+
             await MarkPaymentSucceededAsync(payment);
 
+            var result = await ConfirmBookingOrRefundAsync(payment, null);
+
+            return Accepted(result);
+        }
+
+        // Booking hết hạn / bị huỷ khi chưa thanh toán: payment PENDING -> FAILED.
+        // Booking bị huỷ thì huỷ luôn link PayOS để khách không trả tiền vào booking đã huỷ.
+        public async Task FailUnpaidPaymentsOfBookingAsync(
+            long bookingId,
+            string reason,
+            bool cancelPayOsLink)
+        {
+            var payment = await _paymentRepository.GetLatestByBookingIdAsync(bookingId, "PENDING");
+
+            if (payment == null)
+            {
+                return;
+            }
+
+            if (cancelPayOsLink &&
+                string.Equals(payment.Method, "PAYOS", StringComparison.OrdinalIgnoreCase) &&
+                long.TryParse(payment.TransactionRef, out var orderCode))
+            {
+                try
+                {
+                    await _payOsClient.CancelPaymentLinkAsync(orderCode, reason);
+                }
+                catch (Exception ex)
+                {
+                    // Không huỷ được link: khách lỡ trả tiền thì webhook sẽ tạo yêu cầu hoàn tiền
+                    _logger.LogWarning(
+                        "Could not cancel PayOS link of order {OrderCode}: {Reason}",
+                        orderCode,
+                        ex.Message);
+                }
+            }
+
+            await MarkPaymentFailedAsync(payment, reason);
+        }
+
+        // Tiền đã về: xác nhận booking. Không giữ được ghế (booking đã huỷ / ghế đã bán cho người khác)
+        // thì tạo yêu cầu hoàn 100% cho khách. Trả về kết quả để ghi log / trả cho PayOS.
+        private async Task<string> ConfirmBookingOrRefundAsync(Payment payment, string? recipientEmail)
+        {
             try
             {
                 var booking = await _bookingService.ConfirmPaidBookingAsync(
                     payment.BookingId,
-                    null);
+                    recipientEmail);
 
-                return Accepted($"Booking {booking.BookingCode} is confirmed.");
+                return $"Booking {booking.BookingCode} is confirmed.";
             }
-            // Tiền đã về nhưng không giữ được ghế (booking đã huỷ / ghế đã bán cho người khác): rạp hoàn tiền
             catch (ConflictException ex)
             {
                 _logger.LogWarning(
@@ -447,34 +520,75 @@ namespace BookingService.Services.Implementations
                     payment.BookingId,
                     ex.Message);
 
-                return Accepted(ex.Message);
+                var refund = await _refundService.RequestRefundAsync(
+                    payment.Id,
+                    "Đã nhận tiền nhưng không giữ được ghế (đơn đã hết hạn hoặc bị huỷ)");
+
+                return $"{ex.Message} Refund {refund.RefundCode} was requested.";
             }
         }
 
-        public async Task MarkUnpaidPaymentFailedAsync(long paymentId)
+        // Payment + event payment.created lưu trong cùng một transaction của database payment
+        private async Task<Payment> AddPaymentAsync(Payment payment, Booking booking)
         {
-            var payment = await _paymentRepository.GetByIdAsync(paymentId);
+            await using var transaction = await _outbox.BeginTransactionAsync();
 
-            if (payment == null || payment.Status != "PENDING")
-            {
-                return;
-            }
+            await _paymentRepository.AddAsync(payment);
 
-            payment.Status = "FAILED";
-            payment.UpdatedAt = DateTime.Now;
-            await _paymentRepository.UpdateAsync(payment);
+            _outbox.Add(EventTypes.PaymentCreated, EventFactory.Payment(payment, booking));
+            await _outbox.SaveChangesAsync();
+
+            await transaction.CommitAsync();
+
+            return payment;
         }
 
         private async Task MarkPaymentSucceededAsync(Payment payment)
         {
             if (payment.Status == "SUCCESS")
             {
+                // Lưu thông tin tài khoản người trả nếu webhook gửi tới sau
+                await _paymentRepository.UpdateAsync(payment);
                 return;
             }
 
             payment.Status = "SUCCESS";
             payment.UpdatedAt = DateTime.Now;
+
+            _outbox.Add(
+                EventTypes.PaymentSucceeded,
+                EventFactory.Payment(payment, await _bookingRepository.GetBookingByIdAsync(payment.BookingId)));
+
             await _paymentRepository.UpdateAsync(payment);
+        }
+
+        private async Task MarkPaymentFailedAsync(Payment payment, string reason)
+        {
+            payment.Status = "FAILED";
+            payment.UpdatedAt = DateTime.Now;
+
+            _outbox.Add(
+                EventTypes.PaymentFailed,
+                EventFactory.Payment(
+                    payment,
+                    await _bookingRepository.GetBookingByIdAsync(payment.BookingId),
+                    reason: reason));
+
+            await _paymentRepository.UpdateAsync(payment);
+        }
+
+        private static string? GetString(JsonElement data, string name)
+        {
+            return data.TryGetProperty(name, out var element) &&
+                   element.ValueKind == JsonValueKind.String &&
+                   !string.IsNullOrWhiteSpace(element.GetString())
+                ? element.GetString()!.Trim()
+                : null;
+        }
+
+        private static string? Limit(string? value, int maxLength)
+        {
+            return value == null || value.Length <= maxLength ? value : value[..maxLength];
         }
 
         private static PayOsWebhookResult Accepted(string message)

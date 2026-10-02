@@ -6,8 +6,8 @@ Key PayOS đặt ở đâu: [SETUP_SECRETS.md mục 6](SETUP_SECRETS.md#6-payos-
 
 1. `POST /api/v1/bookings`: booking `PENDING`, giữ ghế **10 phút** (`expiresAt`). Giờ chiếu và tên phim do server lấy từ MovieService, email nhận vé lấy từ token của khách.
 2. `POST /api/v1/payments/payos/checkout`: trả `checkoutUrl`, app mở link này. Link PayOS **hết hạn cùng lúc** với thời gian giữ ghế.
-3. Khách trả tiền, PayOS gọi **webhook** về BookingService. Chữ ký hợp lệ thì payment `SUCCESS`, booking `CONFIRMED` và email vé được gửi.
-4. PayOS chuyển khách về `returnUrl`. App gọi `POST /api/v1/payments/payos/{orderCode}/verify` để lấy kết quả. Webhook xử lý trước rồi thì verify chỉ trả kết quả, không xác nhận lần hai.
+3. Khách trả tiền, PayOS gọi **webhook** về BookingService. Chữ ký hợp lệ thì payment `SUCCESS`, booking `CONFIRMED` và email vé được gửi (qua RabbitMQ).
+4. PayOS chuyển khách về `returnUrl`. App gọi `POST /api/v1/payments/payos/{orderCode}/verify` để lấy kết quả. Webhook xử lý trước rồi thì verify chỉ trả kết quả, không xác nhận lần hai. Payment `REFUND_PENDING` nghĩa là tiền đã nhận nhưng không giữ được ghế (mục 4).
    - Khách bấm **Huỷ** trên trang PayOS (về `cancelUrl`): verify chuyển payment `FAILED`, booking `CANCELLED` và nhả ghế ngay.
 
 `orderCode` của PayOS chính là id của booking.
@@ -26,10 +26,12 @@ Key PayOS đặt ở đâu: [SETUP_SECRETS.md mục 6](SETUP_SECRETS.md#6-payos-
 | `PENDING` | Đã tạo link, chưa trả tiền |
 | `SUCCESS` | PayOS xác nhận đã nhận tiền |
 | `FAILED` | Khách huỷ thanh toán, hoặc booking hết hạn trước khi trả |
+| `REFUND_PENDING` | Đã ghi nhận yêu cầu hoàn tiền, chờ Staff chuyển khoản |
+| `REFUNDED` | Staff đã chuyển khoản hoàn tiền |
 
 **Trả tiền muộn** (booking đã `EXPIRED`):
 - Ghế còn trống: hệ thống vẫn xác nhận vé.
-- Ghế đã có người khác đặt: booking giữ `EXPIRED`, payment `SUCCESS`, rạp phải hoàn tiền cho khách.
+- Ghế đã có người khác đặt: booking giữ `EXPIRED`, hệ thống **tự tạo yêu cầu hoàn 100%** (mục 4).
 
 ## 3. Webhook
 
@@ -42,7 +44,26 @@ Key PayOS đặt ở đâu: [SETUP_SECRETS.md mục 6](SETUP_SECRETS.md#6-payos-
   - PayOS gửi lại cùng một đơn: **200**, không xác nhận hay gửi email lần hai.
 - Chưa đặt key PayOS thì webhook trả **503**.
 
-## 4. Test trên máy, không cần trả tiền thật
+## 4. Huỷ vé và hoàn tiền (FR-PAY-06)
+
+**Chính sách**:
+- Khách tự huỷ vé đã thanh toán khi còn **ít nhất 2 giờ** trước giờ chiếu, được hoàn **100%**. Số giờ cấu hình ở `RefundPolicy:CustomerCancelBeforeHours`. Muộn hơn thì API trả 409, khách liên hệ rạp.
+- Staff/Admin huỷ được mọi lúc.
+- Suất chiếu bị huỷ thì mọi vé của suất đó tự huỷ và được hoàn tiền.
+
+**PayOS không có API hoàn tiền** cho đơn thanh toán. Hệ thống ghi nhận yêu cầu, còn Staff chuyển khoản trả khách:
+
+1. Vé đã thanh toán bị huỷ, hoặc trả tiền muộn mà không giữ được ghế. Hệ thống tạo yêu cầu hoàn (`PENDING`), payment chuyển `REFUND_PENDING`, khách nhận email.
+2. Staff xem danh sách cần hoàn bằng `GET /api/v1/payments/refunds?status=PENDING`. Mỗi yêu cầu có số tiền và tài khoản khách đã dùng để trả (`payerAccountNumber`, `payerAccountName`, `payerBankName` do PayOS gửi kèm webhook).
+3. Staff chuyển khoản xong thì gọi `POST /api/v1/payments/refunds/{refundId}/complete` với body `{ "transactionRef": "<mã giao dịch>" }`. Payment chuyển `REFUNDED`, khách nhận email kèm mã giao dịch.
+
+Staff hoàn tiền chủ động (ví dụ khách đến quầy) bằng `POST /api/v1/payments/{paymentId}/refund?reason=...`: booking còn hiệu lực thì được huỷ luôn, rồi tạo yêu cầu hoàn.
+
+Khách xem trạng thái hoàn tiền: `GET /api/v1/payments/{paymentId}/refund`.
+
+Email và yêu cầu hoàn tiền khi huỷ vé được xử lý qua RabbitMQ ([MESSAGING.md](MESSAGING.md)), thường xong sau 1–2 giây.
+
+## 5. Test trên máy, không cần trả tiền thật
 
 Tạo booking và link PayOS như bình thường, rồi giả lập PayOS báo đã thanh toán:
 

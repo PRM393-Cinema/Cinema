@@ -118,6 +118,33 @@ Authorization: Bearer <access_token_khach>
 GET {{Gateway}}/api/v1/payments/booking/1
 Authorization: Bearer <access_token_khach>
 
+### Khách huỷ vé: chưa thanh toán thì huỷ ngay; đã thanh toán thì phải còn >= 2 giờ trước giờ chiếu (hoàn 100%)
+POST {{Gateway}}/api/v1/bookings/1/cancel?reason=Ban%20viec
+Authorization: Bearer <access_token_khach>
+
+### ----- Hoàn tiền (docs/PAYOS.md mục 4) -----
+### Khách xem trạng thái hoàn tiền của payment
+GET {{Gateway}}/api/v1/payments/1/refund
+Authorization: Bearer <access_token_khach>
+
+### Staff: danh sách cần chuyển khoản hoàn (kèm tài khoản khách đã trả)
+GET {{Gateway}}/api/v1/payments/refunds?status=PENDING&page=1&size=10
+Authorization: Bearer <access_token_staff>
+
+### Staff đã chuyển khoản: ghi mã giao dịch -> payment REFUNDED, khách nhận email
+POST {{Gateway}}/api/v1/payments/refunds/1/complete
+Content-Type: application/json
+Authorization: Bearer <access_token_staff>
+
+{
+  "transactionRef": "FT26100212345",
+  "note": "Chuyển khoản Vietcombank"
+}
+
+### Staff hoàn tiền chủ động một payment (booking còn hiệu lực thì huỷ luôn)
+POST {{Gateway}}/api/v1/payments/1/refund?reason=Khach%20yeu%20cau%20tai%20quay
+Authorization: Bearer <access_token_staff>
+
 ### Staff/Admin xác nhận tay tại quầy (khách trả tiền mặt), khách gọi sẽ bị 403.
 ### Không truyền recipientEmail thì gửi vé về email lưu trên booking
 POST {{Gateway}}/api/v1/bookings/1/confirm?paymentMethod=CASH

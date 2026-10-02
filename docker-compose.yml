@@ -15,6 +15,19 @@ x-smtp-env: &smtp-env
   Smtp__Password: ${SMTP_PASSWORD:-}
   Smtp__FromEmail: ${SMTP_FROM_EMAIL:-}
 
+# RabbitMQ: event booking / payment / suất chiếu (docs/MESSAGING.md)
+x-rabbitmq-env: &rabbitmq-env
+  RabbitMq__HostName: rabbitmq
+  RabbitMq__UserName: ${RABBITMQ_USER:-cinema}
+  RabbitMq__Password: ${RABBITMQ_PASSWORD:-cinema}
+
+# Service cần cả PostgreSQL và RabbitMQ
+x-depends-db-rabbitmq: &depends-db-rabbitmq
+  postgres:
+    condition: service_healthy
+  rabbitmq:
+    condition: service_healthy
+
 services:
   postgres:
     image: postgres:17-alpine
@@ -39,6 +52,27 @@ services:
       start_period: 10s
     restart: unless-stopped
 
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    # Tên máy cố định: RabbitMQ lưu dữ liệu theo tên node, đổi tên thì mất queue đã tạo
+    hostname: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-cinema}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-cinema}
+    ports:
+      # 5672: service chạy bằng Visual Studio kết nối vào. 15672: trang quản lý http://localhost:15672
+      - "127.0.0.1:5672:5672"
+      - "127.0.0.1:15672:15672"
+    volumes:
+      - rabbitmqdata:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 20s
+    restart: unless-stopped
+
   auth-service:
     <<: *dotnet-service
     build:
@@ -56,10 +90,12 @@ services:
 
   movie-service:
     <<: *dotnet-service
+    depends_on: *depends-db-rabbitmq
     build:
       context: .
       dockerfile: MovieService/MovieService/Dockerfile
     environment:
+      <<: *rabbitmq-env
       ASPNETCORE_ENVIRONMENT: Development
       TZ: Asia/Ho_Chi_Minh
       ConnectionStrings__MovieDb: Host=postgres;Port=5432;Database=cinema_movie_db;Username=postgres;Password=${POSTGRES_PASSWORD}
@@ -70,11 +106,12 @@ services:
 
   booking-service:
     <<: *dotnet-service
+    depends_on: *depends-db-rabbitmq
     build:
       context: .
       dockerfile: BookingService/BookingService/Dockerfile
     environment:
-      <<: *smtp-env
+      <<: [*smtp-env, *rabbitmq-env]
       ASPNETCORE_ENVIRONMENT: Development
       TZ: Asia/Ho_Chi_Minh
       ConnectionStrings__BookingDb: Host=postgres;Port=5432;Database=cinema_booking_db;Username=postgres;Password=${POSTGRES_PASSWORD}
@@ -110,3 +147,4 @@ services:
 
 volumes:
   pgdata:
+  rabbitmqdata:

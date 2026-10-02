@@ -17,6 +17,12 @@ namespace BookingService.Clients.Interfaces
         Task<PayOsPaymentStatus> GetPaymentStatusAsync(
             long orderCode,
             CancellationToken cancellationToken = default);
+
+        // Huỷ link thanh toán (booking đã huỷ): khách không trả tiền vào link này được nữa
+        Task CancelPaymentLinkAsync(
+            long orderCode,
+            string reason,
+            CancellationToken cancellationToken = default);
     }
 
     public sealed class PayOsPaymentLink
