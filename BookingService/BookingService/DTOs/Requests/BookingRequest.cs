@@ -12,6 +12,11 @@ namespace BookingService.DTOs.Requests
 
         public string? MovieTitle { get; set; }
 
+        // Email nhận vé. Khách tự đặt thì lấy email trong token; Staff đặt hộ thì điền email của khách
+        [EmailAddress(ErrorMessage = "Customer email is invalid")]
+        [MaxLength(150, ErrorMessage = "Customer email must not exceed 150 characters")]
+        public string? CustomerEmail { get; set; }
+
         public DateTime? ShowTime { get; set; }
 
         [Required(ErrorMessage = "At least one seat must be selected")]

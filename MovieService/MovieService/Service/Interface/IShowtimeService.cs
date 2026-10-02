@@ -10,9 +10,11 @@ namespace ShowtimeService.Service.Interface
         Task<ShowtimeResponse?> GetShowtimeByIdAsync(long showtimeId);
         Task<ShowtimeResponse> CreateShowtimeAsync(ShowtimeRequest request);
         Task<ShowtimeResponse?> UpdateShowtimeAsync(long showtimeId, ShowtimeRequest request);
-        Task<bool> DeleteShowtimeAsync(long showtimeId);
+        Task<ShowtimeResponse> CancelShowtimeAsync(long showtimeId);
+        Task<ShowtimeResponse> UpdateShowtimeStatusAsync(long showtimeId, string status);
         Task<PagedResult<ShowtimeResponse>> GetOpenShowtimesAsync(int pageNumber, int pageSize, string sortBy, string sortDir);
         Task<PagedResult<ShowtimeResponse>> GetShowtimesByMovieAsync(long movieId, int pageNumber, int pageSize, string sortBy, string sortDir);
+        Task<PagedResult<ShowtimeResponse>> GetOpenShowtimesByMovieAsync(long movieId, int pageNumber, int pageSize, string sortBy, string sortDir);
         Task<PagedResult<ShowtimeResponse>> GetShowtimesByDateRangeAsync(DateTime start, DateTime end, int pageNumber, int pageSize, string sortBy, string sortDir);
         Task<List<ShowtimeSeatResponse>> GetSeatsForBookingAsync(long showtimeId, List<long> seatIds);
     }

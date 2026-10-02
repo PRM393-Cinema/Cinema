@@ -20,7 +20,8 @@ namespace BookingService.Repositories.Interfaces
             int pageSize,
             string sortBy,
             string sortDir);
-        Task<List<long>> GetOccupiedSeatIdsAsync(long showtimeId);
+        Task<List<long>> GetOccupiedSeatIdsAsync(long showtimeId, DateTime now);
         Task<Booking?> GetBookingByIdForUpdateAsync(long id);
+        Task<List<long>> GetOverduePendingBookingIdsAsync(DateTime now, int take);
     }
 }

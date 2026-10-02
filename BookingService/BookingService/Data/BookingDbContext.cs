@@ -36,6 +36,8 @@ public partial class BookingDbContext : DbContext
 
             entity.HasIndex(e => e.UserId, "idx_booking_user");
 
+            entity.HasIndex(e => new { e.Status, e.ExpiresAt }, "idx_booking_status_expires");
+
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.BookingCode)
                 .HasMaxLength(40)
@@ -44,6 +46,9 @@ public partial class BookingDbContext : DbContext
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
+            entity.Property(e => e.CustomerEmail)
+                .HasMaxLength(150)
+                .HasColumnName("customer_email");
             entity.Property(e => e.ExpiresAt)
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("expires_at");

@@ -93,14 +93,28 @@ namespace ShowtimeService.Controllers
         }
 
         // DELETE: api/showtimes/{showtimeId}
+        // Huỷ suất chiếu: chuyển sang CANCELLED (không xoá khỏi DB vì booking vẫn trỏ tới suất chiếu này)
         [HttpDelete("{showtimeId:long}")]
         [Authorize(Policy = AuthorizationPolicies.StaffOrAdmin)]
-        public async Task<IActionResult> DeleteShowtime(
+        public async Task<ActionResult<ShowtimeResponse>> CancelShowtime(
             long showtimeId)
         {
-            await _showtimeService.DeleteShowtimeAsync(showtimeId);
+            var result = await _showtimeService.CancelShowtimeAsync(showtimeId);
 
-            return NoContent();
+            return Ok(result);
+        }
+
+        // PATCH: api/showtimes/{showtimeId}/status   { "status": "CLOSED" }  (OPEN = mở bán lại)
+        [HttpPatch("{showtimeId:long}/status")]
+        [Authorize(Policy = AuthorizationPolicies.StaffOrAdmin)]
+        public async Task<ActionResult<ShowtimeResponse>> UpdateShowtimeStatus(
+            long showtimeId,
+            [FromBody] UpdateShowtimeStatusRequest request)
+        {
+            var result = await _showtimeService
+                .UpdateShowtimeStatusAsync(showtimeId, request.Status);
+
+            return Ok(result);
         }
 
         // GET: api/showtimes/open
@@ -132,6 +146,27 @@ namespace ShowtimeService.Controllers
             [FromQuery] string sortDir = "asc")
         {
             var result = await _showtimeService.GetShowtimesByMovieAsync(
+                movieId,
+                pageNumber,
+                pageSize,
+                sortBy,
+                sortDir);
+
+            return Ok(result);
+        }
+
+        // GET: api/showtimes/movie/{movieId}/open
+        // Suất chiếu của phim còn đặt vé được (đang mở bán, chưa bắt đầu)
+        [HttpGet("movie/{movieId:long}/open")]
+        [AllowAnonymous]
+        public async Task<ActionResult<PagedResult<ShowtimeResponse>>> GetOpenShowtimesByMovie(
+            long movieId,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string sortBy = "startTime",
+            [FromQuery] string sortDir = "asc")
+        {
+            var result = await _showtimeService.GetOpenShowtimesByMovieAsync(
                 movieId,
                 pageNumber,
                 pageSize,

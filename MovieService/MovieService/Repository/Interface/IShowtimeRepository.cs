@@ -11,13 +11,20 @@ namespace ShowtimeService.Repository.Interface
         Task<Showtime?> GetShowtimeByIdAsync(long showtimeId);
         Task<Showtime> CreateShowtimeAsync(ShowtimeRequest request);
         Task<Showtime?> UpdateShowtimeAsync(long showtimeId, ShowtimeRequest request);
-        Task<bool> DeleteShowtimeAsync(long showtimeId);
+        Task<Showtime?> UpdateStatusAsync(long showtimeId, string status);
         Task<PagedList<Showtime>> GetShowtimesByMovieAsync(
         long movieId,
         int pageNumber,
         int pageSize,
         string sortBy,
         string sortDir);
+
+        Task<PagedList<Showtime>> GetOpenShowtimesByMovieAsync(
+            long movieId,
+            int pageNumber,
+            int pageSize,
+            string sortBy,
+            string sortDir);
 
         Task<PagedList<Showtime>> GetShowtimesByDateRangeAsync(
             DateTime start,

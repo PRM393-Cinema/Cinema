@@ -1,4 +1,5 @@
-﻿using BookingService.DTOs.Requests;
+﻿using System.Text.Json;
+using BookingService.DTOs.Requests;
 using BookingService.DTOs.Responses;
 using BookingService.Helpers;
 
@@ -47,5 +48,11 @@ namespace BookingService.Services.Interfaces
         Task<PaymentResponse> VerifyPayOsPaymentAsync(
             long orderCode,
             string? recipientEmail);
+
+        // PayOS gọi về khi khách thanh toán xong (FR-PAY-07): kiểm tra chữ ký rồi mới cập nhật payment
+        Task<PayOsWebhookResult> HandlePayOsWebhookAsync(JsonElement body);
+
+        // Booking hết hạn giữ ghế: payment còn PENDING -> FAILED
+        Task MarkUnpaidPaymentFailedAsync(long paymentId);
     }
 }

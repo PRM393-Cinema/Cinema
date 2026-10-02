@@ -23,7 +23,7 @@ Một lệnh chạy cả 5 thành phần: **PostgreSQL + AuthService + MovieServ
      ```powershell
      $b = New-Object byte[] 32; [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b); -join ($b | ForEach-Object { $_.ToString("x2") })
      ```
-   - PayOS: tuỳ chọn, để trống thì chỉ thanh toán PayOS báo lỗi, mọi thứ khác vẫn chạy (xem [SETUP_SECRETS.md mục 6](SETUP_SECRETS.md#6-payos--smtp-tuỳ-chọn)).
+   - PayOS: tuỳ chọn, để trống thì chỉ thanh toán PayOS báo lỗi, mọi thứ khác vẫn chạy. Luồng thanh toán, webhook, cách test không cần trả tiền thật: [PAYOS.md](PAYOS.md).
    - SMTP (Gmail gửi OTP + email đặt vé): tuỳ chọn, xem [EMAIL_SETUP.md](EMAIL_SETUP.md). Để trống thì email không được gửi thật, mã OTP được in ra `docker compose logs -f auth-service`.
 
 > File `.env` đã nằm trong `.gitignore` — **không commit** file này.
@@ -82,5 +82,5 @@ Tài khoản seed (mật khẩu `123456`): `admin@cinema.com`, `nhanvien1@cinema
 | `Bind for 0.0.0.0:5000 failed: port is already allocated` | Cổng đang bị chiếm (thường do service đang chạy trong Visual Studio) — tắt đi rồi chạy lại |
 | Container `postgres` dừng, log có `Khong tim thay /db-scripts/...` | Thiếu repo `Project-Cinema-DB` cạnh `Cinema_BE` (hoặc sai `DB_SCRIPTS_DIR`) → sửa rồi chạy `docker compose down -v` và `up` lại |
 | Đổi `POSTGRES_PASSWORD` sau lần chạy đầu thì service không kết nối được DB | Mật khẩu chỉ được đặt lúc tạo volume → `docker compose down -v` rồi chạy lại |
-| AuthService lỗi `42703: column u.email_verified does not exist` | DB trong volume được tạo từ file SQL cũ → `docker compose down -v` rồi chạy lại |
+| AuthService lỗi `42703: column u.email_verified does not exist` / BookingService lỗi `column b.customer_email does not exist` | DB trong volume được tạo từ file SQL cũ → `docker compose down -v` rồi chạy lại (hoặc chạy file mới trong `Project-Cinema-DB/migrations`) |
 | Đăng ký xong không nhận được email OTP | Chưa cấu hình SMTP trong `.env` → lấy mã trong `docker compose logs auth-service`, hoặc cấu hình Gmail ([EMAIL_SETUP.md](EMAIL_SETUP.md)) |

@@ -111,9 +111,11 @@ namespace BookingService.Controllers
         public async Task<ActionResult<BookingResponse>> Create(
             [FromBody] BookingRequest request)
         {
+            // Khách tự đặt: user và email nhận vé lấy từ token. Staff đặt hộ thì gửi userId + email của khách
             if (!User.IsStaffOrAdmin())
             {
                 request.UserId = User.GetCurrentUserId();
+                request.CustomerEmail = User.GetEmail();
             }
 
             var result = await _bookingService.CreateBookingAsync(request);
@@ -125,20 +127,20 @@ namespace BookingService.Controllers
         }
 
         // Xác nhận tay tại quầy (vd: khách trả tiền mặt): chỉ Staff/Admin.
-        // Khách thanh toán PayOS thì booking được xác nhận tự động khi xác minh thanh toán thành công
-        // (POST /api/v1/payments/payos/{orderCode}/verify), khách không tự xác nhận được.
+        // Khách thanh toán PayOS thì booking được xác nhận tự động khi PayOS gọi webhook
+        // hoặc khi app xác minh thanh toán (POST /api/v1/payments/payos/{orderCode}/verify).
+        // Không truyền recipientEmail thì gửi vé về email lưu trên booking.
         [HttpPost("{id:long}/confirm")]
         [Authorize(Policy = AuthorizationPolicies.StaffOrAdmin)]
         public async Task<ActionResult<BookingResponse>> Confirm(
             long id,
             [FromQuery] string paymentMethod,
-            [FromQuery] string recipientEmail)
+            [FromQuery] string? recipientEmail = null)
         {
-            if (string.IsNullOrWhiteSpace(paymentMethod) ||
-                string.IsNullOrWhiteSpace(recipientEmail))
+            if (string.IsNullOrWhiteSpace(paymentMethod))
             {
                 return BadRequest(
-                    "Payment method and recipient email are required.");
+                    "Payment method is required.");
             }
 
             var result = await _bookingService.ConfirmBookingAsync(

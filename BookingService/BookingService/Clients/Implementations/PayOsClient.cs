@@ -31,6 +31,7 @@ namespace BookingService.Clients.Implementations
             string description,
             string returnUrl,
             string cancelUrl,
+            DateTime? expiresAt = null,
             CancellationToken cancellationToken = default)
         {
             EnsureConfigured();
@@ -43,6 +44,10 @@ namespace BookingService.Clients.Implementations
                 Description = description,
                 ReturnUrl = returnUrl,
                 CancelUrl = cancelUrl,
+                // Link hết hạn cùng lúc với thời gian giữ ghế: khách không trả tiền được cho booking đã hết hạn
+                ExpiredAt = expiresAt.HasValue
+                    ? new DateTimeOffset(expiresAt.Value).ToUnixTimeSeconds()
+                    : null,
                 Signature = CreateSignature(
                     $"amount={amountValue}&cancelUrl={cancelUrl}&description={description}&orderCode={orderCode}&returnUrl={returnUrl}")
             };
@@ -213,6 +218,11 @@ namespace BookingService.Clients.Implementations
 
             [JsonPropertyName("cancelUrl")]
             public string CancelUrl { get; init; } = string.Empty;
+
+            // Unix timestamp (giây), không nằm trong chữ ký
+            [JsonPropertyName("expiredAt")]
+            [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+            public long? ExpiredAt { get; init; }
 
             [JsonPropertyName("signature")]
             public string Signature { get; init; } = string.Empty;

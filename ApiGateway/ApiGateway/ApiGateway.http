@@ -42,8 +42,24 @@ Authorization: Bearer <access_token>
 ### Danh sách phim (không cần đăng nhập)
 GET {{Gateway}}/api/v1/movies?page=1&size=5
 
-### Suất chiếu còn mở (không cần đăng nhập)
+### Suất chiếu còn mở bán và chưa bắt đầu (không cần đăng nhập)
 GET {{Gateway}}/api/showtimes/open
+
+### Suất chiếu còn đặt được của một phim (không cần đăng nhập)
+GET {{Gateway}}/api/showtimes/movie/1/open
+
+### Ngừng bán / mở bán lại suất chiếu (Staff/Admin): "CLOSED" / "OPEN". Vé đã bán vẫn giữ
+PATCH {{Gateway}}/api/showtimes/1/status
+Content-Type: application/json
+Authorization: Bearer <access_token_staff>
+
+{
+  "status": "CLOSED"
+}
+
+### Huỷ suất chiếu (Staff/Admin): chuyển CANCELLED, không xoá khỏi DB, không mở lại được
+DELETE {{Gateway}}/api/showtimes/1
+Authorization: Bearer <access_token_staff>
 
 ### Sơ đồ ghế của phòng (cần đăng nhập, mọi role)
 GET {{Gateway}}/api/seats/room/1
@@ -90,13 +106,21 @@ Authorization: Bearer <access_token_khach>
   "cancelUrl": "https://example.com/payment/cancel"
 }
 
-### 3. Khách quay lại app -> xác minh thanh toán. PayOS báo đã trả tiền thì booking tự CONFIRMED
-###    và email vé gửi về email trong token (khách KHÔNG tự gọi /confirm được nữa)
+### 3. Khách trả tiền xong, PayOS gọi webhook: booking tự CONFIRMED và email vé gửi về email của khách.
+###    Test trên máy không cần trả tiền thật: .\scripts\payos-webhook.ps1 -OrderCode <bookingId> -Amount <totalAmount>
+###    (chi tiết: docs/PAYOS.md). Webhook không cần token, được xác thực bằng chữ ký của PayOS.
+
+### 4. Khách quay lại app -> lấy kết quả thanh toán (khách KHÔNG tự gọi /confirm được)
 POST {{Gateway}}/api/v1/payments/payos/<orderCode>/verify
 Authorization: Bearer <access_token_khach>
 
-### Staff/Admin xác nhận tay tại quầy (khách trả tiền mặt) — khách gọi sẽ bị 403
-POST {{Gateway}}/api/v1/bookings/1/confirm?paymentMethod=CASH&recipientEmail=khachhang1@gmail.com
+### Payment của một booking (chủ booking hoặc Staff/Admin)
+GET {{Gateway}}/api/v1/payments/booking/1
+Authorization: Bearer <access_token_khach>
+
+### Staff/Admin xác nhận tay tại quầy (khách trả tiền mặt), khách gọi sẽ bị 403.
+### Không truyền recipientEmail thì gửi vé về email lưu trên booking
+POST {{Gateway}}/api/v1/bookings/1/confirm?paymentMethod=CASH
 Authorization: Bearer <access_token_staff>
 
 ### ----- Admin quản lý user (chỉ ROLE_ADMIN, chi tiết xem AuthService.http) -----
