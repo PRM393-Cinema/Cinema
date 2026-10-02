@@ -8,6 +8,8 @@
 
         public long UserId { get; set; }
 
+        public string? CustomerEmail { get; set; }
+
         public long ShowtimeId { get; set; }
 
         public string Status { get; set; } = null!;

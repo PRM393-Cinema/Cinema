@@ -20,6 +20,7 @@ namespace ShowtimeService.DTOs.Request
         [Required(ErrorMessage = "Price is required.")]
         [Range(0, double.MaxValue, ErrorMessage = "Price must be a non-negative value.")]
         public decimal Price { get; set; }
-        public string Status { get; set; } = null!;
+        // OPEN (mặc định) / CLOSED. Không gửi khi sửa thì giữ nguyên trạng thái hiện tại
+        public string? Status { get; set; }
     }
 }

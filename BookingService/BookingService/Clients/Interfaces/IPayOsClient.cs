@@ -11,6 +11,7 @@ namespace BookingService.Clients.Interfaces
             string description,
             string returnUrl,
             string cancelUrl,
+            DateTime? expiresAt = null,
             CancellationToken cancellationToken = default);
 
         Task<PayOsPaymentStatus> GetPaymentStatusAsync(

@@ -25,6 +25,8 @@ namespace BookingService.Exceptions
                     (StatusCodes.Status404NotFound, "Resource Not Found"),
                 ServiceUnavailableException =>
                     (StatusCodes.Status503ServiceUnavailable, "Service Unavailable"),
+                ConflictException =>
+                    (StatusCodes.Status409Conflict, "Conflict"),
                 ExternalServiceException =>
                     (StatusCodes.Status502BadGateway, "External Service Error"),
                 BusinessException or ArgumentException or InvalidOperationException =>

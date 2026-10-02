@@ -1,6 +1,7 @@
 ﻿using BookingService.Data;
 using BookingService.DTOs.Requests;
 using BookingService.DTOs.Responses;
+using BookingService.Exceptions;
 using BookingService.Helpers;
 using BookingService.Mapping;
 using BookingService.Models;
@@ -17,6 +18,9 @@ namespace BookingService.Services.Implementations
 {
     public class BookingService : IBookingService
     {
+        // Thời gian giữ ghế chờ thanh toán
+        private static readonly TimeSpan HoldDuration = TimeSpan.FromMinutes(10);
+
         private readonly BookingDbContext _context;
         private readonly IBookingRepository _bookingRepository;
         private readonly IBookingSeatRepository _bookingSeatRepository;
@@ -149,11 +153,12 @@ namespace BookingService.Services.Implementations
 
             if (seatIds.Count != request.Seats.Count)
             {
-                throw new InvalidOperationException(
+                throw new BusinessException(
                     "Duplicate seats are not allowed.");
             }
 
             // Get authoritative seat information before opening transaction.
+            // MovieService cũng kiểm tra suất chiếu còn mở bán và chưa bắt đầu.
             var seatInfos =
                 await _showtimeClient.GetSeatsAsync(
                     showtimeId,
@@ -161,9 +166,16 @@ namespace BookingService.Services.Implementations
 
             if (seatInfos.Count != seatIds.Count)
             {
-                throw new InvalidOperationException(
+                throw new BusinessException(
                     "One or more seats are invalid.");
             }
+
+            // Giờ chiếu và tên phim lấy từ MovieService, không tin dữ liệu app gửi lên
+            // (giờ chiếu được dùng cho chính sách huỷ vé).
+            var showtime = await _showtimeClient.GetShowtimeAsync(showtimeId);
+            var movieTitle =
+                await _showtimeClient.GetMovieTitleAsync(showtime.MovieId) ??
+                request.MovieTitle;
 
             var seatMap = seatInfos.ToDictionary(
                 x => x.SeatId);
@@ -172,7 +184,7 @@ namespace BookingService.Services.Implementations
                 seatId => seatMap[seatId].Price);
 
             var expiresAt =
-                DateTime.Now.AddMinutes(10);
+                DateTime.Now.Add(HoldDuration);
 
             await using var transaction =
                 await _context.Database.BeginTransactionAsync();
@@ -202,16 +214,16 @@ namespace BookingService.Services.Implementations
 
                     if (status == "BOOKED")
                     {
-                        throw new InvalidOperationException(
-                            $"Seat {seatId} is already booked.");
+                        throw new ConflictException(
+                            $"Seat {seatMap[seatId].SeatLabel} is already booked.");
                     }
 
                     if (status == "HELD" &&
                         reservation.HeldUntil.HasValue &&
                         reservation.HeldUntil.Value > DateTime.Now)
                     {
-                        throw new InvalidOperationException(
-                            $"Seat {seatId} is currently held.");
+                        throw new ConflictException(
+                            $"Seat {seatMap[seatId].SeatLabel} is currently held by another booking.");
                     }
 
                     existingReservations[seatId] = reservation;
@@ -220,12 +232,15 @@ namespace BookingService.Services.Implementations
                 var booking = new Booking
                 {
                     UserId = userId,
+                    CustomerEmail = string.IsNullOrWhiteSpace(request.CustomerEmail)
+                        ? null
+                        : request.CustomerEmail.Trim(),
                     ShowtimeId = showtimeId,
                     Status = "PENDING",
                     TotalAmount = totalAmount,
                     BookingCode = GenerateBookingCode(),
-                    MovieTitle = request.MovieTitle,
-                    ShowTime = request.ShowTime,
+                    MovieTitle = movieTitle,
+                    ShowTime = showtime.StartTime,
                     CreatedAt = DateTime.Now,
                     ExpiresAt = expiresAt
                 };
@@ -278,15 +293,11 @@ namespace BookingService.Services.Implementations
 
                 return await MapBookingAsync(booking);
             }
-            catch (DbUpdateException ex) when (
-                ex.InnerException is PostgresException
-                {
-                    SqlState: PostgresErrorCodes.UniqueViolation
-                })
+            catch (DbUpdateException ex) when (IsUniqueViolation(ex))
             {
                 await transaction.RollbackAsync();
 
-                throw new InvalidOperationException(
+                throw new ConflictException(
                     "One or more selected seats were just taken by another booking. Please choose again.");
             }
             catch
@@ -303,25 +314,10 @@ namespace BookingService.Services.Implementations
         }
 
         // Staff/Admin xác nhận tay tại quầy (vd: khách trả tiền mặt).
-        public Task<BookingResponse> ConfirmBookingAsync(
+        // Không truyền email thì gửi vé về email lưu trên booking.
+        public async Task<BookingResponse> ConfirmBookingAsync(
             long id,
             string paymentMethod,
-            string recipientEmail)
-        {
-            return ConfirmAsync(id, paidOnline: false, recipientEmail);
-        }
-
-        // Hệ thống tự xác nhận sau khi PayOS báo đã thanh toán (khách không tự xác nhận được).
-        public Task<BookingResponse> ConfirmPaidBookingAsync(
-            long id,
-            string? recipientEmail)
-        {
-            return ConfirmAsync(id, paidOnline: true, recipientEmail);
-        }
-
-        private async Task<BookingResponse> ConfirmAsync(
-            long id,
-            bool paidOnline,
             string? recipientEmail)
         {
             await using var transaction =
@@ -329,52 +325,19 @@ namespace BookingService.Services.Implementations
 
             try
             {
-                var booking =
-                    await _bookingRepository
-                        .GetBookingByIdForUpdateAsync(id);
+                var booking = await GetBookingForUpdateAsync(id);
 
-                if (booking == null)
+                if (NormalizeStatus(booking) != "PENDING")
                 {
-                    throw new KeyNotFoundException(
-                        $"Booking with id {id} was not found.");
+                    throw new ConflictException(
+                        "Only PENDING bookings can be confirmed.");
                 }
 
-                var status = booking.Status
-                    .Trim()
-                    .ToUpperInvariant();
-
-                var seats =
-                    await _bookingSeatRepository
-                        .GetByBookingIdAsync(booking.Id);
-
-                // Xác minh thanh toán có thể bị gọi lại (app mở lại, bấm thử lại):
-                // booking đã xác nhận thì trả về luôn thay vì báo lỗi.
-                if (paidOnline && status == "CONFIRMED")
-                {
-                    await transaction.CommitAsync();
-
-                    await SendConfirmationEmailAsync(
-                        booking,
-                        seats,
-                        recipientEmail);
-
-                    return booking.ToResponse(
-                        seats.Select(x => x.ToResponse()).ToList());
-                }
-
-                if (status != "PENDING")
-                {
-                    throw new InvalidOperationException(paidOnline
-                        ? $"Payment succeeded but booking {booking.BookingCode} is {status} and cannot be confirmed. Please contact the cinema for a refund."
-                        : "Only PENDING bookings can be confirmed.");
-                }
-
-                // Xác nhận tay: quá thời gian giữ chỗ là hết hạn. Đã trả tiền online thì vẫn
-                // xác nhận được nếu ghế chưa bị booking khác lấy mất (kiểm tra ngay bên dưới).
-                if (!paidOnline &&
-                    booking.ExpiresAt.HasValue &&
+                // Quá thời gian giữ chỗ: chuyển EXPIRED, nhả ghế (lưu lại trước khi báo lỗi)
+                if (booking.ExpiresAt.HasValue &&
                     booking.ExpiresAt.Value <= DateTime.Now)
                 {
+                    await ReleaseSeatsAsync(booking, "EXPIRED", includeBooked: false);
                     booking.Status = "EXPIRED";
 
                     await _bookingRepository.UpdateBookingAsync(
@@ -383,83 +346,34 @@ namespace BookingService.Services.Implementations
 
                     await transaction.CommitAsync();
 
-                    throw new InvalidOperationException(
+                    throw new ConflictException(
                         "Booking has expired.");
                 }
 
-                var reservations = new List<(BookingSeat Seat, SeatReservation? Reservation)>();
+                var seats =
+                    await _bookingSeatRepository
+                        .GetByBookingIdAsync(booking.Id);
 
-                foreach (var seat in seats)
-                {
-                    var reservation =
-                        await _seatReservationRepository
-                            .GetByShowtimeIdAndSeatIdForUpdateAsync(
-                                booking.ShowtimeId,
-                                seat.SeatId);
-
-                    reservations.Add((seat, reservation));
-                }
+                var reservations = await LockReservationsAsync(booking, seats);
 
                 var lost = reservations.FirstOrDefault(
                     x => !IsHeldBy(x.Reservation, booking.Id));
 
                 if (lost.Seat != null)
                 {
-                    if (!paidOnline)
-                    {
-                        throw new InvalidOperationException(lost.Reservation == null
-                            ? $"Reservation for seat {lost.Seat.SeatId} was not found."
-                            : $"Seat {lost.Seat.SeatId} is not held by this booking.");
-                    }
-
-                    // Trả tiền sau khi hết giờ giữ chỗ và ghế đã thuộc booking khác:
-                    // nhả các ghế còn giữ, chuyển booking sang EXPIRED để rạp hoàn tiền.
-                    foreach (var (_, reservation) in reservations)
-                    {
-                        if (IsHeldBy(reservation, booking.Id))
-                        {
-                            reservation!.Status = "EXPIRED";
-                            reservation.HeldUntil = null;
-                            reservation.BookingId = null;
-
-                            await _seatReservationRepository
-                                .UpdateAsync(reservation);
-                        }
-                    }
-
-                    booking.Status = "EXPIRED";
-
-                    await _bookingRepository.UpdateBookingAsync(
-                        booking.Id,
-                        booking);
-
-                    await transaction.CommitAsync();
-
-                    throw new InvalidOperationException(
-                        $"Payment succeeded but seat {lost.Seat.SeatLabel} is no longer held for booking {booking.BookingCode}. Please contact the cinema for a refund.");
+                    throw new ConflictException(lost.Reservation == null
+                        ? $"Reservation for seat {lost.Seat.SeatLabel} was not found."
+                        : $"Seat {lost.Seat.SeatLabel} is not held by this booking.");
                 }
 
-                booking.Status = "CONFIRMED";
-
-                await _bookingRepository.UpdateBookingAsync(
-                    booking.Id,
-                    booking);
-
-                foreach (var (_, reservation) in reservations)
-                {
-                    reservation!.Status = "BOOKED";
-                    reservation.HeldUntil = null;
-
-                    await _seatReservationRepository
-                        .UpdateAsync(reservation);
-                }
+                await MarkConfirmedAsync(booking, reservations);
 
                 await transaction.CommitAsync();
 
                 await SendConfirmationEmailAsync(
                     booking,
                     seats,
-                    recipientEmail);
+                    recipientEmail ?? booking.CustomerEmail);
 
                 return booking.ToResponse(
                     seats.Select(x => x.ToResponse()).ToList());
@@ -477,10 +391,382 @@ namespace BookingService.Services.Implementations
             }
         }
 
+        // Hệ thống tự xác nhận sau khi PayOS báo đã thanh toán (khách không tự xác nhận được).
+        // Gọi lại nhiều lần vẫn an toàn (webhook gửi lại, app bấm xác minh lại).
+        // Tiền về sau khi booking đã hết hạn: vẫn xác nhận nếu các ghế chưa bị booking khác lấy.
+        public async Task<BookingResponse> ConfirmPaidBookingAsync(
+            long id,
+            string? recipientEmail)
+        {
+            await using var transaction =
+                await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                var booking = await GetBookingForUpdateAsync(id);
+                var status = NormalizeStatus(booking);
+
+                var seats =
+                    await _bookingSeatRepository
+                        .GetByBookingIdAsync(booking.Id);
+
+                if (status == "CONFIRMED")
+                {
+                    await transaction.CommitAsync();
+
+                    await SendConfirmationEmailAsync(
+                        booking,
+                        seats,
+                        recipientEmail ?? booking.CustomerEmail);
+
+                    return booking.ToResponse(
+                        seats.Select(x => x.ToResponse()).ToList());
+                }
+
+                if (status is not ("PENDING" or "EXPIRED"))
+                {
+                    throw new ConflictException(
+                        $"Payment succeeded but booking {booking.BookingCode} is {status} and cannot be confirmed. Please contact the cinema for a refund.");
+                }
+
+                var reservations = await LockReservationsAsync(booking, seats);
+                var now = DateTime.Now;
+
+                // Ghế mất = đang thuộc booking khác (đã bán, hoặc đang được giữ còn hạn)
+                var lost = reservations.FirstOrDefault(x =>
+                    x.Reservation != null &&
+                    !IsHeldBy(x.Reservation, booking.Id) &&
+                    IsOccupied(x.Reservation, now));
+
+                if (lost.Seat != null)
+                {
+                    // Nhả các ghế còn giữ, chuyển booking sang EXPIRED để rạp hoàn tiền.
+                    if (status == "PENDING")
+                    {
+                        await ReleaseSeatsAsync(booking, "EXPIRED", includeBooked: false);
+                        booking.Status = "EXPIRED";
+
+                        await _bookingRepository.UpdateBookingAsync(
+                            booking.Id,
+                            booking);
+                    }
+
+                    await transaction.CommitAsync();
+
+                    throw new ConflictException(
+                        $"Payment succeeded but seat {lost.Seat.SeatLabel} is no longer available for booking {booking.BookingCode}. Please contact the cinema for a refund.");
+                }
+
+                await MarkConfirmedAsync(booking, reservations);
+
+                await transaction.CommitAsync();
+
+                await SendConfirmationEmailAsync(
+                    booking,
+                    seats,
+                    recipientEmail ?? booking.CustomerEmail);
+
+                return booking.ToResponse(
+                    seats.Select(x => x.ToResponse()).ToList());
+            }
+            catch (DbUpdateException ex) when (IsUniqueViolation(ex))
+            {
+                await transaction.RollbackAsync();
+
+                throw new ConflictException(
+                    "Payment succeeded but one or more seats were just taken by another booking. Please contact the cinema for a refund.");
+            }
+            catch
+            {
+                if (_context.Database.CurrentTransaction is not null)
+                {
+                    await transaction.RollbackAsync();
+                }
+
+                throw;
+            }
+        }
+
+        public async Task<BookingResponse> CancelBookingAsync(
+            long id,
+            bool manager)
+        {
+            await using var transaction =
+                await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                var booking = await GetBookingForUpdateAsync(id);
+                var status = NormalizeStatus(booking);
+
+                if (status == "CANCELLED")
+                {
+                    throw new ConflictException(
+                        "Booking has already been cancelled.");
+                }
+
+                if (status == "EXPIRED")
+                {
+                    throw new ConflictException(
+                        "Expired booking cannot be cancelled.");
+                }
+
+                if (!manager && status != "PENDING")
+                {
+                    throw new ConflictException(
+                        "This booking cannot be cancelled.");
+                }
+
+                // Huỷ booking đã xác nhận thì nhả cả ghế đã bán để người khác đặt được
+                var seats = await ReleaseSeatsAsync(booking, "AVAILABLE", includeBooked: true);
+
+                booking.Status = "CANCELLED";
+                booking.ExpiresAt = null;
+
+                await _bookingRepository.UpdateBookingAsync(
+                    booking.Id,
+                    booking);
+
+                await transaction.CommitAsync();
+
+                return booking.ToResponse(
+                    seats.Select(x => x.ToResponse()).ToList());
+            }
+            catch
+            {
+                // Lỗi xảy ra sau khi đã commit (CurrentTransaction = null) thì không rollback nữa,
+                // để giữ nguyên lỗi gốc thay vì lỗi "This NpgsqlTransaction has completed".
+                if (_context.Database.CurrentTransaction is not null)
+                {
+                    await transaction.RollbackAsync();
+                }
+
+                throw;
+            }
+        }
+
+        // Khách bấm huỷ trên trang PayOS: huỷ booking đang chờ thanh toán để nhả ghế ngay.
+        // Booking không còn PENDING thì bỏ qua.
+        public async Task CancelUnpaidBookingAsync(long id)
+        {
+            await using var transaction =
+                await _context.Database.BeginTransactionAsync();
+
+            var booking =
+                await _bookingRepository
+                    .GetBookingByIdForUpdateAsync(id);
+
+            if (booking == null || NormalizeStatus(booking) != "PENDING")
+            {
+                await transaction.CommitAsync();
+                return;
+            }
+
+            await ReleaseSeatsAsync(booking, "AVAILABLE", includeBooked: false);
+
+            booking.Status = "CANCELLED";
+            booking.ExpiresAt = null;
+
+            await _bookingRepository.UpdateBookingAsync(
+                booking.Id,
+                booking);
+
+            await transaction.CommitAsync();
+        }
+
+        // Job chạy nền gọi định kỳ: booking PENDING quá hạn giữ ghế -> EXPIRED, nhả ghế.
+        // Mỗi booking một transaction ngắn; booking vừa được thanh toán / huỷ trong lúc đó thì bỏ qua.
+        public async Task<List<BookingResponse>> ExpireOverdueBookingsAsync(
+            int batchSize)
+        {
+            var overdueIds =
+                await _bookingRepository
+                    .GetOverduePendingBookingIdsAsync(
+                        DateTime.Now,
+                        batchSize);
+
+            var expired = new List<BookingResponse>();
+
+            foreach (var id in overdueIds)
+            {
+                await using var transaction =
+                    await _context.Database.BeginTransactionAsync();
+
+                var booking =
+                    await _bookingRepository
+                        .GetBookingByIdForUpdateAsync(id);
+
+                if (booking == null ||
+                    NormalizeStatus(booking) != "PENDING" ||
+                    booking.ExpiresAt is not { } expiresAt ||
+                    expiresAt > DateTime.Now)
+                {
+                    await transaction.CommitAsync();
+                    continue;
+                }
+
+                var seats = await ReleaseSeatsAsync(booking, "EXPIRED", includeBooked: false);
+
+                booking.Status = "EXPIRED";
+
+                await _bookingRepository.UpdateBookingAsync(
+                    booking.Id,
+                    booking);
+
+                await transaction.CommitAsync();
+
+                expired.Add(booking.ToResponse(
+                    seats.Select(x => x.ToResponse()).ToList()));
+            }
+
+            return expired;
+        }
+
+        public async Task<List<long>> GetOccupiedSeatIdsAsync(
+            long showtimeId)
+        {
+            return await _bookingRepository
+                .GetOccupiedSeatIdsAsync(showtimeId, DateTime.Now);
+        }
+
+        private async Task<Booking> GetBookingForUpdateAsync(long id)
+        {
+            var booking =
+                await _bookingRepository
+                    .GetBookingByIdForUpdateAsync(id);
+
+            if (booking == null)
+            {
+                throw new KeyNotFoundException(
+                    $"Booking with id {id} was not found.");
+            }
+
+            return booking;
+        }
+
+        private async Task<List<(BookingSeat Seat, SeatReservation? Reservation)>> LockReservationsAsync(
+            Booking booking,
+            IEnumerable<BookingSeat> seats)
+        {
+            var reservations = new List<(BookingSeat Seat, SeatReservation? Reservation)>();
+
+            foreach (var seat in seats)
+            {
+                var reservation =
+                    await _seatReservationRepository
+                        .GetByShowtimeIdAndSeatIdForUpdateAsync(
+                            booking.ShowtimeId,
+                            seat.SeatId);
+
+                reservations.Add((seat, reservation));
+            }
+
+            return reservations;
+        }
+
+        // Chốt ghế: BOOKED cho booking này (ghế chưa có dòng giữ chỗ thì tạo mới), booking -> CONFIRMED
+        private async Task MarkConfirmedAsync(
+            Booking booking,
+            List<(BookingSeat Seat, SeatReservation? Reservation)> reservations)
+        {
+            foreach (var (seat, reservation) in reservations)
+            {
+                if (reservation == null)
+                {
+                    await _seatReservationRepository
+                        .AddAsync(new SeatReservation
+                        {
+                            ShowtimeId = booking.ShowtimeId,
+                            SeatId = seat.SeatId,
+                            Status = "BOOKED",
+                            BookingId = booking.Id
+                        });
+
+                    continue;
+                }
+
+                reservation.Status = "BOOKED";
+                reservation.HeldUntil = null;
+                reservation.BookingId = booking.Id;
+
+                await _seatReservationRepository
+                    .UpdateAsync(reservation);
+            }
+
+            booking.Status = "CONFIRMED";
+            booking.ExpiresAt = null;
+
+            await _bookingRepository.UpdateBookingAsync(
+                booking.Id,
+                booking);
+        }
+
+        // Nhả các ghế đang thuộc booking (HELD, và cả BOOKED nếu includeBooked) để booking khác đặt được
+        private async Task<List<BookingSeat>> ReleaseSeatsAsync(
+            Booking booking,
+            string releasedStatus,
+            bool includeBooked)
+        {
+            var seats =
+                await _bookingSeatRepository
+                    .GetByBookingIdAsync(booking.Id);
+
+            foreach (var seat in seats)
+            {
+                var reservation =
+                    await _seatReservationRepository
+                        .GetByShowtimeIdAndSeatIdForUpdateAsync(
+                            booking.ShowtimeId,
+                            seat.SeatId);
+
+                if (reservation == null ||
+                    reservation.BookingId != booking.Id)
+                {
+                    continue;
+                }
+
+                if (reservation.Status == "HELD" ||
+                    (includeBooked && reservation.Status == "BOOKED"))
+                {
+                    reservation.Status = releasedStatus;
+                    reservation.HeldUntil = null;
+                    reservation.BookingId = null;
+
+                    await _seatReservationRepository
+                        .UpdateAsync(reservation);
+                }
+            }
+
+            return seats;
+        }
+
+        private static string NormalizeStatus(Booking booking)
+        {
+            return booking.Status
+                .Trim()
+                .ToUpperInvariant();
+        }
+
         private static bool IsHeldBy(SeatReservation? reservation, long bookingId)
         {
             return reservation is { Status: "HELD" } &&
                    reservation.BookingId == bookingId;
+        }
+
+        private static bool IsOccupied(SeatReservation reservation, DateTime now)
+        {
+            return reservation.Status == "BOOKED" ||
+                   (reservation.Status == "HELD" &&
+                    reservation.HeldUntil.HasValue &&
+                    reservation.HeldUntil.Value > now);
+        }
+
+        private static bool IsUniqueViolation(DbUpdateException ex)
+        {
+            return ex.InnerException is PostgresException
+            {
+                SqlState: PostgresErrorCodes.UniqueViolation
+            };
         }
 
         // Notification is deliberately sent after the booking transaction commits.
@@ -518,143 +804,6 @@ namespace BookingService.Services.Implementations
                     "Booking {BookingId} was confirmed but confirmation email could not be sent.",
                     booking.Id);
             }
-        }
-
-        public async Task<BookingResponse> CancelBookingAsync(
-            long id,
-            bool manager)
-        {
-            await using var transaction =
-                await _context.Database.BeginTransactionAsync();
-
-            try
-            {
-                var booking =
-                    await _bookingRepository
-                        .GetBookingByIdForUpdateAsync(id);
-
-                if (booking == null)
-                {
-                    throw new KeyNotFoundException(
-                        $"Booking with id {id} was not found.");
-                }
-
-                var status = booking.Status
-                    .Trim()
-                    .ToUpperInvariant();
-
-                if (status == "CANCELLED")
-                {
-                    throw new InvalidOperationException(
-                        "Booking has already been cancelled.");
-                }
-
-                if (status == "EXPIRED")
-                {
-                    throw new InvalidOperationException(
-                        "Expired booking cannot be cancelled.");
-                }
-
-                if (!manager && status != "PENDING")
-                {
-                    throw new InvalidOperationException(
-                        "This booking cannot be cancelled.");
-                }
-
-                var seats =
-                    await _bookingSeatRepository
-                        .GetByBookingIdAsync(booking.Id);
-
-                foreach (var seat in seats)
-                {
-                    var reservation =
-                        await _seatReservationRepository
-                            .GetByShowtimeIdAndSeatIdForUpdateAsync(
-                                booking.ShowtimeId,
-                                seat.SeatId);
-
-                    if (reservation == null)
-                    {
-                        continue;
-                    }
-
-                    if (reservation.BookingId != booking.Id)
-                    {
-                        continue;
-                    }
-
-                    if (reservation.Status == "HELD")
-                    {
-                        reservation.Status = "EXPIRED";
-                        reservation.HeldUntil = null;
-                        reservation.BookingId = null;
-
-                        await _seatReservationRepository
-                            .UpdateAsync(reservation);
-                    }
-                }
-
-                booking.Status = "CANCELLED";
-                booking.ExpiresAt = null;
-
-                await _bookingRepository.UpdateBookingAsync(
-                    booking.Id,
-                    booking);
-
-                await transaction.CommitAsync();
-
-                return booking.ToResponse(
-                    seats.Select(x => x.ToResponse()).ToList());
-            }
-            catch
-            {
-                // Lỗi xảy ra sau khi đã commit (CurrentTransaction = null) thì không rollback nữa,
-                // để giữ nguyên lỗi gốc thay vì lỗi "This NpgsqlTransaction has completed".
-                if (_context.Database.CurrentTransaction is not null)
-                {
-                    await transaction.RollbackAsync();
-                }
-
-                throw;
-            }
-        }
-
-        public async Task ExpirePastShowtimeBookingsAsync()
-        {
-            /*
-             * Ideally this query should be executed directly at repository
-             * level instead of loading every booking into memory.
-             *
-             * The condition is:
-             *
-             * Status = PENDING
-             * AND Showtime has already passed
-             *
-             * To implement this correctly, BookingService needs Showtime
-             * information from ShowtimeService.
-             */
-            throw new NotImplementedException(
-                "This operation requires ShowtimeService integration.");
-        }
-
-        public async Task<List<long>> GetOccupiedSeatIdsAsync(
-            long showtimeId)
-        {
-            return await _bookingRepository
-                .GetOccupiedSeatIdsAsync(showtimeId);
-        }
-
-        private async Task<Booking> GetBookingEntityAsync(long id)
-        {
-            var booking = await _bookingRepository.GetBookingByIdAsync(id);
-
-            if (booking == null)
-            {
-                throw new KeyNotFoundException(
-                    $"Booking with id {id} was not found.");
-            }
-
-            return booking;
         }
 
         private static EmailMessage BuildBookingConfirmationEmail(

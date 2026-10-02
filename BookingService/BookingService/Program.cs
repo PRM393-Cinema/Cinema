@@ -11,6 +11,7 @@ using BookingService.Repositories.Impl;
 using BookingService.Repositories.Interfaces;
 using BookingService.Services.Implementations;
 using BookingService.Services.Interfaces;
+using BookingService.Workers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -46,6 +47,8 @@ builder.Services.Configure<SmtpOptions>(
 
 builder.Services.Configure<JwtOptions>(
     builder.Configuration.GetSection("Jwt"));
+builder.Services.Configure<BookingExpiryOptions>(
+    builder.Configuration.GetSection("BookingExpiry"));
 
 var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()
     ?? throw new InvalidOperationException(
@@ -98,6 +101,10 @@ builder.Services.AddAuthorization(options =>
         policy => policy.RequireRole(
             "USER", "ROLE_USER", "ROLE_CUSTOMER",
             "STAFF", "ROLE_STAFF", "ADMIN", "ROLE_ADMIN"));
+
+    options.AddPolicy(
+        AuthorizationPolicies.AdminOnly,
+        policy => policy.RequireRole("ADMIN", "ROLE_ADMIN"));
 });
 
 builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
@@ -171,6 +178,9 @@ builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 builder.Services.AddScoped<IBookingService, BookingService.Services.Implementations.BookingService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
+
+// Job nền: booking PENDING quá 10 phút chưa thanh toán -> EXPIRED, nhả ghế
+builder.Services.AddHostedService<BookingExpiryWorker>();
 
 //====== HEALTH CHECK ======
 builder.Services.AddHealthChecks()

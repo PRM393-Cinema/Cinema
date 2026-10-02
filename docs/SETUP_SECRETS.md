@@ -139,6 +139,8 @@ dotnet user-secrets set "PayOS:ApiKey" "<api_key>" --project BookingService/Book
 dotnet user-secrets set "PayOS:ChecksumKey" "<checksum_key>" --project BookingService/BookingService
 ```
 
+Luồng thanh toán, webhook và cách test không cần trả tiền thật: [PAYOS.md](PAYOS.md).
+
 **SMTP (Gmail)**: AuthService và BookingService dùng chung một tài khoản Gmail với **App Password**. Cách tạo App Password và script đặt key cho cả hai service nằm trong [EMAIL_SETUP.md](EMAIL_SETUP.md#3-cấu-hình).
 
 ## 7. Database

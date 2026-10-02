@@ -3,6 +3,7 @@ using MovieService.Helpers;
 using ShowtimeService.DTOs.Request;
 using ShowtimeService.DTOs.Response;
 using ShowtimeService.Extensions;
+using ShowtimeService.Models;
 using ShowtimeService.Repository.Interface;
 using ShowtimeService.Service.Interface;
 
@@ -10,6 +11,11 @@ namespace ShowtimeService.Service.Impl
 {
     public class ShowtimeService : IShowtimeService
     {
+        // OPEN: đang bán vé. CLOSED: ngừng bán, vé đã bán vẫn giữ. CANCELLED: suất chiếu bị huỷ (không mở lại được)
+        private const string Open = "OPEN";
+        private const string Closed = "CLOSED";
+        private const string Cancelled = "CANCELLED";
+
         private readonly IShowtimeRepository _showtimeRepository;
         private readonly ISeatRepository _seatRepository;
 
@@ -122,6 +128,8 @@ namespace ShowtimeService.Service.Impl
                     "Start time must be earlier than end time.");
             }
 
+            request.Status = NormalizeEditableStatus(request.Status) ?? Open;
+
             var hasConflict = await _showtimeRepository
                 .HasScheduleConflictAsync(
                     request.RoomId,
@@ -130,7 +138,7 @@ namespace ShowtimeService.Service.Impl
 
             if (hasConflict)
             {
-                throw new BusinessException(
+                throw new ConflictException(
                     "The room already has a showtime during this period.");
             }
 
@@ -167,6 +175,11 @@ namespace ShowtimeService.Service.Impl
                     $"Showtime with ID {showtimeId} was not found.");
             }
 
+            EnsureNotCancelled(existingShowtime.Status, showtimeId);
+
+            // Không gửi status thì giữ nguyên trạng thái hiện tại
+            request.Status = NormalizeEditableStatus(request.Status) ?? existingShowtime.Status;
+
             var hasConflict = await _showtimeRepository
                 .HasScheduleConflictAsync(
                     request.RoomId,
@@ -176,7 +189,7 @@ namespace ShowtimeService.Service.Impl
 
             if (hasConflict)
             {
-                throw new BusinessException(
+                throw new ConflictException(
                     "The room already has a showtime during this period.");
             }
 
@@ -188,26 +201,42 @@ namespace ShowtimeService.Service.Impl
             return updatedShowtime?.ToResponse();
         }
 
-        public async Task<bool> DeleteShowtimeAsync(
+        // FR-SHOW-05: huỷ suất chiếu = chuyển sang CANCELLED, không xoá khỏi DB vì booking vẫn trỏ tới suất chiếu này
+        public async Task<ShowtimeResponse> CancelShowtimeAsync(
             long showtimeId)
         {
-            if (showtimeId <= 0)
+            var existingShowtime = await GetExistingShowtimeAsync(showtimeId);
+
+            EnsureNotCancelled(existingShowtime.Status, showtimeId);
+
+            if (existingShowtime.EndTime <= DateTime.Now)
             {
-                throw new BusinessException(
-                    "Showtime ID must be greater than 0.");
+                throw new ConflictException(
+                    $"Showtime with ID {showtimeId} has already ended and cannot be cancelled.");
             }
 
-            var existingShowtime = await _showtimeRepository
-                .GetShowtimeByIdAsync(showtimeId);
+            var cancelled = await _showtimeRepository
+                .UpdateStatusAsync(showtimeId, Cancelled);
 
-            if (existingShowtime == null)
-            {
-                throw new NotFoundException(
-                    $"Showtime with ID {showtimeId} was not found.");
-            }
+            return cancelled!.ToResponse();
+        }
 
-            return await _showtimeRepository
-                .DeleteShowtimeAsync(showtimeId);
+        // Đóng / mở bán lại suất chiếu (OPEN <-> CLOSED). Huỷ hẳn thì dùng CancelShowtimeAsync
+        public async Task<ShowtimeResponse> UpdateShowtimeStatusAsync(
+            long showtimeId,
+            string status)
+        {
+            var normalizedStatus = NormalizeEditableStatus(status)
+                ?? throw new BusinessException("Status is required (OPEN or CLOSED).");
+
+            var existingShowtime = await GetExistingShowtimeAsync(showtimeId);
+
+            EnsureNotCancelled(existingShowtime.Status, showtimeId);
+
+            var updated = await _showtimeRepository
+                .UpdateStatusAsync(showtimeId, normalizedStatus);
+
+            return updated!.ToResponse();
         }
 
         public async Task<PagedResult<ShowtimeResponse>> GetOpenShowtimesAsync(
@@ -262,6 +291,37 @@ namespace ShowtimeService.Service.Impl
             return showtimes.ToPagedResult();
         }
 
+        // FR-SHOW-08: suất chiếu của phim còn đặt vé được (đang mở bán, chưa bắt đầu)
+        public async Task<PagedResult<ShowtimeResponse>> GetOpenShowtimesByMovieAsync(
+            long movieId,
+            int pageNumber,
+            int pageSize,
+            string sortBy,
+            string sortDir)
+        {
+            if (movieId <= 0)
+            {
+                throw new BusinessException(
+                    "Movie ID must be greater than 0.");
+            }
+
+            var p = PaginationUtils.Normalize(
+                pageNumber,
+                pageSize,
+                sortBy,
+                sortDir);
+
+            var showtimes = await _showtimeRepository
+                .GetOpenShowtimesByMovieAsync(
+                    movieId,
+                    p.PageNumber,
+                    p.PageSize,
+                    p.SortBy,
+                    p.SortDir);
+
+            return showtimes.ToPagedResult();
+        }
+
         public async Task<PagedResult<ShowtimeResponse>> GetShowtimesByDateRangeAsync(
             DateTime start,
             DateTime end,
@@ -292,6 +352,48 @@ namespace ShowtimeService.Service.Impl
                     p.SortDir);
 
             return showtimes.ToPagedResult();
+        }
+
+        private async Task<Showtime> GetExistingShowtimeAsync(long showtimeId)
+        {
+            if (showtimeId <= 0)
+            {
+                throw new BusinessException(
+                    "Showtime ID must be greater than 0.");
+            }
+
+            return await _showtimeRepository.GetShowtimeByIdAsync(showtimeId)
+                ?? throw new NotFoundException(
+                    $"Showtime with ID {showtimeId} was not found.");
+        }
+
+        private static void EnsureNotCancelled(string status, long showtimeId)
+        {
+            if (string.Equals(status, Cancelled, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new ConflictException(
+                    $"Showtime with ID {showtimeId} has been cancelled.");
+            }
+        }
+
+        // Trạng thái sửa tay được: OPEN / CLOSED. Rỗng -> null (người gọi tự chọn mặc định)
+        private static string? NormalizeEditableStatus(string? status)
+        {
+            if (string.IsNullOrWhiteSpace(status))
+            {
+                return null;
+            }
+
+            var normalized = status.Trim().ToUpperInvariant();
+
+            return normalized switch
+            {
+                Open or Closed => normalized,
+                Cancelled => throw new BusinessException(
+                    "Use DELETE /api/showtimes/{id} to cancel a showtime."),
+                _ => throw new BusinessException(
+                    "Status must be OPEN or CLOSED.")
+            };
         }
 
         private static void ValidateShowtimeRequest(

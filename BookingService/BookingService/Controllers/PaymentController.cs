@@ -1,3 +1,4 @@
+using System.Text.Json;
 using BookingService.DTOs.Requests;
 using BookingService.DTOs.Responses;
 using BookingService.Configuration;
@@ -14,10 +15,14 @@ namespace BookingService.Controllers
     public sealed class PaymentController : ControllerBase
     {
         private readonly IPaymentService _paymentService;
+        private readonly IBookingService _bookingService;
 
-        public PaymentController(IPaymentService paymentService)
+        public PaymentController(
+            IPaymentService paymentService,
+            IBookingService bookingService)
         {
             _paymentService = paymentService;
+            _bookingService = bookingService;
         }
 
         [HttpGet]
@@ -64,8 +69,8 @@ namespace BookingService.Controllers
                 userId, page, size, sortBy, sortDir));
         }
 
+        // Khách xem được payment của booking của chính mình (FR-PAY-05)
         [HttpGet("booking/{bookingId:long}")]
-        [Authorize(Policy = AuthorizationPolicies.StaffOrAdmin)]
         public async Task<ActionResult<PagedResult<PaymentResponse>>> GetByBooking(
             long bookingId,
             [FromQuery] int page = 1,
@@ -73,6 +78,16 @@ namespace BookingService.Controllers
             [FromQuery] string sortBy = "createdAt",
             [FromQuery] string sortDir = "desc")
         {
+            if (!User.IsStaffOrAdmin())
+            {
+                var booking = await _bookingService.GetBookingByIdAsync(bookingId);
+
+                if (booking.UserId != User.GetCurrentUserId())
+                {
+                    return Forbid();
+                }
+            }
+
             return Ok(await _paymentService.GetPaymentsByBookingAsync(
                 bookingId, page, size, sortBy, sortDir));
         }
@@ -125,6 +140,22 @@ namespace BookingService.Controllers
 
             return Ok(await _paymentService.VerifyPayOsPaymentAsync(
                 orderCode, recipientEmail));
+        }
+
+        // PayOS gọi về khi khách thanh toán xong (không có JWT, xác thực bằng chữ ký HMAC trong body).
+        // Đăng ký URL này trong trang quản lý PayOS: https://<domain>/api/v1/payments/payos/webhook
+        [HttpPost("payos/webhook")]
+        [AllowAnonymous]
+        public async Task<IActionResult> PayOsWebhook([FromBody] JsonElement body)
+        {
+            var result = await _paymentService.HandlePayOsWebhookAsync(body);
+
+            if (!result.SignatureValid)
+            {
+                return BadRequest(new { success = false, message = result.Message });
+            }
+
+            return Ok(new { success = true, message = result.Message });
         }
 
         [HttpPost("{id:long}/process")]

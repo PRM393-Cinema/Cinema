@@ -7,5 +7,7 @@ namespace BookingService.Configuration
         public const string StaffOrAdmin = "StaffOrAdmin";
 
         public const string AnyRole = "AnyRole";
+
+        public const string AdminOnly = "AdminOnly";
     }
 }

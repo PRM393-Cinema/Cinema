@@ -143,17 +143,36 @@ namespace BookingService.Repositories.Impl
                 pageSize);
         }
 
-        public async Task<List<long>> GetOccupiedSeatIdsAsync(long showtimeId)
+        // Booking PENDING đã quá hạn giữ ghế không còn chiếm ghế (job sẽ chuyển sang EXPIRED)
+        public async Task<List<long>> GetOccupiedSeatIdsAsync(long showtimeId, DateTime now)
         {
             return await _context.BookingSeats
                 .Where(bs =>
                     bs.Booking.ShowtimeId == showtimeId &&
                     (
-                        bs.Booking.Status == "PENDING" ||
-                        bs.Booking.Status == "CONFIRMED"
+                        bs.Booking.Status == "CONFIRMED" ||
+                        (
+                            bs.Booking.Status == "PENDING" &&
+                            (bs.Booking.ExpiresAt == null || bs.Booking.ExpiresAt > now)
+                        )
                     ))
                 .Select(bs => bs.SeatId)
                 .Distinct()
+                .OrderBy(seatId => seatId)
+                .ToListAsync();
+        }
+
+        public async Task<List<long>> GetOverduePendingBookingIdsAsync(DateTime now, int take)
+        {
+            return await _context.Bookings
+                .AsNoTracking()
+                .Where(b =>
+                    b.Status == "PENDING" &&
+                    b.ExpiresAt != null &&
+                    b.ExpiresAt <= now)
+                .OrderBy(b => b.ExpiresAt)
+                .Select(b => b.Id)
+                .Take(take)
                 .ToListAsync();
         }
 

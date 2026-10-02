@@ -18,7 +18,7 @@ namespace ShowtimeService.Repository.Impl
 
         public async Task<PagedList<Showtime>> GetAllShowtimesAsync(int pageNumber, int pageSize, string sortBy, string sortDir)
         {
-            var query = _context.Showtimes.AsNoTracking();
+            var query = ApplySorting(_context.Showtimes.AsNoTracking(), sortBy, sortDir);
 
             return await PagedList<Showtime>.CreateAsync(query, pageNumber, pageSize);
         }
@@ -59,16 +59,17 @@ namespace ShowtimeService.Repository.Impl
             return existingShowtime;
         }
 
-        public async Task<bool> DeleteShowtimeAsync(long showtimeId)
+        // Huỷ / đóng suất chiếu chỉ đổi trạng thái, không xoá dòng: booking của khách vẫn trỏ tới suất chiếu này
+        public async Task<Showtime?> UpdateStatusAsync(long showtimeId, string status)
         {
             var existingShowtime = await _context.Showtimes.FindAsync(showtimeId);
             if (existingShowtime == null)
             {
-                return false;
+                return null;
             }
-            _context.Showtimes.Remove(existingShowtime);
+            existingShowtime.Status = status;
             await _context.SaveChangesAsync();
-            return true;
+            return existingShowtime;
         }
 
         //public async Task<PagedList<Showtime>> GetShowtimesByStatusAsync(string status, int pageNumber, int pageSize, string sortBy, string sortDir)
@@ -101,17 +102,38 @@ namespace ShowtimeService.Repository.Impl
             string sortBy,
             string sortDir)
         {
-            var query = _context.Showtimes
-                .AsNoTracking()
-                .Where(x => x.StartTime > DateTime.Now);
+            var query = OpenForBooking(_context.Showtimes.AsNoTracking());
 
             query = ApplySorting(query, sortBy, sortDir);
 
             return await PagedList<Showtime>.CreateAsync(
-                query, 
+                query,
                 pageNumber,
                 pageSize
                 );
+        }
+
+        public async Task<PagedList<Showtime>> GetOpenShowtimesByMovieAsync(
+            long movieId,
+            int pageNumber,
+            int pageSize,
+            string sortBy,
+            string sortDir)
+        {
+            var query = OpenForBooking(_context.Showtimes.AsNoTracking())
+                .Where(x => x.MovieId == movieId);
+
+            query = ApplySorting(query, sortBy, sortDir);
+
+            return await PagedList<Showtime>.CreateAsync(query, pageNumber, pageSize);
+        }
+
+        // Suất chiếu còn đặt được: đang mở bán và chưa bắt đầu (cùng điều kiện với lúc BookingService giữ ghế)
+        private static IQueryable<Showtime> OpenForBooking(IQueryable<Showtime> query)
+        {
+            var now = DateTime.Now;
+
+            return query.Where(x => x.Status == "OPEN" && x.StartTime > now);
         }
 
         public async Task<PagedList<Showtime>> GetShowtimesByMovieAsync(
@@ -159,10 +181,12 @@ namespace ShowtimeService.Repository.Impl
             DateTime endTime,
             long? excludeShowtimeId = null)
         {
+            // Suất đã huỷ không còn chiếm phòng
             var query = _context.Showtimes
                 .AsNoTracking()
                 .Where(x =>
                     x.RoomId == roomId &&
+                    x.Status != "CANCELLED" &&
                     x.StartTime < endTime &&
                     x.EndTime > startTime);
 

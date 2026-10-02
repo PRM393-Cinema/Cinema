@@ -11,6 +11,8 @@ public partial class Booking
 
     public long UserId { get; set; }
 
+    public string? CustomerEmail { get; set; } // email nhận vé / thông báo
+
     public long ShowtimeId { get; set; }
 
     public string Status { get; set; } = null!; //PENDING / CONFIRMED / CANCELLED / EXPIRED

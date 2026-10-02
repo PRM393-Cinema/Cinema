@@ -20,8 +20,9 @@ namespace BookingService.Controllers
             _notificationService = notificationService;
         }
 
+        // Xem thông báo của mọi người: chỉ Admin. Customer / Staff chỉ xem của chính mình (ma trận quyền SRS §9)
         [HttpGet]
-        [Authorize(Policy = AuthorizationPolicies.StaffOrAdmin)]
+        [Authorize(Policy = AuthorizationPolicies.AdminOnly)]
         public async Task<ActionResult<PagedResult<NotificationResponse>>> GetAll(
             [FromQuery] int page = 1,
             [FromQuery] int size = 10,
@@ -33,10 +34,16 @@ namespace BookingService.Controllers
         }
 
         [HttpGet("{id:long}")]
-        [Authorize(Policy = AuthorizationPolicies.StaffOrAdmin)]
         public async Task<ActionResult<NotificationResponse>> GetById(long id)
         {
-            return Ok(await _notificationService.GetNotificationByIdAsync(id));
+            var result = await _notificationService.GetNotificationByIdAsync(id);
+
+            if (!User.IsAdmin() && result.UserId != User.GetCurrentUserId())
+            {
+                return Forbid();
+            }
+
+            return Ok(result);
         }
 
         [HttpGet("user/{userId:long}")]
@@ -47,7 +54,7 @@ namespace BookingService.Controllers
             [FromQuery] string sortBy = "createdAt",
             [FromQuery] string sortDir = "desc")
         {
-            if (!User.IsStaffOrAdmin() && userId != User.GetCurrentUserId())
+            if (!User.IsAdmin() && userId != User.GetCurrentUserId())
             {
                 return Forbid();
             }
@@ -71,10 +78,17 @@ namespace BookingService.Controllers
             return Ok(await _notificationService.SendNotificationAsync(id));
         }
 
+        // Người nhận tự xoá thông báo của mình; Admin xoá được mọi thông báo
         [HttpDelete("{id:long}")]
-        [Authorize(Policy = AuthorizationPolicies.StaffOrAdmin)]
         public async Task<IActionResult> Delete(long id)
         {
+            var notification = await _notificationService.GetNotificationByIdAsync(id);
+
+            if (!User.IsAdmin() && notification.UserId != User.GetCurrentUserId())
+            {
+                return Forbid();
+            }
+
             await _notificationService.DeleteNotificationAsync(id);
             return NoContent();
         }

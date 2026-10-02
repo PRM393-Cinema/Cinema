@@ -12,6 +12,12 @@ namespace BookingService.Helpers
                    user.IsInRole("ROLE_STAFF");
         }
 
+        public static bool IsAdmin(this ClaimsPrincipal user)
+        {
+            return user.IsInRole("ADMIN") ||
+                   user.IsInRole("ROLE_ADMIN");
+        }
+
         public static long GetCurrentUserId(this ClaimsPrincipal user)
         {
             var value = user.FindFirstValue(ClaimTypes.NameIdentifier) ??

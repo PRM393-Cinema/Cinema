@@ -22,6 +22,7 @@ namespace MovieService.Exception
             var (statusCode, title) = exception switch
             {
                 NotFoundException => (StatusCodes.Status404NotFound, "Resource Not Found"),
+                ConflictException => (StatusCodes.Status409Conflict, "Conflict"),
                 BusinessException => (StatusCodes.Status400BadRequest, "Bad Request"),
                 _ => (StatusCodes.Status500InternalServerError, "Server Error")
             };
