@@ -183,7 +183,7 @@ Các connection string ở trên trỏ tới 6 database tạo từ repo **Projec
 ## 10. Chạy thử
 
 1. Thứ tự khởi động: **AuthService → MovieService → BookingService → ApiGateway** (profile `http` hay `https` đều được).
-2. Mở `http://localhost:5000/health` → thấy `Healthy` là gateway đã chạy.
+2. Mở `http://localhost:5000/health` → thấy `Healthy` là gateway đã chạy. Mở `http://localhost:5000/health/services` để xem từng service (và database của nó) có `Healthy` không.
 3. Flutter gọi qua gateway: `http://localhost:5000` (Android emulator dùng `http://10.0.2.2:5000`).
 4. Tài khoản seed (mật khẩu đều là `123456`, email đã xác thực sẵn):
 

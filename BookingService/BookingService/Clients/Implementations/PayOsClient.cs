@@ -1,11 +1,14 @@
 using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using BookingService.Configuration;
 using BookingService.Clients.Interfaces;
 using BookingService.Exceptions;
 using Microsoft.Extensions.Options;
+using Polly.CircuitBreaker;
+using Polly.Timeout;
 
 namespace BookingService.Clients.Implementations
 {
@@ -53,9 +56,7 @@ namespace BookingService.Clients.Implementations
 
             AddHeaders(request);
 
-            var response = await _httpClient.SendAsync(
-                request,
-                cancellationToken);
+            var response = await SendAsync(request, cancellationToken);
 
             var result = await ReadResponseAsync<PayOsCreateResponse>(
                 response,
@@ -87,9 +88,7 @@ namespace BookingService.Clients.Implementations
 
             AddHeaders(request);
 
-            var response = await _httpClient.SendAsync(
-                request,
-                cancellationToken);
+            var response = await SendAsync(request, cancellationToken);
 
             var result = await ReadResponseAsync<PayOsStatusResponse>(
                 response,
@@ -110,13 +109,45 @@ namespace BookingService.Clients.Implementations
             };
         }
 
+        private async Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                return await _httpClient.SendAsync(request, cancellationToken);
+            }
+            // Đã retry (với GET) mà vẫn lỗi kết nối / quá thời gian chờ, hoặc circuit breaker đang mở
+            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException
+                                           or TimeoutRejectedException or BrokenCircuitException)
+            {
+                throw new ServiceUnavailableException(
+                    "PayOS is temporarily unavailable. Please try again later.", ex);
+            }
+        }
+
         private async Task<T> ReadResponseAsync<T>(
             HttpResponseMessage response,
             CancellationToken cancellationToken)
             where T : PayOsResponse
         {
-            var result = await response.Content.ReadFromJsonAsync<T>(
-                cancellationToken: cancellationToken);
+            if ((int)response.StatusCode >= 500)
+            {
+                throw new ServiceUnavailableException(
+                    $"PayOS is temporarily unavailable (status {(int)response.StatusCode}). Please try again later.");
+            }
+
+            T? result = null;
+
+            try
+            {
+                result = await response.Content.ReadFromJsonAsync<T>(
+                    cancellationToken: cancellationToken);
+            }
+            catch (Exception ex) when (ex is JsonException or NotSupportedException)
+            {
+                // Phản hồi không phải JSON hợp lệ: báo lỗi phía PayOS ở dưới thay vì lỗi 500
+            }
 
             if (!response.IsSuccessStatusCode ||
                 result == null ||

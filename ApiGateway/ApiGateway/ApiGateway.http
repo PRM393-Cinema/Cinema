@@ -3,6 +3,9 @@
 ### Health check của gateway
 GET {{Gateway}}/health
 
+### Tình trạng từng service phía sau (Auth, Movie, Booking và database của chúng)
+GET {{Gateway}}/health/services
+
 ### Đăng nhập qua gateway (tài khoản seed: admin@cinema.com / 123456)
 POST {{Gateway}}/api/v1/auth/login
 Content-Type: application/json
