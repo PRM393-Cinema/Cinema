@@ -1,0 +1,47 @@
+# Build + chạy test tự động cho mỗi pull request vào dev / main (docs/TESTING.md)
+name: CI
+
+on:
+  pull_request:
+    branches: [dev, main]
+  push:
+    branches: [dev]
+
+jobs:
+  test:
+    name: Test ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [AuthService, MovieService, BookingService]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      # Test tích hợp tự bật PostgreSQL / RabbitMQ bằng Docker (có sẵn trên máy ảo ubuntu của GitHub)
+      - name: Test
+        run: dotnet test ${{ matrix.service }}/${{ matrix.service }}.sln --configuration Release --logger "trx;LogFileName=results.trx"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.service }}
+          path: ${{ matrix.service }}/**/TestResults/*.trx
+
+  build-gateway:
+    name: Build ApiGateway
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Build
+        run: dotnet build ApiGateway/ApiGateway.sln --configuration Release

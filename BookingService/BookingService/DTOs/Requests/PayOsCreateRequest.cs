@@ -7,7 +7,7 @@ namespace BookingService.DTOs.Requests
         [Required(ErrorMessage = "Booking id is required")]
         public long? BookingId { get; set; }
 
-        [Required(ErrorMessage = "User id is required")]
+        // Khách: server lấy từ token (không cần gửi). Staff/Admin tạo hộ khách thì bắt buộc gửi
         public long? UserId { get; set; }
 
         [Required(ErrorMessage = "Amount is required")]

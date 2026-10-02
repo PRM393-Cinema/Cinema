@@ -157,3 +157,6 @@ app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => fa
     .AllowAnonymous();
 
 app.Run();
+
+// Cho project test (WebApplicationFactory<Program>) dựng service trong bộ nhớ
+public partial class Program { }

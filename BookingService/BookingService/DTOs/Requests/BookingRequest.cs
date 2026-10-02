@@ -4,7 +4,7 @@ namespace BookingService.DTOs.Requests
 {
     public class BookingRequest
     {
-        [Required(ErrorMessage = "User id is required")]
+        // Khách: server lấy từ token (không cần gửi). Staff/Admin tạo hộ khách thì bắt buộc gửi
         public long? UserId { get; set; }
 
         [Required(ErrorMessage = "Showtime id is required")]
