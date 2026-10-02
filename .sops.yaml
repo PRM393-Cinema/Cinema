@@ -1,0 +1,7 @@
+# Cấu hình SOPS: ai có private key ứng với một public key dưới đây thì giải mã được secrets.enc.env.
+# Chỉ chứa PUBLIC key (không phải bí mật). Thêm thành viên: .\scripts\secrets.ps1 add-key <age1...>
+# Hướng dẫn: docs/SECRETS_SOPS.md
+creation_rules:
+  - path_regex: \.env$
+    age: >-
+      age18kq2wtfx530yda0hdvm8tl6kqe7353tytqktfgtkc3v3mpfxpgwqrmxyh5

@@ -12,7 +12,9 @@ Một lệnh chạy cả 5 thành phần: **PostgreSQL + AuthService + MovieServ
    └── Project-Cinema-DB/
    ```
    Nếu để chỗ khác thì khai báo `DB_SCRIPTS_DIR` trong `.env`.
-3. Trong thư mục `Cinema_BE`, tạo file `.env` từ mẫu rồi điền 2 giá trị bắt buộc:
+3. Tạo file `.env` trong thư mục `Cinema_BE`:
+   - **Đã được cấp quyền giải mã** ([SECRETS_SOPS.md](SECRETS_SOPS.md)): chạy `.\scripts\secrets.ps1 decrypt` là có `.env` đầy đủ, kể cả SMTP. Bỏ qua phần điền tay bên dưới.
+   - **Chưa được cấp quyền**: tạo từ mẫu rồi điền 2 giá trị bắt buộc:
    ```powershell
    Copy-Item .env.example .env
    ```

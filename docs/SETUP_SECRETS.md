@@ -6,6 +6,7 @@
 > - **JWT key phải giống hệt nhau** ở AuthService, MovieService, BookingService và ApiGateway (trên cùng một máy).
 > - Chạy bằng **Docker** thì không cần User Secrets — xem [DOCKER.md](DOCKER.md) (key đặt trong file `.env`).
 > - Gửi email OTP / xác nhận đặt vé bằng Gmail: xem [EMAIL_SETUP.md](EMAIL_SETUP.md).
+> - `.env` cho Docker được chia sẻ dạng mã hoá (`secrets.enc.env`): xem [SECRETS_SOPS.md](SECRETS_SOPS.md).
 
 ---
 
