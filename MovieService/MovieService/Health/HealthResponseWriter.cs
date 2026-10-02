@@ -16,7 +16,8 @@ namespace MovieService.Health
                     name = entry.Key,
                     status = entry.Value.Status.ToString(),
                     durationMs = (int)entry.Value.Duration.TotalMilliseconds,
-                    error = entry.Value.Status == HealthStatus.Healthy ? null : entry.Value.Description
+                    error = entry.Value.Status == HealthStatus.Healthy ? null : entry.Value.Description,
+                    data = entry.Value.Data.Count > 0 ? entry.Value.Data : null
                 })
             });
         }

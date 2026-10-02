@@ -1,6 +1,6 @@
 # Chạy toàn bộ backend bằng Docker
 
-Một lệnh chạy cả 5 thành phần: **PostgreSQL + AuthService + MovieService + BookingService + ApiGateway**. Không cần cài PostgreSQL, không cần cài User Secrets, không cần mở từng service trong Visual Studio.
+Một lệnh chạy cả 6 thành phần: **PostgreSQL + RabbitMQ + AuthService + MovieService + BookingService + ApiGateway**. Không cần cài PostgreSQL, không cần cài User Secrets, không cần mở từng service trong Visual Studio.
 
 ## 1. Chuẩn bị (làm một lần)
 
@@ -35,7 +35,7 @@ docker compose up -d --build
 ```
 
 - Lần đầu mất vài phút (tải image, build 4 service, tạo 6 database và nạp dữ liệu seed). Các lần sau nhanh hơn nhiều.
-- Kiểm tra trạng thái: `docker compose ps` — `postgres` phải là `healthy`, các service khác là `running`.
+- Kiểm tra trạng thái: `docker compose ps` — `postgres` và `rabbitmq` phải là `healthy`, các service khác là `running`.
 
 | Thành phần | Địa chỉ trên máy |
 |---|---|
@@ -44,6 +44,7 @@ docker compose up -d --build
 | Swagger MovieService | `http://localhost:5168/swagger` |
 | Swagger BookingService | `http://localhost:5063/swagger` |
 | PostgreSQL (pgAdmin/DBeaver) | `localhost:5433`, user `postgres`, mật khẩu = `POSTGRES_PASSWORD` trong `.env` |
+| RabbitMQ (trang quản lý) | `http://localhost:15672`, tài khoản `cinema` / `cinema` (event giữa các service: [MESSAGING.md](MESSAGING.md)) |
 | **Tình trạng cả hệ thống** | `http://localhost:5000/health/services` (từng service: `Healthy` / `Unhealthy`) |
 | Tình trạng một service | `http://localhost:5100/health` (5168, 5063 tương tự): chỉ ra database nào đang lỗi |
 
@@ -84,3 +85,5 @@ Tài khoản seed (mật khẩu `123456`): `admin@cinema.com`, `nhanvien1@cinema
 | Đổi `POSTGRES_PASSWORD` sau lần chạy đầu thì service không kết nối được DB | Mật khẩu chỉ được đặt lúc tạo volume → `docker compose down -v` rồi chạy lại |
 | AuthService lỗi `42703: column u.email_verified does not exist` / BookingService lỗi `column b.customer_email does not exist` | DB trong volume được tạo từ file SQL cũ → `docker compose down -v` rồi chạy lại (hoặc chạy file mới trong `Project-Cinema-DB/migrations`) |
 | Đăng ký xong không nhận được email OTP | Chưa cấu hình SMTP trong `.env` → lấy mã trong `docker compose logs auth-service`, hoặc cấu hình Gmail ([EMAIL_SETUP.md](EMAIL_SETUP.md)) |
+| Thanh toán xong không có email vé / huỷ vé không thấy hoàn tiền | Xem `http://localhost:5063/health`: `rabbitmq` phải `Healthy`. Event chưa gửi được thì nằm chờ, RabbitMQ chạy lại sẽ gửi bù ([MESSAGING.md](MESSAGING.md)) |
+| `relation "outbox_messages" does not exist` / `column ... payer_account_number does not exist` | DB tạo từ file SQL cũ → `docker compose down -v` rồi chạy lại (hoặc chạy các file `2026-10-02_*.sql` trong `Project-Cinema-DB/migrations`) |

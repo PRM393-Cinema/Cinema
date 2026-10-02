@@ -13,6 +13,13 @@ namespace BookingService.Repositories.Interfaces
 
         Task<Payment?> GetByIdAsync(long id);
 
+        Task<Payment?> GetByIdForUpdateAsync(long id);
+
+        Task<List<Payment>> GetByIdsAsync(List<long> ids);
+
+        // Payment mới nhất của booking có trạng thái thuộc danh sách (vd: SUCCESS, PENDING)
+        Task<Payment?> GetLatestByBookingIdAsync(long bookingId, params string[] statuses);
+
         Task<Payment?> GetByPaymentCodeAsync(string paymentCode);
 
         Task<PagedList<Payment>> GetByBookingIdAsync(

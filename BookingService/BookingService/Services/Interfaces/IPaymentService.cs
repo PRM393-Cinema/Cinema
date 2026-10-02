@@ -37,9 +37,9 @@ namespace BookingService.Services.Interfaces
             long id,
             string? recipientEmail);
 
-        Task<PaymentResponse> RefundPaymentAsync(
+        Task<RefundResponse> RefundPaymentAsync(
             long id,
-            string fallbackRecipientEmail);
+            string? reason);
 
         Task<PayOsCheckoutResponse> CreatePayOsPaymentAsync(
             PayOsCreateRequest request);
@@ -52,7 +52,7 @@ namespace BookingService.Services.Interfaces
         // PayOS gọi về khi khách thanh toán xong (FR-PAY-07): kiểm tra chữ ký rồi mới cập nhật payment
         Task<PayOsWebhookResult> HandlePayOsWebhookAsync(JsonElement body);
 
-        // Booking hết hạn giữ ghế: payment còn PENDING -> FAILED
-        Task MarkUnpaidPaymentFailedAsync(long paymentId);
+        // Booking hết hạn / bị huỷ khi chưa thanh toán: payment còn PENDING -> FAILED
+        Task FailUnpaidPaymentsOfBookingAsync(long bookingId, string reason, bool cancelPayOsLink);
     }
 }

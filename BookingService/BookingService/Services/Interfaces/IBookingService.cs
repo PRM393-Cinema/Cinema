@@ -53,9 +53,19 @@ namespace BookingService.Services.Interfaces
             long id,
             string? recipientEmail);
 
+        /// <summary>
+        /// Khách huỷ booking chưa thanh toán, hoặc booking đã thanh toán khi còn đủ thời gian trước giờ chiếu.
+        /// Staff/Admin (manager) huỷ được mọi lúc. Booking đã thanh toán được hoàn tiền qua event booking.cancelled.
+        /// </summary>
         Task<BookingResponse> CancelBookingAsync(
             long id,
-            bool manager);
+            bool manager,
+            string? reason = null);
+
+        /// <summary>
+        /// Suất chiếu bị huỷ: huỷ mọi booking PENDING / CONFIRMED của suất đó. Trả về số booking đã huỷ.
+        /// </summary>
+        Task<int> CancelBookingsOfShowtimeAsync(long showtimeId, string reason);
 
         /// <summary>
         /// Khách huỷ thanh toán trên PayOS: huỷ booking còn PENDING để nhả ghế.

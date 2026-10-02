@@ -114,6 +114,27 @@ namespace BookingService.Clients.Implementations
             };
         }
 
+        public async Task CancelPaymentLinkAsync(
+            long orderCode,
+            string reason,
+            CancellationToken cancellationToken = default)
+        {
+            EnsureConfigured();
+
+            using var request = new HttpRequestMessage(
+                HttpMethod.Post,
+                $"v2/payment-requests/{orderCode}/cancel")
+            {
+                Content = JsonContent.Create(new { cancellationReason = reason })
+            };
+
+            AddHeaders(request);
+
+            var response = await SendAsync(request, cancellationToken);
+
+            await ReadResponseAsync<PayOsStatusResponse>(response, cancellationToken);
+        }
+
         private async Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request,
             CancellationToken cancellationToken)

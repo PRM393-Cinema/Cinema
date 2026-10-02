@@ -38,6 +38,36 @@ namespace BookingService.Repositories.Impl
                 .FirstOrDefaultAsync(p => p.Id == id);
         }
 
+        // FOR UPDATE: khoá dòng payment tới hết transaction
+        public async Task<Payment?> GetByIdForUpdateAsync(long id)
+        {
+            return await _context.Payments
+                .FromSqlInterpolated($@"
+            SELECT *
+            FROM payments
+            WHERE id = {id}
+            FOR UPDATE")
+                .AsTracking()
+                .FirstOrDefaultAsync();
+        }
+
+        public async Task<List<Payment>> GetByIdsAsync(List<long> ids)
+        {
+            return await _context.Payments
+                .Where(p => ids.Contains(p.Id))
+                .ToListAsync();
+        }
+
+        public async Task<Payment?> GetLatestByBookingIdAsync(
+            long bookingId,
+            params string[] statuses)
+        {
+            return await _context.Payments
+                .Where(p => p.BookingId == bookingId && statuses.Contains(p.Status))
+                .OrderByDescending(p => p.Id)
+                .FirstOrDefaultAsync();
+        }
+
         public async Task<Payment?> GetByPaymentCodeAsync(
             string paymentCode)
         {

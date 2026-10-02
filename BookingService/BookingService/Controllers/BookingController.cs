@@ -149,9 +149,13 @@ namespace BookingService.Controllers
             return Ok(result);
         }
 
+        // Khách: huỷ booking chưa thanh toán, hoặc booking đã thanh toán khi còn ít nhất 2 giờ trước giờ chiếu
+        // (hoàn 100%). Staff/Admin huỷ được mọi lúc. Đã thanh toán thì yêu cầu hoàn tiền được tạo tự động.
         [HttpPost("{id:long}/cancel")]
         [Authorize(Policy = AuthorizationPolicies.UserOrStaff)]
-        public async Task<ActionResult<BookingResponse>> Cancel(long id)
+        public async Task<ActionResult<BookingResponse>> Cancel(
+            long id,
+            [FromQuery] string? reason = null)
         {
             var existingBooking = await _bookingService.GetBookingByIdAsync(id);
             var manager = User.IsStaffOrAdmin();
@@ -162,7 +166,7 @@ namespace BookingService.Controllers
             }
 
             var result = await _bookingService.CancelBookingAsync(
-                id, manager);
+                id, manager, reason);
 
             return Ok(result);
         }

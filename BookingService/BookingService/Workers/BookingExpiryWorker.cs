@@ -4,8 +4,8 @@ using Microsoft.Extensions.Options;
 
 namespace BookingService.Workers
 {
-    // Chạy nền: booking PENDING quá hạn giữ ghế (10 phút) -> EXPIRED, nhả ghế cho người khác đặt,
-    // payment PayOS còn PENDING của booking đó -> FAILED (link PayOS cũng hết hạn cùng lúc).
+    // Chạy nền: booking PENDING quá hạn giữ ghế (10 phút) -> EXPIRED, nhả ghế cho người khác đặt.
+    // Event booking.expired báo cho phía payment (payment PENDING -> FAILED) và gửi email cho khách.
     public sealed class BookingExpiryWorker : BackgroundService
     {
         private readonly IServiceScopeFactory _scopeFactory;
@@ -53,15 +53,9 @@ namespace BookingService.Workers
             {
                 using var scope = _scopeFactory.CreateScope();
                 var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
-                var paymentService = scope.ServiceProvider.GetRequiredService<IPaymentService>();
 
                 var expired = await bookingService.ExpireOverdueBookingsAsync(
                     Math.Max(1, _options.BatchSize));
-
-                foreach (var booking in expired.Where(booking => booking.PaymentId.HasValue))
-                {
-                    await paymentService.MarkUnpaidPaymentFailedAsync(booking.PaymentId!.Value);
-                }
 
                 if (expired.Count > 0)
                 {

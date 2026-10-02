@@ -1,5 +1,7 @@
 ﻿using MovieService.Exception;
 using MovieService.Helpers;
+using MovieService.Messaging;
+using ShowtimeService.Data;
 using ShowtimeService.DTOs.Request;
 using ShowtimeService.DTOs.Response;
 using ShowtimeService.Extensions;
@@ -18,13 +20,16 @@ namespace ShowtimeService.Service.Impl
 
         private readonly IShowtimeRepository _showtimeRepository;
         private readonly ISeatRepository _seatRepository;
+        private readonly OutboxWriter<ShowtimeDbContext> _outbox;
 
         public ShowtimeService(
             IShowtimeRepository showtimeRepository,
-            ISeatRepository seatRepository)
+            ISeatRepository seatRepository,
+            OutboxWriter<ShowtimeDbContext> outbox)
         {
             _showtimeRepository = showtimeRepository;
             _seatRepository = seatRepository;
+            _outbox = outbox;
         }
 
         // ======= GET SEATS FOR BOOKING (BookingService gọi sang) =======
@@ -201,7 +206,8 @@ namespace ShowtimeService.Service.Impl
             return updatedShowtime?.ToResponse();
         }
 
-        // FR-SHOW-05: huỷ suất chiếu = chuyển sang CANCELLED, không xoá khỏi DB vì booking vẫn trỏ tới suất chiếu này
+        // FR-SHOW-05: huỷ suất chiếu = chuyển sang CANCELLED, không xoá khỏi DB vì booking vẫn trỏ tới suất chiếu này.
+        // Event showtime.cancelled lưu cùng lần cập nhật trạng thái (outbox): BookingService huỷ booking và hoàn tiền.
         public async Task<ShowtimeResponse> CancelShowtimeAsync(
             long showtimeId)
         {
@@ -215,6 +221,16 @@ namespace ShowtimeService.Service.Impl
                     $"Showtime with ID {showtimeId} has already ended and cannot be cancelled.");
             }
 
+            _outbox.Add(EventTypes.ShowtimeCancelled, new ShowtimeCancelledEventData
+            {
+                ShowtimeId = existingShowtime.Id,
+                MovieId = existingShowtime.MovieId,
+                RoomId = existingShowtime.RoomId,
+                StartTime = existingShowtime.StartTime,
+                EndTime = existingShowtime.EndTime
+            });
+
+            // Cùng một DbContext: SaveChanges lưu trạng thái CANCELLED và event trong một transaction
             var cancelled = await _showtimeRepository
                 .UpdateStatusAsync(showtimeId, Cancelled);
 

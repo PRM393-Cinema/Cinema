@@ -10,6 +10,7 @@ using MovieService.Configuration;
 using MovieService.Data;
 using MovieService.Exception;
 using MovieService.Health;
+using MovieService.Messaging;
 using MovieService.Repository.Impl;
 using MovieService.Repository.Interface;
 using MovieService.Service.Interface;
@@ -43,6 +44,11 @@ builder.Services.AddScoped<IShowtimeService, ShowtimeService.Service.Impl.Showti
 builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<ISeatService, SeatService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+//====== RABBITMQ: huỷ suất chiếu phát event showtime.cancelled qua outbox (docs/MESSAGING.md) ======
+builder.Services
+    .AddRabbitMqMessaging(builder.Configuration)
+    .AddOutboxPublisher<ShowtimeDbContext>(builder.Configuration);
 
 //====== JWT: tự kiểm tra token do AuthService cấp (lớp bảo vệ thứ hai, phòng khi gọi thẳng vào service, bỏ qua gateway) ======
 var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()
@@ -90,7 +96,9 @@ builder.Services.AddAuthorization(options =>
 //====== HEALTH CHECK ======
 builder.Services.AddHealthChecks()
     .AddCheck<DbContextHealthCheck<MovieDbContext>>("movie-db", timeout: TimeSpan.FromSeconds(5))
-    .AddCheck<DbContextHealthCheck<ShowtimeDbContext>>("showtime-db", timeout: TimeSpan.FromSeconds(5));
+    .AddCheck<DbContextHealthCheck<ShowtimeDbContext>>("showtime-db", timeout: TimeSpan.FromSeconds(5))
+    // RabbitMQ dừng chỉ báo Degraded: event chờ trong outbox
+    .AddCheck<RabbitMqHealthCheck>("rabbitmq", timeout: TimeSpan.FromSeconds(5));
 
 // Add services to the container.
 
