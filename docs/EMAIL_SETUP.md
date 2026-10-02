@@ -42,7 +42,7 @@ Hai service dùng chung **một tài khoản Gmail** với cùng bộ key `Smtp:
 
 ### Chạy bằng Docker
 
-Sửa file `.env` trong thư mục `Cinema_BE`:
+Đã được cấp quyền giải mã `secrets.enc.env` ([SECRETS_SOPS.md](SECRETS_SOPS.md)) thì chạy `.\scripts\secrets.ps1 decrypt` là có sẵn SMTP, không cần xin App Password. Nếu không, sửa file `.env` trong thư mục `Cinema_BE`:
 
 ```
 SMTP_HOST=smtp.gmail.com

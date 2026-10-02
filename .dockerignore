@@ -10,3 +10,6 @@
 docs
 docker
 *.md
+secrets.enc.env
+.sops.yaml
+scripts

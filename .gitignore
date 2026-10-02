@@ -86,6 +86,9 @@ PublishScripts/
 *.pfx
 *.key
 .env
+.env.bak
+# Private key của age (SOPS): không bao giờ commit
+keys.txt
 
 ## Hệ điều hành
 Thumbs.db

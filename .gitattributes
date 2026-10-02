@@ -1,2 +1,4 @@
 # Script chạy trong container Linux phải giữ xuống dòng LF, kể cả khi checkout trên Windows
 *.sh text eol=lf
+# File .env đã mã hoá bằng SOPS: giữ LF để mọi máy giải mã giống nhau
+secrets.enc.env text eol=lf
