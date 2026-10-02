@@ -44,10 +44,18 @@ docker compose up -d --build
 | Swagger MovieService | `http://localhost:5168/swagger` |
 | Swagger BookingService | `http://localhost:5063/swagger` |
 | PostgreSQL (pgAdmin/DBeaver) | `localhost:5433`, user `postgres`, mật khẩu = `POSTGRES_PASSWORD` trong `.env` |
+| **Tình trạng cả hệ thống** | `http://localhost:5000/health/services` (từng service: `Healthy` / `Unhealthy`) |
+| Tình trạng một service | `http://localhost:5100/health` (5168, 5063 tương tự): chỉ ra database nào đang lỗi |
 
 > Chỉ **gateway** mở cho máy khác trong mạng. Các service và PostgreSQL chỉ nghe ở `127.0.0.1`: trên máy mình vẫn mở Swagger/pgAdmin bình thường, còn máy khác cùng wifi không gọi thẳng vào được (phải đi qua gateway, nơi kiểm tra quyền và giới hạn số request).
 
 Tài khoản seed (mật khẩu `123456`): `admin@cinema.com`, `nhanvien1@cinema.com`, `khachhang1@gmail.com`.
+
+**Khi một service lỗi** (retry + circuit breaker, SRS §13.2):
+- BookingService gọi MovieService/PayOS: lỗi tạm thời thì **tự thử lại** tối đa 2 lần. Riêng lệnh tạo link PayOS không thử lại, để tránh tạo trùng.
+- Lỗi liên tục: **circuit breaker mở 15 giây**, API trả **503** ngay ("... temporarily unavailable. Please try again later.") thay vì để người dùng chờ timeout. Hết 15 giây thì thử lại một request, thành công thì hoạt động bình thường.
+- Gateway kiểm tra `/health/live` của từng service mỗi 10 giây. Service chết thì gateway trả 503 ngay, service sống lại thì tự định tuyến lại.
+- Flutter: gặp **503** thì báo "Hệ thống đang bận, vui lòng thử lại sau", không cần xử lý gì thêm.
 
 ## 3. Các lệnh hay dùng
 

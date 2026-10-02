@@ -2,9 +2,11 @@ using System.Text;
 using AuthService.Configuration;
 using AuthService.Data;
 using AuthService.Exception;
+using AuthService.Health;
 using AuthService.Repository;
 using AuthService.Service;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -67,6 +69,10 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IOtpService, OtpService>();
 builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
 builder.Services.AddScoped<IAuthService, AuthService.Service.AuthService>();
+
+//====== HEALTH CHECK ======
+builder.Services.AddHealthChecks()
+    .AddCheck<DbContextHealthCheck<AuthDbContext>>("auth-db", timeout: TimeSpan.FromSeconds(5));
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -142,5 +148,11 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// /health: kiểm tra kết nối database. /health/live: chỉ báo tiến trình còn chạy (gateway dùng để biết service sống hay chết)
+app.MapHealthChecks("/health", new HealthCheckOptions { ResponseWriter = HealthResponseWriter.WriteAsync })
+    .AllowAnonymous();
+app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false, ResponseWriter = HealthResponseWriter.WriteAsync })
+    .AllowAnonymous();
 
 app.Run();

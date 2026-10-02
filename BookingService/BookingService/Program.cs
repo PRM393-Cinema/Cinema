@@ -5,6 +5,7 @@ using BookingService.Clients.Implementations;
 using BookingService.Clients.Interfaces;
 using BookingService.Configuration;
 using BookingService.Exceptions;
+using BookingService.Health;
 using BookingService.Helpers;
 using BookingService.Repositories.Impl;
 using BookingService.Repositories.Interfaces;
@@ -12,6 +13,9 @@ using BookingService.Services.Implementations;
 using BookingService.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Http.Resilience;
+using Polly;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
@@ -114,7 +118,20 @@ builder.Services.AddHttpClient<IShowtimeClient, ShowtimeClient>(client =>
 
     client.BaseAddress = new Uri(baseUrl);
 })
-.AddHttpMessageHandler<ForwardAuthorizationHandler>();
+.AddHttpMessageHandler<ForwardAuthorizationHandler>()
+// Retry + Circuit Breaker + timeout (SRS §13.2). Lời gọi lấy giá ghế chỉ đọc dữ liệu nên retry an toàn.
+// Lỗi liên tục: circuit mở 15 giây, trả 503 ngay thay vì chờ từng request bị timeout.
+.AddStandardResilienceHandler(options =>
+{
+    options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(12);
+    options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(3);
+    options.Retry.MaxRetryAttempts = 2;
+    options.Retry.Delay = TimeSpan.FromMilliseconds(300);
+    options.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(30);
+    options.CircuitBreaker.MinimumThroughput = 5;
+    options.CircuitBreaker.FailureRatio = 0.5;
+    options.CircuitBreaker.BreakDuration = TimeSpan.FromSeconds(15);
+});
 
 builder.Services.AddHttpClient<IPayOsClient, PayOsClient>(client =>
 {
@@ -127,6 +144,22 @@ builder.Services.AddHttpClient<IPayOsClient, PayOsClient>(client =>
     }
 
     client.BaseAddress = new Uri(baseUrl);
+})
+// PayOS: chỉ retry lời gọi đọc (GET trạng thái thanh toán). Tạo link thanh toán (POST) không retry,
+// vì lần đầu có thể đã thành công phía PayOS dù mình không nhận được phản hồi.
+.AddStandardResilienceHandler(options =>
+{
+    options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(20);
+    options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(8);
+    options.Retry.MaxRetryAttempts = 2;
+    options.Retry.Delay = TimeSpan.FromMilliseconds(500);
+    options.Retry.ShouldHandle = args => ValueTask.FromResult(
+        args.Context.GetRequestMessage()?.Method == HttpMethod.Get &&
+        HttpClientResiliencePredicates.IsTransient(args.Outcome));
+    options.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(30);
+    options.CircuitBreaker.MinimumThroughput = 5;
+    options.CircuitBreaker.FailureRatio = 0.5;
+    options.CircuitBreaker.BreakDuration = TimeSpan.FromSeconds(15);
 });
 
 builder.Services.AddScoped<IBookingRepository, BookingRepository>();
@@ -139,6 +172,11 @@ builder.Services.AddScoped<IBookingService, BookingService.Services.Implementati
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 
+//====== HEALTH CHECK ======
+builder.Services.AddHealthChecks()
+    .AddCheck<DbContextHealthCheck<BookingDbContext>>("booking-db", timeout: TimeSpan.FromSeconds(5))
+    .AddCheck<DbContextHealthCheck<PaymentDbContext>>("payment-db", timeout: TimeSpan.FromSeconds(5))
+    .AddCheck<DbContextHealthCheck<NotificationDbContext>>("notification-db", timeout: TimeSpan.FromSeconds(5));
 
 builder.Services.AddControllers();
 
@@ -221,5 +259,11 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// /health: kiểm tra kết nối database. /health/live: chỉ báo tiến trình còn chạy (gateway dùng để biết service sống hay chết)
+app.MapHealthChecks("/health", new HealthCheckOptions { ResponseWriter = HealthResponseWriter.WriteAsync })
+    .AllowAnonymous();
+app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false, ResponseWriter = HealthResponseWriter.WriteAsync })
+    .AllowAnonymous();
 
 app.Run();

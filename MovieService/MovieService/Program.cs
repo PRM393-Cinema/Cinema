@@ -2,12 +2,14 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using MovieService.Configuration;
 using MovieService.Data;
 using MovieService.Exception;
+using MovieService.Health;
 using MovieService.Repository.Impl;
 using MovieService.Repository.Interface;
 using MovieService.Service.Interface;
@@ -84,6 +86,11 @@ builder.Services.AddAuthorization(options =>
         .RequireAuthenticatedUser()
         .Build();
 });
+
+//====== HEALTH CHECK ======
+builder.Services.AddHealthChecks()
+    .AddCheck<DbContextHealthCheck<MovieDbContext>>("movie-db", timeout: TimeSpan.FromSeconds(5))
+    .AddCheck<DbContextHealthCheck<ShowtimeDbContext>>("showtime-db", timeout: TimeSpan.FromSeconds(5));
 
 // Add services to the container.
 
@@ -167,5 +174,12 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// /health: kiểm tra kết nối database. /health/live: chỉ báo tiến trình còn chạy (gateway dùng để biết service sống hay chết).
+// AllowAnonymous vì mặc định mọi endpoint của MovieService đều cần đăng nhập.
+app.MapHealthChecks("/health", new HealthCheckOptions { ResponseWriter = HealthResponseWriter.WriteAsync })
+    .AllowAnonymous();
+app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false, ResponseWriter = HealthResponseWriter.WriteAsync })
+    .AllowAnonymous();
 
 app.Run();

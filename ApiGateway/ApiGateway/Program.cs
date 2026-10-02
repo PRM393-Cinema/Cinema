@@ -2,9 +2,12 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.RateLimiting;
 using ApiGateway.Configuration;
+using ApiGateway.Health;
 using ApiGateway.Helpers;
 using ApiGateway.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using Yarp.ReverseProxy.Forwarder;
 
@@ -124,7 +127,32 @@ builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
         .WithExposedHeaders(CorrelationIdMiddleware.HeaderName, "Retry-After");
 }));
 
-builder.Services.AddHealthChecks();
+//====== HEALTH CHECK ======
+// /health: gateway còn chạy. /health/services: gọi /health của từng service trong ReverseProxy:Clusters
+// (địa chỉ lấy từ cấu hình nên Docker ghi đè bằng biến môi trường vẫn đúng)
+const string servicesTag = "services";
+builder.Services.AddHttpClient(DownstreamHealthCheck.HttpClientName);
+var healthChecks = builder.Services.AddHealthChecks();
+
+foreach (var cluster in builder.Configuration.GetSection("ReverseProxy:Clusters").GetChildren())
+{
+    var address = cluster.GetSection("Destinations").GetChildren()
+        .Select(destination => destination["Address"])
+        .FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));
+
+    if (address is null)
+    {
+        continue;
+    }
+
+    var healthUri = new Uri(new Uri(address), "health");
+    healthChecks.Add(new HealthCheckRegistration(
+        cluster.Key,
+        services => new DownstreamHealthCheck(services.GetRequiredService<IHttpClientFactory>(), healthUri),
+        failureStatus: null,
+        tags: new[] { servicesTag },
+        timeout: TimeSpan.FromSeconds(5)));
+}
 
 //====== REVERSE PROXY (YARP): route + cluster đọc từ ReverseProxy trong appsettings.json ======
 builder.Services.AddReverseProxy()
@@ -138,8 +166,13 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapGet("/", () => Results.Ok(new { service = "Cinema API Gateway", health = "/health" }));
-app.MapHealthChecks("/health");
+app.MapGet("/", () => Results.Ok(new { service = "Cinema API Gateway", health = "/health", services = "/health/services" }));
+app.MapHealthChecks("/health", new HealthCheckOptions { Predicate = _ => false });
+app.MapHealthChecks("/health/services", new HealthCheckOptions
+{
+    Predicate = registration => registration.Tags.Contains(servicesTag),
+    ResponseWriter = HealthResponseWriter.WriteAsync
+});
 
 app.MapReverseProxy(proxyPipeline =>
 {

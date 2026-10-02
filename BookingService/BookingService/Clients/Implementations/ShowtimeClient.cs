@@ -3,6 +3,8 @@ using System.Net.Http.Json;
 using BookingService.Clients.Interfaces;
 using BookingService.Exceptions;
 using Microsoft.AspNetCore.Mvc;
+using Polly.CircuitBreaker;
+using Polly.Timeout;
 
 namespace BookingService.Clients.Implementations;
 
@@ -27,10 +29,12 @@ public class ShowtimeClient : IShowtimeClient
                 $"api/showtimes/{showtimeId}/seats",
                 seatIds);
         }
-        catch (System.Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+        // Đã retry mà vẫn lỗi kết nối / quá thời gian chờ, hoặc circuit breaker đang mở
+        catch (System.Exception ex) when (ex is HttpRequestException or TaskCanceledException
+                                              or TimeoutRejectedException or BrokenCircuitException)
         {
-            throw new ExternalServiceException(
-                "Showtime service is unavailable. Please try again later.");
+            throw new ServiceUnavailableException(
+                "Showtime service is temporarily unavailable. Please try again later.", ex);
         }
 
         if (response.IsSuccessStatusCode)
@@ -51,6 +55,8 @@ public class ShowtimeClient : IShowtimeClient
                 detail ?? $"Showtime with ID {showtimeId} was not found."),
             HttpStatusCode.BadRequest => new BusinessException(
                 detail ?? "One or more selected seats are invalid for this showtime."),
+            HttpStatusCode.ServiceUnavailable => new ServiceUnavailableException(
+                "Showtime service is temporarily unavailable. Please try again later."),
             HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden => new ExternalServiceException(
                 $"Showtime service rejected the request ({(int)response.StatusCode}). " +
                 "Check that Jwt:SecretKey is the same in MovieService and BookingService."),

@@ -23,6 +23,8 @@ namespace BookingService.Exceptions
             {
                 NotFoundException or KeyNotFoundException =>
                     (StatusCodes.Status404NotFound, "Resource Not Found"),
+                ServiceUnavailableException =>
+                    (StatusCodes.Status503ServiceUnavailable, "Service Unavailable"),
                 ExternalServiceException =>
                     (StatusCodes.Status502BadGateway, "External Service Error"),
                 BusinessException or ArgumentException or InvalidOperationException =>
