@@ -49,7 +49,7 @@ docker compose up -d --build
 
 > Chỉ **gateway** mở cho máy khác trong mạng. Các service và PostgreSQL chỉ nghe ở `127.0.0.1`: trên máy mình vẫn mở Swagger/pgAdmin bình thường, còn máy khác cùng wifi không gọi thẳng vào được (phải đi qua gateway, nơi kiểm tra quyền và giới hạn số request).
 
-Tài khoản seed (mật khẩu `123456`): `admin@cinema.com`, `nhanvien1@cinema.com`, `khachhang1@gmail.com`.
+Tài khoản seed (mật khẩu `123456`): `admin@cinema.com`, `nhanvien1@cinema.com`, `khachhang1@gmail.com`. Cần thêm tài khoản Staff/Admin thì đăng nhập admin rồi gọi `POST /api/v1/auth/users` (ví dụ trong `ApiGateway.http`).
 
 **Khi một service lỗi** (retry + circuit breaker, SRS §13.2):
 - BookingService gọi MovieService/PayOS: lỗi tạm thời thì **tự thử lại** tối đa 2 lần. Riêng lệnh tạo link PayOS không thử lại, để tránh tạo trùng.

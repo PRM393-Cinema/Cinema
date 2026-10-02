@@ -69,6 +69,7 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IOtpService, OtpService>();
 builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
 builder.Services.AddScoped<IAuthService, AuthService.Service.AuthService>();
+builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 
 //====== HEALTH CHECK ======
 builder.Services.AddHealthChecks()

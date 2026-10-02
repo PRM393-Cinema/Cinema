@@ -22,7 +22,5 @@ namespace AuthService.Service
         Task LogoutAsync(string refreshToken);
 
         Task<UserResponse> GetCurrentUserAsync(long userId);
-
-        Task<List<UserResponse>> GetAllUsersAsync();
     }
 }
