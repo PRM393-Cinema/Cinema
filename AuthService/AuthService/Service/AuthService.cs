@@ -240,6 +240,12 @@ namespace AuthService.Service
                 throw new UnauthorizedException("Không tìm thấy người dùng gắn với refresh token.");
             }
 
+            // Tài khoản bị admin khoá thì không được cấp token mới
+            if (!stored.User.Enabled)
+            {
+                throw new UnauthorizedException("Tài khoản đã bị vô hiệu hóa.");
+            }
+
             // Thu hồi token cũ và cấp cặp token mới (rotation)
             stored.Revoked = true;
 
@@ -267,13 +273,6 @@ namespace AuthService.Service
                 ?? throw new NotFoundException($"Không tìm thấy người dùng với ID {userId}.");
 
             return user.ToResponse();
-        }
-
-        // ======= GET ALL USERS (ADMIN) =======
-        public async Task<List<UserResponse>> GetAllUsersAsync()
-        {
-            var users = await _userRepository.GetAllAsync();
-            return users.Select(u => u.ToResponse()).ToList();
         }
 
         // ======= HELPER: tạo access token + refresh token và lưu lại =======

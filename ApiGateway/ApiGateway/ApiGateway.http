@@ -98,3 +98,20 @@ Authorization: Bearer <access_token_khach>
 ### Staff/Admin xác nhận tay tại quầy (khách trả tiền mặt) — khách gọi sẽ bị 403
 POST {{Gateway}}/api/v1/bookings/1/confirm?paymentMethod=CASH&recipientEmail=khachhang1@gmail.com
 Authorization: Bearer <access_token_staff>
+
+### ----- Admin quản lý user (chỉ ROLE_ADMIN, chi tiết xem AuthService.http) -----
+### Danh sách nhân viên đang hoạt động
+GET {{Gateway}}/api/v1/auth/users?role=staff&enabled=true&page=1&size=10
+Authorization: Bearer <access_token_admin>
+
+### Tạo tài khoản nhân viên
+POST {{Gateway}}/api/v1/auth/users
+Content-Type: application/json
+Authorization: Bearer <access_token_admin>
+
+{
+  "email": "nhanvien2@cinema.com",
+  "password": "123456",
+  "fullName": "Nhân Viên Hai",
+  "roles": ["ROLE_STAFF"]
+}

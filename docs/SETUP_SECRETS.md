@@ -192,3 +192,5 @@ Các connection string ở trên trỏ tới 6 database tạo từ repo **Projec
 | `admin@cinema.com` | ROLE_ADMIN |
 | `nhanvien1@cinema.com` | ROLE_STAFF |
 | `khachhang1@gmail.com` | ROLE_CUSTOMER |
+
+Tạo thêm tài khoản Staff/Admin, đổi role, khoá tài khoản: đăng nhập `admin@cinema.com` rồi dùng các API `/api/v1/auth/users` (chỉ Admin, ví dụ trong `AuthService/AuthService/AuthService.http`).
