@@ -1,0 +1,28 @@
+# Prometheus đọc metrics của từng service mỗi 15 giây (docs/MONITORING.md)
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # Gateway trả /metrics ở cổng nội bộ 9464 (cổng 8080 mở ra LAN không có /metrics)
+  - job_name: api-gateway
+    static_configs:
+      - targets: ["api-gateway:9464"]
+
+  - job_name: auth-service
+    static_configs:
+      - targets: ["auth-service:8080"]
+
+  - job_name: movie-service
+    static_configs:
+      - targets: ["movie-service:8080"]
+
+  - job_name: booking-service
+    static_configs:
+      - targets: ["booking-service:8080"]
+
+  # Plugin rabbitmq_prometheus có sẵn trong image: số message đang chờ theo từng queue
+  - job_name: rabbitmq
+    metrics_path: /metrics/per-object
+    static_configs:
+      - targets: ["rabbitmq:15692"]

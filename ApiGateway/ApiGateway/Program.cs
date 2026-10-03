@@ -5,6 +5,7 @@ using ApiGateway.Configuration;
 using ApiGateway.Health;
 using ApiGateway.Helpers;
 using ApiGateway.Middleware;
+using ApiGateway.Observability;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -155,6 +156,9 @@ foreach (var cluster in builder.Configuration.GetSection("ReverseProxy:Clusters"
 }
 
 //====== REVERSE PROXY (YARP): route + cluster đọc từ ReverseProxy trong appsettings.json ======
+//====== GIÁM SÁT: metrics cho Prometheus (/metrics) + tracing gửi Jaeger, xem docs/MONITORING.md ======
+builder.AddObservability("api-gateway");
+
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
 
@@ -168,6 +172,7 @@ app.UseAuthorization();
 
 app.MapGet("/", () => Results.Ok(new { service = "Cinema API Gateway", health = "/health", services = "/health/services" }));
 app.MapHealthChecks("/health", new HealthCheckOptions { Predicate = _ => false });
+app.MapObservability();
 app.MapHealthChecks("/health/services", new HealthCheckOptions
 {
     Predicate = registration => registration.Tags.Contains(servicesTag),

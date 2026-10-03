@@ -26,6 +26,9 @@ namespace ApiGateway.Middleware
 
             context.Items[ItemKey] = correlationId;
 
+            // Gắn vào span của trace: tìm trong Jaeger theo tag correlation.id
+            System.Diagnostics.Activity.Current?.SetTag("correlation.id", correlationId);
+
             // Header này được YARP chuyển tiếp nguyên vẹn xuống service phía sau
             context.Request.Headers[HeaderName] = correlationId;
 
@@ -35,7 +38,8 @@ namespace ApiGateway.Middleware
                 return Task.CompletedTask;
             });
 
-            using (_logger.BeginScope(new Dictionary<string, object> { [ItemKey] = correlationId }))
+            // Scope dạng message template: log thường in "CorrelationId:abc", log JSON có thuộc tính CorrelationId
+            using (_logger.BeginScope("CorrelationId:{CorrelationId}", correlationId))
             {
                 await _next(context);
             }

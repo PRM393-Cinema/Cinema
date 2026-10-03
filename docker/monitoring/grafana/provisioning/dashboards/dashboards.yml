@@ -1,0 +1,11 @@
+# Nạp các dashboard JSON trong docker/monitoring/grafana/dashboards (mount vào /etc/grafana/dashboards)
+# vào thư mục "Cinema". Sửa dashboard trên Grafana xong muốn giữ lại: Export JSON rồi ghi đè file trong repo
+apiVersion: 1
+
+providers:
+  - name: cinema
+    folder: Cinema
+    type: file
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/dashboards

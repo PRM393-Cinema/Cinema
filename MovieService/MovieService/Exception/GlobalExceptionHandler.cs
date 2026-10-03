@@ -17,8 +17,6 @@ namespace MovieService.Exception
             System.Exception exception,
             CancellationToken cancellationToken)
         {
-            _logger.LogError(exception, "An unhandled exception occurred: {Message}", exception.Message);
-
             var (statusCode, title) = exception switch
             {
                 NotFoundException => (StatusCodes.Status404NotFound, "Resource Not Found"),
@@ -26,6 +24,18 @@ namespace MovieService.Exception
                 BusinessException => (StatusCodes.Status400BadRequest, "Bad Request"),
                 _ => (StatusCodes.Status500InternalServerError, "Server Error")
             };
+
+            // Lỗi nghiệp vụ (4xx) chỉ ghi cảnh báo; lỗi hệ thống (5xx) ghi kèm stack trace
+            if (statusCode >= StatusCodes.Status500InternalServerError)
+            {
+                _logger.LogError(exception, "Request {Method} {Path} failed: {Message}",
+                    httpContext.Request.Method, httpContext.Request.Path, exception.Message);
+            }
+            else
+            {
+                _logger.LogWarning("Request {Method} {Path} returned {StatusCode}: {Message}",
+                    httpContext.Request.Method, httpContext.Request.Path, statusCode, exception.Message);
+            }
 
             var problemDetails = new ProblemDetails
             {

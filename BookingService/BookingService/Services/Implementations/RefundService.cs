@@ -5,6 +5,7 @@ using BookingService.Helpers;
 using BookingService.Mapping;
 using BookingService.Messaging;
 using BookingService.Models;
+using BookingService.Observability;
 using BookingService.Repositories.Interfaces;
 using BookingService.Services.Interfaces;
 
@@ -16,6 +17,7 @@ namespace BookingService.Services.Implementations
         private readonly IPaymentRepository _paymentRepository;
         private readonly IBookingRepository _bookingRepository;
         private readonly OutboxWriter<PaymentDbContext> _outbox;
+        private readonly BookingMetrics _metrics;
         private readonly ILogger<RefundService> _logger;
 
         public RefundService(
@@ -23,12 +25,14 @@ namespace BookingService.Services.Implementations
             IPaymentRepository paymentRepository,
             IBookingRepository bookingRepository,
             OutboxWriter<PaymentDbContext> outbox,
+            BookingMetrics metrics,
             ILogger<RefundService> logger)
         {
             _refundRepository = refundRepository;
             _paymentRepository = paymentRepository;
             _bookingRepository = bookingRepository;
             _outbox = outbox;
+            _metrics = metrics;
             _logger = logger;
         }
 
@@ -79,6 +83,7 @@ namespace BookingService.Services.Implementations
 
             await _paymentRepository.UpdateAsync(payment);
             await transaction.CommitAsync();
+            _metrics.Refund("requested");
 
             _logger.LogInformation(
                 "Refund {RefundCode} of {Amount} requested for payment {PaymentId}: {Reason}",
@@ -144,6 +149,7 @@ namespace BookingService.Services.Implementations
 
             await _refundRepository.UpdateAsync(refund);
             await transaction.CommitAsync();
+            _metrics.Refund("completed");
 
             return refund.ToResponse(payment);
         }

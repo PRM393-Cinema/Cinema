@@ -3,6 +3,7 @@ using AuthService.Configuration;
 using AuthService.Data;
 using AuthService.Exception;
 using AuthService.Health;
+using AuthService.Observability;
 using AuthService.Repository;
 using AuthService.Service;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -76,6 +77,9 @@ builder.Services.AddHealthChecks()
     .AddCheck<DbContextHealthCheck<AuthDbContext>>("auth-db", timeout: TimeSpan.FromSeconds(5));
 
 // Add services to the container.
+//====== GIÁM SÁT: metrics cho Prometheus (/metrics) + tracing gửi Jaeger, xem docs/MONITORING.md ======
+builder.AddObservability("auth-service");
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
@@ -124,6 +128,9 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
+// Đưa X-Correlation-ID (gateway gắn) vào log và trace; đặt trước exception handler để log lỗi cũng có id
+app.UseMiddleware<CorrelationIdMiddleware>();
+
 app.UseExceptionHandler();
 
 // Enable Swagger UI
@@ -151,6 +158,8 @@ app.UseAuthorization();
 app.MapControllers();
 
 // /health: kiểm tra kết nối database. /health/live: chỉ báo tiến trình còn chạy (gateway dùng để biết service sống hay chết)
+app.MapObservability();
+
 app.MapHealthChecks("/health", new HealthCheckOptions { ResponseWriter = HealthResponseWriter.WriteAsync })
     .AllowAnonymous();
 app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false, ResponseWriter = HealthResponseWriter.WriteAsync })

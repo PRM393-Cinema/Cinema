@@ -35,6 +35,7 @@ docker compose up -d --build
 ```
 
 - Lần đầu mất vài phút (tải image, build 4 service, tạo 6 database và nạp dữ liệu seed). Các lần sau nhanh hơn nhiều.
+- Kèm công cụ giám sát (Grafana, Prometheus, Jaeger): `docker compose --profile monitoring up -d --build`, xem [MONITORING.md](MONITORING.md).
 - Kiểm tra trạng thái: `docker compose ps` — `postgres` và `rabbitmq` phải là `healthy`, các service khác là `running`.
 
 | Thành phần | Địa chỉ trên máy |
@@ -47,6 +48,7 @@ docker compose up -d --build
 | RabbitMQ (trang quản lý) | `http://localhost:15672`, tài khoản `cinema` / `cinema` (event giữa các service: [MESSAGING.md](MESSAGING.md)) |
 | **Tình trạng cả hệ thống** | `http://localhost:5000/health/services` (từng service: `Healthy` / `Unhealthy`) |
 | Tình trạng một service | `http://localhost:5100/health` (5168, 5063 tương tự): chỉ ra database nào đang lỗi |
+| Grafana / Prometheus / Jaeger (chỉ khi có `--profile monitoring`) | `http://localhost:3000` / `http://localhost:9090` / `http://localhost:16686` ([MONITORING.md](MONITORING.md)) |
 
 > Chỉ **gateway** mở cho máy khác trong mạng. Các service và PostgreSQL chỉ nghe ở `127.0.0.1`: trên máy mình vẫn mở Swagger/pgAdmin bình thường, còn máy khác cùng wifi không gọi thẳng vào được (phải đi qua gateway, nơi kiểm tra quyền và giới hạn số request).
 

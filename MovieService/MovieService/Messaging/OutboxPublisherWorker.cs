@@ -126,6 +126,9 @@ namespace MovieService.Messaging
                 {
                     message.Attempts++;
 
+                    // Span con của request đã tạo event (Jaeger: request -> gửi RabbitMQ -> consumer xử lý)
+                    using var activity = OutboxTracing.StartPublish(message);
+
                     var properties = new BasicProperties
                     {
                         MessageId = message.EventId,
