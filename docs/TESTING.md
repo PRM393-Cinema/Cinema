@@ -6,7 +6,7 @@ Mỗi service có một project test xUnit nằm cạnh project chính, và đã
 |---|---|---|
 | AuthService | `AuthService/AuthService.Tests` | 8 |
 | MovieService | `MovieService/MovieService.Tests` | 6 |
-| BookingService | `BookingService/BookingService.Tests` | 41 |
+| BookingService | `BookingService/BookingService.Tests` | 43 |
 
 ## 1. Chạy test
 
@@ -37,6 +37,7 @@ Mỗi service chạy xong trong khoảng 15–30 giây.
 | Failure | MovieService chết: đặt vé trả 503. PayOS chết: thanh toán trả 503 và booking vẫn thanh toán lại được | `BookingFlowTests.cs` |
 | Auth | Đăng ký, OTP (khoá sau 5 lần sai), đăng nhập, refresh token xoay vòng, đăng xuất, Admin tạo / khoá tài khoản | `AuthService.Tests/Integration/*` |
 | Suất chiếu | Quyền, trùng lịch 409, suất còn đặt được theo phim, huỷ mềm và ghi event `showtime.cancelled` | `MovieService.Tests/Integration/ShowtimeTests.cs` |
+| Giám sát | `/metrics` mở cho Prometheus và đếm booking theo trạng thái; chỉ trả ở cổng nội bộ khi cấu hình `MetricsPort` | `BookingService.Tests/Integration/ObservabilityTests.cs` |
 
 Trong test, MovieService, PayOS và SMTP được thay bằng bản giả: không gọi PayOS thật, không gửi email thật. JWT trong test được ký bằng key riêng của test.
 

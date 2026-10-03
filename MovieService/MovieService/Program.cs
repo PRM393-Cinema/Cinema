@@ -10,6 +10,7 @@ using MovieService.Configuration;
 using MovieService.Data;
 using MovieService.Exception;
 using MovieService.Health;
+using MovieService.Observability;
 using MovieService.Messaging;
 using MovieService.Repository.Impl;
 using MovieService.Repository.Interface;
@@ -102,6 +103,9 @@ builder.Services.AddHealthChecks()
 
 // Add services to the container.
 
+//====== GIÁM SÁT: metrics cho Prometheus (/metrics) + tracing gửi Jaeger, xem docs/MONITORING.md ======
+builder.AddObservability("movie-service");
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
@@ -150,6 +154,9 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
+// Đưa X-Correlation-ID (gateway gắn) vào log và trace; đặt trước exception handler để log lỗi cũng có id
+app.UseMiddleware<CorrelationIdMiddleware>();
+
 app.UseExceptionHandler();
 
 // Enable Swagger UI (Bật cho cả môi trường Dev và Production nếu cần test)
@@ -185,6 +192,8 @@ app.MapControllers();
 
 // /health: kiểm tra kết nối database. /health/live: chỉ báo tiến trình còn chạy (gateway dùng để biết service sống hay chết).
 // AllowAnonymous vì mặc định mọi endpoint của MovieService đều cần đăng nhập.
+app.MapObservability();
+
 app.MapHealthChecks("/health", new HealthCheckOptions { ResponseWriter = HealthResponseWriter.WriteAsync })
     .AllowAnonymous();
 app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false, ResponseWriter = HealthResponseWriter.WriteAsync })

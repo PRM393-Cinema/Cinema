@@ -9,6 +9,7 @@ using BookingService.Helpers;
 using BookingService.Mapping;
 using BookingService.Messaging;
 using BookingService.Models;
+using BookingService.Observability;
 using BookingService.Repositories.Interfaces;
 using BookingService.Services.Interfaces;
 using BookingService.Validators;
@@ -26,6 +27,7 @@ namespace BookingService.Services.Implementations
         private readonly IRefundService _refundService;
         private readonly OutboxWriter<PaymentDbContext> _outbox;
         private readonly PayOsOptions _payOsOptions;
+        private readonly BookingMetrics _metrics;
         private readonly ILogger<PaymentService> _logger;
 
         public PaymentService(
@@ -37,6 +39,7 @@ namespace BookingService.Services.Implementations
             IRefundService refundService,
             OutboxWriter<PaymentDbContext> outbox,
             IOptions<PayOsOptions> payOsOptions,
+            BookingMetrics metrics,
             ILogger<PaymentService> logger)
         {
             _paymentRepository = paymentRepository;
@@ -47,6 +50,7 @@ namespace BookingService.Services.Implementations
             _refundService = refundService;
             _outbox = outbox;
             _payOsOptions = payOsOptions.Value;
+            _metrics = metrics;
             _logger = logger;
         }
 
@@ -539,6 +543,7 @@ namespace BookingService.Services.Implementations
             await _outbox.SaveChangesAsync();
 
             await transaction.CommitAsync();
+            _metrics.Payment("created");
 
             return payment;
         }
@@ -560,6 +565,7 @@ namespace BookingService.Services.Implementations
                 EventFactory.Payment(payment, await _bookingRepository.GetBookingByIdAsync(payment.BookingId)));
 
             await _paymentRepository.UpdateAsync(payment);
+            _metrics.Payment("succeeded");
         }
 
         private async Task MarkPaymentFailedAsync(Payment payment, string reason)
@@ -575,6 +581,7 @@ namespace BookingService.Services.Implementations
                     reason: reason));
 
             await _paymentRepository.UpdateAsync(payment);
+            _metrics.Payment("failed");
         }
 
         private static string? GetString(JsonElement data, string name)

@@ -24,6 +24,7 @@ Ghi chú:
 - `Jwt:Issuer` (`CinemaAuthService`) và `Jwt:Audience` (`CinemaClients`) đã có sẵn trong `appsettings.json`, không phải bí mật.
 - BookingService gọi thẳng MovieService qua `ShowtimeService:BaseUrl` = `http://localhost:5168/` (đã có trong `appsettings.json`) — MovieService phải đang chạy thì mới tạo booking được.
 - Email, hoàn tiền tự động và huỷ booking khi huỷ suất chiếu chạy qua **RabbitMQ**: bật bằng `docker compose up -d rabbitmq` (không cần key, xem [MESSAGING.md](MESSAGING.md)).
+- Xem trace khi chạy bằng Visual Studio (tuỳ chọn): đặt `Observability:OtlpTracesEndpoint`, xem [MONITORING.md mục 6](MONITORING.md#6-chạy-bằng-visual-studio).
 
 ## 2. Vì sao dùng User Secrets
 

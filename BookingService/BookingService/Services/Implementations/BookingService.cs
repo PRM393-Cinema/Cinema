@@ -7,6 +7,7 @@ using BookingService.Helpers;
 using BookingService.Mapping;
 using BookingService.Messaging;
 using BookingService.Models;
+using BookingService.Observability;
 using BookingService.Repositories.Interfaces;
 using BookingService.Services.Interfaces;
 using BookingService.Validators;
@@ -29,6 +30,7 @@ namespace BookingService.Services.Implementations
         private readonly IShowtimeClient _showtimeClient;
         private readonly OutboxWriter<BookingDbContext> _outbox;
         private readonly RefundPolicyOptions _refundPolicy;
+        private readonly BookingMetrics _metrics;
         private readonly ILogger<BookingService> _logger;
 
         public BookingService(
@@ -39,6 +41,7 @@ namespace BookingService.Services.Implementations
             IShowtimeClient showtimeClient,
             OutboxWriter<BookingDbContext> outbox,
             IOptions<RefundPolicyOptions> refundPolicy,
+            BookingMetrics metrics,
             ILogger<BookingService> logger)
         {
             _context = context;
@@ -48,6 +51,7 @@ namespace BookingService.Services.Implementations
             _showtimeClient = showtimeClient;
             _outbox = outbox;
             _refundPolicy = refundPolicy.Value;
+            _metrics = metrics;
             _logger = logger;
         }
 
@@ -303,6 +307,7 @@ namespace BookingService.Services.Implementations
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
+                _metrics.Booking("created");
 
                 return await MapBookingAsync(booking);
             }
@@ -362,6 +367,7 @@ namespace BookingService.Services.Implementations
                         booking);
 
                     await transaction.CommitAsync();
+                    _metrics.Booking("expired");
 
                     throw new ConflictException(
                         "Booking has expired.");
@@ -386,6 +392,7 @@ namespace BookingService.Services.Implementations
                 await MarkConfirmedAsync(booking, seats, reservations, recipientEmail);
 
                 await transaction.CommitAsync();
+                _metrics.Booking("confirmed");
 
                 return booking.ToResponse(
                     seats.Select(x => x.ToResponse()).ToList());
@@ -464,6 +471,8 @@ namespace BookingService.Services.Implementations
                         await _bookingRepository.UpdateBookingAsync(
                             booking.Id,
                             booking);
+
+                        _metrics.Booking("expired");
                     }
 
                     await transaction.CommitAsync();
@@ -475,6 +484,7 @@ namespace BookingService.Services.Implementations
                 await MarkConfirmedAsync(booking, seats, reservations, recipientEmail);
 
                 await transaction.CommitAsync();
+                _metrics.Booking("confirmed");
 
                 return booking.ToResponse(
                     seats.Select(x => x.ToResponse()).ToList());
@@ -541,6 +551,7 @@ namespace BookingService.Services.Implementations
                     manager ? "STAFF" : "CUSTOMER");
 
                 await transaction.CommitAsync();
+                _metrics.Booking("cancelled");
 
                 return booking.ToResponse(
                     seats.Select(x => x.ToResponse()).ToList());
@@ -578,6 +589,7 @@ namespace BookingService.Services.Implementations
             await CancelLockedBookingAsync(booking, "Khách huỷ thanh toán", "CUSTOMER");
 
             await transaction.CommitAsync();
+            _metrics.Booking("cancelled");
         }
 
         // Suất chiếu bị huỷ (event showtime.cancelled): huỷ mọi booking PENDING / CONFIRMED của suất đó.
@@ -609,6 +621,7 @@ namespace BookingService.Services.Implementations
                 await CancelLockedBookingAsync(booking, reason, "SYSTEM");
 
                 await transaction.CommitAsync();
+                _metrics.Booking("cancelled");
                 cancelled++;
             }
 
@@ -659,6 +672,7 @@ namespace BookingService.Services.Implementations
                     booking);
 
                 await transaction.CommitAsync();
+                _metrics.Booking("expired");
 
                 expired.Add(booking.ToResponse(
                     seats.Select(x => x.ToResponse()).ToList()));

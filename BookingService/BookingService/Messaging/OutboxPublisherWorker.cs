@@ -1,5 +1,6 @@
 using System.Text;
 using BookingService.Models;
+using BookingService.Observability;
 using Microsoft.EntityFrameworkCore;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Exceptions;
@@ -13,16 +14,19 @@ namespace BookingService.Messaging
     {
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly RabbitMqConnection _rabbitMq;
+        private readonly BookingMetrics _metrics;
         private readonly ILogger<OutboxPublisherWorker<TContext>> _logger;
         private IChannel? _channel;
 
         public OutboxPublisherWorker(
             IServiceScopeFactory scopeFactory,
             RabbitMqConnection rabbitMq,
+            BookingMetrics metrics,
             ILogger<OutboxPublisherWorker<TContext>> logger)
         {
             _scopeFactory = scopeFactory;
             _rabbitMq = rabbitMq;
+            _metrics = metrics;
             _logger = logger;
         }
 
@@ -56,6 +60,7 @@ namespace BookingService.Messaging
                 catch (Exception ex)
                 {
                     failures++;
+                    _metrics.OutboxFailed(typeof(TContext).Name);
 
                     // Ghi log lần lỗi đầu và mỗi 30 lần sau đó, tránh ngập log khi RabbitMQ dừng lâu
                     if (failures == 1 || failures % 30 == 0)
@@ -127,6 +132,9 @@ namespace BookingService.Messaging
                 {
                     message.Attempts++;
 
+                    // Span con của request đã tạo event (Jaeger: request -> gửi RabbitMQ -> consumer xử lý)
+                    using var activity = OutboxTracing.StartPublish(message);
+
                     var properties = new BasicProperties
                     {
                         MessageId = message.EventId,
@@ -177,7 +185,14 @@ namespace BookingService.Messaging
             await context.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
-            return messages.Count(message => message.PublishedAt != null);
+            var published = messages.Count(message => message.PublishedAt != null);
+
+            if (published > 0)
+            {
+                _metrics.OutboxPublished(typeof(TContext).Name, published);
+            }
+
+            return published;
         }
 
         private async Task<IChannel> GetChannelAsync(CancellationToken cancellationToken)

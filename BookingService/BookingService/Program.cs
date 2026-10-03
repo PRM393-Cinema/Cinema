@@ -6,6 +6,7 @@ using BookingService.Clients.Interfaces;
 using BookingService.Configuration;
 using BookingService.Exceptions;
 using BookingService.Health;
+using BookingService.Observability;
 using BookingService.Helpers;
 using BookingService.Messaging;
 using BookingService.Messaging.Handlers;
@@ -218,6 +219,10 @@ builder.Services.AddHealthChecks()
     // RabbitMQ dừng chỉ báo Degraded: đặt vé / thanh toán vẫn chạy, event chờ trong outbox
     .AddCheck<RabbitMqHealthCheck>("rabbitmq", timeout: TimeSpan.FromSeconds(5));
 
+//====== GIÁM SÁT: metrics cho Prometheus (/metrics) + tracing gửi Jaeger, xem docs/MONITORING.md ======
+builder.Services.AddSingleton<BookingMetrics>();
+builder.AddObservability("booking-service", BookingMetrics.MeterName);
+
 builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
@@ -267,6 +272,9 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
+// Đưa X-Correlation-ID (gateway gắn) vào log và trace; đặt trước exception handler để log lỗi cũng có id
+app.UseMiddleware<CorrelationIdMiddleware>();
+
 app.UseExceptionHandler();
 
 // Enable Swagger UI (Bật cho cả môi trường Dev và Production nếu cần test)
@@ -301,6 +309,8 @@ app.UseAuthorization();
 app.MapControllers();
 
 // /health: kiểm tra kết nối database. /health/live: chỉ báo tiến trình còn chạy (gateway dùng để biết service sống hay chết)
+app.MapObservability();
+
 app.MapHealthChecks("/health", new HealthCheckOptions { ResponseWriter = HealthResponseWriter.WriteAsync })
     .AllowAnonymous();
 app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false, ResponseWriter = HealthResponseWriter.WriteAsync })

@@ -28,6 +28,8 @@ namespace BookingService.Messaging
                     eventId,
                     eventType,
                     occurredAt = now,
+                    // Trace của request tạo ra event: worker gửi lên RabbitMQ nối tiếp trace này
+                    traceParent = OutboxTracing.CurrentTraceParent(),
                     data
                 },
                 MessagingJson.Options);
