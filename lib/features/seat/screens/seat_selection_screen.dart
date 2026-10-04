@@ -9,6 +9,7 @@ import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../data/mock/mock_movies.dart';
 import '../../../data/mock/mock_seats.dart';
+import '../../../data/models/booking_draft.dart';
 import '../../../data/models/seat.dart';
 import '../../../data/models/showtime.dart';
 import '../widgets/seat_item.dart';
@@ -121,12 +122,12 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                                   Navigator.pushNamed(
                                     context,
                                     AppRoutes.bookingSummary,
-                                    arguments: {
-                                      'showtime': showtime,
-                                      'seats': data.seats
+                                    arguments: BookingDraft(
+                                      showtime: showtime,
+                                      seats: data.seats
                                           .where((s) => _selectedSeatIds.contains(s.id))
                                           .toList(),
-                                    },
+                                    ),
                                   );
                                 }
                               : null,

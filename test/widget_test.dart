@@ -129,6 +129,48 @@ void main() {
     await tester.pump();
     expect(find.text('0 seat(s)'), findsOneWidget);
   });
+
+  testWidgets('Booking Summary receives draft and renders details', (WidgetTester tester) async {
+    await _openHome(tester);
+
+    await tester.tap(find.text('View Details'));
+    await _pumpRoute(tester);
+    await tester.ensureVisible(find.text('Select Showtime'));
+    await tester.pump();
+    await tester.tap(find.text('Select Showtime'));
+    await _pumpRoute(tester);
+
+    await tester.tap(find.textContaining('Room A'));
+    await tester.pump();
+    await tester.tap(find.text('Continue to Seats'));
+    await _pumpRoute(tester);
+
+    // Select two seats
+    await tester.tap(find.text('4').first);
+    await tester.pump();
+    await tester.tap(find.text('5').first);
+    await tester.pump();
+
+    // Proceed to booking summary
+    await tester.tap(find.text('Continue'));
+    await _pumpRoute(tester);
+
+    expect(find.text('Booking Summary'), findsWidgets);
+    expect(find.text('2 Ticket(s)'), findsOneWidget);
+    expect(find.text('\$30.00'), findsWidgets); // 15.00 * 2 = 30.00
+    
+    // Tap Confirm Booking
+    await tester.scrollUntilVisible(
+      find.text('Confirm Booking'),
+      100,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.text('Confirm Booking'));
+    await _pumpRoute(tester);
+    
+    // Verify it navigates somewhere (e.g. payment placeholder or error)
+    // The previous implementation went to AppRoutes.payment, which might just be a placeholder
+  });
 }
 
 Future<void> _openHome(WidgetTester tester) async {
