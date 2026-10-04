@@ -1,5 +1,9 @@
 import 'package:cinema_fe/app/app.dart';
+import 'package:cinema_fe/app/routes/app_routes.dart';
+import 'package:cinema_fe/app/theme/app_theme.dart';
 import 'package:cinema_fe/data/mock/mock_movies.dart';
+import 'package:cinema_fe/features/booking/screens/booking_detail_screen.dart';
+import 'package:cinema_fe/features/booking/screens/my_bookings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -170,6 +174,54 @@ void main() {
     
     // Verify it navigates somewhere (e.g. payment placeholder or error)
     // The previous implementation went to AppRoutes.payment, which might just be a placeholder
+  });
+
+  testWidgets('My Bookings renders backend-aligned bookings and navigates to Detail', (WidgetTester tester) async {
+    // We can navigate to my bookings if there is a button, or just pump it directly for the test.
+    // For now, let's just use CinemaApp and push the route directly using a Navigator key, 
+    // or just pump the widget directly wrapped in a MaterialApp.
+    // However, CinemaApp has the routing setup. Let's just pump the screen directly for isolation.
+    await tester.pumpWidget(MaterialApp(
+      theme: AppTheme.darkTheme,
+      routes: {
+        '/': (_) => const MyBookingsScreen(),
+        AppRoutes.bookingDetail: (_) => const BookingDetailScreen(),
+      },
+    ));
+
+    expect(find.text('My Bookings'), findsWidgets);
+    expect(find.text('Active'), findsOneWidget);
+    expect(find.text('History'), findsOneWidget);
+
+    // Active tab has pending and confirmed bookings
+    expect(find.text('Code: BKG-XYZ-101'), findsOneWidget);
+    expect(find.text('Pending'), findsOneWidget);
+
+    // Tap first booking to open Booking Detail
+    await tester.tap(find.text('Code: BKG-XYZ-101'));
+    await _pumpRoute(tester);
+
+    expect(find.text('Booking Detail'), findsWidgets);
+    expect(find.text('Code: BKG-XYZ-101'), findsWidgets);
+    expect(find.text('Cancel Booking'), findsOneWidget); // Pending bookings can be cancelled
+
+    // Back to My Bookings
+    await tester.pageBack();
+    await _pumpRoute(tester);
+
+    // Switch to History tab by swiping
+    await tester.drag(find.text('Code: BKG-XYZ-101').first, const Offset(-500.0, 0.0));
+    await tester.pumpAndSettle(); // ensure tab animation finishes
+
+    expect(find.text('Code: BKG-LMN-303'), findsOneWidget); // Cancelled
+    expect(find.text('Cancelled'), findsOneWidget);
+
+    // Tap cancelled booking
+    await tester.tap(find.text('Code: BKG-LMN-303'));
+    await _pumpRoute(tester);
+
+    expect(find.text('Code: BKG-LMN-303'), findsWidgets);
+    expect(find.text('Cancel Booking'), findsNothing); // Cancelled booking shouldn't have cancel button
   });
 }
 
