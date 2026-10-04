@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import 'app/app.dart';
-import 'app/routes/app_routes.dart';
 import 'core/session/session_state.dart';
 import 'data/storage/auth_token_storage.dart';
 
@@ -19,9 +18,7 @@ void main() async {
   runApp(
     SessionProvider(
       sessionState: sessionState,
-      child: CinemaApp(
-        initialRoute: sessionState.isAuthenticated ? AppRoutes.home : AppRoutes.welcome,
-      ),
+      child: CinemaApp(),
     ),
   );
 }

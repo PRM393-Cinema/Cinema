@@ -13,17 +13,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('App without session shows Welcome', (WidgetTester tester) async {
-    await tester.pumpWidget(_wrapWithSession(_testApp()));
+  testWidgets('App without session opens Home', (WidgetTester tester) async {
+    await tester.pumpWidget(_wrapWithSession(_testApp(authenticated: false), authenticated: false));
 
-    expect(find.text('Welcome to Cinema'), findsOneWidget);
-    expect(find.text('Continue as guest'), findsOneWidget);
-    expect(find.text('Sign in'), findsOneWidget);
-    expect(find.text('Create account'), findsOneWidget);
+    expect(find.text('Find your next movie night'), findsOneWidget);
+    expect(find.text('Sign in'), findsOneWidget); // AppBar action
   });
 
   testWidgets('Sign in action opens Login', (WidgetTester tester) async {
-    await tester.pumpWidget(_wrapWithSession(_testApp()));
+    await tester.pumpWidget(_wrapWithSession(_testApp(authenticated: false), authenticated: false));
     await tester.tap(find.text('Sign in').first);
     await _pumpRoute(tester);
 
@@ -38,7 +36,8 @@ void main() {
     await tester.tap(find.text('Sign in').first);
     await _pumpRoute(tester);
     await _enterLoginCredentials(tester);
-    await tester.ensureVisible(find.byType(AppButton).first);
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -300));
+    await tester.pumpAndSettle();
     await tester.tap(find.byType(AppButton).first);
     await tester.pump();
 
@@ -74,7 +73,8 @@ void main() {
     await tester.tap(find.text('Sign in').first);
     await _pumpRoute(tester);
     await _enterLoginCredentials(tester);
-    await tester.ensureVisible(find.byType(AppButton).first);
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -300));
+    await tester.pumpAndSettle();
     await tester.tap(find.byType(AppButton).first);
     await tester.pump();
 
@@ -333,7 +333,7 @@ CinemaApp _testApp({AuthRepository? authRepository, bool authenticated = false})
 
   return CinemaApp(
     authRepository: authRepository ?? _FakeAuthRepository.success(),
-    initialRoute: authenticated ? AppRoutes.home : AppRoutes.welcome,
+    initialRoute: AppRoutes.home,
   );
 }
 
@@ -352,17 +352,14 @@ Widget _wrapWithSession(Widget app, {bool authenticated = false}) {
 
 Future<void> _openHome(WidgetTester tester, {bool authenticated = true}) async {
   await tester.pumpWidget(_wrapWithSession(_testApp(authenticated: authenticated), authenticated: authenticated));
-  if (!authenticated) {
-    await tester.tap(find.text('Continue as guest'));
-    await _pumpRoute(tester);
-  }
 }
 
 Future<void> _loginToHome(WidgetTester tester) async {
   await tester.tap(find.text('Sign in').first);
   await _pumpRoute(tester);
   await _enterLoginCredentials(tester);
-  await tester.ensureVisible(find.byType(AppButton).first);
+  await tester.drag(find.byType(Scrollable).first, const Offset(0, -300));
+  await tester.pumpAndSettle();
   await tester.tap(find.byType(AppButton).first);
   await _pumpRoute(tester);
 }
@@ -376,7 +373,8 @@ Future<void> _enterLoginCredentials(WidgetTester tester) async {
     find.widgetWithText(TextFormField, 'Password'),
     '123456',
   );
-  await tester.pump();
+  FocusManager.instance.primaryFocus?.unfocus();
+  await tester.pumpAndSettle();
 }
 
 Future<void> _scrollHomeTo(WidgetTester tester, Finder finder) async {
@@ -394,8 +392,7 @@ Future<void> _scrollHomeTo(WidgetTester tester, Finder finder) async {
 }
 
 Future<void> _pumpRoute(WidgetTester tester) async {
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 300));
+  await tester.pumpAndSettle();
 }
 
 class _FakeAuthRepository implements AuthRepository {
