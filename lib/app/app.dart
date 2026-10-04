@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../data/repositories/auth_repository.dart';
 import '../features/auth/screens/forgot_password_screen.dart';
 import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/register_screen.dart';
 import '../features/auth/screens/reset_password_screen.dart';
 import '../features/auth/screens/verify_email_screen.dart';
+import '../features/auth/screens/welcome_screen.dart';
 import '../features/booking/screens/booking_detail_screen.dart';
 import '../features/booking/screens/booking_summary_screen.dart';
 import '../features/booking/screens/my_bookings_screen.dart';
@@ -21,7 +23,11 @@ import 'routes/app_routes.dart';
 import 'theme/app_theme.dart';
 
 class CinemaApp extends StatelessWidget {
-  const CinemaApp({super.key});
+  CinemaApp({AuthRepository? authRepository, this.initialRoute = AppRoutes.welcome, super.key})
+    : authRepository = authRepository ?? RemoteAuthRepository.create();
+
+  final AuthRepository authRepository;
+  final String initialRoute;
 
   @override
   Widget build(BuildContext context) {
@@ -29,9 +35,10 @@ class CinemaApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Cinema App',
       theme: AppTheme.darkTheme,
-      initialRoute: AppRoutes.login,
+      initialRoute: initialRoute,
       routes: {
-        AppRoutes.login: (_) => const LoginScreen(),
+        AppRoutes.welcome: (_) => const WelcomeScreen(),
+        AppRoutes.login: (_) => LoginScreen(authRepository: authRepository),
         AppRoutes.register: (_) => const RegisterScreen(),
         AppRoutes.verifyEmail: (_) => const VerifyEmailScreen(),
         AppRoutes.forgotPassword: (_) => const ForgotPasswordScreen(),

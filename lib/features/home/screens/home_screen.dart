@@ -12,6 +12,7 @@ import '../../../core/widgets/empty_state.dart';
 import '../../../data/mock/mock_movies.dart';
 import '../../../data/models/movie.dart';
 import '../../movie/widgets/movie_card.dart';
+import '../../../core/session/session_state.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -37,26 +38,37 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // For featured movie, pick the first active one, or just the first mock if none active
     final featuredMovie = _filteredMovies.isNotEmpty ? _filteredMovies.first : mockMovies.first;
     final visibleMovies = _filteredMovies;
+    final session = SessionProvider.of(context);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Cinema App'),
-        actions: [
-          IconButton(
-            tooltip: 'Notifications',
-            onPressed: () =>
-                Navigator.pushNamed(context, AppRoutes.notifications),
-            icon: const Icon(Icons.notifications_none_outlined),
-          ),
-          IconButton(
-            tooltip: 'Profile',
-            onPressed: () => Navigator.pushNamed(context, AppRoutes.profile),
-            icon: const Icon(Icons.person_outline),
-          ),
-        ],
+        actions: session.isAuthenticated
+            ? [
+                IconButton(
+                  tooltip: 'Notifications',
+                  onPressed: () => Navigator.pushNamed(context, AppRoutes.notifications),
+                  icon: const Icon(Icons.notifications_none_outlined),
+                ),
+                IconButton(
+                  tooltip: 'Profile',
+                  onPressed: () => Navigator.pushNamed(context, AppRoutes.profile),
+                  icon: const Icon(Icons.person_outline),
+                ),
+              ]
+            : [
+                TextButton.icon(
+                  onPressed: () => Navigator.pushNamed(context, AppRoutes.login),
+                  icon: const Icon(Icons.login),
+                  label: const Text('Sign in'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+              ],
       ),
       body: SafeArea(
         child: LayoutBuilder(

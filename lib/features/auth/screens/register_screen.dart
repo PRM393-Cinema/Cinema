@@ -19,9 +19,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Create Account'),
-      ),
+      appBar: AppBar(title: const Text('Create account')),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -32,7 +30,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const Text(
-                    'Join Cinema',
+                    'Create your account',
                     style: AppTextStyles.heading1,
                     textAlign: TextAlign.center,
                   ),
@@ -44,7 +42,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const SizedBox(height: AppSpacing.xxl),
                   const AppTextField(
-                    label: 'Full Name',
+                    label: 'Full name',
                     hint: 'Enter your full name',
                     keyboardType: TextInputType.name,
                     prefixIcon: Icon(Icons.person_outline),
@@ -58,7 +56,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   const AppTextField(
-                    label: 'Phone',
+                    label: 'Phone number',
                     hint: 'Enter your phone number',
                     keyboardType: TextInputType.phone,
                     prefixIcon: Icon(Icons.phone_outlined),
@@ -70,7 +68,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     obscureText: _obscurePassword,
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
-                      tooltip: _obscurePassword ? 'Show password' : 'Hide password',
+                      tooltip: _obscurePassword
+                          ? 'Show password'
+                          : 'Hide password',
                       onPressed: () {
                         setState(() {
                           _obscurePassword = !_obscurePassword;
@@ -85,13 +85,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const SizedBox(height: AppSpacing.xxl),
                   AppButton(
-                    label: 'Register',
+                    label: 'Create account',
                     // Simulate successful registration and navigate to OTP verification
-                    onPressed: () => Navigator.pushNamed(context, AppRoutes.verifyEmail),
+                    onPressed: () =>
+                        Navigator.pushNamed(context, AppRoutes.verifyEmail),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   AppButton.secondary(
-                    label: 'Already have an account? Login',
+                    label: 'Already have an account? Sign in',
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],

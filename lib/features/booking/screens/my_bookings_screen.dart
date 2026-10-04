@@ -69,7 +69,7 @@ class _BookingList extends StatelessWidget {
     return ListView.separated(
       padding: const EdgeInsets.all(AppSpacing.md),
       itemCount: bookings.length,
-      separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.md),
+      separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.md),
       itemBuilder: (context, index) {
         final booking = bookings[index];
         return _BookingCard(booking: booking);

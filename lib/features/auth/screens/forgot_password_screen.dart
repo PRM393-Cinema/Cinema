@@ -34,9 +34,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Forgot Password'),
-      ),
+      appBar: AppBar(title: const Text('Forgot password?')),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -47,13 +45,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const Text(
-                    'Reset Password',
+                    'Forgot password?',
                     style: AppTextStyles.heading1,
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   const Text(
-                    'Enter your email address and we will send you a code to reset your password.',
+                    'Enter your email and we will send you a verification code.',
                     style: AppTextStyles.bodySmall,
                     textAlign: TextAlign.center,
                   ),
@@ -66,9 +64,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     prefixIcon: const Icon(Icons.email_outlined),
                   ),
                   const SizedBox(height: AppSpacing.xxl),
-                  AppButton(
-                    label: 'Send Reset Code',
-                    onPressed: _onSendResetCode,
+                  AppButton(label: 'Continue', onPressed: _onSendResetCode),
+                  const SizedBox(height: AppSpacing.md),
+                  AppButton.secondary(
+                    label: 'Back to login',
+                    onPressed: () => Navigator.pop(context),
                   ),
                 ],
               ),

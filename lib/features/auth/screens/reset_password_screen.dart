@@ -19,12 +19,11 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final email = ModalRoute.of(context)?.settings.arguments as String? ?? 'your email';
+    final email =
+        ModalRoute.of(context)?.settings.arguments as String? ?? 'your email';
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Reset Password'),
-      ),
+      appBar: AppBar(title: const Text('Reset password')),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -35,31 +34,35 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const Text(
-                    'Create New Password',
+                    'Reset password',
                     style: AppTextStyles.heading1,
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   Text(
                     'Code sent to $email',
-                    style: AppTextStyles.bodySmall.copyWith(color: AppColors.primary),
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.primary,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: AppSpacing.xxl),
                   const AppTextField(
-                    label: 'OTP Code',
+                    label: 'Verification code',
                     hint: '123456',
                     keyboardType: TextInputType.number,
                     prefixIcon: Icon(Icons.pin_outlined),
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   AppTextField(
-                    label: 'New Password',
+                    label: 'New password',
                     hint: 'Enter new password',
                     obscureText: _obscurePassword,
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
-                      tooltip: _obscurePassword ? 'Show password' : 'Hide password',
+                      tooltip: _obscurePassword
+                          ? 'Show password'
+                          : 'Hide password',
                       onPressed: () {
                         setState(() {
                           _obscurePassword = !_obscurePassword;
@@ -74,8 +77,11 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   ),
                   const SizedBox(height: AppSpacing.xxl),
                   AppButton(
-                    label: 'Reset Password',
-                    onPressed: () => Navigator.pushReplacementNamed(context, AppRoutes.login),
+                    label: 'Reset password',
+                    onPressed: () => Navigator.pushReplacementNamed(
+                      context,
+                      AppRoutes.login,
+                    ),
                   ),
                 ],
               ),

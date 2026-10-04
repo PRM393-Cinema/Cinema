@@ -11,6 +11,7 @@ import '../../../core/widgets/error_state.dart';
 import '../../../data/mock/mock_showtimes.dart';
 import '../../../data/models/movie.dart';
 import '../../../data/models/showtime.dart';
+import '../../../core/session/auth_guard.dart';
 
 class ShowtimeSelectionScreen extends StatefulWidget {
   const ShowtimeSelectionScreen({super.key});
@@ -99,10 +100,17 @@ class _ShowtimeSelectionScreenState extends State<ShowtimeSelectionScreen> {
                     label: 'Continue to Seats',
                     onPressed: _selectedShowtime != null
                         ? () {
-                            Navigator.pushNamed(
+                            AuthGuard.requireAuthentication(
                               context,
-                              AppRoutes.seatSelection,
-                              arguments: _selectedShowtime,
+                              pendingRoute: AppRoutes.seatSelection,
+                              pendingArguments: _selectedShowtime,
+                              onAuthenticated: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  AppRoutes.seatSelection,
+                                  arguments: _selectedShowtime,
+                                );
+                              },
                             );
                           }
                         : null,

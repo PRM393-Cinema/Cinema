@@ -19,9 +19,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Verify Email'),
-      ),
+      appBar: AppBar(title: const Text('Verify email')),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -32,13 +30,13 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const Text(
-                    'Enter Verification Code',
+                    'Verify your email',
                     style: AppTextStyles.heading1,
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   const Text(
-                    'We sent a 6-digit code to your email.',
+                    'Enter the verification code sent to your email.',
                     style: AppTextStyles.bodySmall,
                     textAlign: TextAlign.center,
                   ),
@@ -52,19 +50,21 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   const AppTextField(
-                    label: 'OTP Code',
+                    label: 'Verification code',
                     hint: '123456',
                     keyboardType: TextInputType.number,
                     prefixIcon: Icon(Icons.pin_outlined),
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   AppTextField(
-                    label: 'Confirm Password',
+                    label: 'Confirm password',
                     hint: 'Enter your password to activate',
                     obscureText: _obscurePassword,
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
-                      tooltip: _obscurePassword ? 'Show password' : 'Hide password',
+                      tooltip: _obscurePassword
+                          ? 'Show password'
+                          : 'Hide password',
                       onPressed: () {
                         setState(() {
                           _obscurePassword = !_obscurePassword;
@@ -79,15 +79,13 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                   ),
                   const SizedBox(height: AppSpacing.xxl),
                   AppButton(
-                    label: 'Verify and Login',
+                    label: 'Verify email',
                     // Simulate successful verification
-                    onPressed: () => Navigator.pushReplacementNamed(context, AppRoutes.home),
+                    onPressed: () =>
+                        Navigator.pushReplacementNamed(context, AppRoutes.home),
                   ),
                   const SizedBox(height: AppSpacing.md),
-                  AppButton.secondary(
-                    label: 'Resend Code',
-                    onPressed: () {},
-                  ),
+                  AppButton.secondary(label: 'Resend code', onPressed: () {}),
                 ],
               ),
             ),
