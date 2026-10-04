@@ -4,9 +4,13 @@ import 'package:cinema_fe/app/theme/app_theme.dart';
 import 'package:cinema_fe/core/network/api_exception.dart';
 import 'package:cinema_fe/data/mock/mock_movies.dart';
 import 'package:cinema_fe/data/models/auth_response.dart';
+import 'package:cinema_fe/data/models/otp_sent_response.dart';
 import 'package:cinema_fe/data/repositories/auth_repository.dart';
 import 'package:cinema_fe/features/booking/screens/booking_detail_screen.dart';
 import 'package:cinema_fe/features/booking/screens/my_bookings_screen.dart';
+import 'package:cinema_fe/features/auth/screens/login_screen.dart';
+import 'package:cinema_fe/features/auth/screens/verify_email_screen.dart';
+import 'package:cinema_fe/features/auth/verify_email_arguments.dart';
 import 'package:cinema_fe/core/session/session_state.dart';
 import 'package:cinema_fe/core/widgets/app_button.dart';
 import 'package:flutter/material.dart';
@@ -14,14 +18,18 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   testWidgets('App without session opens Home', (WidgetTester tester) async {
-    await tester.pumpWidget(_wrapWithSession(_testApp(authenticated: false), authenticated: false));
+    await tester.pumpWidget(
+      _wrapWithSession(_testApp(authenticated: false), authenticated: false),
+    );
 
     expect(find.text('Find your next movie night'), findsOneWidget);
     expect(find.text('Sign in'), findsOneWidget); // AppBar action
   });
 
   testWidgets('Sign in action opens Login', (WidgetTester tester) async {
-    await tester.pumpWidget(_wrapWithSession(_testApp(authenticated: false), authenticated: false));
+    await tester.pumpWidget(
+      _wrapWithSession(_testApp(authenticated: false), authenticated: false),
+    );
     await tester.tap(find.text('Sign in').first);
     await _pumpRoute(tester);
 
@@ -67,7 +75,11 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      _wrapWithSession(_testApp(authRepository: _FakeAuthRepository.failure('Bad credentials'))),
+      _wrapWithSession(
+        _testApp(
+          authRepository: _FakeAuthRepository.failure('Bad credentials'),
+        ),
+      ),
     );
 
     await tester.tap(find.text('Sign in').first);
@@ -81,6 +93,108 @@ void main() {
     expect(find.text('Invalid email or password.'), findsOneWidget);
     expect(find.text('Welcome back'), findsOneWidget);
     expect(find.text('Find your next movie night'), findsNothing);
+  });
+
+  testWidgets('Register loading state works', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      _wrapWithSession(
+        _testApp(
+          authRepository: _FakeAuthRepository.registerDelayed(),
+          initialRoute: AppRoutes.register,
+        ),
+      ),
+    );
+
+    await _enterRegisterDetails(tester);
+    await tester.ensureVisible(find.byType(AppButton).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(AppButton).first);
+    await tester.pump();
+
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('Register success navigates to Verify Email with email', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrapWithSession(_testApp(initialRoute: AppRoutes.register)),
+    );
+
+    await _enterRegisterDetails(tester);
+    await tester.ensureVisible(find.byType(AppButton).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(AppButton).first);
+    await _pumpRoute(tester);
+
+    expect(find.text('Verify your email'), findsOneWidget);
+    expect(find.text('Code sent to jane@example.com'), findsOneWidget);
+  });
+
+  testWidgets('Register failure displays error and stays on Register', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrapWithSession(
+        _testApp(
+          authRepository: _FakeAuthRepository.registerFailure(
+            'Email already registered.',
+          ),
+          initialRoute: AppRoutes.register,
+        ),
+      ),
+    );
+
+    await _enterRegisterDetails(tester, email: 'taken@example.com');
+    await tester.ensureVisible(find.byType(AppButton).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(AppButton).first);
+    await tester.pump();
+
+    expect(find.text('This email is already registered.'), findsOneWidget);
+    expect(find.text('Create your account'), findsOneWidget);
+  });
+
+  testWidgets('Verify Email success navigates to Login', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(_verifyEmailTestApp());
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Verification code'),
+      '123456',
+    );
+    await tester.ensureVisible(find.byType(AppButton).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(AppButton).first);
+    await _pumpRoute(tester);
+
+    expect(find.text('Welcome back'), findsOneWidget);
+  });
+
+  testWidgets('Invalid OTP displays error on Verify Email', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      _verifyEmailTestApp(
+        authRepository: _FakeAuthRepository.verifyFailure('OTP invalid'),
+      ),
+    );
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Verification code'),
+      '000000',
+    );
+    await tester.ensureVisible(find.byType(AppButton).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(AppButton).first);
+    await tester.pump();
+
+    expect(find.text('Invalid or expired verification code.'), findsOneWidget);
+    expect(find.text('Verify your email'), findsOneWidget);
   });
 
   testWidgets('Home renders movie titles from mock data', (
@@ -155,28 +269,34 @@ void main() {
     expect(find.text('Select Showtime'), findsWidgets);
   });
 
-  testWidgets('Guest attempting protected action gets Sign in required prompt', (WidgetTester tester) async {
-    await _openHome(tester, authenticated: false);
-    
-    // Tap a movie
-    await _scrollHomeTo(tester, find.text('View Details').first);
-    await tester.tap(find.text('View Details').first);
-    await _pumpRoute(tester);
+  testWidgets(
+    'Guest attempting protected action gets Sign in required prompt',
+    (WidgetTester tester) async {
+      await _openHome(tester, authenticated: false);
 
-    await tester.ensureVisible(find.text('Select Showtime'));
-    await tester.pump();
-    await tester.tap(find.text('Select Showtime'));
-    await _pumpRoute(tester);
+      // Tap a movie
+      await _scrollHomeTo(tester, find.text('View Details').first);
+      await tester.tap(find.text('View Details').first);
+      await _pumpRoute(tester);
 
-    // On showtime screen, tap a room
-    await tester.tap(find.textContaining('Room A').first);
-    await tester.pump();
-    await tester.tap(find.text('Continue to Seats'));
-    await tester.pump();
+      await tester.ensureVisible(find.text('Select Showtime'));
+      await tester.pump();
+      await tester.tap(find.text('Select Showtime'));
+      await _pumpRoute(tester);
 
-    expect(find.text('Sign in required'), findsOneWidget);
-    expect(find.text('Please sign in to continue with this action.'), findsOneWidget);
-  });
+      // On showtime screen, tap a room
+      await tester.tap(find.textContaining('Room A').first);
+      await tester.pump();
+      await tester.tap(find.text('Continue to Seats'));
+      await tester.pump();
+
+      expect(find.text('Sign in required'), findsOneWidget);
+      expect(
+        find.text('Please sign in to continue with this action.'),
+        findsOneWidget,
+      );
+    },
+  );
 
   testWidgets('Seat Selection flow handles selecting available seats', (
     WidgetTester tester,
@@ -327,7 +447,11 @@ void main() {
   );
 }
 
-CinemaApp _testApp({AuthRepository? authRepository, bool authenticated = false}) {
+CinemaApp _testApp({
+  AuthRepository? authRepository,
+  bool authenticated = false,
+  String initialRoute = AppRoutes.home,
+}) {
   final session = SessionState();
   if (authenticated) {
     session.setAuthenticated();
@@ -337,7 +461,31 @@ CinemaApp _testApp({AuthRepository? authRepository, bool authenticated = false})
 
   return CinemaApp(
     authRepository: authRepository ?? _FakeAuthRepository.success(),
-    initialRoute: AppRoutes.home,
+    initialRoute: initialRoute,
+  );
+}
+
+Widget _verifyEmailTestApp({AuthRepository? authRepository}) {
+  final repository = authRepository ?? _FakeAuthRepository.success();
+  return MaterialApp(
+    theme: AppTheme.darkTheme,
+    onGenerateRoute: (settings) {
+      if (settings.name == AppRoutes.login) {
+        return MaterialPageRoute(
+          builder: (_) => LoginScreen(authRepository: repository),
+        );
+      }
+
+      return MaterialPageRoute(
+        settings: const RouteSettings(
+          arguments: VerifyEmailArguments(
+            email: 'jane@example.com',
+            password: 'Secret123',
+          ),
+        ),
+        builder: (_) => VerifyEmailScreen(authRepository: repository),
+      );
+    },
   );
 }
 
@@ -348,14 +496,16 @@ Widget _wrapWithSession(Widget app, {bool authenticated = false}) {
   } else {
     session.setGuest();
   }
-  return SessionProvider(
-    sessionState: session,
-    child: app,
-  );
+  return SessionProvider(sessionState: session, child: app);
 }
 
 Future<void> _openHome(WidgetTester tester, {bool authenticated = true}) async {
-  await tester.pumpWidget(_wrapWithSession(_testApp(authenticated: authenticated), authenticated: authenticated));
+  await tester.pumpWidget(
+    _wrapWithSession(
+      _testApp(authenticated: authenticated),
+      authenticated: authenticated,
+    ),
+  );
 }
 
 Future<void> _loginToHome(WidgetTester tester) async {
@@ -376,6 +526,27 @@ Future<void> _enterLoginCredentials(WidgetTester tester) async {
   await tester.enterText(
     find.widgetWithText(TextFormField, 'Password'),
     '123456',
+  );
+  FocusManager.instance.primaryFocus?.unfocus();
+  await tester.pumpAndSettle();
+}
+
+Future<void> _enterRegisterDetails(
+  WidgetTester tester, {
+  String email = 'jane@example.com',
+}) async {
+  await tester.enterText(
+    find.widgetWithText(TextFormField, 'Full name'),
+    'Jane Customer',
+  );
+  await tester.enterText(find.widgetWithText(TextFormField, 'Email'), email);
+  await tester.enterText(
+    find.widgetWithText(TextFormField, 'Phone number'),
+    '0123456789',
+  );
+  await tester.enterText(
+    find.widgetWithText(TextFormField, 'Password'),
+    'Secret123',
   );
   FocusManager.instance.primaryFocus?.unfocus();
   await tester.pumpAndSettle();
@@ -402,17 +573,32 @@ Future<void> _pumpRoute(WidgetTester tester) async {
 class _FakeAuthRepository implements AuthRepository {
   _FakeAuthRepository._({
     required this.response,
-    this.errorMessage,
+    required this.otpResponse,
+    this.loginErrorMessage,
+    this.registerErrorMessage,
+    this.verifyErrorMessage,
     this.delay = Duration.zero,
   });
 
   factory _FakeAuthRepository.success() {
-    return _FakeAuthRepository._(response: _authResponseFixture);
+    return _FakeAuthRepository._(
+      response: _authResponseFixture,
+      otpResponse: _otpResponseFixture,
+    );
   }
 
   factory _FakeAuthRepository.delayed() {
     return _FakeAuthRepository._(
       response: _authResponseFixture,
+      otpResponse: _otpResponseFixture,
+      delay: const Duration(seconds: 1),
+    );
+  }
+
+  factory _FakeAuthRepository.registerDelayed() {
+    return _FakeAuthRepository._(
+      response: _authResponseFixture,
+      otpResponse: _otpResponseFixture,
       delay: const Duration(seconds: 1),
     );
   }
@@ -420,12 +606,32 @@ class _FakeAuthRepository implements AuthRepository {
   factory _FakeAuthRepository.failure(String message) {
     return _FakeAuthRepository._(
       response: _authResponseFixture,
-      errorMessage: message,
+      otpResponse: _otpResponseFixture,
+      loginErrorMessage: message,
+    );
+  }
+
+  factory _FakeAuthRepository.registerFailure(String message) {
+    return _FakeAuthRepository._(
+      response: _authResponseFixture,
+      otpResponse: _otpResponseFixture,
+      registerErrorMessage: message,
+    );
+  }
+
+  factory _FakeAuthRepository.verifyFailure(String message) {
+    return _FakeAuthRepository._(
+      response: _authResponseFixture,
+      otpResponse: _otpResponseFixture,
+      verifyErrorMessage: message,
     );
   }
 
   final AuthResponse response;
-  final String? errorMessage;
+  final OtpSentResponse otpResponse;
+  final String? loginErrorMessage;
+  final String? registerErrorMessage;
+  final String? verifyErrorMessage;
   final Duration delay;
 
   @override
@@ -437,11 +643,57 @@ class _FakeAuthRepository implements AuthRepository {
       await Future<void>.delayed(delay);
     }
 
-    if (errorMessage != null) {
-      throw ApiException(statusCode: 401, message: errorMessage!);
+    if (loginErrorMessage != null) {
+      throw ApiException(statusCode: 401, message: loginErrorMessage!);
     }
 
     return response;
+  }
+
+  @override
+  Future<OtpSentResponse> register({
+    required String fullName,
+    required String email,
+    required String password,
+    String? phone,
+  }) async {
+    if (delay > Duration.zero) {
+      await Future<void>.delayed(delay);
+    }
+
+    if (registerErrorMessage != null) {
+      throw ApiException(statusCode: 400, message: registerErrorMessage!);
+    }
+
+    return OtpSentResponse(
+      email: email.trim().toLowerCase(),
+      message: otpResponse.message,
+      expiresInSeconds: otpResponse.expiresInSeconds,
+      resendAfterSeconds: otpResponse.resendAfterSeconds,
+    );
+  }
+
+  @override
+  Future<AuthResponse> verifyEmail({
+    required String email,
+    required String otp,
+    required String password,
+  }) async {
+    if (verifyErrorMessage != null) {
+      throw ApiException(statusCode: 400, message: verifyErrorMessage!);
+    }
+
+    return response;
+  }
+
+  @override
+  Future<OtpSentResponse> resendVerification({required String email}) async {
+    return OtpSentResponse(
+      email: email,
+      message: 'OTP sent.',
+      expiresInSeconds: 300,
+      resendAfterSeconds: 60,
+    );
   }
 }
 
@@ -460,4 +712,11 @@ final _authResponseFixture = AuthResponse(
     createdAt: DateTime(2026, 10, 1),
     roles: const ['ROLE_ADMIN'],
   ),
+);
+
+const _otpResponseFixture = OtpSentResponse(
+  email: 'jane@example.com',
+  message: 'OTP sent.',
+  expiresInSeconds: 300,
+  resendAfterSeconds: 0,
 );

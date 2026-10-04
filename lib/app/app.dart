@@ -22,8 +22,11 @@ import 'routes/app_routes.dart';
 import 'theme/app_theme.dart';
 
 class CinemaApp extends StatelessWidget {
-  CinemaApp({AuthRepository? authRepository, this.initialRoute = AppRoutes.home, super.key})
-    : authRepository = authRepository ?? RemoteAuthRepository.create();
+  CinemaApp({
+    AuthRepository? authRepository,
+    this.initialRoute = AppRoutes.home,
+    super.key,
+  }) : authRepository = authRepository ?? RemoteAuthRepository.create();
 
   final AuthRepository authRepository;
   final String initialRoute;
@@ -37,8 +40,10 @@ class CinemaApp extends StatelessWidget {
       initialRoute: initialRoute,
       routes: {
         AppRoutes.login: (_) => LoginScreen(authRepository: authRepository),
-        AppRoutes.register: (_) => const RegisterScreen(),
-        AppRoutes.verifyEmail: (_) => const VerifyEmailScreen(),
+        AppRoutes.register: (_) =>
+            RegisterScreen(authRepository: authRepository),
+        AppRoutes.verifyEmail: (_) =>
+            VerifyEmailScreen(authRepository: authRepository),
         AppRoutes.forgotPassword: (_) => const ForgotPasswordScreen(),
         AppRoutes.resetPassword: (_) => const ResetPasswordScreen(),
         AppRoutes.home: (_) => const HomeScreen(),

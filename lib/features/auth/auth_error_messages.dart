@@ -20,6 +20,42 @@ String authErrorMessage(ApiException error) {
     return 'Invalid or expired verification code.';
   }
 
+  if (_isEmailAlreadyRegisteredError(normalized)) {
+    return 'This email is already registered.';
+  }
+
+  if (_isEmailAlreadyVerifiedError(normalized)) {
+    return 'This email is already verified. Please sign in.';
+  }
+
+  if (_isInvalidPhoneError(normalized)) {
+    return 'Please enter a valid phone number.';
+  }
+
+  if (_isInvalidEmailError(normalized)) {
+    return 'Please enter a valid email address.';
+  }
+
+  if (_isPasswordTooShortError(normalized)) {
+    return 'Password must be at least 6 characters.';
+  }
+
+  if (_isRequiredFieldError(normalized)) {
+    return _requiredFieldMessage(normalized);
+  }
+
+  if (_isPasswordMismatchError(normalized)) {
+    return 'Password does not match your registration. Please register again.';
+  }
+
+  if (_isResendCooldownError(normalized)) {
+    return 'Please wait before requesting a new code.';
+  }
+
+  if (_isEmailSendError(normalized)) {
+    return 'Unable to send the verification email. Please try again later.';
+  }
+
   if (error.statusCode == 401 || _isInvalidCredentialsError(normalized)) {
     return 'Invalid email or password.';
   }
@@ -150,6 +186,75 @@ bool _isEmailVerificationError(String normalized) {
       normalized.contains('chua kich hoat');
 }
 
+bool _isEmailAlreadyRegisteredError(String normalized) {
+  return normalized.contains('already registered') ||
+      normalized.contains('already exists') ||
+      normalized.contains('da duoc dang ky');
+}
+
+bool _isEmailAlreadyVerifiedError(String normalized) {
+  return normalized.contains('already verified') ||
+      normalized.contains('email da duoc xac thuc');
+}
+
+bool _isInvalidPhoneError(String normalized) {
+  return normalized.contains('phone number is not valid') ||
+      normalized.contains('phone is invalid') ||
+      normalized.contains('so dien thoai khong hop le');
+}
+
+bool _isInvalidEmailError(String normalized) {
+  return normalized.contains('email is not valid') ||
+      normalized.contains('email is invalid') ||
+      normalized.contains('valid email address') ||
+      normalized.contains('email khong hop le');
+}
+
+bool _isPasswordTooShortError(String normalized) {
+  return normalized.contains('password must be at least 6 characters') ||
+      normalized.contains('mat khau') && normalized.contains('6');
+}
+
+bool _isRequiredFieldError(String normalized) {
+  return normalized.contains('email is required') ||
+      normalized.contains('password is required') ||
+      normalized.contains('full name is required') ||
+      normalized.contains('otp is required');
+}
+
+String _requiredFieldMessage(String normalized) {
+  if (normalized.contains('email is required')) {
+    return 'Email is required.';
+  }
+  if (normalized.contains('password is required')) {
+    return 'Password is required.';
+  }
+  if (normalized.contains('full name is required')) {
+    return 'Full name is required.';
+  }
+  if (normalized.contains('otp is required')) {
+    return 'Verification code is required.';
+  }
+  return 'Please check your information and try again.';
+}
+
+bool _isPasswordMismatchError(String normalized) {
+  return normalized.contains('password does not match') ||
+      normalized.contains('mat khau khong khop');
+}
+
+bool _isResendCooldownError(String normalized) {
+  return normalized.contains('please wait') ||
+      normalized.contains('vui long doi') ||
+      normalized.contains('request a new code');
+}
+
+bool _isEmailSendError(String normalized) {
+  return normalized.contains('could not send email') ||
+      normalized.contains('unable to send') ||
+      normalized.contains('khong gui duoc email');
+}
+
 bool _isInvalidOtpError(String normalized) {
   final mentionsCode =
       normalized.contains('otp') ||
@@ -161,7 +266,10 @@ bool _isInvalidOtpError(String normalized) {
       normalized.contains('expired') ||
       normalized.contains('incorrect') ||
       normalized.contains('sai') ||
-      normalized.contains('het han');
+      normalized.contains('het han') ||
+      normalized.contains('khong dung') ||
+      normalized.contains('het luot') ||
+      normalized.contains('qua so lan');
 
   return mentionsCode && invalidOrExpired;
 }
