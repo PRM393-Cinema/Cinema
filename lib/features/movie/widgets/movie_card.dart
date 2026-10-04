@@ -27,58 +27,42 @@ class MovieCard extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       borderRadius: AppRadius.borderRadiusMd,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: AppRadius.borderRadiusMd,
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Row(
-            children: [
-              AppNetworkImage(
-                imageUrl: posterUrl ?? '',
-                width: AppSpacing.xxxl,
-                height: AppSpacing.xxxl * 1.5,
-                borderRadius: AppRadius.borderRadiusSm,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: AppRadius.borderRadiusMd,
+                border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
               ),
-              const SizedBox(width: AppSpacing.lg),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      title,
-                      style: AppTextStyles.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (genre != null) ...[
-                      const SizedBox(height: AppSpacing.sm),
-                      Text(
-                        genre!,
-                        style: AppTextStyles.bodySmall,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                    if (duration != null) ...[
-                      const SizedBox(height: AppSpacing.xs),
-                      Text(
-                        duration!,
-                        style: AppTextStyles.caption,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ],
+              child: ClipRRect(
+                borderRadius: AppRadius.borderRadiusMd,
+                child: AppNetworkImage(
+                  imageUrl: posterUrl ?? '',
+                  width: double.infinity,
+                  height: double.infinity,
                 ),
               ),
-            ],
+            ),
           ),
-        ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            title,
+            style: AppTextStyles.title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          if (genre != null || duration != null) ...[
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              [if (genre != null) genre, if (duration != null) duration].join(' • '),
+              style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ],
       ),
     );
   }

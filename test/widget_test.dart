@@ -144,7 +144,8 @@ void main() {
   ) async {
     await _openHome(tester, authenticated: true);
 
-    await tester.tap(find.text('View Details'));
+    await _scrollHomeTo(tester, find.text('View Details').first);
+    await tester.tap(find.text('View Details').first);
     await _pumpRoute(tester);
     await tester.ensureVisible(find.text('Select Showtime'));
     await tester.pump();
@@ -158,6 +159,7 @@ void main() {
     await _openHome(tester, authenticated: false);
     
     // Tap a movie
+    await _scrollHomeTo(tester, find.text('View Details').first);
     await tester.tap(find.text('View Details').first);
     await _pumpRoute(tester);
 
@@ -181,7 +183,8 @@ void main() {
   ) async {
     await _openHome(tester, authenticated: true);
 
-    await tester.tap(find.text('View Details'));
+    await _scrollHomeTo(tester, find.text('View Details').first);
+    await tester.tap(find.text('View Details').first);
     await _pumpRoute(tester);
     await tester.ensureVisible(find.text('Select Showtime'));
     await tester.pump();
@@ -221,7 +224,8 @@ void main() {
   ) async {
     await _openHome(tester, authenticated: true);
 
-    await tester.tap(find.text('View Details'));
+    await _scrollHomeTo(tester, find.text('View Details').first);
+    await tester.tap(find.text('View Details').first);
     await _pumpRoute(tester);
     await tester.ensureVisible(find.text('Select Showtime'));
     await tester.pump();

@@ -44,7 +44,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Cinema App'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Row(
+          children: [
+            Icon(Icons.movie_filter_outlined, color: AppColors.primary, size: 28),
+            const SizedBox(width: AppSpacing.sm),
+            Text(
+              'CINEMA',
+              style: AppTextStyles.heading2.copyWith(letterSpacing: 1.5),
+            ),
+          ],
+        ),
         actions: session.isAuthenticated
             ? [
                 IconButton(
@@ -57,17 +68,18 @@ class _HomeScreenState extends State<HomeScreen> {
                   onPressed: () => Navigator.pushNamed(context, AppRoutes.profile),
                   icon: const Icon(Icons.person_outline),
                 ),
+                const SizedBox(width: AppSpacing.sm),
               ]
             : [
-                TextButton.icon(
+                TextButton(
                   onPressed: () => Navigator.pushNamed(context, AppRoutes.login),
-                  icon: const Icon(Icons.login),
-                  label: const Text('Sign in'),
                   style: TextButton.styleFrom(
                     foregroundColor: AppColors.textPrimary,
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
                   ),
+                  child: const Text('Sign in', style: AppTextStyles.button),
                 ),
-                const SizedBox(width: AppSpacing.sm),
+                const SizedBox(width: AppSpacing.md),
               ],
       ),
       body: SafeArea(
@@ -179,29 +191,39 @@ class _FeaturedMovie extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: AppRadius.borderRadiusLg,
-        border: Border.all(color: AppColors.border),
-      ),
+    return GestureDetector(
+      onTap: onTap,
       child: ClipRRect(
         borderRadius: AppRadius.borderRadiusLg,
-        child: Flex(
-          direction: isWide ? Axis.horizontal : Axis.vertical,
-          children: [
-            SizedBox(
-              width: isWide ? 420 : double.infinity,
-              height: isWide ? 260 : 190,
-              child: AppNetworkImage(imageUrl: movie.posterUrl),
-            ),
-            if (isWide)
-              Expanded(
+        child: SizedBox(
+          height: isWide ? 480 : 520,
+          width: double.infinity,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              AppNetworkImage(imageUrl: movie.posterUrl),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      AppColors.background.withValues(alpha: 0.6),
+                      AppColors.background,
+                    ],
+                    stops: const [0.4, 0.8, 1.0],
+                  ),
+                ),
+              ),
+              Positioned(
+                left: AppSpacing.xl,
+                right: AppSpacing.xl,
+                bottom: AppSpacing.xl,
                 child: _FeaturedMovieContent(movie: movie, onTap: onTap),
-              )
-            else
-              _FeaturedMovieContent(movie: movie, onTap: onTap),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -216,32 +238,58 @@ class _FeaturedMovieContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.xl),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Featured', style: AppTextStyles.caption),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            movie.title,
-            style: AppTextStyles.heading1,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: 0.2),
+            borderRadius: AppRadius.borderRadiusSm,
+            border: Border.all(color: AppColors.primary.withValues(alpha: 0.5)),
           ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            '${movie.genre} - ${movie.durationText}',
-            style: AppTextStyles.bodySmall,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm,
+              vertical: AppSpacing.xs,
+            ),
+            child: Text(
+              'FEATURED',
+              style: AppTextStyles.caption.copyWith(color: AppColors.primary),
+            ),
           ),
-          const SizedBox(height: AppSpacing.lg),
-          AppButton(
-            label: 'View Details',
-            leadingIcon: Icons.play_arrow_outlined,
-            onPressed: onTap,
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        Text(
+          movie.title,
+          style: AppTextStyles.display.copyWith(color: Colors.white),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Text(
+          '${movie.genre} • ${movie.durationText}',
+          style: AppTextStyles.body.copyWith(color: Colors.white70),
+        ),
+        const SizedBox(height: AppSpacing.xl),
+        Row(
+          children: [
+            Expanded(
+              child: AppButton(
+                label: 'Book Now',
+                onPressed: onTap, // Tap the same route
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: AppButton.secondary(
+                label: 'View Details',
+                onPressed: onTap, 
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -259,8 +307,8 @@ class _MovieGrid extends StatelessWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 360,
-        mainAxisExtent: 128,
+        maxCrossAxisExtent: 220,
+        mainAxisExtent: 340,
         crossAxisSpacing: AppSpacing.lg,
         mainAxisSpacing: AppSpacing.lg,
       ),
@@ -287,7 +335,7 @@ class _MovieList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 144,
+      height: 320,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: movies.length,
@@ -295,7 +343,7 @@ class _MovieList extends StatelessWidget {
         itemBuilder: (context, index) {
           final movie = movies[index];
           return SizedBox(
-            width: 300,
+            width: 160,
             child: MovieCard(
               title: movie.title,
               posterUrl: movie.posterUrl,
