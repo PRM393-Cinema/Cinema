@@ -16,8 +16,9 @@ class SeatLegend extends StatelessWidget {
       children: [
         _SeatLegendEntry(label: 'Available', state: SeatItemState.available),
         _SeatLegendEntry(label: 'Selected', state: SeatItemState.selected),
-        _SeatLegendEntry(label: 'Held', state: SeatItemState.held),
-        _SeatLegendEntry(label: 'Booked', state: SeatItemState.booked),
+        // Seats held by other customers are reported together with booked
+        // seats, so both show as unavailable.
+        _SeatLegendEntry(label: 'Unavailable', state: SeatItemState.booked),
       ],
     );
   }

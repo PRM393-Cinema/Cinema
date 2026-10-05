@@ -49,7 +49,7 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      await widget.authRepository.login(
+      final response = await widget.authRepository.login(
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
@@ -58,14 +58,19 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
-      SessionProvider.of(context).setAuthenticated();
+      SessionProvider.of(context).setAuthenticated(response.user);
 
-      final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+      final args =
+          ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
       final pendingRoute = args?['pendingRoute'] as String?;
       final pendingArguments = args?['pendingArguments'];
 
       if (pendingRoute != null) {
-        Navigator.pushReplacementNamed(context, pendingRoute, arguments: pendingArguments);
+        Navigator.pushReplacementNamed(
+          context,
+          pendingRoute,
+          arguments: pendingArguments,
+        );
       } else {
         Navigator.pushReplacementNamed(context, AppRoutes.home);
       }

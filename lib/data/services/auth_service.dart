@@ -1,8 +1,10 @@
 import '../../core/network/api_client.dart';
 import '../models/auth_response.dart';
+import '../models/json_readers.dart';
 import '../models/login_request.dart';
 import '../models/otp_sent_response.dart';
 import '../models/register_request.dart';
+import '../models/reset_password_request.dart';
 import '../models/verify_email_request.dart';
 
 class AuthService {
@@ -60,5 +62,49 @@ class AuthService {
     }
 
     return OtpSentResponse.fromJson(Map<String, Object?>.from(response));
+  }
+
+  Future<OtpSentResponse> forgotPassword(String email) async {
+    final response = await _apiClient.post(
+      '/api/v1/auth/forgot-password',
+      body: {'email': email},
+    );
+
+    return OtpSentResponse.fromJson(readMap(response));
+  }
+
+  Future<String> resetPassword(ResetPasswordRequest request) async {
+    final response = await _apiClient.post(
+      '/api/v1/auth/reset-password',
+      body: request.toJson(),
+    );
+
+    return readString(readMap(response)['message']);
+  }
+
+  Future<AuthResponse> refresh(String refreshToken) async {
+    final response = await _apiClient.post(
+      '/api/v1/auth/refresh',
+      body: {'refreshToken': refreshToken},
+    );
+
+    return AuthResponse.fromJson(readMap(response));
+  }
+
+  Future<void> logout(String refreshToken) async {
+    await _apiClient.post(
+      '/api/v1/auth/logout',
+      body: {'refreshToken': refreshToken},
+      authenticated: true,
+    );
+  }
+
+  Future<AuthUser> me() async {
+    final response = await _apiClient.get(
+      '/api/v1/auth/me',
+      authenticated: true,
+    );
+
+    return AuthUser.fromJson(readMap(response));
   }
 }

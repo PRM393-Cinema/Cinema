@@ -110,8 +110,9 @@ class _MovieDetailContent extends StatelessWidget {
           spacing: AppSpacing.sm,
           runSpacing: AppSpacing.sm,
           children: [
-            _InfoPill(label: movie.releaseYear),
-            _InfoPill(label: movie.language),
+            if (movie.releaseYear.isNotEmpty)
+              _InfoPill(label: movie.releaseYear),
+            if (movie.language.isNotEmpty) _InfoPill(label: movie.language),
             _InfoPill(label: movie.durationText),
           ],
         ),

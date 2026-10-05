@@ -1,18 +1,104 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 import '../../../app/routes/app_routes.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_radius.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
+import '../../../core/network/api_exception.dart';
+import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/error_state.dart';
-import '../../../data/mock/mock_movies.dart';
 import '../../../data/models/booking_draft.dart';
+import '../../../data/repositories/booking_repository.dart';
 
-class BookingSummaryScreen extends StatelessWidget {
-  const BookingSummaryScreen({super.key});
+class BookingSummaryScreen extends StatefulWidget {
+  const BookingSummaryScreen({required this.bookingRepository, super.key});
+
+  final BookingRepository bookingRepository;
+
+  @override
+  State<BookingSummaryScreen> createState() => _BookingSummaryScreenState();
+}
+
+class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
+  bool _isSubmitting = false;
+  String? _errorMessage;
+
+  Future<void> _confirmBooking(BookingDraft draft) async {
+    setState(() {
+      _isSubmitting = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final booking = await widget.bookingRepository.createBooking(
+        showtimeId: draft.showtime.id,
+        seatIds: draft.seats.map((seat) => seat.id).toList(),
+      );
+
+      if (!mounted) return;
+
+      // The seats are now held for this booking: leave the selection flow so
+      // going back cannot create a second booking for the same seats.
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        AppRoutes.payment,
+        (route) => route.isFirst,
+        arguments: booking,
+      );
+    } on ApiException catch (error) {
+      if (error.statusCode == 409) {
+        await _showSeatsTakenDialog(error.message);
+        return;
+      }
+      _showError(error.message);
+    } on FormatException {
+      _showError('The server returned an invalid response.');
+    } on Object {
+      _showError('Something went wrong. Please try again.');
+    }
+  }
+
+  Future<void> _showSeatsTakenDialog(String message) async {
+    if (!mounted) return;
+    setState(() {
+      _isSubmitting = false;
+    });
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text(
+          'Seats no longer available',
+          style: AppTextStyles.title,
+        ),
+        content: Text(
+          'Some of your seats were just taken by another customer. Please choose your seats again.\n\n$message',
+          style: AppTextStyles.body,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Choose again'),
+          ),
+        ],
+      ),
+    );
+
+    if (mounted) {
+      Navigator.pop(context, true);
+    }
+  }
+
+  void _showError(String message) {
+    if (!mounted) return;
+    setState(() {
+      _isSubmitting = false;
+      _errorMessage = message;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,29 +116,7 @@ class BookingSummaryScreen extends StatelessWidget {
 
     final draft = args;
     final showtime = draft.showtime;
-    final movie = mockMovies.firstWhere(
-      (m) => m.id == showtime.movieId,
-      orElse: () => mockMovies.first,
-    );
-
-    final dateFormat = DateFormat('EEEE, MMM d, yyyy');
-    final timeFormat = DateFormat('h:mm a');
-
-    // Group seat labels by row for a clean display
-    final Map<String, List<int>> seatsByRow = {};
-    for (final seat in draft.seats) {
-      seatsByRow.putIfAbsent(seat.row, () => []).add(seat.number);
-    }
-
-    // Sort rows and numbers
-    final sortedRows = seatsByRow.keys.toList()..sort();
-    for (final row in sortedRows) {
-      seatsByRow[row]!.sort();
-    }
-
-    final seatLabels = sortedRows.map((row) {
-      return '$row${seatsByRow[row]!.join(', ')}';
-    }).join(' • ');
+    final seatLabels = draft.seats.map((seat) => seat.label).join(', ');
 
     return Scaffold(
       appBar: AppBar(title: const Text('Booking Summary')),
@@ -70,19 +134,22 @@ class BookingSummaryScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(movie.title, style: AppTextStyles.heading2),
+                          Text(
+                            draft.movie.title,
+                            style: AppTextStyles.heading2,
+                          ),
                           const SizedBox(height: AppSpacing.sm),
                           _DetailRow(
                             icon: Icons.calendar_today_outlined,
-                            text: dateFormat.format(showtime.startTime),
+                            text: formatLongDate(showtime.startTime),
                           ),
                           _DetailRow(
                             icon: Icons.access_time_outlined,
-                            text: timeFormat.format(showtime.startTime),
+                            text: formatTime(showtime.startTime),
                           ),
                           _DetailRow(
                             icon: Icons.meeting_room_outlined,
-                            text: 'Room: ${showtime.roomId}',
+                            text: showtime.roomLabel,
                           ),
                         ],
                       ),
@@ -93,10 +160,7 @@ class BookingSummaryScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            seatLabels,
-                            style: AppTextStyles.body,
-                          ),
+                          Text(seatLabels, style: AppTextStyles.body),
                           const SizedBox(height: AppSpacing.xs),
                           Text(
                             '${draft.ticketCount} Ticket(s)',
@@ -114,25 +178,30 @@ class BookingSummaryScreen extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                '${draft.ticketCount}x Ticket (\$${showtime.price.toStringAsFixed(2)})',
+                                '${draft.ticketCount}x Ticket (${formatVnd(showtime.price)})',
                                 style: AppTextStyles.body,
                               ),
                               Text(
-                                '\$${draft.totalPrice.toStringAsFixed(2)}',
+                                formatVnd(draft.totalPrice),
                                 style: AppTextStyles.body,
                               ),
                             ],
                           ),
                           const Padding(
-                            padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
+                            padding: EdgeInsets.symmetric(
+                              vertical: AppSpacing.md,
+                            ),
                             child: Divider(height: 1),
                           ),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text('Total', style: AppTextStyles.heading2),
+                              const Text(
+                                'Total',
+                                style: AppTextStyles.heading2,
+                              ),
                               Text(
-                                '\$${draft.totalPrice.toStringAsFixed(2)}',
+                                formatVnd(draft.totalPrice),
                                 style: AppTextStyles.heading2.copyWith(
                                   color: AppColors.primary,
                                 ),
@@ -142,11 +211,21 @@ class BookingSummaryScreen extends StatelessWidget {
                         ],
                       ),
                     ),
+                    const SizedBox(height: AppSpacing.lg),
+                    const Text(
+                      'Your seats will be held for 10 minutes while you pay with PayOS.',
+                      style: AppTextStyles.bodySmall,
+                    ),
+                    if (_errorMessage != null) ...[
+                      const SizedBox(height: AppSpacing.lg),
+                      _ErrorBanner(message: _errorMessage!),
+                    ],
                   ],
                 ),
               ),
             ),
             Container(
+              width: double.infinity,
               padding: const EdgeInsets.all(AppSpacing.xl),
               decoration: const BoxDecoration(
                 color: AppColors.surface,
@@ -154,10 +233,8 @@ class BookingSummaryScreen extends StatelessWidget {
               ),
               child: AppButton(
                 label: 'Confirm Booking',
-                onPressed: () {
-                  // Navigation validation only. Real POST /api/v1/bookings not called yet.
-                  Navigator.pushNamed(context, AppRoutes.payment);
-                },
+                isLoading: _isSubmitting,
+                onPressed: _isSubmitting ? null : () => _confirmBooking(draft),
               ),
             ),
           ],
@@ -188,10 +265,7 @@ class _SummaryCard extends StatelessWidget {
           ),
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.lg),
-            child: SizedBox(
-              width: double.infinity,
-              child: child,
-            ),
+            child: SizedBox(width: double.infinity, child: child),
           ),
         ),
       ],
@@ -213,10 +287,36 @@ class _DetailRow extends StatelessWidget {
         children: [
           Icon(icon, size: 20, color: AppColors.textSecondary),
           const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Text(text, style: AppTextStyles.body),
-          ),
+          Expanded(child: Text(text, style: AppTextStyles.body)),
         ],
+      ),
+    );
+  }
+}
+
+class _ErrorBanner extends StatelessWidget {
+  const _ErrorBanner({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: AppColors.error.withValues(alpha: 0.12),
+        borderRadius: AppRadius.borderRadiusMd,
+        border: Border.all(color: AppColors.error),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(Icons.error_outline, color: AppColors.error),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(child: Text(message, style: AppTextStyles.bodySmall)),
+          ],
+        ),
       ),
     );
   }

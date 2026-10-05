@@ -1,32 +1,86 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 import '../../../app/routes/app_routes.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
+import '../../../core/network/api_exception.dart';
+import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/app_button.dart';
+import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/error_state.dart';
-import '../../../data/mock/mock_movies.dart';
-import '../../../data/mock/mock_seats.dart';
+import '../../../core/widgets/loading_state.dart';
 import '../../../data/models/booking_draft.dart';
 import '../../../data/models/seat.dart';
-import '../../../data/models/showtime.dart';
+import '../../../data/repositories/catalog_repository.dart';
 import '../widgets/seat_item.dart';
 import '../widgets/seat_legend.dart';
 
 class SeatSelectionScreen extends StatefulWidget {
-  const SeatSelectionScreen({super.key});
+  const SeatSelectionScreen({required this.catalogRepository, super.key});
+
+  final CatalogRepository catalogRepository;
 
   @override
   State<SeatSelectionScreen> createState() => _SeatSelectionScreenState();
 }
 
 class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
-  final Set<String> _selectedSeatIds = {};
+  final Set<int> _selectedSeatIds = {};
+  SeatSelectionArgs? _args;
+  ShowtimeSeatsData? _data;
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (_args == null && args is SeatSelectionArgs) {
+      _args = args;
+      _loadSeatMap();
+    }
+  }
+
+  Future<void> _loadSeatMap() async {
+    final args = _args;
+    if (args == null) return;
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final data = await widget.catalogRepository.getSeatMap(args.showtime);
+      if (!mounted) return;
+      setState(() {
+        _data = data;
+        _isLoading = false;
+        // Drop selections that someone else took in the meantime.
+        _selectedSeatIds.removeWhere((id) => data.reservations.containsKey(id));
+      });
+    } on ApiException catch (error) {
+      _showError(error.message);
+    } on FormatException {
+      _showError('The server returned an invalid response.');
+    } on Object {
+      _showError('Something went wrong. Please try again.');
+    }
+  }
+
+  void _showError(String message) {
+    if (!mounted) return;
+    setState(() {
+      _isLoading = false;
+      _errorMessage = message;
+    });
+  }
 
   void _toggleSeat(Seat seat, SeatReservationStatus status) {
-    if (status == SeatReservationStatus.held || status == SeatReservationStatus.booked) {
+    if (status == SeatReservationStatus.held ||
+        status == SeatReservationStatus.booked) {
       return; // Cannot select
     }
     setState(() {
@@ -38,11 +92,33 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
     });
   }
 
+  Future<void> _continue(SeatSelectionArgs args, ShowtimeSeatsData data) async {
+    final seats =
+        data.seats.where((s) => _selectedSeatIds.contains(s.id)).toList()
+          ..sort((a, b) => a.label.compareTo(b.label));
+
+    final seatsTaken = await Navigator.pushNamed(
+      context,
+      AppRoutes.bookingSummary,
+      arguments: BookingDraft(
+        movie: args.movie,
+        showtime: args.showtime,
+        seats: seats,
+      ),
+    );
+
+    // The summary returns true when some seats were taken before the booking
+    // was created: reload the map so the customer can pick again.
+    if (seatsTaken == true && mounted) {
+      await _loadSeatMap();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final args = ModalRoute.of(context)?.settings.arguments;
+    final args = _args;
 
-    if (args is! Showtime) {
+    if (args == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Seat Selection')),
         body: const ErrorState(
@@ -52,26 +128,19 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
       );
     }
 
-    final showtime = args;
-    final movie = mockMovies.firstWhere(
-      (m) => m.id == showtime.movieId,
-      orElse: () => mockMovies.first,
-    );
-    final data = mockShowtimeSeatsData;
-
+    final showtime = args.showtime;
+    final data = _data;
     final totalPrice = _selectedSeatIds.length * showtime.price;
-    final timeFormat = DateFormat('h:mm a');
-    final dateFormat = DateFormat('MMM d, yyyy');
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(movie.title),
+        title: Text(args.movie.title),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(40),
           child: Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.md),
             child: Text(
-              '${dateFormat.format(showtime.startTime)} • ${timeFormat.format(showtime.startTime)} • ${showtime.roomId}',
+              '${formatDate(showtime.startTime)} • ${formatTime(showtime.startTime)} • ${showtime.roomLabel}',
               style: AppTextStyles.bodySmall,
             ),
           ),
@@ -80,13 +149,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            Expanded(
-              child: _SeatMap(
-                data: data,
-                selectedSeatIds: _selectedSeatIds,
-                onSeatTap: _toggleSeat,
-              ),
-            ),
+            Expanded(child: _buildSeatMap(data)),
             const Divider(height: 1),
             Container(
               padding: const EdgeInsets.all(AppSpacing.xl),
@@ -109,27 +172,15 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                               style: AppTextStyles.bodySmall,
                             ),
                             Text(
-                              '\$${totalPrice.toStringAsFixed(2)}',
+                              formatVnd(totalPrice),
                               style: AppTextStyles.heading2,
                             ),
                           ],
                         ),
                         AppButton(
                           label: 'Continue',
-                          onPressed: _selectedSeatIds.isNotEmpty
-                              ? () {
-                                  // Pass necessary payload for the next phase
-                                  Navigator.pushNamed(
-                                    context,
-                                    AppRoutes.bookingSummary,
-                                    arguments: BookingDraft(
-                                      showtime: showtime,
-                                      seats: data.seats
-                                          .where((s) => _selectedSeatIds.contains(s.id))
-                                          .toList(),
-                                    ),
-                                  );
-                                }
+                          onPressed: data != null && _selectedSeatIds.isNotEmpty
+                              ? () => _continue(args, data)
                               : null,
                         ),
                       ],
@@ -143,6 +194,34 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
       ),
     );
   }
+
+  Widget _buildSeatMap(ShowtimeSeatsData? data) {
+    if (_isLoading) {
+      return const LoadingState(message: 'Loading seats...');
+    }
+
+    if (_errorMessage != null || data == null) {
+      return ErrorState(
+        title: 'Unable to load seats',
+        message: _errorMessage ?? 'Please try again.',
+        onRetry: _loadSeatMap,
+      );
+    }
+
+    if (data.seats.isEmpty) {
+      return const EmptyState(
+        icon: Icons.event_seat_outlined,
+        title: 'No seats configured',
+        message: 'This room has no seat map yet.',
+      );
+    }
+
+    return _SeatMap(
+      data: data,
+      selectedSeatIds: _selectedSeatIds,
+      onSeatTap: _toggleSeat,
+    );
+  }
 }
 
 class _SeatMap extends StatelessWidget {
@@ -153,7 +232,7 @@ class _SeatMap extends StatelessWidget {
   });
 
   final ShowtimeSeatsData data;
-  final Set<String> selectedSeatIds;
+  final Set<int> selectedSeatIds;
   final void Function(Seat seat, SeatReservationStatus status) onSeatTap;
 
   @override
@@ -205,9 +284,10 @@ class _SeatMap extends StatelessWidget {
                           ),
                           const SizedBox(width: AppSpacing.md),
                           ...rowSeats.map((seat) {
-                            final status = data.reservations[seat.id] ??
-                                SeatReservationStatus.available;
-                            final isSelected = selectedSeatIds.contains(seat.id);
+                            final status = data.statusOf(seat);
+                            final isSelected = selectedSeatIds.contains(
+                              seat.id,
+                            );
 
                             SeatItemState itemState;
                             if (isSelected) {
@@ -221,7 +301,9 @@ class _SeatMap extends StatelessWidget {
                             }
 
                             return Padding(
-                              padding: const EdgeInsets.only(right: AppSpacing.md),
+                              padding: const EdgeInsets.only(
+                                right: AppSpacing.md,
+                              ),
                               child: SeatItem(
                                 label: seat.number.toString(),
                                 state: itemState,
@@ -257,15 +339,9 @@ class _ScreenIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        CustomPaint(
-          size: const Size(300, 30),
-          painter: _ScreenCurvePainter(),
-        ),
+        CustomPaint(size: const Size(300, 30), painter: _ScreenCurvePainter()),
         const SizedBox(height: AppSpacing.sm),
-        const Text(
-          'SCREEN',
-          style: AppTextStyles.caption,
-        ),
+        const Text('SCREEN', style: AppTextStyles.caption),
       ],
     );
   }

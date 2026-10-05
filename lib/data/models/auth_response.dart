@@ -59,4 +59,22 @@ class AuthUser {
   final bool emailVerified;
   final DateTime createdAt;
   final List<String> roles;
+
+  String get displayName {
+    final name = fullName?.trim();
+    return name == null || name.isEmpty ? email : name;
+  }
+
+  Map<String, Object?> toJson() {
+    return {
+      'userId': userId,
+      'email': email,
+      'fullName': fullName,
+      'phone': phone,
+      'enabled': enabled,
+      'emailVerified': emailVerified,
+      'createdAt': createdAt.toIso8601String(),
+      'roles': roles,
+    };
+  }
 }

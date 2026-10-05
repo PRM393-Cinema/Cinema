@@ -1,33 +1,106 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 import '../../../app/routes/app_routes.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_radius.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
+import '../../../core/network/api_exception.dart';
+import '../../../core/session/auth_guard.dart';
+import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/app_button.dart';
+import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/error_state.dart';
-import '../../../data/mock/mock_showtimes.dart';
+import '../../../core/widgets/loading_state.dart';
+import '../../../data/models/booking_draft.dart';
 import '../../../data/models/movie.dart';
 import '../../../data/models/showtime.dart';
-import '../../../core/session/auth_guard.dart';
+import '../../../data/repositories/catalog_repository.dart';
 
 class ShowtimeSelectionScreen extends StatefulWidget {
-  const ShowtimeSelectionScreen({super.key});
+  const ShowtimeSelectionScreen({required this.catalogRepository, super.key});
+
+  final CatalogRepository catalogRepository;
 
   @override
-  State<ShowtimeSelectionScreen> createState() => _ShowtimeSelectionScreenState();
+  State<ShowtimeSelectionScreen> createState() =>
+      _ShowtimeSelectionScreenState();
 }
 
 class _ShowtimeSelectionScreenState extends State<ShowtimeSelectionScreen> {
+  Movie? _movie;
+  List<Showtime> _showtimes = const [];
+  bool _isLoading = true;
+  String? _errorMessage;
   Showtime? _selectedShowtime;
 
   @override
-  Widget build(BuildContext context) {
-    final args = ModalRoute.of(context)?.settings.arguments;
+  void didChangeDependencies() {
+    super.didChangeDependencies();
 
-    if (args is! Movie) {
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (_movie == null && args is Movie) {
+      _movie = args;
+      _loadShowtimes();
+    }
+  }
+
+  Future<void> _loadShowtimes() async {
+    final movie = _movie;
+    if (movie == null) return;
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final showtimes = await widget.catalogRepository.getOpenShowtimes(
+        movie.id,
+      );
+      if (!mounted) return;
+      setState(() {
+        _showtimes = showtimes;
+        _isLoading = false;
+        if (!showtimes.any((s) => s.id == _selectedShowtime?.id)) {
+          _selectedShowtime = null;
+        }
+      });
+    } on ApiException catch (error) {
+      _showError(error.message);
+    } on FormatException {
+      _showError('The server returned an invalid response.');
+    } on Object {
+      _showError('Something went wrong. Please try again.');
+    }
+  }
+
+  void _showError(String message) {
+    if (!mounted) return;
+    setState(() {
+      _isLoading = false;
+      _errorMessage = message;
+    });
+  }
+
+  void _continueToSeats(Movie movie, Showtime showtime) {
+    final args = SeatSelectionArgs(movie: movie, showtime: showtime);
+
+    AuthGuard.requireAuthentication(
+      context,
+      pendingRoute: AppRoutes.seatSelection,
+      pendingArguments: args,
+      onAuthenticated: () {
+        Navigator.pushNamed(context, AppRoutes.seatSelection, arguments: args);
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final movie = _movie;
+
+    if (movie == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Showtimes')),
         body: const ErrorState(
@@ -37,20 +110,8 @@ class _ShowtimeSelectionScreenState extends State<ShowtimeSelectionScreen> {
       );
     }
 
-    final movie = args;
-    // In a real app, we'd fetch showtimes for this movie id from backend.
-    // For now, we simulate fetching by taking the mock showtimes.
-    // We'll just show all mock showtimes if none match, for UI preview, 
-    // or filter properly. Let's filter properly. If empty, just show a fallback to mockShowtimes for UI testing.
-    var showtimes = mockShowtimes.where((s) => s.movieId == movie.id).toList();
-    if (showtimes.isEmpty) {
-      showtimes = mockShowtimes; // fallback for previewing other movies
-    }
-
     return Scaffold(
-      appBar: AppBar(
-        title: Text(movie.title),
-      ),
+      appBar: AppBar(title: Text(movie.title)),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -63,7 +124,10 @@ class _ShowtimeSelectionScreenState extends State<ShowtimeSelectionScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Select Showtime', style: AppTextStyles.heading1),
+                      const Text(
+                        'Select Showtime',
+                        style: AppTextStyles.heading1,
+                      ),
                       const SizedBox(height: AppSpacing.sm),
                       Text(
                         'Choose a time to see ${movie.title}',
@@ -72,47 +136,13 @@ class _ShowtimeSelectionScreenState extends State<ShowtimeSelectionScreen> {
                     ],
                   ),
                 ),
-                Expanded(
-                  child: ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-                    itemCount: showtimes.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.md),
-                    itemBuilder: (context, index) {
-                      final showtime = showtimes[index];
-                      final isSelected = _selectedShowtime?.id == showtime.id;
-                      return _ShowtimeCard(
-                        showtime: showtime,
-                        isSelected: isSelected,
-                        onTap: () {
-                          if (showtime.isOpen) {
-                            setState(() {
-                              _selectedShowtime = showtime;
-                            });
-                          }
-                        },
-                      );
-                    },
-                  ),
-                ),
+                Expanded(child: _buildShowtimes()),
                 Padding(
                   padding: const EdgeInsets.all(AppSpacing.xl),
                   child: AppButton(
                     label: 'Continue to Seats',
                     onPressed: _selectedShowtime != null
-                        ? () {
-                            AuthGuard.requireAuthentication(
-                              context,
-                              pendingRoute: AppRoutes.seatSelection,
-                              pendingArguments: _selectedShowtime,
-                              onAuthenticated: () {
-                                Navigator.pushNamed(
-                                  context,
-                                  AppRoutes.seatSelection,
-                                  arguments: _selectedShowtime,
-                                );
-                              },
-                            );
-                          }
+                        ? () => _continueToSeats(movie, _selectedShowtime!)
                         : null,
                   ),
                 ),
@@ -120,6 +150,58 @@ class _ShowtimeSelectionScreenState extends State<ShowtimeSelectionScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildShowtimes() {
+    if (_isLoading) {
+      return const LoadingState(message: 'Loading showtimes...');
+    }
+
+    if (_errorMessage != null) {
+      return ErrorState(
+        title: 'Unable to load showtimes',
+        message: _errorMessage!,
+        onRetry: _loadShowtimes,
+      );
+    }
+
+    if (_showtimes.isEmpty) {
+      return EmptyState(
+        icon: Icons.event_busy_outlined,
+        title: 'No showtimes available',
+        message: 'There are no upcoming showtimes for this movie yet.',
+        action: AppButton.secondary(
+          label: 'Refresh',
+          onPressed: _loadShowtimes,
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadShowtimes,
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+        physics: const AlwaysScrollableScrollPhysics(),
+        itemCount: _showtimes.length,
+        separatorBuilder: (context, index) =>
+            const SizedBox(height: AppSpacing.md),
+        itemBuilder: (context, index) {
+          final showtime = _showtimes[index];
+          final isSelected = _selectedShowtime?.id == showtime.id;
+          return _ShowtimeCard(
+            showtime: showtime,
+            isSelected: isSelected,
+            onTap: () {
+              if (showtime.isOpen) {
+                setState(() {
+                  _selectedShowtime = showtime;
+                });
+              }
+            },
+          );
+        },
       ),
     );
   }
@@ -138,9 +220,6 @@ class _ShowtimeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final timeFormat = DateFormat('h:mm a');
-    final dateFormat = DateFormat('MMM d, yyyy');
-
     final backgroundColor = isSelected
         ? AppColors.primary.withAlpha(38)
         : AppColors.surface;
@@ -167,12 +246,12 @@ class _ShowtimeCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${timeFormat.format(showtime.startTime)} - ${timeFormat.format(showtime.endTime)}',
+                        '${formatTime(showtime.startTime)} - ${formatTime(showtime.endTime)}',
                         style: AppTextStyles.heading2,
                       ),
                       const SizedBox(height: AppSpacing.xs),
                       Text(
-                        '${dateFormat.format(showtime.startTime)} • Room: ${showtime.roomId}',
+                        '${formatDate(showtime.startTime)} • ${showtime.roomLabel}',
                         style: AppTextStyles.bodySmall,
                       ),
                     ],
@@ -181,10 +260,7 @@ class _ShowtimeCard extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text(
-                      '\$${showtime.price.toStringAsFixed(2)}',
-                      style: AppTextStyles.title,
-                    ),
+                    Text(formatVnd(showtime.price), style: AppTextStyles.title),
                     const SizedBox(height: AppSpacing.xs),
                     _StatusPill(status: showtime.status),
                   ],
@@ -208,12 +284,17 @@ class _StatusPill extends StatelessWidget {
     final isOpen = status == 'OPEN';
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: isOpen ? AppColors.success.withAlpha(51) : AppColors.error.withAlpha(51),
+        color: isOpen
+            ? AppColors.success.withAlpha(51)
+            : AppColors.error.withAlpha(51),
         borderRadius: AppRadius.borderRadiusSm,
         border: Border.all(color: isOpen ? AppColors.success : AppColors.error),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.xs,
+        ),
         child: Text(
           status,
           style: AppTextStyles.caption.copyWith(
