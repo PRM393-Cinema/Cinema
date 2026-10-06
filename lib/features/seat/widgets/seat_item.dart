@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../../app/theme/app_colors.dart';
@@ -12,6 +14,7 @@ class SeatItem extends StatelessWidget {
     required this.label,
     this.state = SeatItemState.available,
     this.onTap,
+    this.size = AppSpacing.xxxl,
     super.key,
   });
 
@@ -19,28 +22,37 @@ class SeatItem extends StatelessWidget {
   final SeatItemState state;
   final VoidCallback? onTap;
 
+  // Seat maps shrink seats so a whole row fits on a phone.
+  final double size;
+
   bool get _canTap =>
       state == SeatItemState.available || state == SeatItemState.selected;
 
   @override
   Widget build(BuildContext context) {
     final style = _SeatStyle.fromState(state);
+    final borderRadius = BorderRadius.circular(
+      math.min(AppRadius.sm, size / 5),
+    );
 
     return InkWell(
       onTap: _canTap ? onTap : null,
-      borderRadius: AppRadius.borderRadiusSm,
+      borderRadius: borderRadius,
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: style.background,
-          borderRadius: AppRadius.borderRadiusSm,
+          borderRadius: borderRadius,
           border: Border.all(color: style.border),
         ),
         child: SizedBox.square(
-          dimension: AppSpacing.xxxl,
+          dimension: size,
           child: Center(
             child: Text(
               label,
-              style: AppTextStyles.caption.copyWith(color: style.foreground),
+              style: AppTextStyles.caption.copyWith(
+                color: style.foreground,
+                fontSize: size < 36 ? 10 : null,
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),

@@ -27,6 +27,8 @@ class SeatLegend extends StatelessWidget {
 class _SeatLegendEntry extends StatelessWidget {
   const _SeatLegendEntry({required this.label, required this.state});
 
+  static const _swatchSize = 18.0;
+
   final String label;
   final SeatItemState state;
 
@@ -35,7 +37,7 @@ class _SeatLegendEntry extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        SeatItem(label: '', state: state),
+        SeatItem(label: '', state: state, size: _swatchSize),
         const SizedBox(width: AppSpacing.sm),
         Text(label, style: AppTextStyles.bodySmall),
       ],
