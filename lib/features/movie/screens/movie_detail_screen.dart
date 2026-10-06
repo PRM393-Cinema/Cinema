@@ -38,7 +38,7 @@ class MovieDetailScreen extends StatelessWidget {
             return CustomScrollView(
               slivers: [
                 SliverAppBar(
-                  expandedHeight: isWide ? 360 : 280,
+                  expandedHeight: isWide ? 320 : 200,
                   pinned: true,
                   title: Text(movie.title),
                   flexibleSpace: FlexibleSpaceBar(
@@ -61,25 +61,9 @@ class MovieDetailScreen extends StatelessWidget {
                         padding: EdgeInsets.all(
                           isWide ? AppSpacing.xxl : AppSpacing.lg,
                         ),
-                        child: Flex(
-                          direction: isWide ? Axis.horizontal : Axis.vertical,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            AppNetworkImage(
-                              imageUrl: movie.posterUrl,
-                              width: isWide ? 260 : double.infinity,
-                              height: isWide ? 390 : 420,
-                              borderRadius: AppRadius.borderRadiusLg,
-                            ),
-                            SizedBox(
-                              width: isWide ? AppSpacing.xxl : 0,
-                              height: isWide ? 0 : AppSpacing.xl,
-                            ),
-                            if (isWide)
-                              Expanded(child: _MovieDetailContent(movie: movie))
-                            else
-                              _MovieDetailContent(movie: movie),
-                          ],
+                        child: _MovieDetailContent(
+                          movie: movie,
+                          isWide: isWide,
                         ),
                       ),
                     ),
@@ -90,50 +74,98 @@ class MovieDetailScreen extends StatelessWidget {
           },
         ),
       ),
+      // Always reachable, so the poster and synopsis never push it off screen.
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.md,
+          AppSpacing.lg,
+          AppSpacing.lg,
+        ),
+        decoration: const BoxDecoration(
+          color: AppColors.surface,
+          border: Border(top: BorderSide(color: AppColors.border)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: AppButton(
+            label: 'Select Showtime',
+            leadingIcon: Icons.event_seat_outlined,
+            onPressed: () => Navigator.pushNamed(
+              context,
+              AppRoutes.showtime,
+              arguments: movie,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
 
 class _MovieDetailContent extends StatelessWidget {
-  const _MovieDetailContent({required this.movie});
+  const _MovieDetailContent({required this.movie, required this.isWide});
 
   final Movie movie;
+  final bool isWide;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(movie.title, style: AppTextStyles.display),
-        const SizedBox(height: AppSpacing.md),
-        Wrap(
-          spacing: AppSpacing.sm,
-          runSpacing: AppSpacing.sm,
+        // Poster beside the facts keeps the title and details on the first
+        // screen of a phone.
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (movie.releaseYear.isNotEmpty)
-              _InfoPill(label: movie.releaseYear),
-            if (movie.language.isNotEmpty) _InfoPill(label: movie.language),
-            _InfoPill(label: movie.durationText),
+            AppNetworkImage(
+              imageUrl: movie.posterUrl,
+              width: isWide ? 220 : 116,
+              height: isWide ? 330 : 174,
+              borderRadius: AppRadius.borderRadiusLg,
+            ),
+            SizedBox(width: isWide ? AppSpacing.xxl : AppSpacing.lg),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    movie.title,
+                    style: isWide
+                        ? AppTextStyles.display
+                        : AppTextStyles.heading2,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  Wrap(
+                    spacing: AppSpacing.sm,
+                    runSpacing: AppSpacing.sm,
+                    children: [
+                      if (movie.releaseYear.isNotEmpty)
+                        _InfoPill(label: movie.releaseYear),
+                      _InfoPill(label: movie.durationText),
+                      if (movie.language.isNotEmpty)
+                        _InfoPill(label: movie.language),
+                    ],
+                  ),
+                  if (movie.genre.isNotEmpty) ...[
+                    const SizedBox(height: AppSpacing.md),
+                    Text(movie.genre, style: AppTextStyles.title),
+                  ],
+                ],
+              ),
+            ),
           ],
         ),
-        const SizedBox(height: AppSpacing.lg),
-        Text(movie.genre, style: AppTextStyles.title),
-        const SizedBox(height: AppSpacing.lg),
-        ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 680),
-          child: Text(movie.description, style: AppTextStyles.body),
-        ),
-        const SizedBox(height: AppSpacing.xxl),
-        AppButton(
-          label: 'Select Showtime',
-          leadingIcon: Icons.event_seat_outlined,
-          // Pass the movie ID (or the whole movie object) to the showtime screen
-          onPressed: () => Navigator.pushNamed(
-            context,
-            AppRoutes.showtime,
-            arguments: movie,
+        if (movie.description.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.xl),
+          const Text('Synopsis', style: AppTextStyles.caption),
+          const SizedBox(height: AppSpacing.sm),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 680),
+            child: Text(movie.description, style: AppTextStyles.body),
           ),
-        ),
+        ],
       ],
     );
   }
