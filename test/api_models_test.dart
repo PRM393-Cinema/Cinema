@@ -245,6 +245,20 @@ void main() {
     expect(notification.plainContent, 'Đặt vé thành công\n• Phim: Chuyến tàu');
   });
 
+  test('Showtime days are labelled today and tomorrow', () {
+    final now = DateTime(2026, 10, 6, 15, 30);
+
+    expect(
+      formatDayHeading(DateTime(2026, 10, 6, 19), now: now),
+      'Today · Tue, Oct 6',
+    );
+    expect(
+      formatDayHeading(DateTime(2026, 10, 7, 13), now: now),
+      'Tomorrow · Wed, Oct 7',
+    );
+    expect(formatDayHeading(DateTime(2026, 10, 9, 13), now: now), 'Fri, Oct 9');
+  });
+
   test('Prices are formatted in Vietnamese dong', () {
     expect(formatVnd(90000), '90.000 ₫');
     expect(formatCountdown(const Duration(minutes: 9, seconds: 5)), '09:05');

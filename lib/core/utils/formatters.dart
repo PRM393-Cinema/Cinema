@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 // Prices come from the backend in Vietnamese dong.
@@ -27,4 +28,17 @@ String formatCountdown(Duration remaining) {
   final minutes = safe.inMinutes.toString().padLeft(2, '0');
   final seconds = (safe.inSeconds % 60).toString().padLeft(2, '0');
   return '$minutes:$seconds';
+}
+
+// Group heading for a day of showtimes: "Today · Mon, Oct 6".
+String formatDayHeading(DateTime value, {DateTime? now}) {
+  final today = DateUtils.dateOnly(now ?? DateTime.now());
+  final day = DateUtils.dateOnly(value);
+  final label = DateFormat('EEE, MMM d').format(value);
+
+  return switch (day.difference(today).inDays) {
+    0 => 'Today · $label',
+    1 => 'Tomorrow · $label',
+    _ => label,
+  };
 }
