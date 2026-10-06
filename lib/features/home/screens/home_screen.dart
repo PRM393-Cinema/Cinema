@@ -100,9 +100,15 @@ class _HomeScreenState extends State<HomeScreen> {
               size: 28,
             ),
             const SizedBox(width: AppSpacing.sm),
-            Text(
-              'CINEMA',
-              style: AppTextStyles.heading2.copyWith(letterSpacing: 1.5),
+            // Narrow phones with every action shown leave little room.
+            Flexible(
+              child: Text(
+                'CINEMA',
+                style: AppTextStyles.heading2.copyWith(letterSpacing: 1.5),
+                maxLines: 1,
+                overflow: TextOverflow.fade,
+                softWrap: false,
+              ),
             ),
           ],
         ),
