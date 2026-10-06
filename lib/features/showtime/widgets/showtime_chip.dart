@@ -8,6 +8,7 @@ import '../../../app/theme/app_text_styles.dart';
 class ShowtimeChip extends StatelessWidget {
   const ShowtimeChip({
     required this.time,
+    this.room,
     this.price,
     this.isSelected = false,
     this.isAvailable = true,
@@ -16,6 +17,7 @@ class ShowtimeChip extends StatelessWidget {
   });
 
   final String time;
+  final String? room;
   final String? price;
   final bool isSelected;
   final bool isAvailable;
@@ -52,6 +54,13 @@ class ShowtimeChip extends StatelessWidget {
                 time,
                 style: AppTextStyles.button.copyWith(color: foregroundColor),
               ),
+              if (room != null) ...[
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  room!,
+                  style: AppTextStyles.caption.copyWith(color: foregroundColor),
+                ),
+              ],
               if (price != null) ...[
                 const SizedBox(height: AppSpacing.xs),
                 Text(

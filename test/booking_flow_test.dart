@@ -535,12 +535,11 @@ Future<void> _openSeatSelection(
   await scrollHomeTo(tester, find.text('View Details').first);
   await tester.tap(find.text('View Details').first);
   await pumpRoute(tester);
-  await tester.ensureVisible(find.text('Select Showtime'));
-  await tester.pump();
-  await tester.tap(find.text('Select Showtime'));
-  await pumpRoute(tester);
 
-  await tester.tap(find.textContaining('Room 1'));
+  // Showtimes are listed on the movie detail screen.
+  await tester.ensureVisible(find.text('Room 1'));
+  await tester.pump();
+  await tester.tap(find.text('Room 1'));
   await tester.pump();
   await tester.tap(find.text('Continue to Seats'));
   await pumpRoute(tester);

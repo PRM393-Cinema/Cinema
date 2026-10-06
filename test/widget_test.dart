@@ -248,7 +248,8 @@ void main() {
     await pumpRoute(tester);
 
     expect(find.text('Interstellar'), findsWidgets);
-    expect(find.text('Select Showtime'), findsOneWidget);
+    expect(find.text('Showtimes'), findsOneWidget);
+    expect(find.text('Continue to Seats'), findsOneWidget);
   });
 
   testWidgets('Movie Detail renders selected movie title', (
@@ -266,24 +267,42 @@ void main() {
     expect(find.text('Biography, Drama'), findsWidgets);
   });
 
-  testWidgets('Booking flow reaches Showtime from Movie Detail', (
+  testWidgets('Movie Detail lists the upcoming showtimes', (
     WidgetTester tester,
   ) async {
     await _openHome(tester, authenticated: true);
-    await _openShowtimes(tester);
+    await _openMovieDetail(tester);
 
-    expect(find.text('Select Showtime'), findsWidgets);
+    expect(find.text('Showtimes'), findsOneWidget);
+    expect(find.textContaining('Tomorrow'), findsOneWidget);
+    expect(find.text('7:30 PM'), findsOneWidget);
+    expect(find.text('Room 1'), findsOneWidget);
     expect(find.text(formatVnd(90000)), findsOneWidget);
-    expect(find.textContaining('Room 1'), findsOneWidget);
+
+    // Nothing chosen yet: the way to the seats is disabled.
+    final continueButton = tester.widget<ElevatedButton>(
+      find.widgetWithText(ElevatedButton, 'Continue to Seats'),
+    );
+    expect(continueButton.onPressed, isNull);
+
+    await tester.ensureVisible(find.text('7:30 PM'));
+    await tester.pump();
+    await tester.tap(find.text('7:30 PM'));
+    await tester.pump();
+
+    expect(find.textContaining('7:30 PM • Room 1'), findsOneWidget);
+    expect(find.text('${formatVnd(90000)} / seat'), findsOneWidget);
   });
 
   testWidgets(
     'Guest attempting protected action gets Sign in required prompt',
     (WidgetTester tester) async {
       await _openHome(tester, authenticated: false);
-      await _openShowtimes(tester);
+      await _openMovieDetail(tester);
 
-      await tester.tap(find.textContaining('Room 1').first);
+      await tester.ensureVisible(find.text('Room 1'));
+      await tester.pump();
+      await tester.tap(find.text('Room 1'));
       await tester.pump();
       await tester.tap(find.text('Continue to Seats'));
       await tester.pump();
@@ -329,13 +348,9 @@ Future<void> _openHome(WidgetTester tester, {bool authenticated = true}) async {
   await pumpRoute(tester);
 }
 
-Future<void> _openShowtimes(WidgetTester tester) async {
+Future<void> _openMovieDetail(WidgetTester tester) async {
   await scrollHomeTo(tester, find.text('View Details').first);
   await tester.tap(find.text('View Details').first);
-  await pumpRoute(tester);
-  await tester.ensureVisible(find.text('Select Showtime'));
-  await tester.pump();
-  await tester.tap(find.text('Select Showtime'));
   await pumpRoute(tester);
 }
 

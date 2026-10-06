@@ -30,11 +30,16 @@ String formatCountdown(Duration remaining) {
   return '$minutes:$seconds';
 }
 
+// "Wed, Oct 7": short date for tight spaces such as bottom bars.
+String formatShortDate(DateTime value) {
+  return DateFormat('EEE, MMM d').format(value);
+}
+
 // Group heading for a day of showtimes: "Today · Mon, Oct 6".
 String formatDayHeading(DateTime value, {DateTime? now}) {
   final today = DateUtils.dateOnly(now ?? DateTime.now());
   final day = DateUtils.dateOnly(value);
-  final label = DateFormat('EEE, MMM d').format(value);
+  final label = formatShortDate(value);
 
   return switch (day.difference(today).inDays) {
     0 => 'Today · $label',
