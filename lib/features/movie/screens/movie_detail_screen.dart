@@ -30,46 +30,24 @@ class MovieDetailScreen extends StatelessWidget {
     final movie = args;
 
     return Scaffold(
+      appBar: AppBar(title: Text(movie.title)),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
             final isWide = constraints.maxWidth >= 760;
 
-            return CustomScrollView(
-              slivers: [
-                SliverAppBar(
-                  expandedHeight: isWide ? 320 : 200,
-                  pinned: true,
-                  title: Text(movie.title),
-                  flexibleSpace: FlexibleSpaceBar(
-                    background: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        AppNetworkImage(imageUrl: movie.posterUrl),
-                        const DecoratedBox(
-                          decoration: BoxDecoration(color: Color(0xDD0B0D12)),
-                        ),
-                      ],
+            return SingleChildScrollView(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1040),
+                  child: Padding(
+                    padding: EdgeInsets.all(
+                      isWide ? AppSpacing.xxl : AppSpacing.lg,
                     ),
+                    child: _MovieDetailContent(movie: movie, isWide: isWide),
                   ),
                 ),
-                SliverToBoxAdapter(
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1040),
-                      child: Padding(
-                        padding: EdgeInsets.all(
-                          isWide ? AppSpacing.xxl : AppSpacing.lg,
-                        ),
-                        child: _MovieDetailContent(
-                          movie: movie,
-                          isWide: isWide,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             );
           },
         ),
@@ -88,13 +66,22 @@ class MovieDetailScreen extends StatelessWidget {
         ),
         child: SafeArea(
           top: false,
-          child: AppButton(
-            label: 'Select Showtime',
-            leadingIcon: Icons.event_seat_outlined,
-            onPressed: () => Navigator.pushNamed(
-              context,
-              AppRoutes.showtime,
-              arguments: movie,
+          child: Center(
+            heightFactor: 1,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: SizedBox(
+                width: double.infinity,
+                child: AppButton(
+                  label: 'Select Showtime',
+                  leadingIcon: Icons.event_seat_outlined,
+                  onPressed: () => Navigator.pushNamed(
+                    context,
+                    AppRoutes.showtime,
+                    arguments: movie,
+                  ),
+                ),
+              ),
             ),
           ),
         ),
@@ -111,11 +98,15 @@ class _MovieDetailContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final synopsis = movie.description.isEmpty
+        ? null
+        : _Synopsis(description: movie.description);
+
+    // Poster beside the facts keeps the title and details on the first
+    // screen. Wide screens also put the synopsis in that column.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Poster beside the facts keeps the title and details on the first
-        // screen of a phone.
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -130,42 +121,76 @@ class _MovieDetailContent extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    movie.title,
-                    style: isWide
-                        ? AppTextStyles.display
-                        : AppTextStyles.heading2,
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  Wrap(
-                    spacing: AppSpacing.sm,
-                    runSpacing: AppSpacing.sm,
-                    children: [
-                      if (movie.releaseYear.isNotEmpty)
-                        _InfoPill(label: movie.releaseYear),
-                      _InfoPill(label: movie.durationText),
-                      if (movie.language.isNotEmpty)
-                        _InfoPill(label: movie.language),
-                    ],
-                  ),
-                  if (movie.genre.isNotEmpty) ...[
-                    const SizedBox(height: AppSpacing.md),
-                    Text(movie.genre, style: AppTextStyles.title),
+                  _MovieFacts(movie: movie, isWide: isWide),
+                  if (isWide && synopsis != null) ...[
+                    const SizedBox(height: AppSpacing.xl),
+                    synopsis,
                   ],
                 ],
               ),
             ),
           ],
         ),
-        if (movie.description.isNotEmpty) ...[
+        if (!isWide && synopsis != null) ...[
           const SizedBox(height: AppSpacing.xl),
-          const Text('Synopsis', style: AppTextStyles.caption),
-          const SizedBox(height: AppSpacing.sm),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 680),
-            child: Text(movie.description, style: AppTextStyles.body),
-          ),
+          synopsis,
         ],
+      ],
+    );
+  }
+}
+
+class _MovieFacts extends StatelessWidget {
+  const _MovieFacts({required this.movie, required this.isWide});
+
+  final Movie movie;
+  final bool isWide;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          movie.title,
+          style: isWide ? AppTextStyles.display : AppTextStyles.heading2,
+        ),
+        const SizedBox(height: AppSpacing.md),
+        Wrap(
+          spacing: AppSpacing.sm,
+          runSpacing: AppSpacing.sm,
+          children: [
+            if (movie.releaseYear.isNotEmpty)
+              _InfoPill(label: movie.releaseYear),
+            _InfoPill(label: movie.durationText),
+            if (movie.language.isNotEmpty) _InfoPill(label: movie.language),
+          ],
+        ),
+        if (movie.genre.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.md),
+          Text(movie.genre, style: AppTextStyles.title),
+        ],
+      ],
+    );
+  }
+}
+
+class _Synopsis extends StatelessWidget {
+  const _Synopsis({required this.description});
+
+  final String description;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Synopsis', style: AppTextStyles.caption),
+        const SizedBox(height: AppSpacing.sm),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 680),
+          child: Text(description, style: AppTextStyles.body),
+        ),
       ],
     );
   }
