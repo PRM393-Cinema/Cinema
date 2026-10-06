@@ -161,23 +161,35 @@ class _PaymentResultScreenState extends State<PaymentResultScreen> {
 
     final outcome = _outcomeOf(booking, _payment);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSpacing.xl),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 640),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _OutcomeHeader(outcome: outcome, booking: booking),
-              const SizedBox(height: AppSpacing.xl),
-              _TicketCard(booking: booking),
-              const SizedBox(height: AppSpacing.xl),
-              ..._actions(outcome, booking),
-            ],
+    // Centered on tall screens like a confirmation page; scrolls on short
+    // ones.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(AppSpacing.xl),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: constraints.maxHeight - AppSpacing.xl * 2,
+            ),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 640),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _OutcomeHeader(outcome: outcome, booking: booking),
+                    const SizedBox(height: AppSpacing.xl),
+                    _TicketCard(booking: booking),
+                    const SizedBox(height: AppSpacing.xl),
+                    ..._actions(outcome, booking),
+                  ],
+                ),
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 

@@ -4,16 +4,20 @@ import 'package:flutter/material.dart';
 
 import '../../../app/routes/app_routes.dart';
 import '../../../app/theme/app_colors.dart';
+import '../../../app/theme/app_radius.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/app_button.dart';
+import '../../../core/widgets/app_network_image.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_state.dart';
 import '../../../data/models/booking_draft.dart';
+import '../../../data/models/movie.dart';
 import '../../../data/models/seat.dart';
+import '../../../data/models/showtime.dart';
 import '../../../data/repositories/catalog_repository.dart';
 import '../widgets/seat_item.dart';
 import '../widgets/seat_legend.dart';
@@ -94,10 +98,20 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
     });
   }
 
+  // Selected seats in row then number order (A2 before A10).
+  List<Seat> _selectedSeats(ShowtimeSeatsData? data) {
+    if (data == null) return const [];
+    return data.seats
+        .where((seat) => _selectedSeatIds.contains(seat.id))
+        .toList()
+      ..sort((a, b) {
+        final byRow = a.row.compareTo(b.row);
+        return byRow != 0 ? byRow : a.number.compareTo(b.number);
+      });
+  }
+
   Future<void> _continue(SeatSelectionArgs args, ShowtimeSeatsData data) async {
-    final seats =
-        data.seats.where((s) => _selectedSeatIds.contains(s.id)).toList()
-          ..sort((a, b) => a.label.compareTo(b.label));
+    final seats = _selectedSeats(data);
 
     final seatsTaken = await Navigator.pushNamed(
       context,
@@ -133,36 +147,30 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
     final showtime = args.showtime;
     final data = _data;
     final totalPrice = _selectedSeatIds.length * showtime.price;
+    final selectedLabels = _selectedSeats(data)
+        .map((seat) => seat.label)
+        .join(', ');
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(args.movie.title),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(40),
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.md),
-            child: Text(
-              '${formatDate(showtime.startTime)} • ${formatTime(showtime.startTime)} • ${showtime.roomLabel}',
-              style: AppTextStyles.bodySmall,
-            ),
-          ),
-        ),
-      ),
+      appBar: AppBar(title: const Text('Select Seats')),
       body: SafeArea(
         child: Column(
           children: [
+            _ShowtimeSummary(movie: args.movie, showtime: showtime),
+            const Divider(height: 1, color: AppColors.border),
             Expanded(child: _buildSeatMap(data)),
-            const Divider(height: 1),
+            const Divider(height: 1, color: AppColors.border),
             Container(
-              padding: const EdgeInsets.all(AppSpacing.xl),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.xl,
+                vertical: AppSpacing.lg,
+              ),
               color: AppColors.surface,
               child: SafeArea(
                 top: false,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const SeatLegend(),
-                    const SizedBox(height: AppSpacing.xl),
                     Row(
                       children: [
                         // A large total shrinks instead of pushing the
@@ -171,9 +179,24 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                '${_selectedSeatIds.length} seat(s)',
-                                style: AppTextStyles.bodySmall,
+                              Row(
+                                children: [
+                                  Text(
+                                    '${_selectedSeatIds.length} seat(s)',
+                                    style: AppTextStyles.bodySmall,
+                                  ),
+                                  if (selectedLabels.isNotEmpty)
+                                    Flexible(
+                                      child: Text(
+                                        ' • $selectedLabels',
+                                        style: AppTextStyles.bodySmall.copyWith(
+                                          color: AppColors.textPrimary,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                ],
                               ),
                               FittedBox(
                                 fit: BoxFit.scaleDown,
@@ -230,6 +253,58 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
       data: data,
       selectedSeatIds: _selectedSeatIds,
       onSeatTap: _toggleSeat,
+    );
+  }
+}
+
+// What is being booked: shown above the seat map.
+class _ShowtimeSummary extends StatelessWidget {
+  const _ShowtimeSummary({required this.movie, required this.showtime});
+
+  final Movie movie;
+  final Showtime showtime;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Row(
+        children: [
+          AppNetworkImage(
+            imageUrl: movie.posterUrl,
+            width: 48,
+            height: 72,
+            borderRadius: AppRadius.borderRadiusSm,
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  movie.title,
+                  style: AppTextStyles.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  '${formatDayHeading(showtime.startTime)} • '
+                  '${formatTime(showtime.startTime)}',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  '${showtime.roomLabel} • ${formatVnd(showtime.price)} / seat',
+                  style: AppTextStyles.caption,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -291,39 +366,56 @@ class _SeatMap extends StatelessWidget {
           minScale: fitsScreen ? 1 : 0.5,
           maxScale: 3,
           constrained: false,
+          // Small rooms sit in the middle of the free space instead of
+          // leaving a gap below the seats.
           child: ConstrainedBox(
-            constraints: BoxConstraints(minWidth: constraints.maxWidth),
-            child: Padding(
-              padding: const EdgeInsets.all(_SeatMapLayout.padding),
-              child: Column(
-                children: [
-                  _ScreenIndicator(width: layout.seatsWidth(seatsPerRow)),
-                  const SizedBox(height: AppSpacing.xl),
-                  ...sortedRowKeys.map((rowKey) {
-                    final rowSeats = rows[rowKey]!;
-                    return Padding(
-                      padding: EdgeInsets.only(bottom: layout.gap),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _RowLabel(label: rowKey),
-                          const SizedBox(width: _SeatMapLayout.labelGap),
-                          for (final (index, seat) in rowSeats.indexed) ...[
-                            if (index > 0) SizedBox(width: layout.gap),
-                            SeatItem(
-                              label: seat.number.toString(),
-                              state: _itemStateOf(seat, data.statusOf(seat)),
-                              size: layout.seatSize,
-                              onTap: () => onSeatTap(seat, data.statusOf(seat)),
-                            ),
+            constraints: BoxConstraints(
+              minWidth: constraints.maxWidth,
+              minHeight: constraints.maxHeight,
+            ),
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(_SeatMapLayout.padding),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _ScreenIndicator(width: layout.seatsWidth(seatsPerRow)),
+                    const SizedBox(height: AppSpacing.xl),
+                    ...sortedRowKeys.map((rowKey) {
+                      final rowSeats = rows[rowKey]!;
+                      return Padding(
+                        padding: EdgeInsets.only(bottom: layout.gap),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _RowLabel(label: rowKey),
+                            const SizedBox(width: _SeatMapLayout.labelGap),
+                            for (final (index, seat) in rowSeats.indexed) ...[
+                              if (index > 0) SizedBox(width: layout.gap),
+                              SeatItem(
+                                label: seat.number.toString(),
+                                state: _itemStateOf(seat, data.statusOf(seat)),
+                                size: layout.seatSize,
+                                onTap: () =>
+                                    onSeatTap(seat, data.statusOf(seat)),
+                              ),
+                            ],
+                            const SizedBox(width: _SeatMapLayout.labelGap),
+                            _RowLabel(label: rowKey),
                           ],
-                          const SizedBox(width: _SeatMapLayout.labelGap),
-                          _RowLabel(label: rowKey),
-                        ],
+                        ),
+                      );
+                    }),
+                    const SizedBox(height: AppSpacing.lg),
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth:
+                            constraints.maxWidth - _SeatMapLayout.padding * 2,
                       ),
-                    );
-                  }),
-                ],
+                      child: const SeatLegend(),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
