@@ -317,6 +317,8 @@ class _PaymentScreenState extends State<PaymentScreen>
                             isError: _messageIsError,
                           ),
                         ],
+                        const SizedBox(height: AppSpacing.xl),
+                        const _PaymentSteps(),
                       ],
                     ),
                   ),
@@ -362,6 +364,43 @@ class _PaymentScreenState extends State<PaymentScreen>
           ],
         ),
       ),
+    );
+  }
+}
+
+class _PaymentSteps extends StatelessWidget {
+  const _PaymentSteps();
+
+  static const _steps = [
+    'Tap "Pay with PayOS" to open the secure PayOS checkout.',
+    'Scan the VietQR code with your banking app, or transfer manually.',
+    'Your tickets are confirmed automatically once the payment arrives.',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('How to pay', style: AppTextStyles.caption),
+        const SizedBox(height: AppSpacing.sm),
+        for (final (index, step) in _steps.indexed)
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.md),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CircleAvatar(
+                  radius: 12,
+                  backgroundColor: AppColors.surfaceSoft,
+                  child: Text('${index + 1}', style: AppTextStyles.caption),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(child: Text(step, style: AppTextStyles.bodySmall)),
+              ],
+            ),
+          ),
+      ],
     );
   }
 }
