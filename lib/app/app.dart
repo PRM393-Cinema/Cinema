@@ -20,7 +20,6 @@ import '../features/payment/screens/payment_result_screen.dart';
 import '../features/payment/screens/payment_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
 import '../features/seat/screens/seat_selection_screen.dart';
-import '../features/showtime/screens/showtime_selection_screen.dart';
 import 'routes/app_routes.dart';
 import 'theme/app_theme.dart';
 
@@ -52,9 +51,8 @@ class CinemaApp extends StatelessWidget {
     AppRoutes.resetPassword: (_) =>
         ResetPasswordScreen(authRepository: authRepository),
     AppRoutes.home: (_) => HomeScreen(catalogRepository: catalogRepository),
-    AppRoutes.movieDetail: (_) => const MovieDetailScreen(),
-    AppRoutes.showtime: (_) =>
-        ShowtimeSelectionScreen(catalogRepository: catalogRepository),
+    AppRoutes.movieDetail: (_) =>
+        MovieDetailScreen(catalogRepository: catalogRepository),
     AppRoutes.seatSelection: (_) =>
         SeatSelectionScreen(catalogRepository: catalogRepository),
     AppRoutes.bookingSummary: (_) =>

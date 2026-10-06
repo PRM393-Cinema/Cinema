@@ -6,7 +6,6 @@ abstract final class AppRoutes {
   static const resetPassword = '/reset-password';
   static const home = '/home';
   static const movieDetail = '/movie-detail';
-  static const showtime = '/showtime';
   static const seatSelection = '/seat-selection';
   static const bookingSummary = '/booking-summary';
   static const payment = '/payment';
