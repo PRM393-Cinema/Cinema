@@ -7,6 +7,7 @@ import 'package:cinema_fe/data/models/booking.dart';
 import 'package:cinema_fe/data/models/payment.dart';
 import 'package:cinema_fe/data/models/seat.dart';
 import 'package:cinema_fe/features/payment/payment_args.dart';
+import 'package:cinema_fe/features/seat/widgets/seat_item.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:url_launcher_platform_interface/url_launcher_platform_interface.dart';
@@ -24,6 +25,53 @@ void main() {
   });
 
   group('Seat selection and booking', () {
+    testWidgets('Seat map fits a phone screen and stays centered', (
+      WidgetTester tester,
+    ) async {
+      tester.view.physicalSize = const Size(375, 812);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      // Room 2 of the seed data: three rows of ten seats.
+      final catalog = FakeCatalogRepository(
+        seatMap: ShowtimeSeatsData.fromOccupied(
+          seats: [
+            for (final (index, row) in ['A', 'B', 'C'].indexed)
+              for (var number = 1; number <= 10; number++)
+                Seat(
+                  id: index * 10 + number,
+                  roomId: 1,
+                  row: row,
+                  number: number,
+                  type: 'NORMAL',
+                ),
+          ],
+          occupiedSeatIds: const [],
+        ),
+      );
+      await _openSeatSelection(tester, catalogRepository: catalog);
+
+      Rect seatRect(String number) => tester.getRect(
+        find.ancestor(
+          of: find.text(number).first,
+          matching: find.byType(SeatItem),
+        ),
+      );
+      final firstSeat = seatRect('1');
+      final lastSeat = seatRect('10');
+      final leftGap = firstSeat.left;
+      final rightGap = 375 - lastSeat.right;
+
+      expect(leftGap, greaterThan(0));
+      expect(rightGap, greaterThan(0));
+      expect((leftGap - rightGap).abs(), lessThan(2));
+
+      // The last seat of the row is still tappable.
+      await tester.tap(find.text('10').first);
+      await tester.pump();
+      expect(find.text('1 seat(s)'), findsOneWidget);
+    });
+
     testWidgets('Seat map marks taken seats and updates the total', (
       WidgetTester tester,
     ) async {

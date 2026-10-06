@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../../app/routes/app_routes.dart';
@@ -162,21 +164,29 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                     const SeatLegend(),
                     const SizedBox(height: AppSpacing.xl),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '${_selectedSeatIds.length} seat(s)',
-                              style: AppTextStyles.bodySmall,
-                            ),
-                            Text(
-                              formatVnd(totalPrice),
-                              style: AppTextStyles.heading2,
-                            ),
-                          ],
+                        // A large total shrinks instead of pushing the
+                        // button off narrow screens.
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${_selectedSeatIds.length} seat(s)',
+                                style: AppTextStyles.bodySmall,
+                              ),
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  formatVnd(totalPrice),
+                                  style: AppTextStyles.heading2,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
+                        const SizedBox(width: AppSpacing.lg),
                         AppButton(
                           label: 'Continue',
                           onPressed: data != null && _selectedSeatIds.isNotEmpty
@@ -235,6 +245,17 @@ class _SeatMap extends StatelessWidget {
   final Set<int> selectedSeatIds;
   final void Function(Seat seat, SeatReservationStatus status) onSeatTap;
 
+  SeatItemState _itemStateOf(Seat seat, SeatReservationStatus status) {
+    if (selectedSeatIds.contains(seat.id)) {
+      return SeatItemState.selected;
+    }
+    return switch (status) {
+      SeatReservationStatus.held => SeatItemState.held,
+      SeatReservationStatus.booked => SeatItemState.booked,
+      SeatReservationStatus.available => SeatItemState.available,
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     // Group seats by row
@@ -251,75 +272,53 @@ class _SeatMap extends StatelessWidget {
       rows[row]!.sort((a, b) => a.number.compareTo(b.number));
     }
 
+    final seatsPerRow = rows.values.fold<int>(
+      0,
+      (widest, row) => math.max(widest, row.length),
+    );
+
     return LayoutBuilder(
       builder: (context, constraints) {
+        final layout = _SeatMapLayout.fit(
+          maxWidth: constraints.maxWidth,
+          seatsPerRow: seatsPerRow,
+        );
+        final fitsScreen = layout.mapWidth(seatsPerRow) <= constraints.maxWidth;
+
         return InteractiveViewer(
-          minScale: 0.5,
-          maxScale: 2.0,
+          // Pinch to zoom in on small seats; very wide rooms can also be
+          // zoomed out and panned.
+          minScale: fitsScreen ? 1 : 0.5,
+          maxScale: 3,
           constrained: false,
-          boundaryMargin: const EdgeInsets.all(AppSpacing.xxxl),
           child: ConstrainedBox(
             constraints: BoxConstraints(minWidth: constraints.maxWidth),
             child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.xxl),
+              padding: const EdgeInsets.all(_SeatMapLayout.padding),
               child: Column(
                 children: [
-                  _ScreenIndicator(),
-                  const SizedBox(height: AppSpacing.xxxl),
+                  _ScreenIndicator(width: layout.seatsWidth(seatsPerRow)),
+                  const SizedBox(height: AppSpacing.xl),
                   ...sortedRowKeys.map((rowKey) {
                     final rowSeats = rows[rowKey]!;
                     return Padding(
-                      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                      padding: EdgeInsets.only(bottom: layout.gap),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          SizedBox(
-                            width: AppSpacing.xxl,
-                            child: Text(
-                              rowKey,
-                              style: AppTextStyles.title,
-                              textAlign: TextAlign.center,
+                          _RowLabel(label: rowKey),
+                          const SizedBox(width: _SeatMapLayout.labelGap),
+                          for (final (index, seat) in rowSeats.indexed) ...[
+                            if (index > 0) SizedBox(width: layout.gap),
+                            SeatItem(
+                              label: seat.number.toString(),
+                              state: _itemStateOf(seat, data.statusOf(seat)),
+                              size: layout.seatSize,
+                              onTap: () => onSeatTap(seat, data.statusOf(seat)),
                             ),
-                          ),
-                          const SizedBox(width: AppSpacing.md),
-                          ...rowSeats.map((seat) {
-                            final status = data.statusOf(seat);
-                            final isSelected = selectedSeatIds.contains(
-                              seat.id,
-                            );
-
-                            SeatItemState itemState;
-                            if (isSelected) {
-                              itemState = SeatItemState.selected;
-                            } else if (status == SeatReservationStatus.held) {
-                              itemState = SeatItemState.held;
-                            } else if (status == SeatReservationStatus.booked) {
-                              itemState = SeatItemState.booked;
-                            } else {
-                              itemState = SeatItemState.available;
-                            }
-
-                            return Padding(
-                              padding: const EdgeInsets.only(
-                                right: AppSpacing.md,
-                              ),
-                              child: SeatItem(
-                                label: seat.number.toString(),
-                                state: itemState,
-                                onTap: () => onSeatTap(seat, status),
-                              ),
-                            );
-                          }),
-                          const SizedBox(width: AppSpacing.md),
-                          SizedBox(
-                            width: AppSpacing.xxl,
-                            child: Text(
-                              rowKey,
-                              style: AppTextStyles.title,
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
+                          ],
+                          const SizedBox(width: _SeatMapLayout.labelGap),
+                          _RowLabel(label: rowKey),
                         ],
                       ),
                     );
@@ -334,12 +333,76 @@ class _SeatMap extends StatelessWidget {
   }
 }
 
+// Sizes the seat map so the widest row fits the screen: seats shrink on
+// phones (down to [minSeat]) and grow up to [maxSeat] on larger screens.
+class _SeatMapLayout {
+  const _SeatMapLayout({required this.seatSize, required this.gap});
+
+  factory _SeatMapLayout.fit({
+    required double maxWidth,
+    required int seatsPerRow,
+  }) {
+    final seats = math.max(seatsPerRow, 1);
+    final gap = maxWidth < 600 ? 6.0 : AppSpacing.md;
+    final available =
+        maxWidth -
+        padding * 2 -
+        (labelWidth + labelGap) * 2 -
+        gap * (seats - 1);
+
+    return _SeatMapLayout(
+      seatSize: (available / seats).clamp(minSeat, maxSeat).toDouble(),
+      gap: gap,
+    );
+  }
+
+  static const padding = AppSpacing.md;
+  static const labelWidth = 20.0;
+  static const labelGap = 6.0;
+  static const minSeat = 20.0;
+  static const maxSeat = 44.0;
+
+  final double seatSize;
+  final double gap;
+
+  double seatsWidth(int seats) => seats * seatSize + (seats - 1) * gap;
+
+  double mapWidth(int seats) {
+    return seatsWidth(seats) + (labelWidth + labelGap) * 2 + padding * 2;
+  }
+}
+
+class _RowLabel extends StatelessWidget {
+  const _RowLabel({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: _SeatMapLayout.labelWidth,
+      child: Text(
+        label,
+        style: AppTextStyles.bodySmall.copyWith(
+          color: AppColors.textPrimary,
+          fontWeight: FontWeight.w600,
+        ),
+        textAlign: TextAlign.center,
+      ),
+    );
+  }
+}
+
 class _ScreenIndicator extends StatelessWidget {
+  const _ScreenIndicator({required this.width});
+
+  final double width;
+
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        CustomPaint(size: const Size(300, 30), painter: _ScreenCurvePainter()),
+        CustomPaint(size: Size(width, 24), painter: _ScreenCurvePainter()),
         const SizedBox(height: AppSpacing.sm),
         const Text('SCREEN', style: AppTextStyles.caption),
       ],
