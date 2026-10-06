@@ -1,0 +1,102 @@
+# ==========================================================
+#  .gitignore cho dự án .NET / ASP.NET Core + Visual Studio
+# ==========================================================
+
+## Kết quả build
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+build/
+bld/
+[Ll]og/
+[Ll]ogs/
+
+## Thư mục Visual Studio
+.vs/
+.vscode/
+
+## File riêng của người dùng (không nên commit)
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+
+## File tạm & cache của VS/MSBuild
+*.cache
+*.tmp
+*.tmp_proj
+*_wpftmp.csproj
+*.log
+*.vspscc
+*.vssscc
+.builds
+*.pidb
+*.svclog
+*.scc
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+## Kết quả test
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.trx
+*.coverage
+*.coveragexml
+TestResults/
+coverage*.json
+coverage*.xml
+coverage*.info
+
+## NuGet
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+*.nuget.props
+*.nuget.targets
+
+## Entity Framework
+# (Giữ lại code Migrations; chỉ bỏ file backup nếu có)
+*.mdf
+*.ldf
+*.ndf
+
+## Publish / Docker
+*.[Pp]ublish.xml
+*.pubxml
+*.pubxml.user
+*.azurePubxml
+PublishScripts/
+
+## File nhạy cảm / bí mật (bỏ comment nếu muốn không commit)
+# appsettings.*.json
+# secrets.json
+*.pfx
+*.key
+.env
+.env.bak
+# Private key của age (SOPS): không bao giờ commit
+keys.txt
+
+## Hệ điều hành
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+
+## Rider / JetBrains (nếu ai đó trong nhóm dùng)
+.idea/
+*.sln.iml

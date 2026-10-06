@@ -1,0 +1,168 @@
+@Gateway = http://localhost:5000
+
+### Health check của gateway
+GET {{Gateway}}/health
+
+### Tình trạng từng service phía sau (Auth, Movie, Booking và database của chúng)
+GET {{Gateway}}/health/services
+
+### Đăng nhập qua gateway (tài khoản seed: admin@cinema.com / 123456)
+POST {{Gateway}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@cinema.com",
+  "password": "123456"
+}
+
+### Đăng ký qua gateway -> OTP gửi về email (chưa cấu hình SMTP thì xem log AuthService)
+POST {{Gateway}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "email": "newuser@gmail.com",
+  "password": "123456",
+  "fullName": "Người Dùng Mới"
+}
+
+### Xác thực email bằng OTP -> trả token như đăng nhập
+POST {{Gateway}}/api/v1/auth/verify-email
+Content-Type: application/json
+
+{
+  "email": "newuser@gmail.com",
+  "otp": "<ma_otp_6_so>",
+  "password": "123456"
+}
+
+### Thông tin người dùng hiện tại (cần Bearer token)
+GET {{Gateway}}/api/v1/auth/me
+Authorization: Bearer <access_token>
+
+### Danh sách phim (không cần đăng nhập)
+GET {{Gateway}}/api/v1/movies?page=1&size=5
+
+### Suất chiếu còn mở bán và chưa bắt đầu (không cần đăng nhập)
+GET {{Gateway}}/api/showtimes/open
+
+### Suất chiếu còn đặt được của một phim (không cần đăng nhập)
+GET {{Gateway}}/api/showtimes/movie/1/open
+
+### Ngừng bán / mở bán lại suất chiếu (Staff/Admin): "CLOSED" / "OPEN". Vé đã bán vẫn giữ
+PATCH {{Gateway}}/api/showtimes/1/status
+Content-Type: application/json
+Authorization: Bearer <access_token_staff>
+
+{
+  "status": "CLOSED"
+}
+
+### Huỷ suất chiếu (Staff/Admin): chuyển CANCELLED, không xoá khỏi DB, không mở lại được
+DELETE {{Gateway}}/api/showtimes/1
+Authorization: Bearer <access_token_staff>
+
+### Sơ đồ ghế của phòng (cần đăng nhập, mọi role)
+GET {{Gateway}}/api/seats/room/1
+Authorization: Bearer <access_token>
+
+### Tạo phim (chỉ ROLE_ADMIN)
+POST {{Gateway}}/api/v1/movies
+Content-Type: application/json
+Authorization: Bearer <access_token>
+
+{
+  "title": "Tên phim",
+  "description": "Mô tả",
+  "durationMinutes": 120,
+  "releaseDate": "2026-12-25"
+}
+
+### Lịch sử booking của user (cần đăng nhập, BookingService kiểm tra quyền sở hữu)
+GET {{Gateway}}/api/v1/bookings/user/3
+Authorization: Bearer <access_token>
+
+### ----- Luồng khách đặt vé + thanh toán PayOS -----
+### 1. Tạo booking (giữ ghế 10 phút)
+POST {{Gateway}}/api/v1/bookings
+Content-Type: application/json
+Authorization: Bearer <access_token_khach>
+
+{
+  "userId": 3,
+  "showtimeId": 1,
+  "seats": [ { "seatId": 1 }, { "seatId": 2 } ]
+}
+
+### 2. Tạo link thanh toán PayOS (amount = totalAmount của booking) -> mở checkoutUrl cho khách trả tiền
+POST {{Gateway}}/api/v1/payments/payos/checkout
+Content-Type: application/json
+Authorization: Bearer <access_token_khach>
+
+{
+  "bookingId": 1,
+  "userId": 3,
+  "amount": 180000,
+  "returnUrl": "https://example.com/payment/return",
+  "cancelUrl": "https://example.com/payment/cancel"
+}
+
+### 3. Khách trả tiền xong, PayOS gọi webhook: booking tự CONFIRMED và email vé gửi về email của khách.
+###    Test trên máy không cần trả tiền thật: .\scripts\payos-webhook.ps1 -OrderCode <bookingId> -Amount <totalAmount>
+###    (chi tiết: docs/PAYOS.md). Webhook không cần token, được xác thực bằng chữ ký của PayOS.
+
+### 4. Khách quay lại app -> lấy kết quả thanh toán (khách KHÔNG tự gọi /confirm được)
+POST {{Gateway}}/api/v1/payments/payos/<orderCode>/verify
+Authorization: Bearer <access_token_khach>
+
+### Payment của một booking (chủ booking hoặc Staff/Admin)
+GET {{Gateway}}/api/v1/payments/booking/1
+Authorization: Bearer <access_token_khach>
+
+### Khách huỷ vé: chưa thanh toán thì huỷ ngay; đã thanh toán thì phải còn >= 2 giờ trước giờ chiếu (hoàn 100%)
+POST {{Gateway}}/api/v1/bookings/1/cancel?reason=Ban%20viec
+Authorization: Bearer <access_token_khach>
+
+### ----- Hoàn tiền (docs/PAYOS.md mục 4) -----
+### Khách xem trạng thái hoàn tiền của payment
+GET {{Gateway}}/api/v1/payments/1/refund
+Authorization: Bearer <access_token_khach>
+
+### Staff: danh sách cần chuyển khoản hoàn (kèm tài khoản khách đã trả)
+GET {{Gateway}}/api/v1/payments/refunds?status=PENDING&page=1&size=10
+Authorization: Bearer <access_token_staff>
+
+### Staff đã chuyển khoản: ghi mã giao dịch -> payment REFUNDED, khách nhận email
+POST {{Gateway}}/api/v1/payments/refunds/1/complete
+Content-Type: application/json
+Authorization: Bearer <access_token_staff>
+
+{
+  "transactionRef": "FT26100212345",
+  "note": "Chuyển khoản Vietcombank"
+}
+
+### Staff hoàn tiền chủ động một payment (booking còn hiệu lực thì huỷ luôn)
+POST {{Gateway}}/api/v1/payments/1/refund?reason=Khach%20yeu%20cau%20tai%20quay
+Authorization: Bearer <access_token_staff>
+
+### Staff/Admin xác nhận tay tại quầy (khách trả tiền mặt), khách gọi sẽ bị 403.
+### Không truyền recipientEmail thì gửi vé về email lưu trên booking
+POST {{Gateway}}/api/v1/bookings/1/confirm?paymentMethod=CASH
+Authorization: Bearer <access_token_staff>
+
+### ----- Admin quản lý user (chỉ ROLE_ADMIN, chi tiết xem AuthService.http) -----
+### Danh sách nhân viên đang hoạt động
+GET {{Gateway}}/api/v1/auth/users?role=staff&enabled=true&page=1&size=10
+Authorization: Bearer <access_token_admin>
+
+### Tạo tài khoản nhân viên
+POST {{Gateway}}/api/v1/auth/users
+Content-Type: application/json
+Authorization: Bearer <access_token_admin>
+
+{
+  "email": "nhanvien2@cinema.com",
+  "password": "123456",
+  "fullName": "Nhân Viên Hai",
+  "roles": ["ROLE_STAFF"]
+}
