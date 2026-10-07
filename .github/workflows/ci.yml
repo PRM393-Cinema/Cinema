@@ -1,11 +1,22 @@
-# Build + chạy test tự động cho mỗi pull request vào dev / main (docs/TESTING.md)
+# Build + chạy test backend cho mỗi pull request vào dev / main (Cinema_BE/docs/TESTING.md)
 name: CI
 
 on:
   pull_request:
     branches: [dev, main]
+    paths:
+      - 'Cinema_BE/**'
+      - '.github/workflows/ci.yml'
   push:
     branches: [dev]
+    paths:
+      - 'Cinema_BE/**'
+      - '.github/workflows/ci.yml'
+
+# Backend nằm trong thư mục Cinema_BE của monorepo
+defaults:
+  run:
+    working-directory: Cinema_BE
 
 jobs:
   test:
@@ -31,7 +42,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-results-${{ matrix.service }}
-          path: ${{ matrix.service }}/**/TestResults/*.trx
+          path: Cinema_BE/${{ matrix.service }}/**/TestResults/*.trx
 
   build-gateway:
     name: Build ApiGateway

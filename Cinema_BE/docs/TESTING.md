@@ -43,9 +43,11 @@ Trong test, MovieService, PayOS và SMTP được thay bằng bản giả: khôn
 
 ## 3. CI trên GitHub
 
-Workflow `.github/workflows/ci.yml` tự build và chạy toàn bộ test khi:
+Workflow `.github/workflows/ci.yml` (ở gốc repo) tự build và chạy toàn bộ test khi:
 - mở pull request vào `dev` hoặc `main`;
 - push lên `dev`.
+
+Workflow chỉ chạy khi có thay đổi trong `Cinema_BE/` (hoặc chính file workflow); pull request chỉ sửa `Cinema_Mobile/` thì không chạy.
 
 Kết quả hiện ở tab **Checks** của pull request. Test lỗi thì file kết quả (`.trx`) nằm trong mục *Artifacts* của lần chạy.
 
