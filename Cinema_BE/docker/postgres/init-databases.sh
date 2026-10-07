@@ -6,7 +6,7 @@ set -e
 for db in auth movie showtime booking payment notification; do
     file="/db-scripts/cinema_${db}_db.sql"
     if [ ! -f "$file" ]; then
-        echo "Khong tim thay $file - kiem tra DB_SCRIPTS_DIR trong .env (mac dinh ../Project-Cinema-DB)" >&2
+        echo "Khong tim thay $file - kiem tra DB_SCRIPTS_DIR trong .env (mac dinh ../../Project-Cinema-DB, canh thu muc Cinema)" >&2
         exit 1
     fi
 

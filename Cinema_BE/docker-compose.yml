@@ -47,7 +47,8 @@ services:
       - "127.0.0.1:5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ${DB_SCRIPTS_DIR:-../Project-Cinema-DB}:/db-scripts:ro
+      # File SQL của repo Project-Cinema-DB, mặc định nằm cạnh thư mục Cinema (đổi bằng DB_SCRIPTS_DIR trong .env)
+      - ${DB_SCRIPTS_DIR:-../../Project-Cinema-DB}:/db-scripts:ro
       - ./docker/postgres/init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh:ro
     healthcheck:
       # Chỉ "healthy" khi server thật đã chạy và DB cuối cùng đã được tạo xong

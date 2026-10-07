@@ -5,13 +5,15 @@ Một lệnh chạy cả 6 thành phần: **PostgreSQL + RabbitMQ + AuthService 
 ## 1. Chuẩn bị (làm một lần)
 
 1. Cài và **mở Docker Desktop**.
-2. Clone 2 repo **nằm cạnh nhau** (container PostgreSQL lấy file SQL từ repo DB):
+2. Clone repo `Cinema` (repo này) và repo `Project-Cinema-DB` **nằm cạnh nhau** (container PostgreSQL lấy file SQL từ repo DB):
    ```
    <thư mục bất kỳ>/
-   ├── Cinema_BE/
+   ├── Cinema/
+   │   ├── Cinema_BE/
+   │   └── Cinema_Mobile/
    └── Project-Cinema-DB/
    ```
-   Nếu để chỗ khác thì khai báo `DB_SCRIPTS_DIR` trong `.env`.
+   Nếu để chỗ khác thì khai báo `DB_SCRIPTS_DIR` trong `.env` (đường dẫn tính từ thư mục `Cinema_BE`).
 3. Tạo file `.env` trong thư mục `Cinema_BE`:
    - **Đã được cấp quyền giải mã** ([SECRETS_SOPS.md](SECRETS_SOPS.md)): chạy `.\scripts\secrets.ps1 decrypt` là có `.env` đầy đủ, kể cả SMTP. Bỏ qua phần điền tay bên dưới.
    - **Chưa được cấp quyền**: tạo từ mẫu rồi điền 2 giá trị bắt buộc:
@@ -29,6 +31,8 @@ Một lệnh chạy cả 6 thành phần: **PostgreSQL + RabbitMQ + AuthService 
 > File `.env` đã nằm trong `.gitignore` — **không commit** file này.
 
 ## 2. Chạy
+
+Mở PowerShell **trong thư mục `Cinema_BE`** rồi chạy:
 
 ```powershell
 docker compose up -d --build
@@ -83,7 +87,7 @@ Tài khoản seed (mật khẩu `123456`): `admin@cinema.com`, `nhanvien1@cinema
 | `failed to connect to the docker API ... dockerDesktopLinuxEngine` | Docker Desktop chưa mở — mở lên rồi chạy lại |
 | `Set POSTGRES_PASSWORD in .env` / `Set JWT_SECRET_KEY in .env` | Chưa tạo `.env` hoặc chưa điền giá trị (mục 1) |
 | `Bind for 0.0.0.0:5000 failed: port is already allocated` | Cổng đang bị chiếm (thường do service đang chạy trong Visual Studio) — tắt đi rồi chạy lại |
-| Container `postgres` dừng, log có `Khong tim thay /db-scripts/...` | Thiếu repo `Project-Cinema-DB` cạnh `Cinema_BE` (hoặc sai `DB_SCRIPTS_DIR`) → sửa rồi chạy `docker compose down -v` và `up` lại |
+| Container `postgres` dừng, log có `Khong tim thay /db-scripts/...` | Thiếu repo `Project-Cinema-DB` cạnh thư mục `Cinema` (hoặc sai `DB_SCRIPTS_DIR`) → sửa rồi chạy `docker compose down -v` và `up` lại |
 | Đổi `POSTGRES_PASSWORD` sau lần chạy đầu thì service không kết nối được DB | Mật khẩu chỉ được đặt lúc tạo volume → `docker compose down -v` rồi chạy lại |
 | AuthService lỗi `42703: column u.email_verified does not exist` / BookingService lỗi `column b.customer_email does not exist` | DB trong volume được tạo từ file SQL cũ → `docker compose down -v` rồi chạy lại (hoặc chạy file mới trong `Project-Cinema-DB/migrations`) |
 | Đăng ký xong không nhận được email OTP | Chưa cấu hình SMTP trong `.env` → lấy mã trong `docker compose logs auth-service`, hoặc cấu hình Gmail ([EMAIL_SETUP.md](EMAIL_SETUP.md)) |
