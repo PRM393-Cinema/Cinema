@@ -11,6 +11,7 @@ import '../../../core/widgets/app_text_field.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../auth_error_messages.dart';
 import '../verify_email_arguments.dart';
+import '../widgets/auth_scaffold.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({required this.authRepository, super.key});
@@ -103,142 +104,119 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(AppSpacing.xl),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 460),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: AppColors.background,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: AppColors.border.withValues(alpha: 0.8),
-                  ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.xxl),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const _RegisterTitle(key: Key('registerTitle')),
-                        const SizedBox(height: AppSpacing.sm),
-                        const Text(
-                          'Join us for a premium movie booking experience',
-                          style: AppTextStyles.caption,
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: AppSpacing.xxl),
-                        AppTextField(
-                          key: const Key('registerFullNameField'),
-                          label: 'Full Name',
-                          labelAbove: true,
-                          hint: 'John Doe',
-                          controller: _fullNameController,
-                          enabled: !_isLoading,
-                          keyboardType: TextInputType.name,
-                          validator: _validateFullName,
-                        ),
-                        const SizedBox(height: AppSpacing.lg),
-                        AppTextField(
-                          key: const Key('registerEmailField'),
-                          label: 'Email Address',
-                          labelAbove: true,
-                          hint: 'johndoe@example.com',
-                          controller: _emailController,
-                          enabled: !_isLoading,
-                          keyboardType: TextInputType.emailAddress,
-                          validator: _validateEmail,
-                        ),
-                        const SizedBox(height: AppSpacing.lg),
-                        AppTextField(
-                          key: const Key('registerPhoneField'),
-                          label: 'Phone Number (Optional)',
-                          labelAbove: true,
-                          hint: '0912345678',
-                          controller: _phoneController,
-                          enabled: !_isLoading,
-                          keyboardType: TextInputType.phone,
-                          validator: _validatePhone,
-                        ),
-                        const SizedBox(height: AppSpacing.lg),
-                        AppTextField(
-                          key: const Key('registerPasswordField'),
-                          label: 'Password',
-                          labelAbove: true,
-                          hint: 'Enter your password',
-                          controller: _passwordController,
-                          obscureText: _obscurePassword,
-                          enabled: !_isLoading,
-                          validator: _validatePassword,
-                          suffixIcon: IconButton(
-                            tooltip: _obscurePassword
-                                ? 'Show password'
-                                : 'Hide password',
-                            onPressed: _isLoading
-                                ? null
-                                : () {
-                                    setState(() {
-                                      _obscurePassword = !_obscurePassword;
-                                    });
-                                  },
-                            icon: Icon(
-                              _obscurePassword
-                                  ? Icons.visibility_outlined
-                                  : Icons.visibility_off_outlined,
-                            ),
-                          ),
-                        ),
-                        if (_errorMessage != null) ...[
-                          const SizedBox(height: AppSpacing.lg),
-                          _AuthError(message: _errorMessage!),
-                        ],
-                        const SizedBox(height: AppSpacing.xl),
-                        AppButton(
-                          label: 'REGISTER',
-                          useGradient: true,
-                          isLoading: _isLoading,
-                          onPressed: _isLoading ? null : _register,
-                        ),
-                        const SizedBox(height: AppSpacing.lg),
-                        const Divider(height: 1),
-                        const SizedBox(height: AppSpacing.md),
-                        Wrap(
-                          alignment: WrapAlignment.center,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            Text(
-                              'Already have an account? ',
-                              style: AppTextStyles.caption,
-                            ),
-                            TextButton(
-                              onPressed: _isLoading
-                                  ? null
-                                  : () => Navigator.pop(context),
-                              style: TextButton.styleFrom(
-                                padding: EdgeInsets.zero,
-                                minimumSize: Size.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                foregroundColor: AppColors.primary,
-                                textStyle: AppTextStyles.caption.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              child: const Text('Log in here'),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+    return AuthScaffold(
+      showBack: false,
+      title: 'Create your account',
+      titleKey: const Key('registerTitle'),
+      subtitle: 'Book tickets and enjoy your favorite movies.',
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AuthFieldSurface(
+              child: AppTextField(
+                key: const Key('registerFullNameField'),
+                label: 'Full name',
+                hint: 'Enter your full name',
+                isRequired: true,
+                prefixIcon: const Icon(Icons.person_outline),
+                controller: _fullNameController,
+                enabled: !_isLoading,
+                keyboardType: TextInputType.name,
+                validator: _validateFullName,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            AuthFieldSurface(
+              child: AppTextField(
+                key: const Key('registerEmailField'),
+                label: 'Email',
+                hint: 'Enter your email',
+                isRequired: true,
+                prefixIcon: const Icon(Icons.mail_outline),
+                controller: _emailController,
+                enabled: !_isLoading,
+                keyboardType: TextInputType.emailAddress,
+                validator: _validateEmail,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            AuthFieldSurface(
+              child: AppTextField(
+                key: const Key('registerPhoneField'),
+                label: 'Phone number',
+                hint: 'Optional',
+                isRequired: false,
+                prefixIcon: const Icon(Icons.phone_outlined),
+                controller: _phoneController,
+                enabled: !_isLoading,
+                keyboardType: TextInputType.phone,
+                validator: _validatePhone,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            AuthFieldSurface(
+              child: AppTextField(
+                key: const Key('registerPasswordField'),
+                label: 'Password',
+                hint: 'Enter your password',
+                isRequired: true,
+                prefixIcon: const Icon(Icons.lock_outline),
+                controller: _passwordController,
+                enabled: !_isLoading,
+                validator: _validatePassword,
+                obscureText: _obscurePassword,
+                suffixIcon: IconButton(
+                  tooltip: _obscurePassword ? 'Show password' : 'Hide password',
+                  onPressed: _isLoading
+                      ? null
+                      : () {
+                          setState(() => _obscurePassword = !_obscurePassword);
+                        },
+                  icon: Icon(
+                    _obscurePassword
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
                   ),
                 ),
               ),
             ),
-          ),
+            if (_errorMessage != null) ...[
+              const SizedBox(height: AppSpacing.lg),
+              _AuthError(message: _errorMessage!),
+            ],
+            const SizedBox(height: AppSpacing.xxl),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: AppRadius.borderRadiusMd,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.24),
+                    blurRadius: 24,
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
+              child: AppButton(
+                label: 'Create account',
+                trailingIcon: Icons.arrow_forward_rounded,
+                useGradient: true,
+                isLoading: _isLoading,
+                onPressed: _isLoading ? null : _register,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            AppButton.secondary(
+              label: 'Already have an account? Sign in',
+              onPressed: _isLoading
+                  ? null
+                  : () => Navigator.pushReplacementNamed(
+                      context,
+                      AppRoutes.login,
+                    ),
+            ),
+          ],
         ),
       ),
     );
@@ -322,31 +300,6 @@ class _AuthError extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _RegisterTitle extends StatelessWidget {
-  const _RegisterTitle({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return RichText(
-      textAlign: TextAlign.center,
-      text: TextSpan(
-        style: AppTextStyles.heading2.copyWith(
-          fontWeight: FontWeight.w800,
-          letterSpacing: 0.4,
-          color: AppColors.textPrimary,
-        ),
-        children: const [
-          TextSpan(text: 'CREATE '),
-          TextSpan(
-            text: 'ACCOUNT',
-            style: TextStyle(color: AppColors.primary),
-          ),
-        ],
       ),
     );
   }

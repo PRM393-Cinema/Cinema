@@ -14,6 +14,7 @@ import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../auth_error_messages.dart';
+import '../widgets/auth_scaffold.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({required this.authRepository, super.key});
@@ -135,138 +136,101 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(AppSpacing.xl),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: AppColors.background,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: AppColors.border.withValues(alpha: 0.8),
-                  ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.xxl),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const _AuthTitle(
-                          key: Key('loginTitle'),
-                          first: 'LOGIN TO ',
-                          accent: 'CINEMA',
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        const Text(
-                          'Welcome back! Access your booking account',
-                          style: AppTextStyles.caption,
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: AppSpacing.xxl),
-                        AppTextField(
-                          key: const Key('loginEmailField'),
-                          label: 'Email',
-                          labelAbove: true,
-                          hint: 'johndoe@example.com',
-                          controller: _emailController,
-                          keyboardType: TextInputType.emailAddress,
-                          enabled: !_isLoading,
-                          validator: _validateEmail,
-                        ),
-                        const SizedBox(height: AppSpacing.lg),
-                        AppTextField(
-                          key: const Key('loginPasswordField'),
-                          label: 'Password',
-                          labelAbove: true,
-                          labelAction: TextButton(
-                            onPressed: _isLoading ? null : _openForgotPassword,
-                            style: TextButton.styleFrom(
-                              padding: EdgeInsets.zero,
-                              minimumSize: Size.zero,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              foregroundColor: AppColors.primary,
-                              textStyle: AppTextStyles.caption,
-                            ),
-                            child: const Text('Forgot password?'),
-                          ),
-                          hint: 'Enter your password',
-                          controller: _passwordController,
-                          obscureText: _obscurePassword,
-                          enabled: !_isLoading,
-                          validator: _validatePassword,
-                          suffixIcon: IconButton(
-                            tooltip: _obscurePassword
-                                ? 'Show password'
-                                : 'Hide password',
-                            onPressed: _isLoading
-                                ? null
-                                : () {
-                                    setState(() {
-                                      _obscurePassword = !_obscurePassword;
-                                    });
-                                  },
-                            icon: Icon(
-                              _obscurePassword
-                                  ? Icons.visibility_outlined
-                                  : Icons.visibility_off_outlined,
-                            ),
-                          ),
-                        ),
-                        if (_errorMessage != null) ...[
-                          const SizedBox(height: AppSpacing.lg),
-                          _LoginError(message: _errorMessage!),
-                        ],
-                        const SizedBox(height: AppSpacing.xl),
-                        AppButton(
-                          label: 'LOG IN',
-                          useGradient: true,
-                          isLoading: _isLoading,
-                          onPressed: _isLoading ? null : _login,
-                        ),
-                        const SizedBox(height: AppSpacing.lg),
-                        const Divider(height: 1),
-                        const SizedBox(height: AppSpacing.md),
-                        Wrap(
-                          alignment: WrapAlignment.center,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            Text(
-                              "Don't have an account? ",
-                              style: AppTextStyles.caption,
-                            ),
-                            TextButton(
-                              onPressed: _isLoading
-                                  ? null
-                                  : () => Navigator.pushNamed(
-                                      context,
-                                      AppRoutes.register,
-                                    ),
-                              style: TextButton.styleFrom(
-                                padding: EdgeInsets.zero,
-                                minimumSize: Size.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                foregroundColor: AppColors.primary,
-                                textStyle: AppTextStyles.caption.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              child: const Text('Register here'),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+    return AuthScaffold(
+      showBack: false,
+      title: 'Welcome back',
+      titleKey: const Key('loginTitle'),
+      subtitle: 'Sign in to continue your cinema experience.',
+      backToHome: true,
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AuthFieldSurface(
+              child: AppTextField(
+                key: const Key('loginEmailField'),
+                label: 'Email',
+                hint: 'Enter your email',
+                isRequired: true,
+                prefixIcon: const Icon(Icons.mail_outline),
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                enabled: !_isLoading,
+                validator: _validateEmail,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            AuthFieldSurface(
+              child: AppTextField(
+                key: const Key('loginPasswordField'),
+                label: 'Password',
+                hint: 'Enter your password',
+                isRequired: true,
+                prefixIcon: const Icon(Icons.lock_outline),
+                controller: _passwordController,
+                obscureText: _obscurePassword,
+                enabled: !_isLoading,
+                validator: _validatePassword,
+                suffixIcon: IconButton(
+                  tooltip: _obscurePassword ? 'Show password' : 'Hide password',
+                  onPressed: _isLoading
+                      ? null
+                      : () {
+                          setState(() => _obscurePassword = !_obscurePassword);
+                        },
+                  icon: Icon(
+                    _obscurePassword
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
                   ),
                 ),
               ),
             ),
-          ),
+            const SizedBox(height: AppSpacing.sm),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: _isLoading ? null : _openForgotPassword,
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.primary,
+                  textStyle: AppTextStyles.bodySmall,
+                ),
+                child: const Text('Forgot password?'),
+              ),
+            ),
+            if (_errorMessage != null) ...[
+              const SizedBox(height: AppSpacing.lg),
+              _LoginError(message: _errorMessage!),
+            ],
+            const SizedBox(height: AppSpacing.xl),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: AppRadius.borderRadiusMd,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.24),
+                    blurRadius: 24,
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
+              child: AppButton(
+                label: 'Sign in',
+                trailingIcon: Icons.arrow_forward_rounded,
+                useGradient: true,
+                isLoading: _isLoading,
+                onPressed: _isLoading ? null : _login,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            AppButton.secondary(
+              label: 'Create an account',
+              onPressed: _isLoading
+                  ? null
+                  : () => Navigator.pushNamed(context, AppRoutes.register),
+            ),
+          ],
         ),
       ),
     );
@@ -328,34 +292,6 @@ class _LoginError extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _AuthTitle extends StatelessWidget {
-  const _AuthTitle({super.key, required this.first, required this.accent});
-
-  final String first;
-  final String accent;
-
-  @override
-  Widget build(BuildContext context) {
-    return RichText(
-      textAlign: TextAlign.center,
-      text: TextSpan(
-        style: AppTextStyles.heading2.copyWith(
-          fontWeight: FontWeight.w800,
-          letterSpacing: 0.4,
-          color: AppColors.textPrimary,
-        ),
-        children: [
-          TextSpan(text: first),
-          TextSpan(
-            text: accent,
-            style: const TextStyle(color: AppColors.primary),
-          ),
-        ],
       ),
     );
   }

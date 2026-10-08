@@ -14,6 +14,7 @@ class AppButton extends StatelessWidget {
     this.variant = AppButtonVariant.primary,
     this.isLoading = false,
     this.leadingIcon,
+    this.trailingIcon,
     this.useGradient = false,
     super.key,
   });
@@ -23,6 +24,7 @@ class AppButton extends StatelessWidget {
     this.onPressed,
     this.isLoading = false,
     this.leadingIcon,
+    this.trailingIcon,
     this.useGradient = false,
     super.key,
   }) : variant = AppButtonVariant.secondary;
@@ -32,6 +34,7 @@ class AppButton extends StatelessWidget {
     this.onPressed,
     this.isLoading = false,
     this.leadingIcon,
+    this.trailingIcon,
     this.useGradient = false,
     super.key,
   }) : variant = AppButtonVariant.danger;
@@ -41,6 +44,7 @@ class AppButton extends StatelessWidget {
   final AppButtonVariant variant;
   final bool isLoading;
   final IconData? leadingIcon;
+  final IconData? trailingIcon;
   final bool useGradient;
 
   bool get _isDisabled => onPressed == null || isLoading;
@@ -89,6 +93,7 @@ class AppButton extends StatelessWidget {
             label: label,
             isLoading: isLoading,
             leadingIcon: leadingIcon,
+            trailingIcon: trailingIcon,
           ),
         ),
       ),
@@ -101,11 +106,13 @@ class _ButtonContent extends StatelessWidget {
     required this.label,
     required this.isLoading,
     this.leadingIcon,
+    this.trailingIcon,
   });
 
   final String label;
   final bool isLoading;
   final IconData? leadingIcon;
+  final IconData? trailingIcon;
 
   @override
   Widget build(BuildContext context) {
@@ -126,6 +133,10 @@ class _ButtonContent extends StatelessWidget {
         Flexible(
           child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
         ),
+        if (trailingIcon != null) ...[
+          const SizedBox(width: AppSpacing.sm),
+          Icon(trailingIcon, size: AppSpacing.xl),
+        ],
       ],
     );
   }
