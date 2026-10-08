@@ -1,3 +1,6 @@
+import 'dart:math' as math;
+
+import 'package:cinema_fe/app/theme/app_colors.dart';
 import 'package:cinema_fe/app/theme/app_theme.dart';
 import 'package:cinema_fe/core/widgets/app_button.dart';
 import 'package:cinema_fe/core/widgets/status_badge.dart';
@@ -77,6 +80,39 @@ void main() {
     expect(find.text('A3'), findsOneWidget);
     expect(find.text('A4'), findsOneWidget);
   });
+
+  testWidgets('Text on the primary color stays readable', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      _TestApp(
+        child: Column(
+          children: [
+            AppButton(label: 'Book Now', onPressed: () {}),
+            const SeatItem(label: 'A2', state: SeatItemState.selected),
+          ],
+        ),
+      ),
+    );
+
+    // WCAG AA asks for 4.5:1 for normal text.
+    for (final label in ['Book Now', 'A2']) {
+      final text = tester.widget<RichText>(
+        find.descendant(of: find.text(label), matching: find.byType(RichText)),
+      );
+      expect(
+        _contrast(text.text.style!.color!, AppColors.primary),
+        greaterThanOrEqualTo(4.5),
+        reason: label,
+      );
+    }
+  });
+}
+
+double _contrast(Color a, Color b) {
+  final la = a.computeLuminance();
+  final lb = b.computeLuminance();
+  return (math.max(la, lb) + 0.05) / (math.min(la, lb) + 0.05);
 }
 
 class _TestApp extends StatelessWidget {

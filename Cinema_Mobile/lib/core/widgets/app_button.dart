@@ -118,7 +118,7 @@ class _ButtonColors {
     return switch (variant) {
       AppButtonVariant.primary => const _ButtonColors(
         background: AppColors.primary,
-        foreground: AppColors.textPrimary,
+        foreground: AppColors.onPrimary,
         border: AppColors.primary,
       ),
       AppButtonVariant.secondary => const _ButtonColors(
