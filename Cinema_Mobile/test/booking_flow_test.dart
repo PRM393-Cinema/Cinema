@@ -488,11 +488,12 @@ void main() {
 
       await tester.tap(find.text('Forgot password?'));
       await pumpRoute(tester);
+      expect(find.text('Quên Mật Khẩu?'), findsOneWidget);
       await tester.enterText(
-        find.widgetWithText(TextFormField, 'Email'),
+        find.byKey(const Key('forgotEmailField')),
         'khachhang1@gmail.com',
       );
-      await tester.tap(find.text('Continue'));
+      await tester.tap(find.text('GỬI LIÊN KẾT ĐẶT LẠI'));
       await pumpRoute(tester);
 
       expect(auth.forgotPasswordEmail, 'khachhang1@gmail.com');
@@ -513,7 +514,7 @@ void main() {
       await pumpRoute(tester);
 
       expect(auth.resetOtp, '654321');
-      expect(find.text('Welcome back'), findsOneWidget);
+      expect(find.byKey(const Key('loginTitle')), findsOneWidget);
     });
   });
 }

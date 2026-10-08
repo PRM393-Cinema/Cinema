@@ -29,7 +29,7 @@ void main() {
     await tester.tap(find.text('Sign in').first);
     await pumpRoute(tester);
 
-    expect(find.text('Welcome back'), findsOneWidget);
+    expect(find.byKey(const Key('loginTitle')), findsOneWidget);
   });
 
   testWidgets('Login loading state works', (WidgetTester tester) async {
@@ -96,7 +96,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('Invalid email or password.'), findsOneWidget);
-    expect(find.text('Welcome back'), findsOneWidget);
+    expect(find.byKey(const Key('loginTitle')), findsOneWidget);
     expect(find.text('Find your next movie night'), findsNothing);
   });
 
@@ -154,7 +154,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('This email is already registered.'), findsOneWidget);
-    expect(find.text('Create your account'), findsOneWidget);
+    expect(find.byKey(const Key('registerTitle')), findsOneWidget);
   });
 
   testWidgets('Verify Email success navigates to Login', (
@@ -171,7 +171,7 @@ void main() {
     await tester.tap(find.byType(AppButton).first);
     await pumpRoute(tester);
 
-    expect(find.text('Welcome back'), findsOneWidget);
+    expect(find.byKey(const Key('loginTitle')), findsOneWidget);
   });
 
   testWidgets('Invalid OTP displays error on Verify Email', (
@@ -361,16 +361,25 @@ Future<void> _loginToHome(WidgetTester tester) async {
   await tester.drag(find.byType(Scrollable).first, const Offset(0, -300));
   await tester.pumpAndSettle();
   await tester.tap(find.byType(AppButton).first);
+  await tester.pump();
+  expect(find.text('Authenticated!'), findsOneWidget);
+  await tester.pump(const Duration(milliseconds: 1200));
   await pumpRoute(tester);
 }
 
 Future<void> _enterLoginCredentials(WidgetTester tester) async {
   await tester.enterText(
-    find.widgetWithText(TextFormField, 'Email'),
+    find.descendant(
+      of: find.byKey(const Key('loginEmailField')),
+      matching: find.byType(TextFormField),
+    ),
     'khachhang1@gmail.com',
   );
   await tester.enterText(
-    find.widgetWithText(TextFormField, 'Password'),
+    find.descendant(
+      of: find.byKey(const Key('loginPasswordField')),
+      matching: find.byType(TextFormField),
+    ),
     '123456',
   );
   FocusManager.instance.primaryFocus?.unfocus();
@@ -382,16 +391,31 @@ Future<void> _enterRegisterDetails(
   String email = 'jane@example.com',
 }) async {
   await tester.enterText(
-    find.widgetWithText(TextFormField, 'Full name'),
+    find.descendant(
+      of: find.byKey(const Key('registerFullNameField')),
+      matching: find.byType(TextFormField),
+    ),
     'Jane Customer',
   );
-  await tester.enterText(find.widgetWithText(TextFormField, 'Email'), email);
   await tester.enterText(
-    find.widgetWithText(TextFormField, 'Phone number'),
+    find.descendant(
+      of: find.byKey(const Key('registerEmailField')),
+      matching: find.byType(TextFormField),
+    ),
+    email,
+  );
+  await tester.enterText(
+    find.descendant(
+      of: find.byKey(const Key('registerPhoneField')),
+      matching: find.byType(TextFormField),
+    ),
     '0123456789',
   );
   await tester.enterText(
-    find.widgetWithText(TextFormField, 'Password'),
+    find.descendant(
+      of: find.byKey(const Key('registerPasswordField')),
+      matching: find.byType(TextFormField),
+    ),
     'Secret123',
   );
   FocusManager.instance.primaryFocus?.unfocus();
