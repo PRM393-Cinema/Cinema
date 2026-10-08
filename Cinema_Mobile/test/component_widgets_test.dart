@@ -43,6 +43,33 @@ void main() {
     expect(taps, 0);
   });
 
+  testWidgets(
+    'Page button style overrides defaults and keeps disabled behavior',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        _TestApp(
+          child: AppButton(
+            label: 'Styled action',
+            trailingIcon: Icons.arrow_forward_rounded,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              disabledBackgroundColor: Colors.transparent,
+              side: BorderSide.none,
+            ),
+          ),
+        ),
+      );
+      final button = tester.widget<ElevatedButton>(find.byType(ElevatedButton));
+      expect(button.onPressed, isNull);
+      expect(
+        button.style!.backgroundColor!.resolve({WidgetState.disabled}),
+        Colors.transparent,
+      );
+      expect(button.style!.side!.resolve({}), BorderSide.none);
+      expect(find.byIcon(Icons.arrow_forward_rounded), findsOneWidget);
+    },
+  );
+
   testWidgets('StatusBadge renders label', (WidgetTester tester) async {
     await tester.pumpWidget(
       const _TestApp(

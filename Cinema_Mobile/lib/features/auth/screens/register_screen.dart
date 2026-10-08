@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/routes/app_routes.dart';
-import '../../../app/theme/app_colors.dart';
-import '../../../app/theme/app_radius.dart';
 import '../../../app/theme/app_spacing.dart';
-import '../../../app/theme/app_text_styles.dart';
 import '../../../core/network/api_exception.dart';
-import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../auth_error_messages.dart';
+import '../widgets/auth_scaffold.dart';
 import '../verify_email_arguments.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -103,109 +100,100 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Create account')),
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(AppSpacing.xl),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 440),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Text(
-                      'Create your account',
-                      style: AppTextStyles.heading1,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    const Text(
-                      'Book tickets and enjoy your favorite movies.',
-                      style: AppTextStyles.bodySmall,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: AppSpacing.xxl),
-                    AppTextField(
-                      label: 'Full name',
-                      hint: 'Enter your full name',
-                      controller: _fullNameController,
-                      enabled: !_isLoading,
-                      keyboardType: TextInputType.name,
-                      prefixIcon: const Icon(Icons.person_outline),
-                      validator: _validateFullName,
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    AppTextField(
-                      label: 'Email',
-                      hint: 'you@example.com',
-                      controller: _emailController,
-                      enabled: !_isLoading,
-                      keyboardType: TextInputType.emailAddress,
-                      prefixIcon: const Icon(Icons.email_outlined),
-                      validator: _validateEmail,
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    AppTextField(
-                      label: 'Phone number',
-                      hint: 'Enter your phone number',
-                      controller: _phoneController,
-                      enabled: !_isLoading,
-                      keyboardType: TextInputType.phone,
-                      prefixIcon: const Icon(Icons.phone_outlined),
-                      validator: _validatePhone,
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    AppTextField(
-                      label: 'Password',
-                      hint: 'Create a strong password',
-                      controller: _passwordController,
-                      obscureText: _obscurePassword,
-                      enabled: !_isLoading,
-                      prefixIcon: const Icon(Icons.lock_outline),
-                      validator: _validatePassword,
-                      suffixIcon: IconButton(
-                        tooltip: _obscurePassword
-                            ? 'Show password'
-                            : 'Hide password',
-                        onPressed: _isLoading
-                            ? null
-                            : () {
-                                setState(() {
-                                  _obscurePassword = !_obscurePassword;
-                                });
-                              },
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined,
-                        ),
-                      ),
-                    ),
-                    if (_errorMessage != null) ...[
-                      const SizedBox(height: AppSpacing.lg),
-                      _AuthError(message: _errorMessage!),
-                    ],
-                    const SizedBox(height: AppSpacing.xxl),
-                    AppButton(
-                      label: 'Create account',
-                      isLoading: _isLoading,
-                      onPressed: _isLoading ? null : _register,
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    AppButton.secondary(
-                      label: 'Already have an account? Sign in',
-                      onPressed: _isLoading
-                          ? null
-                          : () => Navigator.pop(context),
-                    ),
-                  ],
+    return AuthScaffold(
+      title: 'Create your account',
+      subtitle: 'Book tickets and enjoy your favorite movies.',
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AuthFieldSurface(
+              child: AppTextField(
+                label: 'Full name',
+                isRequired: true,
+                hint: 'Enter your full name',
+                controller: _fullNameController,
+                enabled: !_isLoading,
+                keyboardType: TextInputType.name,
+                prefixIcon: const Icon(Icons.person_outline),
+                validator: _validateFullName,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            AuthFieldSurface(
+              child: AppTextField(
+                label: 'Email',
+                isRequired: true,
+                hint: 'you@example.com',
+                controller: _emailController,
+                enabled: !_isLoading,
+                keyboardType: TextInputType.emailAddress,
+                prefixIcon: const Icon(Icons.email_outlined),
+                validator: _validateEmail,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            AuthFieldSurface(
+              child: AppTextField(
+                label: 'Phone number',
+                hint: 'Enter your phone number',
+                controller: _phoneController,
+                enabled: !_isLoading,
+                keyboardType: TextInputType.phone,
+                prefixIcon: const Icon(Icons.phone_outlined),
+                validator: _validatePhone,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            AuthFieldSurface(
+              child: AppTextField(
+                label: 'Password',
+                isRequired: true,
+                hint: 'Create a strong password',
+                controller: _passwordController,
+                obscureText: _obscurePassword,
+                enabled: !_isLoading,
+                prefixIcon: const Icon(Icons.lock_outline),
+                validator: _validatePassword,
+                onChanged: (value) {
+                  if (value.isEmpty && !_obscurePassword) {
+                    setState(() => _obscurePassword = true);
+                  }
+                },
+                suffixIcon: IconButton(
+                  tooltip: _obscurePassword ? 'Show password' : 'Hide password',
+                  onPressed: _isLoading
+                      ? null
+                      : () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
+                  icon: Icon(
+                    _obscurePassword
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                  ),
                 ),
               ),
             ),
-          ),
+            if (_errorMessage != null) ...[
+              const SizedBox(height: AppSpacing.lg),
+              AuthStatusMessage.error(message: _errorMessage!),
+            ],
+            const SizedBox(height: AppSpacing.xxl),
+            AuthButton(
+              label: 'Create account',
+              isLoading: _isLoading,
+              onPressed: _isLoading ? null : _register,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            AuthButton.secondary(
+              label: 'Already have an account? Sign in',
+              onPressed: _isLoading ? null : () => Navigator.pop(context),
+            ),
+          ],
         ),
       ),
     );
@@ -250,46 +238,4 @@ String? _validatePassword(String? value) {
     return 'Password must be at least 6 characters.';
   }
   return null;
-}
-
-class _AuthError extends StatelessWidget {
-  const _AuthError({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      liveRegion: true,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: AppColors.error.withValues(alpha: 0.12),
-          borderRadius: AppRadius.borderRadiusMd,
-          border: Border.all(color: AppColors.error),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(
-                Icons.error_outline,
-                color: AppColors.error,
-                size: AppSpacing.xl,
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: Text(
-                  message,
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }
