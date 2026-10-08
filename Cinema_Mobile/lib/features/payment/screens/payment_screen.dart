@@ -10,17 +10,26 @@ import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/utils/layout.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/error_state.dart';
+import '../../../core/widgets/loading_state.dart';
 import '../../../data/models/booking.dart';
 import '../../../data/models/payment.dart';
 import '../../../data/repositories/booking_repository.dart';
 import '../payment_args.dart';
 
 class PaymentScreen extends StatefulWidget {
-  const PaymentScreen({required this.bookingRepository, super.key});
+  const PaymentScreen({
+    required this.bookingRepository,
+    this.bookingId,
+    super.key,
+  });
 
   final BookingRepository bookingRepository;
+
+  // Set when the screen is opened from its URL: the booking is loaded by id.
+  final int? bookingId;
 
   @override
   State<PaymentScreen> createState() => _PaymentScreenState();
@@ -32,6 +41,8 @@ class _PaymentScreenState extends State<PaymentScreen>
   static const _pollInterval = Duration(seconds: 5);
 
   Booking? _booking;
+  bool _bookingRequested = false;
+  bool _isLoadingBooking = false;
   Timer? _countdownTimer;
   Timer? _pollTimer;
   bool _checkoutOpened = false;
@@ -54,11 +65,41 @@ class _PaymentScreenState extends State<PaymentScreen>
 
     final args = ModalRoute.of(context)?.settings.arguments;
     if (_booking == null && args is Booking) {
-      _booking = args;
-      _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-        if (mounted) setState(() {});
+      _start(args);
+    } else if (_booking == null &&
+        !_bookingRequested &&
+        widget.bookingId != null) {
+      _bookingRequested = true;
+      _isLoadingBooking = true;
+      _loadBooking(widget.bookingId!);
+    }
+  }
+
+  void _start(Booking booking) {
+    _booking = booking;
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() {});
+    });
+    _pollTimer = Timer.periodic(_pollInterval, (_) => _pollBooking());
+  }
+
+  // Opened from its URL (web refresh): load the booking first. A booking that
+  // is no longer waiting for payment goes straight to its result.
+  Future<void> _loadBooking(int bookingId) async {
+    try {
+      final booking = await widget.bookingRepository.getBooking(bookingId);
+      if (!mounted) return;
+      if (booking.status != BookingStatus.pending) {
+        _openResult(booking.id);
+        return;
+      }
+      setState(() {
+        _isLoadingBooking = false;
+        _start(booking);
       });
-      _pollTimer = Timer.periodic(_pollInterval, (_) => _pollBooking());
+    } on Object {
+      // Shown as "Booking not found" with a link to My Bookings.
+      if (mounted) setState(() => _isLoadingBooking = false);
     }
   }
 
@@ -256,7 +297,7 @@ class _PaymentScreenState extends State<PaymentScreen>
 
     Navigator.pushReplacementNamed(
       context,
-      AppRoutes.paymentResult,
+      AppRoutes.paymentResult(bookingId),
       arguments: PaymentResultArgs(bookingId: bookingId, payment: payment),
     );
   }
@@ -275,6 +316,13 @@ class _PaymentScreenState extends State<PaymentScreen>
   @override
   Widget build(BuildContext context) {
     final booking = _booking;
+
+    if (booking == null && _isLoadingBooking) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Payment')),
+        body: const LoadingState(message: 'Loading booking...'),
+      );
+    }
 
     if (booking == null) {
       return Scaffold(
@@ -327,7 +375,7 @@ class _PaymentScreenState extends State<PaymentScreen>
             ),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(AppSpacing.xl),
+              padding: centeredPadding(context, AppSpacing.xl),
               decoration: const BoxDecoration(
                 color: AppColors.surface,
                 border: Border(top: BorderSide(color: AppColors.border)),

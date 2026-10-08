@@ -37,6 +37,11 @@ class MovieService {
     return Movie.fromJson(readMap(response));
   }
 
+  Future<Showtime> getShowtime(int showtimeId) async {
+    final response = await _apiClient.get('/api/showtimes/$showtimeId');
+    return Showtime.fromJson(readMap(response));
+  }
+
   // Showtimes that are still open for booking and have not started yet.
   Future<PagedResult<Showtime>> getOpenShowtimesByMovie(
     int movieId, {

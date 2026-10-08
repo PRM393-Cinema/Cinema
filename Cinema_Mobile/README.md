@@ -14,12 +14,34 @@ Flutter app for customers: browse the movies now showing, pick a showtime and se
 flutter run -d chrome
 ```
 
-| Target | Command | Backend address used |
-|---|---|---|
-| Chrome / Edge | `flutter run -d chrome` | `http://localhost:5000` |
-| Windows desktop | `flutter run -d windows` | `http://localhost:5000` |
-| Android emulator | `flutter run` | `http://10.0.2.2:5000` (the emulator's alias for the host machine) |
-| Physical phone, or backend on another machine | `flutter run --dart-define=API_BASE_URL=http://<LAN IP>:5000` | the given address |
+| Target                                        | Command                                                       | Backend address used                                               |
+| --------------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Chrome / Edge                                 | `flutter run -d chrome`                                       | `http://localhost:5000`                                            |
+| Windows desktop                               | `flutter run -d windows`                                      | `http://localhost:5000`                                            |
+| Android emulator                              | `flutter run`                                                 | `http://10.0.2.2:5000` (the emulator's alias for the host machine) |
+| Physical phone, or backend on another machine | `flutter run --dart-define=API_BASE_URL=http://<LAN IP>:5000` | the given address                                                  |
+
+## Build for the web
+
+The responsive Flutter web app uses the same customer flows and API as mobile.
+Build it for deployment with an HTTPS API endpoint:
+
+```sh
+flutter build web --release --dart-define=API_BASE_URL=https://<API host>
+```
+
+The static site is written to `build/web`. If it is hosted under a path instead
+of the domain root, pass the matching `--base-href=/path/` option. Configure the
+backend CORS policy to allow the deployed web origin: set
+`Cors__AllowedOrigins__0=https://<web host>` on the gateway (an empty list
+allows every origin, which is only meant for local development).
+
+Every screen has its own URL, for example `#/movies/7`, `#/showtimes/12/seats`
+and `#/bookings/34/payment`. Refreshing the page or opening a shared link shows
+the same screen: it loads the movie, showtime or booking by id, with the home
+page underneath for the back button. Pages that need an account ask the
+customer to sign in first and then continue. Only the chosen seats are kept in
+memory, so a refreshed booking summary returns to the seat map.
 
 - Debug and profile Android builds allow plain HTTP (`android/app/src/debug/AndroidManifest.xml`). Release builds should talk to an HTTPS backend.
 - A physical phone must be on the same network as the backend machine; the gateway listens on port 5000 for the LAN.

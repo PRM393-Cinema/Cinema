@@ -7,17 +7,26 @@ import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/utils/layout.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/error_state.dart';
+import '../../../core/widgets/loading_state.dart';
 import '../../../data/models/booking.dart';
 import '../../../data/models/payment.dart';
 import '../../../data/repositories/booking_repository.dart';
 import 'my_bookings_screen.dart';
 
 class BookingDetailScreen extends StatefulWidget {
-  const BookingDetailScreen({required this.bookingRepository, super.key});
+  const BookingDetailScreen({
+    required this.bookingRepository,
+    this.bookingId,
+    super.key,
+  });
 
   final BookingRepository bookingRepository;
+
+  // Set when the screen is opened from its URL: the booking is loaded by id.
+  final int? bookingId;
 
   @override
   State<BookingDetailScreen> createState() => _BookingDetailScreenState();
@@ -25,6 +34,8 @@ class BookingDetailScreen extends StatefulWidget {
 
 class _BookingDetailScreenState extends State<BookingDetailScreen> {
   Booking? _booking;
+  bool _bookingRequested = false;
+  bool _isLoadingBooking = false;
   Refund? _refund;
   bool _isRefreshing = false;
   bool _isCancelling = false;
@@ -37,6 +48,29 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     if (_booking == null && args is Booking) {
       _booking = args;
       _refresh();
+    } else if (_booking == null &&
+        !_bookingRequested &&
+        widget.bookingId != null) {
+      _bookingRequested = true;
+      _isLoadingBooking = true;
+      _loadBooking(widget.bookingId!);
+    }
+  }
+
+  // Opened from its URL (web refresh or shared link).
+  Future<void> _loadBooking(int bookingId) async {
+    try {
+      final booking = await widget.bookingRepository.getBooking(bookingId);
+      final refund = await _loadRefund(booking);
+      if (!mounted) return;
+      setState(() {
+        _booking = booking;
+        _refund = refund;
+        _isLoadingBooking = false;
+      });
+    } on Object {
+      // Shown as "Booking not found".
+      if (mounted) setState(() => _isLoadingBooking = false);
     }
   }
 
@@ -160,13 +194,24 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   }
 
   Future<void> _payNow(Booking booking) async {
-    await Navigator.pushNamed(context, AppRoutes.payment, arguments: booking);
+    await Navigator.pushNamed(
+      context,
+      AppRoutes.payment(booking.id),
+      arguments: booking,
+    );
     if (mounted) await _refresh();
   }
 
   @override
   Widget build(BuildContext context) {
     final booking = _booking;
+
+    if (booking == null && _isLoadingBooking) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Booking Detail')),
+        body: const LoadingState(message: 'Loading booking...'),
+      );
+    }
 
     if (booking == null) {
       return Scaffold(
@@ -211,7 +256,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                 onRefresh: _refresh,
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.all(AppSpacing.xl),
+                  padding: centeredPadding(context, AppSpacing.xl),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -375,7 +420,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             if (canPay || canCancel)
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(AppSpacing.xl),
+                padding: centeredPadding(context, AppSpacing.xl),
                 decoration: const BoxDecoration(
                   color: AppColors.surface,
                   border: Border(top: BorderSide(color: AppColors.border)),

@@ -23,9 +23,17 @@ import '../widgets/seat_item.dart';
 import '../widgets/seat_legend.dart';
 
 class SeatSelectionScreen extends StatefulWidget {
-  const SeatSelectionScreen({required this.catalogRepository, super.key});
+  const SeatSelectionScreen({
+    required this.catalogRepository,
+    this.showtimeId,
+    super.key,
+  });
 
   final CatalogRepository catalogRepository;
+
+  // Set when the screen is opened from its URL: the showtime and its movie
+  // are loaded by id.
+  final int? showtimeId;
 
   @override
   State<SeatSelectionScreen> createState() => _SeatSelectionScreenState();
@@ -33,6 +41,7 @@ class SeatSelectionScreen extends StatefulWidget {
 
 class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
   final Set<int> _selectedSeatIds = {};
+  bool _showtimeRequested = false;
   SeatSelectionArgs? _args;
   ShowtimeSeatsData? _data;
   bool _isLoading = true;
@@ -46,7 +55,39 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
     if (_args == null && args is SeatSelectionArgs) {
       _args = args;
       _loadSeatMap();
+    } else if (_args == null &&
+        !_showtimeRequested &&
+        widget.showtimeId != null) {
+      _showtimeRequested = true;
+      _loadShowtime();
     }
+  }
+
+  // Opened from its URL (web refresh or shared link): load the showtime and
+  // its movie, then the seat map.
+  Future<void> _loadShowtime() async {
+    try {
+      final catalog = widget.catalogRepository;
+      final showtime = await catalog.getShowtime(widget.showtimeId!);
+      final movie = await catalog.getMovie(showtime.movieId);
+      if (!mounted) return;
+      _args = SeatSelectionArgs(movie: movie, showtime: showtime);
+      await _loadSeatMap();
+    } on ApiException catch (error) {
+      _showError(error.message);
+    } on FormatException {
+      _showError('The server returned an invalid response.');
+    } on Object {
+      _showError('Something went wrong. Please try again.');
+    }
+  }
+
+  void _retryShowtime() {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    _loadShowtime();
   }
 
   Future<void> _loadSeatMap() async {
@@ -115,7 +156,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
 
     final seatsTaken = await Navigator.pushNamed(
       context,
-      AppRoutes.bookingSummary,
+      AppRoutes.bookingSummary(args.showtime.id),
       arguments: BookingDraft(
         movie: args.movie,
         showtime: args.showtime,
@@ -135,12 +176,21 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
     final args = _args;
 
     if (args == null) {
+      final error = _errorMessage;
       return Scaffold(
         appBar: AppBar(title: const Text('Seat Selection')),
-        body: const ErrorState(
-          title: 'Showtime not found',
-          message: 'Please return and select a showtime again.',
-        ),
+        body: _showtimeRequested && _isLoading
+            ? const LoadingState(message: 'Loading showtime...')
+            : _showtimeRequested && error != null
+            ? ErrorState(
+                title: 'Unable to load the showtime',
+                message: error,
+                onRetry: _retryShowtime,
+              )
+            : const ErrorState(
+                title: 'Showtime not found',
+                message: 'Please return and select a showtime again.',
+              ),
       );
     }
 

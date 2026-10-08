@@ -79,7 +79,7 @@ class _SeatStyle {
       ),
       SeatItemState.selected => const _SeatStyle(
         background: AppColors.primary,
-        foreground: AppColors.textPrimary,
+        foreground: AppColors.onPrimary,
         border: AppColors.primary,
       ),
       SeatItemState.held => const _SeatStyle(

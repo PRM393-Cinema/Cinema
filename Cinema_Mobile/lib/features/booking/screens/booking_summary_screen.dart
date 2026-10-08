@@ -7,6 +7,7 @@ import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/utils/layout.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../data/models/booking_draft.dart';
@@ -43,7 +44,7 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
       // going back cannot create a second booking for the same seats.
       Navigator.pushNamedAndRemoveUntil(
         context,
-        AppRoutes.payment,
+        AppRoutes.payment(booking.id),
         (route) => route.isFirst,
         arguments: booking,
       );
@@ -125,7 +126,7 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
           children: [
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(AppSpacing.xl),
+                padding: centeredPadding(context, AppSpacing.xl),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -226,7 +227,7 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
             ),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(AppSpacing.xl),
+              padding: centeredPadding(context, AppSpacing.xl),
               decoration: const BoxDecoration(
                 color: AppColors.surface,
                 border: Border(top: BorderSide(color: AppColors.border)),

@@ -8,6 +8,7 @@ import '../../../app/theme/app_text_styles.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/session/session_state.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/utils/layout.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_state.dart';
@@ -118,7 +119,7 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
       onRefresh: _loadNotifications,
       child: ListView.separated(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: centeredPadding(context, AppSpacing.md),
         itemCount: _notifications.length,
         separatorBuilder: (context, index) =>
             const SizedBox(height: AppSpacing.md),
@@ -128,7 +129,7 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
             notification: notification,
             onTap: () => Navigator.pushNamed(
               context,
-              AppRoutes.notificationDetail,
+              AppRoutes.notificationDetail(notification.id),
               arguments: notification,
             ),
           );
