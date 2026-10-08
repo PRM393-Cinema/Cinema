@@ -32,7 +32,16 @@ flutter build web --release --dart-define=API_BASE_URL=https://<API host>
 
 The static site is written to `build/web`. If it is hosted under a path instead
 of the domain root, pass the matching `--base-href=/path/` option. Configure the
-backend CORS policy to allow the deployed web origin.
+backend CORS policy to allow the deployed web origin: set
+`Cors__AllowedOrigins__0=https://<web host>` on the gateway (an empty list
+allows every origin, which is only meant for local development).
+
+Every screen has its own URL, for example `#/movies/7`, `#/showtimes/12/seats`
+and `#/bookings/34/payment`. Refreshing the page or opening a shared link shows
+the same screen: it loads the movie, showtime or booking by id, with the home
+page underneath for the back button. Pages that need an account ask the
+customer to sign in first and then continue. Only the chosen seats are kept in
+memory, so a refreshed booking summary returns to the seat map.
 
 - Debug and profile Android builds allow plain HTTP (`android/app/src/debug/AndroidManifest.xml`). Release builds should talk to an HTTPS backend.
 - A physical phone must be on the same network as the backend machine; the gateway listens on port 5000 for the LAN.

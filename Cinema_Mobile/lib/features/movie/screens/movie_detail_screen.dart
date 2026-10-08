@@ -22,9 +22,16 @@ import '../../showtime/widgets/showtime_section.dart';
 // Movie details with its upcoming showtimes, so customers pick a time here
 // and go straight to the seat map.
 class MovieDetailScreen extends StatefulWidget {
-  const MovieDetailScreen({required this.catalogRepository, super.key});
+  const MovieDetailScreen({
+    required this.catalogRepository,
+    this.movieId,
+    super.key,
+  });
 
   final CatalogRepository catalogRepository;
+
+  // Set when the screen is opened from its URL: the movie is loaded by id.
+  final int? movieId;
 
   @override
   State<MovieDetailScreen> createState() => _MovieDetailScreenState();
@@ -36,6 +43,9 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
   bool _isLoading = true;
   String? _errorMessage;
   Showtime? _selectedShowtime;
+  bool _movieRequested = false;
+  bool _isLoadingMovie = false;
+  String? _movieError;
 
   @override
   void didChangeDependencies() {
@@ -45,7 +55,47 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     if (_movie == null && args is Movie) {
       _movie = args;
       _loadShowtimes();
+    } else if (_movie == null && !_movieRequested && widget.movieId != null) {
+      _movieRequested = true;
+      _isLoadingMovie = true;
+      _loadMovie();
     }
+  }
+
+  // Opened from its URL (web refresh or shared link): load the movie first.
+  Future<void> _loadMovie() async {
+    try {
+      final movie = await widget.catalogRepository.getMovie(widget.movieId!);
+      if (!mounted) return;
+      setState(() {
+        _movie = movie;
+        _isLoadingMovie = false;
+      });
+      await _loadShowtimes();
+    } on ApiException catch (error) {
+      _showMovieError(error.statusCode == 404 ? null : error.message);
+    } on FormatException {
+      _showMovieError('The server returned an invalid response.');
+    } on Object {
+      _showMovieError('Something went wrong. Please try again.');
+    }
+  }
+
+  void _retryMovie() {
+    setState(() {
+      _isLoadingMovie = true;
+      _movieError = null;
+    });
+    _loadMovie();
+  }
+
+  // A null message means the movie does not exist.
+  void _showMovieError(String? message) {
+    if (!mounted) return;
+    setState(() {
+      _isLoadingMovie = false;
+      _movieError = message;
+    });
   }
 
   Future<void> _loadShowtimes() async {
@@ -89,12 +139,14 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
   void _continueToSeats(Movie movie, Showtime showtime) {
     final args = SeatSelectionArgs(movie: movie, showtime: showtime);
 
+    final route = AppRoutes.seatSelection(showtime.id);
+
     AuthGuard.requireAuthentication(
       context,
-      pendingRoute: AppRoutes.seatSelection,
+      pendingRoute: route,
       pendingArguments: args,
       onAuthenticated: () {
-        Navigator.pushNamed(context, AppRoutes.seatSelection, arguments: args);
+        Navigator.pushNamed(context, route, arguments: args);
       },
     );
   }
@@ -104,12 +156,21 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     final movie = _movie;
 
     if (movie == null) {
+      final error = _movieError;
       return Scaffold(
         appBar: AppBar(title: const Text('Movie Detail')),
-        body: const ErrorState(
-          title: 'Movie not found',
-          message: 'Please return home and select a movie again.',
-        ),
+        body: _isLoadingMovie
+            ? const LoadingState(message: 'Loading movie...')
+            : error != null
+            ? ErrorState(
+                title: 'Unable to load the movie',
+                message: error,
+                onRetry: _retryMovie,
+              )
+            : const ErrorState(
+                title: 'Movie not found',
+                message: 'Please return home and select a movie again.',
+              ),
       );
     }
 

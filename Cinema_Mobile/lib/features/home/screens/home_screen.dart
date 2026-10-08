@@ -249,7 +249,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _openMovie(Movie movie) {
-    Navigator.pushNamed(context, AppRoutes.movieDetail, arguments: movie);
+    Navigator.pushNamed(
+      context,
+      AppRoutes.movieDetail(movie.id),
+      arguments: movie,
+    );
   }
 }
 

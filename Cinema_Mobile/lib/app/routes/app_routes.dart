@@ -1,3 +1,5 @@
+// Screen addresses. On web they are shown in the URL (#/movies/7), so the
+// screens of one record carry its id and can load it again after a refresh.
 abstract final class AppRoutes {
   static const login = '/login';
   static const register = '/register';
@@ -5,14 +7,23 @@ abstract final class AppRoutes {
   static const forgotPassword = '/forgot-password';
   static const resetPassword = '/reset-password';
   static const home = '/home';
-  static const movieDetail = '/movie-detail';
-  static const seatSelection = '/seat-selection';
-  static const bookingSummary = '/booking-summary';
-  static const payment = '/payment';
-  static const paymentResult = '/payment-result';
-  static const myBookings = '/my-bookings';
-  static const bookingDetail = '/booking-detail';
+  static const myBookings = '/bookings';
   static const notifications = '/notifications';
-  static const notificationDetail = '/notification-detail';
   static const profile = '/profile';
+
+  static String movieDetail(int movieId) => '/movies/$movieId';
+
+  static String seatSelection(int showtimeId) => '/showtimes/$showtimeId/seats';
+
+  static String bookingSummary(int showtimeId) =>
+      '/showtimes/$showtimeId/summary';
+
+  static String bookingDetail(int bookingId) => '/bookings/$bookingId';
+
+  static String payment(int bookingId) => '/bookings/$bookingId/payment';
+
+  static String paymentResult(int bookingId) => '/bookings/$bookingId/result';
+
+  static String notificationDetail(int notificationId) =>
+      '/notifications/$notificationId';
 }

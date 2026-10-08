@@ -163,6 +163,26 @@ class FakeCatalogRepository implements CatalogRepository {
   }
 
   @override
+  Future<Movie> getMovie(int movieId) async {
+    return movies.firstWhere(
+      (movie) => movie.id == movieId,
+      orElse: () =>
+          throw const ApiException(message: 'Movie not found', statusCode: 404),
+    );
+  }
+
+  @override
+  Future<Showtime> getShowtime(int showtimeId) async {
+    return showtimes.firstWhere(
+      (showtime) => showtime.id == showtimeId,
+      orElse: () => throw const ApiException(
+        message: 'Showtime not found',
+        statusCode: 404,
+      ),
+    );
+  }
+
+  @override
   Future<List<Showtime>> getOpenShowtimes(int movieId) async {
     return showtimes.where((showtime) => showtime.movieId == movieId).toList();
   }

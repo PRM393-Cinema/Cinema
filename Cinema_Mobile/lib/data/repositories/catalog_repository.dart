@@ -7,6 +7,11 @@ import '../services/movie_service.dart';
 abstract interface class CatalogRepository {
   Future<List<Movie>> getNowShowingMovies();
 
+  // Used when a screen is opened from its URL (web refresh or shared link).
+  Future<Movie> getMovie(int movieId);
+
+  Future<Showtime> getShowtime(int showtimeId);
+
   Future<List<Showtime>> getOpenShowtimes(int movieId);
 
   // Seat map of the showtime's room with the seats already held or booked.
@@ -28,6 +33,13 @@ class RemoteCatalogRepository implements CatalogRepository {
     final result = await _movies.getMoviesByStatus('ACTIVE');
     return result.items;
   }
+
+  @override
+  Future<Movie> getMovie(int movieId) => _movies.getMovie(movieId);
+
+  @override
+  Future<Showtime> getShowtime(int showtimeId) =>
+      _movies.getShowtime(showtimeId);
 
   @override
   Future<List<Showtime>> getOpenShowtimes(int movieId) async {
