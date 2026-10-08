@@ -121,20 +121,26 @@ void main() {
     await tester.pumpWidget(buildTestApp(initialRoute: AppRoutes.myBookings));
     await pumpRoute(tester);
 
-    expect(find.text('Welcome back'), findsOneWidget);
+    expect(find.byKey(const Key('loginTitle')), findsOneWidget);
 
     await tester.enterText(
-      find.widgetWithText(TextFormField, 'Email'),
+      find.descendant(
+        of: find.byKey(const Key('loginEmailField')),
+        matching: find.byType(TextFormField),
+      ),
       'khachhang1@gmail.com',
     );
     await tester.enterText(
-      find.widgetWithText(TextFormField, 'Password'),
+      find.descendant(
+        of: find.byKey(const Key('loginPasswordField')),
+        matching: find.byType(TextFormField),
+      ),
       '123456',
     );
     FocusManager.instance.primaryFocus?.unfocus();
     await tester.pumpAndSettle();
 
-    final signIn = find.widgetWithText(AppButton, 'Sign in');
+    final signIn = find.byType(AppButton).first;
     await tester.ensureVisible(signIn);
     await tester.tap(signIn);
     await pumpRoute(tester);
