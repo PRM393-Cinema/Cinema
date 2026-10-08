@@ -6,6 +6,8 @@ abstract final class AppColors {
   static const Color surfaceSoft = Color(0xFF1C2230);
 
   static const Color primary = Color(0xFF00D9E8);
+  // Text and icons on a primary background: white on cyan is unreadable.
+  static const Color onPrimary = background;
   static const Color primaryDark = Color(0xFF1677D2);
   static const Color accent = Color(0xFFF97316);
 

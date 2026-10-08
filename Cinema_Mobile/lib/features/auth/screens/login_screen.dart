@@ -285,7 +285,7 @@ class _BrandMark extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.lg),
-        const Text('Cinema App', style: AppTextStyles.display),
+        const Text('CosmoQ Cinema', style: AppTextStyles.display),
       ],
     );
   }
