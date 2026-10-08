@@ -211,7 +211,7 @@ class _PaymentResultScreenState extends State<PaymentResultScreen> {
             label: 'Continue payment',
             onPressed: () => Navigator.pushReplacementNamed(
               context,
-              AppRoutes.payment,
+              AppRoutes.payment(booking.id),
               arguments: booking,
             ),
           ),

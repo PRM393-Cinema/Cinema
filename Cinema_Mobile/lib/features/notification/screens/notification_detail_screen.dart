@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/utils/layout.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../data/models/app_notification.dart';
 
@@ -27,7 +28,7 @@ class NotificationDetailScreen extends StatelessWidget {
       appBar: AppBar(title: const Text('Notification')),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpacing.xl),
+          padding: centeredPadding(context, AppSpacing.xl),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
