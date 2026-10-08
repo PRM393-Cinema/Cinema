@@ -86,6 +86,7 @@ PublishScripts/
 *.pfx
 *.key
 .env
+.env.local
 .env.bak
 # Private key của age (SOPS): không bao giờ commit
 keys.txt
