@@ -9,8 +9,8 @@ abstract final class AppTheme {
   static ThemeData get darkTheme {
     const colorScheme = ColorScheme.dark(
       primary: AppColors.primary,
-      onPrimary: AppColors.textPrimary,
-      secondary: AppColors.primaryDark,
+      onPrimary: AppColors.background,
+      secondary: AppColors.accent,
       onSecondary: AppColors.textPrimary,
       surface: AppColors.surface,
       onSurface: AppColors.textPrimary,
@@ -70,7 +70,7 @@ abstract final class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
-          foregroundColor: AppColors.textPrimary,
+          foregroundColor: AppColors.background,
           disabledBackgroundColor: AppColors.surfaceSoft,
           disabledForegroundColor: AppColors.textSecondary,
           textStyle: AppTextStyles.button,

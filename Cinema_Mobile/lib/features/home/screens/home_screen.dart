@@ -103,7 +103,7 @@ class _HomeScreenState extends State<HomeScreen> {
             // Narrow phones with every action shown leave little room.
             Flexible(
               child: Text(
-                'CINEMA',
+                'COSMOQ',
                 style: AppTextStyles.heading2.copyWith(letterSpacing: 1.5),
                 maxLines: 1,
                 overflow: TextOverflow.fade,
@@ -204,7 +204,24 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(height: AppSpacing.xxl),
                   ],
-                  const Text('Now Showing', style: AppTextStyles.heading2),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Now Showing',
+                          style: AppTextStyles.heading2,
+                        ),
+                      ),
+                      if (isWide)
+                        Text(
+                          '${visibleMovies.length} films',
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                    ],
+                  ),
                   const SizedBox(height: AppSpacing.lg),
                   if (_movies.isEmpty)
                     const EmptyState(
@@ -249,12 +266,12 @@ class _HomeHeader extends StatelessWidget {
           ? CrossAxisAlignment.center
           : CrossAxisAlignment.start,
       children: [
-        const Text('Good evening', style: AppTextStyles.bodySmall),
+        const Text('Experience Premium Cinema', style: AppTextStyles.bodySmall),
         if (isWide) const Spacer() else const SizedBox(height: AppSpacing.xs),
         if (isWide)
           const Expanded(
             child: Text(
-              'Find your next movie night',
+              'Step Into CosmoQ Cinema',
               style: AppTextStyles.display,
               textAlign: TextAlign.right,
               maxLines: 2,
@@ -262,10 +279,7 @@ class _HomeHeader extends StatelessWidget {
             ),
           )
         else
-          const Text(
-            'Find your next movie night',
-            style: AppTextStyles.heading1,
-          ),
+          const Text('Step Into CosmoQ Cinema', style: AppTextStyles.heading1),
       ],
     );
   }
@@ -400,7 +414,7 @@ class _MovieGrid extends StatelessWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 220,
+        maxCrossAxisExtent: 260,
         mainAxisExtent: 340,
         crossAxisSpacing: AppSpacing.lg,
         mainAxisSpacing: AppSpacing.lg,

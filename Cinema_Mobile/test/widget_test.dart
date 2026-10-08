@@ -19,7 +19,7 @@ void main() {
     await tester.pumpWidget(buildTestApp());
     await pumpRoute(tester);
 
-    expect(find.text('Find your next movie night'), findsOneWidget);
+    expect(find.text('Step Into CosmoQ Cinema'), findsOneWidget);
     expect(find.text('Sign in'), findsOneWidget); // AppBar action
   });
 
@@ -68,7 +68,7 @@ void main() {
 
     await _loginToHome(tester);
 
-    expect(find.text('Find your next movie night'), findsOneWidget);
+    expect(find.text('Step Into CosmoQ Cinema'), findsOneWidget);
     expect(find.byKey(const Key('movieSearchField')), findsOneWidget);
     expect(session.isAuthenticated, isTrue);
     expect(session.user?.userId, customerUser.userId);

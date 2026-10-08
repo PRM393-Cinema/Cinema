@@ -78,7 +78,7 @@ class CinemaApp extends StatelessWidget {
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Cinema App',
+      title: 'CosmoQ Cinema',
       theme: AppTheme.darkTheme,
       initialRoute: initialRoute,
       routes: routes,

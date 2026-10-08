@@ -5,8 +5,9 @@ abstract final class AppColors {
   static const Color surface = Color(0xFF151922);
   static const Color surfaceSoft = Color(0xFF1C2230);
 
-  static const Color primary = Color(0xFFE50914);
-  static const Color primaryDark = Color(0xFFB20710);
+  static const Color primary = Color(0xFF00D9E8);
+  static const Color primaryDark = Color(0xFF1677D2);
+  static const Color accent = Color(0xFFF97316);
 
   static const Color textPrimary = Color(0xFFF5F7FA);
   static const Color textSecondary = Color(0xFFAAB2C0);

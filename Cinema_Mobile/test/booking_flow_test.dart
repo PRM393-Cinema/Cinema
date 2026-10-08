@@ -253,7 +253,7 @@ void main() {
 
       await tester.tap(find.byTooltip('Close'));
       await pumpRoute(tester);
-      expect(find.text('Find your next movie night'), findsOneWidget);
+      expect(find.text('Step Into CosmoQ Cinema'), findsOneWidget);
     });
 
     testWidgets('Cancelled PayOS payment shows payment not completed', (
