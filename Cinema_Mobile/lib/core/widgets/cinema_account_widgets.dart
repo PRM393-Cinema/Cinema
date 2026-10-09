@@ -332,7 +332,8 @@ class _CinemaNavigationBarState extends State<CinemaNavigationBar>
         ..setFloat(6, _touchPosition.dx)
         ..setFloat(7, _interaction.value.clamp(0.0, 1.0))
         ..setFloat(8, _dragOffset.dy)
-        ..setFloat(9, _touchPosition.dy);
+        ..setFloat(9, _touchPosition.dy)
+        ..setFloat(10, _dragOffset.dx);
       return ImageFilter.compose(
         outer: diffusion,
         inner: ImageFilter.shader(_refractionShader!),
@@ -368,11 +369,11 @@ class _CinemaNavigationBarState extends State<CinemaNavigationBar>
       return SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(5.5, 2, 5.5, 6),
+          padding: const EdgeInsets.fromLTRB(2.5, 2, 2.5, 6),
           child: Center(
             heightFactor: 1,
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 493),
+              constraints: const BoxConstraints(maxWidth: 499),
               child: Listener(
                 onPointerDown: _press,
                 onPointerMove: _drag,
@@ -430,7 +431,7 @@ class _CinemaNavigationBarState extends State<CinemaNavigationBar>
                                 ),
                                 Padding(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 6.5,
+                                    horizontal: 9.5,
                                   ),
                                   child: LayoutBuilder(
                                     builder: (context, constraints) {
@@ -593,7 +594,7 @@ class _LiquidNavClipper extends CustomClipper<Path> {
     final base = Path()
       ..addRRect(
         RRect.fromRectAndRadius(
-          Rect.fromLTRB(6.5, 6, size.width - 6.5, size.height - 6),
+          Rect.fromLTRB(9.5, 6, size.width - 9.5, size.height - 6),
           const Radius.circular(36),
         ),
       );
@@ -609,6 +610,7 @@ class _LiquidNavClipper extends CustomClipper<Path> {
           ? (1 + math.cos(math.pi * distance)) / 2
           : 0.0;
       final outwardY = -tangent.vector.dx;
+      final outwardX = tangent.vector.dy;
       final proximity =
           0.6 +
           0.4 * (1 - (tangent.position.dy / size.height - touch.dy).abs());
@@ -617,7 +619,16 @@ class _LiquidNavClipper extends CustomClipper<Path> {
           pressure;
       final point =
           tangent.position +
-          Offset(tangent.vector.dy * 6.5 * pressure, outwardY * bulge);
+          Offset(
+            outwardX *
+                (6.5 +
+                    math.max(0.0, drag.dx * outwardX) *
+                        0.6 *
+                        weight *
+                        proximity) *
+                pressure,
+            outwardY * bulge,
+          );
       if (step == 0) {
         path.moveTo(point.dx, point.dy);
       } else {
@@ -658,6 +669,7 @@ class _GlassSnapshotPainter extends CustomPainter {
       ..setFloat(7, deformation.pressure)
       ..setFloat(8, deformation.drag.dy)
       ..setFloat(9, deformation.touch.dy)
+      ..setFloat(10, deformation.drag.dx)
       ..setImageSampler(0, image);
     canvas.drawRect(Offset.zero & size, Paint()..shader = shader);
   }
