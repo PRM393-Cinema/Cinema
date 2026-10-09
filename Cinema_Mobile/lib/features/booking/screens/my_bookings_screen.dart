@@ -10,6 +10,8 @@ import '../../../core/session/session_state.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/utils/layout.dart';
 import '../../../core/widgets/error_state.dart';
+import '../../../core/widgets/cinema_background.dart';
+import '../../../core/widgets/cinema_account_widgets.dart';
 import '../../../core/widgets/loading_state.dart';
 import '../../../core/widgets/status_badge.dart';
 import '../../../data/models/booking.dart';
@@ -107,6 +109,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
+        extendBody: true,
         appBar: AppBar(
           title: const Text('My Bookings'),
           bottom: const TabBar(
@@ -119,7 +122,10 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
             unselectedLabelColor: AppColors.textSecondary,
           ),
         ),
-        body: _buildBody(activeBookings, historyBookings),
+        body: CinemaBackground(
+          child: _buildBody(activeBookings, historyBookings),
+        ),
+        bottomNavigationBar: const CinemaNavigationBar(selectedIndex: 1),
       ),
     );
   }
@@ -184,7 +190,9 @@ class _BookingList extends StatelessWidget {
             )
           : ListView.separated(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: centeredPadding(context, AppSpacing.md),
+              padding: centeredPadding(context, AppSpacing.md).copyWith(
+                bottom: AppSpacing.md + MediaQuery.paddingOf(context).bottom,
+              ),
               itemCount: bookings.length,
               separatorBuilder: (context, index) =>
                   const SizedBox(height: AppSpacing.md),
@@ -217,7 +225,11 @@ class _BookingCard extends StatelessWidget {
       borderRadius: AppRadius.borderRadiusMd,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [AppColors.surfaceSoft, AppColors.surface],
+          ),
           borderRadius: AppRadius.borderRadiusMd,
           border: Border.all(color: AppColors.border),
         ),
@@ -241,11 +253,41 @@ class _BookingCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: AppSpacing.sm),
-              Text(showTimeStr, style: AppTextStyles.body),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.schedule_outlined,
+                    size: 18,
+                    color: AppColors.accent,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(child: Text(showTimeStr, style: AppTextStyles.body)),
+                ],
+              ),
               const SizedBox(height: AppSpacing.xs),
-              Text(
-                'Seats: ${booking.seatLabels}',
-                style: AppTextStyles.bodySmall,
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  const Text('Seats:', style: AppTextStyles.bodySmall),
+                  for (final seat in booking.seats)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        seat.seatLabel,
+                        style: AppTextStyles.caption.copyWith(
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                ],
               ),
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
@@ -263,7 +305,9 @@ class _BookingCard extends StatelessWidget {
                   ),
                   Text(
                     formatVnd(booking.totalAmount),
-                    style: AppTextStyles.body,
+                    style: AppTextStyles.title.copyWith(
+                      color: AppColors.primary,
+                    ),
                   ),
                 ],
               ),

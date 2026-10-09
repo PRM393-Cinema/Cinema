@@ -4,6 +4,8 @@ import '../../../app/routes/app_routes.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
+import '../../../core/session/session_state.dart';
+import '../widgets/auth_scaffold.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_text_field.dart';
@@ -23,6 +25,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _otpController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmController = TextEditingController();
 
   bool _obscurePassword = true;
   bool _isLoading = false;
@@ -32,6 +35,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   void dispose() {
     _otpController.dispose();
     _passwordController.dispose();
+    _confirmController.dispose();
     super.dispose();
   }
 
@@ -54,12 +58,19 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       );
       if (!mounted) return;
 
+      await widget.authRepository.logout();
+      if (!mounted) return;
+      SessionProvider.of(context).clear();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Your password has been reset. Please sign in.'),
         ),
       );
-      Navigator.pushReplacementNamed(context, AppRoutes.login);
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        AppRoutes.login,
+        (route) => false,
+      );
     } on ApiException catch (error) {
       _showError(authErrorMessage(error));
     } on FormatException {
@@ -96,101 +107,101 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Reset password')),
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(AppSpacing.xl),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 440),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Text(
-                      'Reset password',
-                      style: AppTextStyles.heading1,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    Text(
-                      'Code sent to $email',
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.primary,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: AppSpacing.xxl),
-                    AppTextField(
-                      controller: _otpController,
-                      label: 'Verification code',
-                      hint: '123456',
-                      keyboardType: TextInputType.number,
-                      enabled: !_isLoading,
-                      prefixIcon: const Icon(Icons.pin_outlined),
-                      validator: (value) {
-                        final otp = value?.trim() ?? '';
-                        if (!RegExp(r'^\d{6}$').hasMatch(otp)) {
-                          return 'Enter the 6-digit code from your email.';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    AppTextField(
-                      controller: _passwordController,
-                      label: 'New password',
-                      hint: 'Enter new password',
-                      obscureText: _obscurePassword,
-                      enabled: !_isLoading,
-                      prefixIcon: const Icon(Icons.lock_outline),
-                      validator: (value) {
-                        if ((value ?? '').length < 6) {
-                          return 'Password must be at least 6 characters.';
-                        }
-                        return null;
-                      },
-                      suffixIcon: IconButton(
-                        tooltip: _obscurePassword
-                            ? 'Show password'
-                            : 'Hide password',
-                        onPressed: () {
+    return AuthScaffold(
+      title: 'Set a new password',
+      subtitle: 'Enter the verification code sent to $email.',
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AuthFieldSurface(
+              child: AppTextField(
+                isRequired: true,
+                controller: _otpController,
+                label: 'Verification code',
+                hint: '123456',
+                keyboardType: TextInputType.number,
+                enabled: !_isLoading,
+                prefixIcon: const Icon(Icons.pin_outlined),
+                validator: (value) {
+                  final otp = value?.trim() ?? '';
+                  if (!RegExp(r'^\d{6}$').hasMatch(otp)) {
+                    return 'Enter the 6-digit code from your email.';
+                  }
+                  return null;
+                },
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            AuthFieldSurface(
+              child: AppTextField(
+                isRequired: true,
+                controller: _passwordController,
+                label: 'New password',
+                hint: 'Enter new password',
+                obscureText: _obscurePassword,
+                enabled: !_isLoading,
+                prefixIcon: const Icon(Icons.lock_outline),
+                validator: (value) {
+                  if ((value ?? '').length < 6) {
+                    return 'Password must be at least 6 characters.';
+                  }
+                  return null;
+                },
+                suffixIcon: IconButton(
+                  tooltip: _obscurePassword ? 'Show password' : 'Hide password',
+                  onPressed: _isLoading
+                      ? null
+                      : () {
                           setState(() {
                             _obscurePassword = !_obscurePassword;
                           });
                         },
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined,
-                        ),
-                      ),
-                    ),
-                    if (_errorMessage != null) ...[
-                      const SizedBox(height: AppSpacing.lg),
-                      Text(
-                        _errorMessage!,
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.error,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                    const SizedBox(height: AppSpacing.xxl),
-                    AppButton(
-                      label: 'Reset password',
-                      isLoading: _isLoading,
-                      onPressed: _isLoading
-                          ? null
-                          : () => _resetPassword(email),
-                    ),
-                  ],
+                  icon: Icon(
+                    _obscurePassword
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                  ),
                 ),
               ),
             ),
-          ),
+            const SizedBox(height: AppSpacing.lg),
+            AuthFieldSurface(
+              child: AppTextField(
+                label: 'Confirm new password',
+                hint: 'Re-enter your new password',
+                controller: _confirmController,
+                enabled: !_isLoading,
+                isRequired: true,
+                obscureText: _obscurePassword,
+                prefixIcon: const Icon(Icons.lock_outline),
+                validator: (value) =>
+                    value != _passwordController.text || (value ?? '').isEmpty
+                    ? 'Passwords do not match.'
+                    : null,
+              ),
+            ),
+            if (_errorMessage != null) ...[
+              const SizedBox(height: AppSpacing.lg),
+              Semantics(
+                liveRegion: true,
+                child: Text(
+                  _errorMessage!,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.error,
+                  ),
+                ),
+              ),
+            ],
+            const SizedBox(height: AppSpacing.xxl),
+            AppButton(
+              label: 'Reset password',
+              useGradient: true,
+              isLoading: _isLoading,
+              onPressed: _isLoading ? null : () => _resetPassword(email),
+            ),
+          ],
         ),
       ),
     );

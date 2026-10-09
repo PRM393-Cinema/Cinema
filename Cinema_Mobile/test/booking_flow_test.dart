@@ -497,7 +497,10 @@ void main() {
       await pumpRoute(tester);
 
       expect(auth.forgotPasswordEmail, 'khachhang1@gmail.com');
-      expect(find.text('Code sent to khachhang1@gmail.com'), findsOneWidget);
+      expect(
+        find.text('Enter the verification code sent to khachhang1@gmail.com.'),
+        findsOneWidget,
+      );
 
       await tester.enterText(
         find.widgetWithText(TextFormField, 'Verification code'),
@@ -505,6 +508,10 @@ void main() {
       );
       await tester.enterText(
         find.widgetWithText(TextFormField, 'New password'),
+        'NewSecret1',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Confirm new password'),
         'NewSecret1',
       );
       final resetButton = find.widgetWithText(AppButton, 'Reset password');

@@ -21,6 +21,7 @@ import '../../features/notification/screens/notification_list_screen.dart';
 import '../../features/payment/payment_args.dart';
 import '../../features/payment/screens/payment_result_screen.dart';
 import '../../features/payment/screens/payment_screen.dart';
+import '../../features/payment/screens/payment_history_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
 import '../../features/seat/screens/seat_selection_screen.dart';
 import 'app_routes.dart';
@@ -119,6 +120,12 @@ class AppRouter {
         );
       case AppRoutes.notifications:
         return _notificationList();
+      case AppRoutes.paymentHistory:
+        return _RouteMatch(
+          settings,
+          (_) => PaymentHistoryScreen(bookingRepository: bookingRepository),
+          signInRequired: true,
+        );
       case AppRoutes.profile:
         return _RouteMatch(
           settings,
@@ -192,8 +199,8 @@ class AppRouter {
           signInRequired: true,
         );
       case 'notifications' when segments.length == 2:
-        // There is no endpoint for a single notification: after a refresh
-        // the list is shown instead.
+        // The detail uses the item passed by the list; its GET endpoint is
+        // not wired here, so a refreshed detail returns to the list.
         if (args is! AppNotification) return _notificationList();
         return _RouteMatch(
           settings,

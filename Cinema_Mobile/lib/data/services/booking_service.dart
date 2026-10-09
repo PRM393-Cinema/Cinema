@@ -66,6 +66,23 @@ class BookingService {
     return PagedResult.fromJson(response, Booking.fromJson);
   }
 
+  Future<PagedResult<PaymentInfo>> getPaymentsByUser(
+    int userId, {
+    int page = 1,
+  }) async {
+    final response = await _apiClient.get(
+      '/api/v1/payments/user/$userId',
+      query: {
+        'page': page,
+        'size': pageSize,
+        'sortBy': 'createdAt',
+        'sortDir': 'desc',
+      },
+      authenticated: true,
+    );
+    return PagedResult.fromJson(response, PaymentInfo.fromJson);
+  }
+
   Future<Booking> cancelBooking(int bookingId, {String? reason}) async {
     final response = await _apiClient.post(
       '/api/v1/bookings/$bookingId/cancel',

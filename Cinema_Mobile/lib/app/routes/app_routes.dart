@@ -10,6 +10,7 @@ abstract final class AppRoutes {
   static const myBookings = '/bookings';
   static const notifications = '/notifications';
   static const profile = '/profile';
+  static const paymentHistory = '/payments';
 
   static String movieDetail(int movieId) => '/movies/$movieId';
 

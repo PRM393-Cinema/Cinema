@@ -264,6 +264,9 @@ class FakeBookingRepository implements BookingRepository {
   Future<List<Booking>> getMyBookings(int userId) async => bookings;
 
   @override
+  Future<List<PaymentInfo>> getMyPayments(int userId) async => [verifyResult];
+
+  @override
   Future<Booking> cancelBooking(int bookingId) async {
     cancelledIds.add(bookingId);
     final booking = await getBooking(bookingId);

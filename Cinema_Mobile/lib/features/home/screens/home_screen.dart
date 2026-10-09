@@ -7,6 +7,8 @@ import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/widgets/app_button.dart';
+import '../../../core/widgets/cinema_background.dart';
+import '../../../core/widgets/cinema_account_widgets.dart';
 import '../../../core/widgets/app_network_image.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/empty_state.dart';
@@ -89,28 +91,34 @@ class _HomeScreenState extends State<HomeScreen> {
     final session = SessionProvider.of(context);
 
     return Scaffold(
+      extendBody: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: Row(
-          children: [
-            Icon(
-              Icons.movie_filter_outlined,
-              color: AppColors.primary,
-              size: 28,
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            // Narrow phones with every action shown leave little room.
-            Flexible(
-              child: Text(
-                'COSMOQ',
-                style: AppTextStyles.heading2.copyWith(letterSpacing: 1.5),
-                maxLines: 1,
-                overflow: TextOverflow.fade,
-                softWrap: false,
+        title: Text.rich(
+          const TextSpan(
+            children: [
+              TextSpan(
+                text: 'COSMO',
+                style: TextStyle(color: AppColors.primary),
               ),
-            ),
-          ],
+              TextSpan(text: 'Q'),
+            ],
+          ),
+          style: AppTextStyles.heading2.copyWith(
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1,
+            shadows: [
+              Shadow(
+                color: AppColors.primary.withValues(alpha: 0.55),
+                blurRadius: 10,
+              ),
+            ],
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.fade,
+          softWrap: false,
         ),
         actions: session.isAuthenticated
             ? [
@@ -149,7 +157,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(width: AppSpacing.md),
               ],
       ),
-      body: SafeArea(child: _buildBody(featuredMovie, visibleMovies)),
+      body: CinemaBackground(
+        child: SafeArea(
+          bottom: false,
+          child: _buildBody(featuredMovie, visibleMovies),
+        ),
+      ),
+      bottomNavigationBar: const CinemaNavigationBar(selectedIndex: 0),
     );
   }
 
@@ -178,9 +192,12 @@ class _HomeScreenState extends State<HomeScreen> {
               child: ListView(
                 key: const Key('homeScrollView'),
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: EdgeInsets.all(
-                  isWide ? AppSpacing.xxl : AppSpacing.lg,
-                ),
+                padding: EdgeInsets.all(isWide ? AppSpacing.xxl : AppSpacing.lg)
+                    .copyWith(
+                      bottom:
+                          (isWide ? AppSpacing.xxl : AppSpacing.lg) +
+                          MediaQuery.paddingOf(context).bottom,
+                    ),
                 children: [
                   _HomeHeader(isWide: isWide),
                   const SizedBox(height: AppSpacing.xl),
@@ -196,7 +213,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                   ),
                   const SizedBox(height: AppSpacing.xxl),
-                  if (featuredMovie != null) ...[
+                  if (featuredMovie != null && isWide) ...[
                     _FeaturedMovie(
                       movie: featuredMovie,
                       isWide: isWide,
@@ -235,10 +252,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       title: 'No movies found',
                       message: 'Try another movie title.',
                     )
-                  else if (isWide)
-                    _MovieGrid(movies: visibleMovies, onMovieTap: _openMovie)
                   else
-                    _MovieList(movies: visibleMovies, onMovieTap: _openMovie),
+                    _MovieGrid(movies: visibleMovies, onMovieTap: _openMovie),
                 ],
               ),
             ),
@@ -259,34 +274,89 @@ class _HomeScreenState extends State<HomeScreen> {
 
 class _HomeHeader extends StatelessWidget {
   const _HomeHeader({required this.isWide});
-
   final bool isWide;
-
   @override
-  Widget build(BuildContext context) {
-    return Flex(
-      direction: isWide ? Axis.horizontal : Axis.vertical,
-      crossAxisAlignment: isWide
-          ? CrossAxisAlignment.center
-          : CrossAxisAlignment.start,
+  Widget build(BuildContext context) => Padding(
+    padding: EdgeInsets.symmetric(vertical: isWide ? 48 : 28),
+    child: Column(
       children: [
-        const Text('Experience Premium Cinema', style: AppTextStyles.bodySmall),
-        if (isWide) const Spacer() else const SizedBox(height: AppSpacing.xs),
-        if (isWide)
-          const Expanded(
-            child: Text(
-              'Step Into CosmoQ Cinema',
-              style: AppTextStyles.display,
-              textAlign: TextAlign.right,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+          ),
+          child: Text(
+            'Experience Premium Cinema',
+            style: AppTextStyles.caption.copyWith(
+              color: AppColors.primary,
+              fontWeight: FontWeight.w600,
             ),
-          )
-        else
-          const Text('Step Into CosmoQ Cinema', style: AppTextStyles.heading1),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        Text.rich(
+          TextSpan(
+            children: [
+              const TextSpan(text: 'Step Into '),
+              TextSpan(
+                text: 'CosmoQ',
+                style: TextStyle(
+                  color: AppColors.primary,
+                  shadows: [
+                    Shadow(
+                      color: AppColors.primary.withValues(alpha: 0.4),
+                      blurRadius: 14,
+                    ),
+                  ],
+                ),
+              ),
+              const TextSpan(text: ' Cinema'),
+            ],
+          ),
+          style: AppTextStyles.heading1.copyWith(
+            fontSize: isWide ? 42 : 28,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.8,
+            height: 1.2,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: AppSpacing.md),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 560),
+          child: Text(
+            'Discover the ultimate film screening technology. High-contrast projection, '
+            'Dolby Atmos audio, and luxury reclining seats. Book your tickets below.',
+            textAlign: TextAlign.center,
+            style: AppTextStyles.bodySmall.copyWith(height: 1.6),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xl),
+        Container(
+          width: 56,
+          height: 2,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(2),
+            gradient: const LinearGradient(
+              colors: [
+                Colors.transparent,
+                AppColors.primary,
+                Colors.transparent,
+              ],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.2),
+                blurRadius: 10,
+              ),
+            ],
+          ),
+        ),
       ],
-    );
-  }
+    ),
+  );
 }
 
 class _FeaturedMovie extends StatelessWidget {
@@ -433,38 +503,6 @@ class _MovieGrid extends StatelessWidget {
           onTap: () => onMovieTap(movie),
         );
       },
-    );
-  }
-}
-
-class _MovieList extends StatelessWidget {
-  const _MovieList({required this.movies, required this.onMovieTap});
-
-  final List<Movie> movies;
-  final ValueChanged<Movie> onMovieTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 320,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: movies.length,
-        separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.md),
-        itemBuilder: (context, index) {
-          final movie = movies[index];
-          return SizedBox(
-            width: 160,
-            child: MovieCard(
-              title: movie.title,
-              posterUrl: movie.posterUrl,
-              genre: movie.genre,
-              duration: movie.durationText,
-              onTap: () => onMovieTap(movie),
-            ),
-          );
-        },
-      ),
     );
   }
 }
