@@ -111,23 +111,61 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
       length: 2,
       child: Scaffold(
         extendBody: true,
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          title: const Text('My Bookings'),
-          bottom: const TabBar(
-            tabs: [
-              Tab(text: 'Active'),
-              Tab(text: 'History'),
-            ],
-            indicatorColor: AppColors.primary,
-            labelColor: AppColors.primary,
-            unselectedLabelColor: AppColors.textSecondary,
-          ),
-        ),
         body: CinemaGlassBackground(
           key: _glassBackgroundKey,
           child: CinemaBackground(
-            child: _buildBody(activeBookings, historyBookings),
+            child: SafeArea(
+              bottom: false,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Padding(
+                    padding: centeredPadding(context, AppSpacing.lg),
+                    child: const Text(
+                      'My Bookings',
+                      style: AppTextStyles.heading2,
+                    ),
+                  ),
+                  Padding(
+                    padding: centeredPadding(
+                      context,
+                      AppSpacing.md,
+                    ).copyWith(top: 0),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: AppColors.surface.withValues(alpha: 0.55),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.08),
+                        ),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: TabBar(
+                          dividerColor: Colors.transparent,
+                          dividerHeight: 0,
+                          indicatorSize: TabBarIndicatorSize.tab,
+                          indicator: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.10),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: AppColors.primary.withValues(alpha: 0.24),
+                            ),
+                          ),
+                          labelColor: AppColors.primary,
+                          unselectedLabelColor: AppColors.textSecondary,
+                          tabs: const [
+                            Tab(text: 'Active', height: 44),
+                            Tab(text: 'History', height: 44),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(child: _buildBody(activeBookings, historyBookings)),
+                ],
+              ),
+            ),
           ),
         ),
         bottomNavigationBar: CinemaNavigationBar(
