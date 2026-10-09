@@ -368,11 +368,11 @@ class _CinemaNavigationBarState extends State<CinemaNavigationBar>
       return SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 2, 12, 6),
+          padding: const EdgeInsets.fromLTRB(8, 2, 8, 6),
           child: Center(
             heightFactor: 1,
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 480),
+              constraints: const BoxConstraints(maxWidth: 488),
               child: Listener(
                 onPointerDown: _press,
                 onPointerMove: _drag,
@@ -428,50 +428,56 @@ class _CinemaNavigationBarState extends State<CinemaNavigationBar>
                                     ),
                                   ),
                                 ),
-                                LayoutBuilder(
-                                  builder: (context, constraints) {
-                                    final slotWidth = constraints.maxWidth / 3;
-                                    return Stack(
-                                      children: [
-                                        AnimatedBuilder(
-                                          animation: _indicator,
-                                          builder: (context, child) =>
-                                              Positioned(
-                                                left:
-                                                    _indicator.value
-                                                            .clamp(0.0, 2.0)
-                                                            .toDouble() *
-                                                        slotWidth +
-                                                    6,
-                                                top: 15,
-                                                bottom: 15,
-                                                width: slotWidth - 12,
-                                                child: child!,
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                  ),
+                                  child: LayoutBuilder(
+                                    builder: (context, constraints) {
+                                      final slotWidth =
+                                          constraints.maxWidth / 3;
+                                      return Stack(
+                                        children: [
+                                          AnimatedBuilder(
+                                            animation: _indicator,
+                                            builder: (context, child) =>
+                                                Positioned(
+                                                  left:
+                                                      _indicator.value
+                                                              .clamp(0.0, 2.0)
+                                                              .toDouble() *
+                                                          slotWidth +
+                                                      6,
+                                                  top: 15,
+                                                  bottom: 15,
+                                                  width: slotWidth - 12,
+                                                  child: child!,
+                                                ),
+                                            child: const _LiquidTabCapsule(),
+                                          ),
+                                          Row(
+                                            children: [
+                                              _destination(
+                                                0,
+                                                'Home',
+                                                Icons.movie,
                                               ),
-                                          child: const _LiquidTabCapsule(),
-                                        ),
-                                        Row(
-                                          children: [
-                                            _destination(
-                                              0,
-                                              'Home',
-                                              Icons.movie,
-                                            ),
-                                            _destination(
-                                              1,
-                                              'Tickets',
-                                              Icons.confirmation_number,
-                                            ),
-                                            _destination(
-                                              2,
-                                              'Account',
-                                              Icons.person,
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    );
-                                  },
+                                              _destination(
+                                                1,
+                                                'Tickets',
+                                                Icons.confirmation_number,
+                                              ),
+                                              _destination(
+                                                2,
+                                                'Account',
+                                                Icons.person,
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  ),
                                 ),
                                 Positioned.fill(
                                   child: IgnorePointer(
@@ -587,7 +593,7 @@ class _LiquidNavClipper extends CustomClipper<Path> {
     final base = Path()
       ..addRRect(
         RRect.fromRectAndRadius(
-          Rect.fromLTRB(0, 6, size.width, size.height - 6),
+          Rect.fromLTRB(4, 6, size.width - 4, size.height - 6),
           const Radius.circular(36),
         ),
       );
@@ -609,7 +615,9 @@ class _LiquidNavClipper extends CustomClipper<Path> {
       final bulge =
           (2.5 + math.max(0.0, drag.dy * outwardY) * 0.5 * weight * proximity) *
           pressure;
-      final point = tangent.position + Offset(0, outwardY * bulge);
+      final point =
+          tangent.position +
+          Offset(tangent.vector.dy * 4 * pressure, outwardY * bulge);
       if (step == 0) {
         path.moveTo(point.dx, point.dy);
       } else {
