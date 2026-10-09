@@ -316,16 +316,23 @@ class _CinemaNavigationBarState extends State<CinemaNavigationBar>
     if (_refractionShader != null && ImageFilter.isShaderFilterSupported) {
       _refractionShader!
         ..setFloat(2, width)
-        ..setFloat(3, 76)
+        ..setFloat(3, 88)
         ..setFloat(4, 0)
-        ..setFloat(5, 1);
+        ..setFloat(5, 1)
+        ..setFloat(
+          6,
+          ((_pressedIndex ?? widget.selectedIndex) + 0.5) / 3 +
+              _dragOffset.dx / width,
+        )
+        ..setFloat(7, _interaction.value.clamp(0.0, 1.0))
+        ..setFloat(8, _dragOffset.dy);
       return ImageFilter.compose(
         outer: diffusion,
         inner: ImageFilter.shader(_refractionShader!),
       );
     }
     final centerX = width / 2;
-    const centerY = 38.0;
+    const centerY = 44.0;
     final lens =
         Matrix4.translationValues(centerX, centerY, 0) *
         (Matrix4.identity()
@@ -346,10 +353,15 @@ class _CinemaNavigationBarState extends State<CinemaNavigationBar>
     animation: _interaction,
     builder: (context, _) {
       final pressure = _interaction.value.clamp(0.0, 1.0);
+      final deformation = _LiquidNavClipper(
+        pressure: pressure,
+        index: _pressedIndex ?? widget.selectedIndex,
+        drag: _dragOffset,
+      );
       return SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+          padding: const EdgeInsets.fromLTRB(12, 2, 12, 6),
           child: Center(
             heightFactor: 1,
             child: ConstrainedBox(
@@ -359,36 +371,22 @@ class _CinemaNavigationBarState extends State<CinemaNavigationBar>
                 onPointerMove: _drag,
                 onPointerUp: _release,
                 onPointerCancel: _release,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(36),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.22),
-                        blurRadius: 28,
-                        offset: const Offset(0, 10),
-                      ),
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.12),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                      BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.05),
-                        blurRadius: 16,
-                      ),
-                    ],
-                  ),
+                child: PhysicalShape(
+                  clipper: deformation,
+                  color: Colors.transparent,
+                  shadowColor: Colors.black.withValues(alpha: 0.3),
+                  elevation: 8,
+                  clipBehavior: Clip.none,
                   child: RepaintBoundary(
                     key: _glassKey,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(36),
+                    child: ClipPath(
+                      clipper: deformation,
                       child: LayoutBuilder(
                         builder: (context, constraints) => BackdropFilter(
                           enabled: _backdropImage == null,
                           filter: _backdropFilter(constraints.maxWidth),
                           child: SizedBox(
-                            height: 76,
+                            height: 88,
                             child: Stack(
                               fit: StackFit.expand,
                               children: [
@@ -403,6 +401,7 @@ class _CinemaNavigationBarState extends State<CinemaNavigationBar>
                                       painter: _GlassSnapshotPainter(
                                         shader: _refractionShader!,
                                         image: _backdropImage!,
+                                        deformation: deformation,
                                       ),
                                     ),
                                   ),
@@ -436,52 +435,13 @@ class _CinemaNavigationBarState extends State<CinemaNavigationBar>
                                                             .clamp(0.0, 2.0)
                                                             .toDouble() *
                                                         slotWidth +
-                                                    6 -
-                                                    pressure * 2,
-                                                top: 9 - pressure * 2,
-                                                bottom: 9 - pressure * 2,
-                                                width:
-                                                    slotWidth -
-                                                    12 +
-                                                    pressure * 4,
+                                                    6,
+                                                top: 15,
+                                                bottom: 15,
+                                                width: slotWidth - 12,
                                                 child: child!,
                                               ),
-                                          child: Transform(
-                                            alignment: Alignment(
-                                              -_dragOffset.dx / 5,
-                                              -_dragOffset.dy / 6,
-                                            ),
-                                            transform: Matrix4.identity()
-                                              ..setEntry(
-                                                0,
-                                                0,
-                                                1 +
-                                                    _dragOffset.dx.abs() *
-                                                        pressure /
-                                                        320,
-                                              )
-                                              ..setEntry(
-                                                1,
-                                                1,
-                                                1 +
-                                                    _dragOffset.dy.abs() *
-                                                        pressure /
-                                                        90,
-                                              )
-                                              ..setEntry(
-                                                0,
-                                                1,
-                                                _dragOffset.dx * pressure / 300,
-                                              )
-                                              ..setEntry(
-                                                1,
-                                                0,
-                                                _dragOffset.dy * pressure / 240,
-                                              ),
-                                            child: _LiquidTabCapsule(
-                                              pressure: pressure,
-                                            ),
-                                          ),
+                                          child: const _LiquidTabCapsule(),
                                         ),
                                         Row(
                                           children: [
@@ -510,8 +470,9 @@ class _CinemaNavigationBarState extends State<CinemaNavigationBar>
                                   child: IgnorePointer(
                                     child: RepaintBoundary(
                                       child: CustomPaint(
-                                        painter: const _LiquidGlassRimPainter(
+                                        painter: _LiquidGlassRimPainter(
                                           radius: 36,
+                                          deformation: deformation,
                                         ),
                                       ),
                                     ),
@@ -602,11 +563,68 @@ class _CinemaNavigationBarState extends State<CinemaNavigationBar>
   }
 }
 
+class _LiquidNavClipper extends CustomClipper<Path> {
+  const _LiquidNavClipper({
+    required this.pressure,
+    required this.index,
+    required this.drag,
+  });
+
+  final double pressure;
+  final int index;
+  final Offset drag;
+
+  @override
+  Path getClip(Size size) {
+    // Reserve six pixels inside the fixed bounds for the local glass bulge.
+    final base = Path()
+      ..addRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTRB(0, 6, size.width, size.height - 6),
+          const Radius.circular(36),
+        ),
+      );
+    if (pressure == 0) return base;
+    final center = (index + 0.5) * size.width / 3 + drag.dx;
+    final span = size.width / 3 * 0.9;
+    final metric = base.computeMetrics().first;
+    final path = Path();
+    for (var step = 0; step < 160; step++) {
+      final tangent = metric.getTangentForOffset(metric.length * step / 160)!;
+      final distance = (tangent.position.dx - center).abs() / span;
+      final weight = distance < 1
+          ? (1 + math.cos(math.pi * distance)) / 2
+          : 0.0;
+      final outwardY = -tangent.vector.dx;
+      final bulge =
+          (2.5 + math.max(0.0, drag.dy * outwardY) * 0.5) * pressure * weight;
+      final point = tangent.position + Offset(0, outwardY * bulge);
+      if (step == 0) {
+        path.moveTo(point.dx, point.dy);
+      } else {
+        path.lineTo(point.dx, point.dy);
+      }
+    }
+    return path..close();
+  }
+
+  @override
+  bool shouldReclip(covariant _LiquidNavClipper oldClipper) =>
+      oldClipper.pressure != pressure ||
+      oldClipper.index != index ||
+      oldClipper.drag != drag;
+}
+
 class _GlassSnapshotPainter extends CustomPainter {
-  const _GlassSnapshotPainter({required this.shader, required this.image});
+  const _GlassSnapshotPainter({
+    required this.shader,
+    required this.image,
+    required this.deformation,
+  });
 
   final FragmentShader shader;
   final ui.Image image;
+  final _LiquidNavClipper deformation;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -617,19 +635,25 @@ class _GlassSnapshotPainter extends CustomPainter {
       ..setFloat(3, size.height)
       ..setFloat(4, 12)
       ..setFloat(5, 0)
+      ..setFloat(
+        6,
+        (deformation.index + 0.5) / 3 + deformation.drag.dx / size.width,
+      )
+      ..setFloat(7, deformation.pressure)
+      ..setFloat(8, deformation.drag.dy)
       ..setImageSampler(0, image);
     canvas.drawRect(Offset.zero & size, Paint()..shader = shader);
   }
 
   @override
   bool shouldRepaint(covariant _GlassSnapshotPainter oldDelegate) =>
-      oldDelegate.image != image || oldDelegate.shader != shader;
+      oldDelegate.image != image ||
+      oldDelegate.shader != shader ||
+      deformation.shouldReclip(oldDelegate.deformation);
 }
 
 class _LiquidTabCapsule extends StatelessWidget {
-  const _LiquidTabCapsule({this.pressure = 0});
-
-  final double pressure;
+  const _LiquidTabCapsule();
 
   @override
   Widget build(BuildContext context) => DecoratedBox(
@@ -659,7 +683,7 @@ class _LiquidTabCapsule extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomRight,
                 colors: [
-                  Colors.white.withValues(alpha: 0.10 + pressure * 0.08),
+                  Colors.white.withValues(alpha: 0.10),
                   Colors.white.withValues(alpha: 0.035),
                   AppColors.primary.withValues(alpha: 0.05),
                   Colors.black.withValues(alpha: 0.035),
@@ -696,9 +720,10 @@ class _LiquidTabCapsule extends StatelessWidget {
 }
 
 class _LiquidGlassRimPainter extends CustomPainter {
-  const _LiquidGlassRimPainter({required this.radius});
+  const _LiquidGlassRimPainter({required this.radius, this.deformation});
 
   final double radius;
+  final _LiquidNavClipper? deformation;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -707,8 +732,9 @@ class _LiquidGlassRimPainter extends CustomPainter {
       rect.deflate(0.7),
       Radius.circular(radius),
     );
-    canvas.drawRRect(
-      rim,
+    final outline = deformation?.getClip(size) ?? (Path()..addRRect(rim));
+    canvas.drawPath(
+      outline,
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 0.9
@@ -725,8 +751,8 @@ class _LiquidGlassRimPainter extends CustomPainter {
         ).createShader(rect),
     );
 
-    canvas.drawRRect(
-      rim.deflate(1.2),
+    canvas.drawPath(
+      deformation == null ? (Path()..addRRect(rim.deflate(1.2))) : outline,
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2
@@ -745,7 +771,12 @@ class _LiquidGlassRimPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _LiquidGlassRimPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _LiquidGlassRimPainter oldDelegate) =>
+      oldDelegate.radius != radius ||
+      (deformation == null
+          ? oldDelegate.deformation != null
+          : oldDelegate.deformation == null ||
+                deformation!.shouldReclip(oldDelegate.deformation!));
 }
 
 class CinemaPanel extends StatelessWidget {
