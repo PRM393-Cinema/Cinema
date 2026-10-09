@@ -28,6 +28,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final _confirmController = TextEditingController();
 
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -94,7 +95,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
     if (email == null || email.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Reset password')),
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          title: const Text('Reset password'),
+        ),
         body: Center(
           child: AppButton.secondary(
             label: 'Request a new code',
@@ -108,6 +112,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     }
 
     return AuthScaffold(
+      showBack: false,
       title: 'Set a new password',
       subtitle: 'Enter the verification code sent to $email.',
       child: Form(
@@ -174,8 +179,23 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 controller: _confirmController,
                 enabled: !_isLoading,
                 isRequired: true,
-                obscureText: _obscurePassword,
+                obscureText: _obscureConfirmPassword,
                 prefixIcon: const Icon(Icons.lock_outline),
+                suffixIcon: IconButton(
+                  tooltip: _obscureConfirmPassword
+                      ? 'Show confirm password'
+                      : 'Hide confirm password',
+                  onPressed: _isLoading
+                      ? null
+                      : () => setState(() {
+                          _obscureConfirmPassword = !_obscureConfirmPassword;
+                        }),
+                  icon: Icon(
+                    _obscureConfirmPassword
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                  ),
+                ),
                 validator: (value) =>
                     value != _passwordController.text || (value ?? '').isEmpty
                     ? 'Passwords do not match.'

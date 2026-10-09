@@ -29,6 +29,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final _glassBackgroundKey = GlobalKey();
   String _query = '';
   List<Movie> _movies = const [];
   bool _isLoading = true;
@@ -157,13 +158,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(width: AppSpacing.md),
               ],
       ),
-      body: CinemaBackground(
-        child: SafeArea(
-          bottom: false,
-          child: _buildBody(featuredMovie, visibleMovies),
+      body: CinemaGlassBackground(
+        key: _glassBackgroundKey,
+        child: CinemaBackground(
+          child: SafeArea(
+            bottom: false,
+            child: _buildBody(featuredMovie, visibleMovies),
+          ),
         ),
       ),
-      bottomNavigationBar: const CinemaNavigationBar(selectedIndex: 0),
+      bottomNavigationBar: CinemaNavigationBar(
+        selectedIndex: 0,
+        backgroundKey: _glassBackgroundKey,
+      ),
     );
   }
 
@@ -193,11 +200,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 key: const Key('homeScrollView'),
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: EdgeInsets.all(isWide ? AppSpacing.xxl : AppSpacing.lg)
-                    .copyWith(
-                      bottom:
-                          (isWide ? AppSpacing.xxl : AppSpacing.lg) +
-                          MediaQuery.paddingOf(context).bottom,
-                    ),
+                    .copyWith(bottom: MediaQuery.paddingOf(context).bottom),
                 children: [
                   _HomeHeader(isWide: isWide),
                   const SizedBox(height: AppSpacing.xl),
@@ -484,6 +487,7 @@ class _MovieGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GridView.builder(
+      padding: EdgeInsets.zero,
       itemCount: movies.length,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),

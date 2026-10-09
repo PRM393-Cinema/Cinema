@@ -14,7 +14,7 @@ class CinemaApp extends StatelessWidget {
     required this.authRepository,
     required this.catalogRepository,
     required this.bookingRepository,
-    this.initialRoute = AppRoutes.home,
+    this.initialRoute,
     this.paymentReturn,
     super.key,
   });
@@ -22,7 +22,7 @@ class CinemaApp extends StatelessWidget {
   final AuthRepository authRepository;
   final CatalogRepository catalogRepository;
   final BookingRepository bookingRepository;
-  final String initialRoute;
+  final String? initialRoute;
 
   // Set when PayOS redirected the browser back to the web app.
   final PayOsReturn? paymentReturn;
@@ -47,6 +47,7 @@ class CinemaApp extends StatelessWidget {
         payOsReturn == null
             ? name
             : AppRoutes.paymentResult(payOsReturn.orderCode),
+        isPaymentReturn: payOsReturn != null,
       ),
     );
   }

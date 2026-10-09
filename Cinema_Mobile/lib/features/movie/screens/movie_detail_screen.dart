@@ -6,7 +6,6 @@ import '../../../app/theme/app_radius.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
 import '../../../core/network/api_exception.dart';
-import '../../../core/session/auth_guard.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_network_image.dart';
@@ -141,14 +140,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
 
     final route = AppRoutes.seatSelection(showtime.id);
 
-    AuthGuard.requireAuthentication(
-      context,
-      pendingRoute: route,
-      pendingArguments: args,
-      onAuthenticated: () {
-        Navigator.pushNamed(context, route, arguments: args);
-      },
-    );
+    Navigator.pushNamed(context, route, arguments: args);
   }
 
   @override

@@ -75,7 +75,19 @@ Tài khoản seed (mật khẩu `123456`): `admin@cinema.com`, `nhanvien1@cinema
 
 ## 4. Lưu ý
 
-- **Database trong Docker tách biệt** với PostgreSQL cài trên máy: dữ liệu hai bên khác nhau. Khi repo `Project-Cinema-DB` có thay đổi, chạy `docker compose down -v` để tạo lại DB từ file SQL mới.
+### Lịch chiếu demo một tháng
+
+DB mới tự bổ sung lịch cho tất cả phim `ACTIVE`, từ ngày mai đến hết một tháng theo giờ Việt Nam. Mỗi phòng có các suất 09:00, 12:30, 16:00, 19:30; thứ Bảy và Chủ nhật thêm suất 23:00. Phòng tiếp theo lệch 15 phút. Lịch dùng đúng thời lượng phim, chừa ít nhất 20 phút dọn phòng, giá khác nhau theo phòng, giờ tối và cuối tuần.
+
+Với DB đang chạy hoặc khi lịch demo đã hết, bổ sung bằng lệnh sau. Script giữ nguyên dữ liệu cũ và bỏ qua các khung giờ đã có lịch:
+
+```powershell
+docker compose exec -T postgres psql -X -U postgres -d cinema_showtime_db -v ON_ERROR_STOP=1 -f /db-scripts/migrations/2026-10-09_cinema_showtime_schedule.sql
+```
+
+Lệnh đọc danh sách phim từ `cinema_movie_db` rồi thêm lịch vào `cinema_showtime_db`; không cần extension PostgreSQL. File nằm trong repo `Project-Cinema-DB`, cần pull cả repo này khi cập nhật.
+
+- **Database trong Docker tách biệt** với PostgreSQL cài trên máy: dữ liệu hai bên khác nhau. Với DB đang dùng, áp dụng các file migration tương ứng trong `Project-Cinema-DB/migrations`; lịch demo dùng lệnh ở trên. `docker compose down -v` xoá dữ liệu, chỉ dùng khi chủ động muốn tạo lại toàn bộ DB.
 - Docker dùng **cùng cổng** với khi chạy bằng Visual Studio (5000/5100/5168/5063) → không chạy song song hai cách. Muốn debug một service bằng Visual Studio thì dừng container của service đó trước (vd: `docker compose stop booking-service`).
 - Trong Docker, cấu hình lấy từ biến môi trường do `docker-compose.yml` truyền vào (đọc từ `.env`), User Secrets trên máy **không** được dùng.
 - Các container chạy theo giờ Việt Nam (`Asia/Ho_Chi_Minh`) để khớp dữ liệu seed và code dùng `DateTime.Now`.

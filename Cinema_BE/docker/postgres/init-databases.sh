@@ -33,4 +33,8 @@ END $$;
 SQL
 done
 
+echo "==> Them lich chieu demo cho mot thang"
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname cinema_showtime_db \
+    -f /db-scripts/migrations/2026-10-09_cinema_showtime_schedule.sql > /dev/null
+
 echo "==> Da tao xong 6 database"

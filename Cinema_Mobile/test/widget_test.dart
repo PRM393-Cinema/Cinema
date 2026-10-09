@@ -169,6 +169,8 @@ void main() {
     await tester.ensureVisible(find.byType(AppButton).first);
     await tester.pumpAndSettle();
     await tester.tap(find.byType(AppButton).first);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 3));
     await pumpRoute(tester);
 
     expect(find.byKey(const Key('loginTitle')), findsOneWidget);
@@ -294,26 +296,21 @@ void main() {
     expect(find.text('${formatVnd(90000)} / seat'), findsOneWidget);
   });
 
-  testWidgets(
-    'Guest attempting protected action gets Sign in required prompt',
-    (WidgetTester tester) async {
-      await _openHome(tester, authenticated: false);
-      await _openMovieDetail(tester);
+  testWidgets('Guest attempting protected action goes to Login', (
+    WidgetTester tester,
+  ) async {
+    await _openHome(tester, authenticated: false);
+    await _openMovieDetail(tester);
 
-      await tester.ensureVisible(find.text('Room 1'));
-      await tester.pump();
-      await tester.tap(find.text('Room 1'));
-      await tester.pump();
-      await tester.tap(find.text('Continue to Seats'));
-      await tester.pump();
+    await tester.ensureVisible(find.text('Room 1'));
+    await tester.pump();
+    await tester.tap(find.text('Room 1'));
+    await tester.pump();
+    await tester.tap(find.text('Continue to Seats'));
+    await pumpRoute(tester);
 
-      expect(find.text('Sign in required'), findsOneWidget);
-      expect(
-        find.text('Please sign in to continue with this action.'),
-        findsOneWidget,
-      );
-    },
-  );
+    expect(find.byKey(const Key('loginTitle')), findsOneWidget);
+  });
 }
 
 Widget _verifyEmailTestApp({AuthRepository? authRepository}) {
@@ -362,8 +359,8 @@ Future<void> _loginToHome(WidgetTester tester) async {
   await tester.pumpAndSettle();
   await tester.tap(find.byType(AppButton).first);
   await tester.pump();
-  expect(find.text('Authenticated!'), findsOneWidget);
-  await tester.pump(const Duration(milliseconds: 1200));
+  expect(find.text('Signed in!'), findsOneWidget);
+  await tester.pump(const Duration(seconds: 3));
   await pumpRoute(tester);
 }
 

@@ -54,8 +54,8 @@ class AppRouter {
         RouteSettings(
           name: AppRoutes.login,
           arguments: <String, dynamic>{
-            'pendingRoute': settings.name,
-            'pendingArguments': settings.arguments,
+            'pendingRoute': match.settings.name,
+            'pendingArguments': match.settings.arguments,
           },
         ),
         (_) => LoginScreen(authRepository: authRepository),
@@ -67,10 +67,18 @@ class AppRouter {
 
   // Home stays under a page opened from its URL, so its back button leads
   // home instead of leaving the app.
-  List<Route<dynamic>> onGenerateInitialRoutes(String initialRoute) {
+  List<Route<dynamic>> onGenerateInitialRoutes(
+    String initialRoute, {
+    bool isPaymentReturn = false,
+  }) {
     final home = _page(const RouteSettings(name: AppRoutes.home), _home);
-    final path = Uri.parse(initialRoute).path;
-    if (path == '/' || path == AppRoutes.home) {
+    final match = _match(RouteSettings(name: initialRoute));
+    if (match == null ||
+        match.settings.name == '/' ||
+        Uri.tryParse(match.settings.name ?? '')?.path == AppRoutes.home ||
+        (match.signInRequired &&
+            !session.isAuthenticated &&
+            !isPaymentReturn)) {
       return [home];
     }
     return [home, onGenerateRoute(RouteSettings(name: initialRoute))];
@@ -80,13 +88,14 @@ class AppRouter {
       HomeScreen(catalogRepository: catalogRepository);
 
   _RouteMatch? _match(RouteSettings settings) {
-    final uri = Uri.parse(settings.name ?? AppRoutes.home);
+    final uri = Uri.tryParse(settings.name ?? AppRoutes.home);
+    if (uri == null || uri.hasScheme || uri.hasAuthority) return null;
     final args = settings.arguments;
 
     switch (uri.path) {
       case '/':
       case AppRoutes.home:
-        return _RouteMatch(settings, _home);
+        return _RouteMatch(const RouteSettings(name: AppRoutes.home), _home);
       case AppRoutes.login:
         return _RouteMatch(
           settings,

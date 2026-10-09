@@ -25,6 +25,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  final _glassBackgroundKey = GlobalKey();
   AuthUser? _user;
   bool _hasStarted = false;
   bool _isLoading = true;
@@ -120,14 +121,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       extendBody: true,
       appBar: AppBar(title: const Text('Account settings')),
-      body: CinemaBackground(
-        child: SafeArea(bottom: false, child: _buildBody()),
+      body: CinemaGlassBackground(
+        key: _glassBackgroundKey,
+        child: CinemaBackground(
+          child: SafeArea(bottom: false, child: Builder(builder: _buildBody)),
+        ),
       ),
-      bottomNavigationBar: const CinemaNavigationBar(selectedIndex: 2),
+      bottomNavigationBar: CinemaNavigationBar(
+        selectedIndex: 2,
+        backgroundKey: _glassBackgroundKey,
+      ),
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(BuildContext context) {
     if (_isLoading) {
       return const LoadingState(message: 'Loading profile...');
     }

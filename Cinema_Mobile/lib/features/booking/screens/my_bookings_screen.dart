@@ -27,6 +27,7 @@ class MyBookingsScreen extends StatefulWidget {
 }
 
 class _MyBookingsScreenState extends State<MyBookingsScreen> {
+  final _glassBackgroundKey = GlobalKey();
   List<Booking> _bookings = const [];
   bool _isLoading = true;
   bool _hasStarted = false;
@@ -122,10 +123,16 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
             unselectedLabelColor: AppColors.textSecondary,
           ),
         ),
-        body: CinemaBackground(
-          child: _buildBody(activeBookings, historyBookings),
+        body: CinemaGlassBackground(
+          key: _glassBackgroundKey,
+          child: CinemaBackground(
+            child: _buildBody(activeBookings, historyBookings),
+          ),
         ),
-        bottomNavigationBar: const CinemaNavigationBar(selectedIndex: 1),
+        bottomNavigationBar: CinemaNavigationBar(
+          selectedIndex: 1,
+          backgroundKey: _glassBackgroundKey,
+        ),
       ),
     );
   }
