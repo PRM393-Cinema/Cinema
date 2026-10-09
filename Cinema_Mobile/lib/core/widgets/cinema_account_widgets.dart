@@ -583,7 +583,7 @@ class _LiquidNavClipper extends CustomClipper<Path> {
 
   @override
   Path getClip(Size size) {
-    // Reserve six pixels inside the fixed bounds for the local glass bulge.
+    // Reserve space for the whole bar to swell and the drag point to stretch.
     final base = Path()
       ..addRRect(
         RRect.fromRectAndRadius(
@@ -607,10 +607,8 @@ class _LiquidNavClipper extends CustomClipper<Path> {
           0.6 +
           0.4 * (1 - (tangent.position.dy / size.height - touch.dy).abs());
       final bulge =
-          (2.5 + math.max(0.0, drag.dy * outwardY) * 0.5) *
-          pressure *
-          weight *
-          proximity;
+          (2.5 + math.max(0.0, drag.dy * outwardY) * 0.5 * weight * proximity) *
+          pressure;
       final point = tangent.position + Offset(0, outwardY * bulge);
       if (step == 0) {
         path.moveTo(point.dx, point.dy);
