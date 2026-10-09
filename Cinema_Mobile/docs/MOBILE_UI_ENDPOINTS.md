@@ -4,17 +4,29 @@ Nhánh: `feat/Ngữ/UI_Update`. Đối chiếu từ controller backend, service 
 
 “Đã nối API” nghĩa là có lời gọi thật trong code; không khẳng định đã thử end-to-end với server, SMTP hay PayOS thật.
 
-## Các màn đã tinh chỉnh
+## Màn hình và endpoint đã kết nối
 
-| Màn | UI mobile | API chính |
-|---|---|---|
-| Home | Hero gọn, poster dạng lưới, tìm kiếm, navigation Home–Tickets–Account | GET movies/status/ACTIVE |
-| Tài khoản | Avatar viền cyan/cam, thông tin xếp dọc, các mục thao tác | GET auth/me |
-| Đổi mật khẩu | Email được điền sẵn từ hồ sơ, OTP, mật khẩu mới và xác nhận | POST auth/forgot-password, POST auth/reset-password |
-| Vé đã đặt | Active/History, thẻ vé, trạng thái, giờ chiếu, ghế, tổng tiền | GET bookings/user/{userId} |
-| Lịch sử thanh toán | Số tiền, trạng thái, ngày, phương thức, mã giao dịch, mở chi tiết vé | GET payments/user/{userId} |
+Cập nhật: 10/10/2026. Đây là bảng kiểm tra kết nối API, không phải lịch sử sửa giao diện. Các bảng theo nhóm bên dưới liệt kê cả endpoint chưa nối để đối chiếu phần còn thiếu.
 
-Các đường dẫn rút gọn trong bảng này có prefix `/api/v1/`; danh sách đầy đủ phía dưới. Nền, cyan/xanh dương, viền và quầng sáng dùng cùng thành phần với login. Hiệu ứng nền ở màn nội dung giảm độ sáng để ưu tiên đọc.
+| Màn/chức năng | Route mobile | Endpoint gọi thật | Trạng thái |
+|---|---|---|---|
+| Home | `/home` | GET `/api/v1/movies/status/ACTIVE` | Đã nối; tìm kiếm hiện lọc local |
+| Đăng nhập | `/login` | POST `/api/v1/auth/login` | Đã nối |
+| Đăng ký | `/register` | POST `/api/v1/auth/register` | Đã nối |
+| Xác thực email/gửi lại OTP | `/verify-email` | POST `/api/v1/auth/verify-email`; POST `/api/v1/auth/resend-verification` | Đã nối |
+| Quên/đổi mật khẩu: gửi mã | `/forgot-password` | POST `/api/v1/auth/forgot-password` | Đã nối; Login và Account dùng cùng màn |
+| Đặt mật khẩu mới | `/reset-password` | POST `/api/v1/auth/reset-password`; POST `/api/v1/auth/logout` | Đã nối; cần email từ bước gửi mã |
+| Tài khoản/đăng xuất | `/profile` | GET `/api/v1/auth/me`; POST `/api/v1/auth/logout` | Đã nối |
+| Chi tiết phim và suất chiếu | `/movies/{id}` | GET `/api/v1/movies/{id}`; GET `/api/showtimes/movie/{movieId}/open` | Đã nối |
+| Chọn ghế | `/showtimes/{id}/seats` | GET `/api/showtimes/{showtimeId}`; GET `/api/seats/room/{roomId}`; GET `/api/v1/bookings/showtime/{showtimeId}/occupied-seats` | Đã nối |
+| Xác nhận đặt vé | `/showtimes/{id}/summary` | POST `/api/v1/bookings` | Đã nối; ghế được truyền từ màn chọn ghế |
+| Vé đã đặt | `/bookings` | GET `/api/v1/bookings/user/{userId}` | Đã nối; mới lấy trang đầu |
+| Chi tiết/hủy vé | `/bookings/{id}` | GET `/api/v1/bookings/{id}`; POST `/api/v1/bookings/{id}/cancel`; GET `/api/v1/payments/{id}/refund` | Đã nối |
+| Thanh toán/kết quả | `/bookings/{id}/payment`, `/bookings/{id}/result` | GET `/api/v1/bookings/{id}`; POST `/api/v1/payments/payos/checkout`; POST `/api/v1/payments/payos/{orderCode}/verify` | Đã nối |
+| Lịch sử thanh toán | `/payments` | GET `/api/v1/payments/user/{userId}` | Đã nối; đọc đủ các trang |
+| Danh sách thông báo/làm mới | `/notifications` | GET `/api/v1/notifications/user/{userId}` | Đã nối; đọc đủ các trang |
+| Chi tiết thông báo/mở vé liên quan | `/notifications/{id}` | GET `/api/v1/notifications/{id}`; GET `/api/v1/bookings/{id}` khi mở vé | Đã nối; tải theo ID, hỗ trợ mở lại URL |
+| Làm mới phiên | Không có màn riêng | POST `/api/v1/auth/refresh` | Đã nối tự động trong lớp API |
 
 ## Tài khoản
 
@@ -118,7 +130,7 @@ Các đường dẫn rút gọn trong bảng này có prefix `/api/v1/`; danh s�
 | Chức năng | Method | Endpoint | UI hiện có | Nguồn backend |
 |---|---|---|---|---|
 | Danh sách thông báo | GET | `/api/v1/notifications` | Chưa có UI nối endpoint này | [NotificationController:24](../../Cinema_BE/BookingService/BookingService/Controllers/NotificationController.cs#L24) |
-| Chi tiết thông báo | GET | `/api/v1/notifications/{id}` | Có UI chi tiết lấy từ danh sách; chưa gọi API này | [NotificationController:36](../../Cinema_BE/BookingService/BookingService/Controllers/NotificationController.cs#L36) |
+| Chi tiết thông báo | GET | `/api/v1/notifications/{id}` | Chi tiết thông báo theo ID · đã nối API | [NotificationController:36](../../Cinema_BE/BookingService/BookingService/Controllers/NotificationController.cs#L36) |
 | Lịch sử theo người dùng thông báo | GET | `/api/v1/notifications/user/{userId}` | Danh sách thông báo · đã nối API | [NotificationController:49](../../Cinema_BE/BookingService/BookingService/Controllers/NotificationController.cs#L49) |
 | Tạo thông báo | POST | `/api/v1/notifications` | Chưa có UI nối endpoint này | [NotificationController:66](../../Cinema_BE/BookingService/BookingService/Controllers/NotificationController.cs#L66) |
 | Gửi thông báo | POST | `/api/v1/notifications/{id}/send` | Chưa có UI nối endpoint này | [NotificationController:74](../../Cinema_BE/BookingService/BookingService/Controllers/NotificationController.cs#L74) |
@@ -129,11 +141,12 @@ Các đường dẫn rút gọn trong bảng này có prefix `/api/v1/`; danh s�
 1. **Đổi mật khẩu bằng mật khẩu hiện tại:** backend chưa có endpoint cho luồng ba ô trong ảnh mẫu. UI hiện dùng OTP email, có xác nhận mật khẩu mới; sau khi thành công xoá phiên local và yêu cầu đăng nhập lại.
 2. **Sửa hồ sơ:** chưa có API cập nhật hồ sơ cá nhân. Màn tài khoản đang hiển thị dữ liệu thật; không có nút lưu giả.
 3. **Tìm phim:** ô tìm kiếm trên Home lọc danh sách đã tải. `GET /api/v1/movies/search` tồn tại nhưng chưa được gọi từ ô này.
-4. **Vé và thông báo:** repository hiện lấy trang đầu tối đa 50 bản ghi. Khi tài khoản vượt 50 bản ghi cần thêm tải trang tiếp; lịch sử thanh toán mới đã đọc đủ các trang.
+4. **Phân trang:** vé đã đặt hiện chỉ lấy trang đầu tối đa 50 bản ghi; thông báo và lịch sử thanh toán đã đọc đủ các trang. Hai danh sách này tải toàn bộ khi mở/làm mới, chưa tải thêm theo cuộn.
 5. **Quản trị:** các API quản lý user, role, phim, phòng, ghế, suất chiếu, xử lý hoàn tiền và gửi thông báo chưa có UI quản trị trong app khách hàng.
-6. **Chi tiết thông báo:** UI hiện lấy đối tượng từ danh sách. Mở URL chi tiết mà không có đối tượng sẽ về danh sách; backend thực tế có GET thông báo theo id nhưng Flutter chưa nối.
+6. **Thông báo còn thiếu:** DELETE `/api/v1/notifications/{id}` có ở backend nhưng chưa có thao tác xóa trên mobile. Backend chưa có endpoint đánh dấu đã đọc/chưa đọc hoặc số thông báo chưa đọc. `status` hiện là trạng thái gửi email, không phải trạng thái đọc.
+7. **Thông báo trống:** thông báo được tạo từ sự kiện xác nhận/hủy/hết hạn vé, yêu cầu/hoàn tiền. Đăng ký, xác thực email và đặt lại mật khẩu chưa tạo bản ghi trong lịch sử này. Không có dữ liệu mẫu tự chèn cho tài khoản mới; kéo xuống hoặc bấm Refresh để lấy dữ liệu mới. Chưa có cập nhật thời gian thực/push notification.
 
-Không thay đổi backend, cơ chế giữ ghế, tính tiền hoặc PayOS webhook trong lần tinh chỉnh UI này. Chưa kiểm tra thiết bị thật, email thật, thanh toán thật hoặc tải đồng thời nhiều người dùng.
+Chưa kiểm tra thiết bị thật, email thật, thanh toán thật hoặc tải đồng thời nhiều người dùng. Trạng thái kết nối API ở trên được đối chiếu từ code.
 
 ## Các file chính
 
@@ -143,3 +156,5 @@ Không thay đổi backend, cơ chế giữ ghế, tính tiền hoặc PayOS web
 - [Lịch sử thanh toán](../lib/features/payment/screens/payment_history_screen.dart)
 - [Gửi OTP](../lib/features/auth/screens/forgot_password_screen.dart)
 - [Mật khẩu mới](../lib/features/auth/screens/reset_password_screen.dart)
+- [Danh sách thông báo](../lib/features/notification/screens/notification_list_screen.dart)
+- [Chi tiết thông báo](../lib/features/notification/screens/notification_detail_screen.dart)

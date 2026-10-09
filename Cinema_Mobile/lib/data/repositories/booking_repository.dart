@@ -30,6 +30,8 @@ abstract interface class BookingRepository {
   Future<Refund?> getRefund(int paymentId);
 
   Future<List<AppNotification>> getMyNotifications(int userId);
+
+  Future<AppNotification> getNotification(int id);
 }
 
 class RemoteBookingRepository implements BookingRepository {
@@ -112,7 +114,16 @@ class RemoteBookingRepository implements BookingRepository {
 
   @override
   Future<List<AppNotification>> getMyNotifications(int userId) async {
-    final result = await _bookingService.getNotificationsByUser(userId);
-    return result.items;
+    var result = await _bookingService.getNotificationsByUser(userId);
+    final notifications = [...result.items];
+    for (var page = 2; page <= result.totalPages; page++) {
+      result = await _bookingService.getNotificationsByUser(userId, page: page);
+      notifications.addAll(result.items);
+    }
+    return notifications;
   }
+
+  @override
+  Future<AppNotification> getNotification(int id) =>
+      _bookingService.getNotification(id);
 }

@@ -143,4 +143,12 @@ class BookingService {
 
     return PagedResult.fromJson(response, AppNotification.fromJson);
   }
+
+  Future<AppNotification> getNotification(int id) async {
+    final response = await _apiClient.get(
+      '/api/v1/notifications/$id',
+      authenticated: true,
+    );
+    return AppNotification.fromJson(readMap(response));
+  }
 }

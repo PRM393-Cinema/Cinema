@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../core/session/session_state.dart';
-import '../../data/models/app_notification.dart';
 import '../../data/models/booking_draft.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/booking_repository.dart';
@@ -208,12 +207,12 @@ class AppRouter {
           signInRequired: true,
         );
       case 'notifications' when segments.length == 2:
-        // The detail uses the item passed by the list; its GET endpoint is
-        // not wired here, so a refreshed detail returns to the list.
-        if (args is! AppNotification) return _notificationList();
         return _RouteMatch(
           settings,
-          (_) => const NotificationDetailScreen(),
+          (_) => NotificationDetailScreen(
+            bookingRepository: bookingRepository,
+            notificationId: id,
+          ),
           signInRequired: true,
         );
     }

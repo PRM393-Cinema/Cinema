@@ -331,6 +331,16 @@ class FakeBookingRepository implements BookingRepository {
   Future<List<AppNotification>> getMyNotifications(int userId) async {
     return notifications;
   }
+
+  @override
+  Future<AppNotification> getNotification(int id) async =>
+      notifications.firstWhere(
+        (notification) => notification.id == id,
+        orElse: () => throw const ApiException(
+          statusCode: 404,
+          message: 'Notification not found.',
+        ),
+      );
 }
 
 // Records the URLs the app asks url_launcher to open.

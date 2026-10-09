@@ -100,7 +100,7 @@ void main() {
     expect(find.textContaining(booking.bookingCode), findsOneWidget);
   });
 
-  testWidgets('A refreshed notification shows the notification list', (
+  testWidgets('A refreshed notification loads its detail by ID', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
@@ -111,7 +111,7 @@ void main() {
     );
     await pumpRoute(tester);
 
-    expect(find.text('Notifications'), findsOneWidget);
+    expect(find.text('Notification'), findsOneWidget);
     expect(find.text(notificationFixture.subject), findsOneWidget);
   });
 
