@@ -7,6 +7,7 @@ uniform float u_native;
 uniform float u_touch_x;
 uniform float u_pressure;
 uniform float u_drag_y;
+uniform float u_touch_y;
 uniform sampler2D u_texture_input;
 
 out vec4 frag_color;
@@ -23,7 +24,8 @@ void main() {
   float radius = 36.0 * pixel_scale;
   float touch_distance = abs(uv.x - u_touch_x) / 0.3;
   float weight = touch_distance < 1.0 ? (1.0 + cos(3.14159265 * touch_distance)) * 0.5 : 0.0;
-  float bulge = (2.5 + max(0.0, u_drag_y * sign(p.y)) * 0.5) * u_pressure * weight * pixel_scale;
+  float proximity = 0.6 + 0.4 * (1.0 - abs(uv.y - u_touch_y));
+  float bulge = (2.5 + max(0.0, u_drag_y * sign(p.y)) * 0.5) * u_pressure * weight * proximity * pixel_scale;
   p.y -= sign(p.y) * bulge * min(abs(p.y) / (38.0 * pixel_scale), 1.0);
   vec2 q = abs(p) - (view_size * 0.5 - vec2(0.0, 6.0 * pixel_scale) - vec2(radius));
   vec2 corner = max(q, vec2(0.0));

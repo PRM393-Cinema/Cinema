@@ -78,6 +78,7 @@ class _CinemaNavigationBarState extends State<CinemaNavigationBar>
   int? _pointerId;
   int? _pressedIndex;
   Offset _pointerOrigin = Offset.zero;
+  Offset _touchPosition = const Offset(0.5, 0.5);
   Offset _dragOffset = Offset.zero;
   FragmentShader? _refractionShader;
   final _glassKey = GlobalKey();
@@ -269,28 +270,38 @@ class _CinemaNavigationBarState extends State<CinemaNavigationBar>
     if (_disableAnimations || _pointerId != null) return;
     final glass = _glassKey.currentContext?.findRenderObject();
     if (glass is! RenderBox || !glass.hasSize) return;
-    final index = (event.localPosition.dx / (glass.size.width / 3))
-        .floor()
-        .clamp(0, 2);
+    final touch = _localTouch(event, glass);
+    final index = (touch.dx * 3).floor().clamp(0, 2);
     setState(() {
       _pointerId = event.pointer;
       _pressedIndex = index;
       _pointerOrigin = event.position;
+      _touchPosition = touch;
       _dragOffset = Offset.zero;
     });
-    _animateAfterFirstFrame(index);
     _springPressure(1);
+  }
+
+  Offset _localTouch(PointerEvent event, RenderBox glass) {
+    final position = glass.globalToLocal(event.position);
+    return Offset(
+      (position.dx / glass.size.width).clamp(0.0, 1.0),
+      (position.dy / glass.size.height).clamp(0.0, 1.0),
+    );
   }
 
   void _drag(PointerMoveEvent event) {
     if (_pointerId != event.pointer || _disableAnimations) return;
+    final glass = _glassKey.currentContext?.findRenderObject();
+    if (glass is! RenderBox || !glass.hasSize) return;
     final delta = (event.position - _pointerOrigin) * 0.15;
-    setState(
-      () => _dragOffset = Offset(
+    setState(() {
+      _touchPosition = _localTouch(event, glass);
+      _dragOffset = Offset(
         delta.dx.clamp(-5.0, 5.0),
         delta.dy.clamp(-6.0, 6.0),
-      ),
-    );
+      );
+    });
     _scheduleBackdropCapture();
   }
 
@@ -298,7 +309,6 @@ class _CinemaNavigationBarState extends State<CinemaNavigationBar>
     if (_pointerId != event.pointer) return;
     _pointerId = null;
     _springPressure(0);
-    _animateAfterFirstFrame(widget.selectedIndex);
   }
 
   @override
@@ -319,13 +329,10 @@ class _CinemaNavigationBarState extends State<CinemaNavigationBar>
         ..setFloat(3, 88)
         ..setFloat(4, 0)
         ..setFloat(5, 1)
-        ..setFloat(
-          6,
-          ((_pressedIndex ?? widget.selectedIndex) + 0.5) / 3 +
-              _dragOffset.dx / width,
-        )
+        ..setFloat(6, _touchPosition.dx)
         ..setFloat(7, _interaction.value.clamp(0.0, 1.0))
-        ..setFloat(8, _dragOffset.dy);
+        ..setFloat(8, _dragOffset.dy)
+        ..setFloat(9, _touchPosition.dy);
       return ImageFilter.compose(
         outer: diffusion,
         inner: ImageFilter.shader(_refractionShader!),
@@ -355,7 +362,7 @@ class _CinemaNavigationBarState extends State<CinemaNavigationBar>
       final pressure = _interaction.value.clamp(0.0, 1.0);
       final deformation = _LiquidNavClipper(
         pressure: pressure,
-        index: _pressedIndex ?? widget.selectedIndex,
+        touch: _touchPosition,
         drag: _dragOffset,
       );
       return SafeArea(
@@ -566,12 +573,12 @@ class _CinemaNavigationBarState extends State<CinemaNavigationBar>
 class _LiquidNavClipper extends CustomClipper<Path> {
   const _LiquidNavClipper({
     required this.pressure,
-    required this.index,
+    required this.touch,
     required this.drag,
   });
 
   final double pressure;
-  final int index;
+  final Offset touch;
   final Offset drag;
 
   @override
@@ -585,7 +592,7 @@ class _LiquidNavClipper extends CustomClipper<Path> {
         ),
       );
     if (pressure == 0) return base;
-    final center = (index + 0.5) * size.width / 3 + drag.dx;
+    final center = touch.dx * size.width;
     final span = size.width / 3 * 0.9;
     final metric = base.computeMetrics().first;
     final path = Path();
@@ -596,8 +603,14 @@ class _LiquidNavClipper extends CustomClipper<Path> {
           ? (1 + math.cos(math.pi * distance)) / 2
           : 0.0;
       final outwardY = -tangent.vector.dx;
+      final proximity =
+          0.6 +
+          0.4 * (1 - (tangent.position.dy / size.height - touch.dy).abs());
       final bulge =
-          (2.5 + math.max(0.0, drag.dy * outwardY) * 0.5) * pressure * weight;
+          (2.5 + math.max(0.0, drag.dy * outwardY) * 0.5) *
+          pressure *
+          weight *
+          proximity;
       final point = tangent.position + Offset(0, outwardY * bulge);
       if (step == 0) {
         path.moveTo(point.dx, point.dy);
@@ -611,7 +624,7 @@ class _LiquidNavClipper extends CustomClipper<Path> {
   @override
   bool shouldReclip(covariant _LiquidNavClipper oldClipper) =>
       oldClipper.pressure != pressure ||
-      oldClipper.index != index ||
+      oldClipper.touch != touch ||
       oldClipper.drag != drag;
 }
 
@@ -635,12 +648,10 @@ class _GlassSnapshotPainter extends CustomPainter {
       ..setFloat(3, size.height)
       ..setFloat(4, 12)
       ..setFloat(5, 0)
-      ..setFloat(
-        6,
-        (deformation.index + 0.5) / 3 + deformation.drag.dx / size.width,
-      )
+      ..setFloat(6, deformation.touch.dx)
       ..setFloat(7, deformation.pressure)
       ..setFloat(8, deformation.drag.dy)
+      ..setFloat(9, deformation.touch.dy)
       ..setImageSampler(0, image);
     canvas.drawRect(Offset.zero & size, Paint()..shader = shader);
   }
