@@ -6,6 +6,7 @@ import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
 import '../../../core/session/session_state.dart';
 import '../widgets/auth_scaffold.dart';
+import '../widgets/auth_success_dialog.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_text_field.dart';
@@ -62,11 +63,26 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       await widget.authRepository.logout();
       if (!mounted) return;
       SessionProvider.of(context).clear();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Your password has been reset. Please sign in.'),
+      await showGeneralDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        barrierLabel: 'Password reset successful',
+        barrierColor: Colors.black.withValues(alpha: 0.72),
+        transitionDuration: MediaQuery.disableAnimationsOf(context)
+            ? Duration.zero
+            : const Duration(milliseconds: 180),
+        pageBuilder: (context, _, _) => const Material(
+          type: MaterialType.transparency,
+          child: AuthSuccessDialog(
+            title: 'Password reset!',
+            message: 'Your password has been updated.\nPlease sign in again.',
+            footer: 'Taking you to sign in…',
+          ),
         ),
+        transitionBuilder: (context, animation, secondaryAnimation, child) =>
+            FadeTransition(opacity: animation, child: child),
       );
+      if (!mounted) return;
       Navigator.pushNamedAndRemoveUntil(
         context,
         AppRoutes.login,
