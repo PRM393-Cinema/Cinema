@@ -178,7 +178,10 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
     if (args == null) {
       final error = _errorMessage;
       return Scaffold(
-        appBar: AppBar(title: const Text('Seat Selection')),
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          title: const Text('Seat Selection'),
+        ),
         body: _showtimeRequested && _isLoading
             ? const LoadingState(message: 'Loading showtime...')
             : _showtimeRequested && error != null
@@ -202,7 +205,10 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
         .join(', ');
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Select Seats')),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: const Text('Select Seats'),
+      ),
       body: SafeArea(
         child: Column(
           children: [

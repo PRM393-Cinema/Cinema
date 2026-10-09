@@ -208,14 +208,20 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
 
     if (booking == null && _isLoadingBooking) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Booking Detail')),
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          title: const Text('Booking Detail'),
+        ),
         body: const LoadingState(message: 'Loading booking...'),
       );
     }
 
     if (booking == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Booking Detail')),
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          title: const Text('Booking Detail'),
+        ),
         body: const ErrorState(
           title: 'Booking not found',
           message: 'The booking details could not be loaded.',
@@ -240,6 +246,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text('Booking Detail'),
         bottom: _isRefreshing
             ? const PreferredSize(

@@ -76,7 +76,10 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Payment history')),
+    appBar: AppBar(
+      automaticallyImplyLeading: false,
+      title: const Text('Payment history'),
+    ),
     body: CinemaBackground(child: _body()),
   );
 

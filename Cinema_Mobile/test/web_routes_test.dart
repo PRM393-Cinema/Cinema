@@ -21,7 +21,7 @@ void main() {
     expect(find.text('Showtimes'), findsOneWidget);
     expect(find.text(inception.title), findsWidgets);
 
-    await tester.pageBack();
+    await tester.binding.handlePopRoute();
     await pumpRoute(tester);
     expect(find.text('Step Into CosmoQ Cinema'), findsOneWidget);
   });

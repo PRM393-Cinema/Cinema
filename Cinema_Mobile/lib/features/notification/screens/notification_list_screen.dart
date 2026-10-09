@@ -12,7 +12,6 @@ import '../../../core/utils/layout.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_state.dart';
-import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/cinema_background.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
 import '../../../data/models/app_notification.dart';
@@ -89,14 +88,8 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text('Notifications'),
-        actions: [
-          IconButton(
-            tooltip: 'Refresh notifications',
-            onPressed: _isRefreshing ? null : _loadNotifications,
-            icon: const Icon(Icons.refresh_rounded),
-          ),
-        ],
       ),
       body: CinemaBackground(child: SafeArea(child: _buildBody())),
     );
@@ -128,12 +121,6 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
                 icon: Icons.notifications_none_outlined,
                 title: 'You’re all caught up',
                 message: 'Booking confirmations, cancellations and refund updates will appear here.',
-                action: AppButton.secondary(
-                  label: 'Refresh',
-                  leadingIcon: Icons.refresh_rounded,
-                  isLoading: _isRefreshing,
-                  onPressed: _isRefreshing ? null : _loadNotifications,
-                ),
               ),
             ),
           ],

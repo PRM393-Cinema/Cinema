@@ -49,7 +49,10 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Notification')),
+    appBar: AppBar(
+      automaticallyImplyLeading: false,
+      title: const Text('Notification'),
+    ),
     body: CinemaBackground(
       child: SafeArea(
         child: FutureBuilder<AppNotification>(

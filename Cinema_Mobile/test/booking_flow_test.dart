@@ -326,7 +326,7 @@ void main() {
       expect(find.text('Pay Now'), findsOneWidget);
       expect(find.text('Cancel Booking'), findsOneWidget);
 
-      await tester.pageBack();
+      await tester.binding.handlePopRoute();
       await pumpRoute(tester);
 
       await tester.tap(find.text('History'));

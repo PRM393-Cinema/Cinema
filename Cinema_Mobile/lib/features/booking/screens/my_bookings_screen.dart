@@ -112,6 +112,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
       child: Scaffold(
         extendBody: true,
         appBar: AppBar(
+          automaticallyImplyLeading: false,
           title: const Text('My Bookings'),
           bottom: const TabBar(
             tabs: [

@@ -120,7 +120,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: true,
-      appBar: AppBar(title: const Text('Account settings')),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: const Text('Account settings'),
+      ),
       body: CinemaGlassBackground(
         key: _glassBackgroundKey,
         child: CinemaBackground(

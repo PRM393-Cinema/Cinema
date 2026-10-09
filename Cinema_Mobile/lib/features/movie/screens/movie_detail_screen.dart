@@ -150,7 +150,10 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     if (movie == null) {
       final error = _movieError;
       return Scaffold(
-        appBar: AppBar(title: const Text('Movie Detail')),
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          title: const Text('Movie Detail'),
+        ),
         body: _isLoadingMovie
             ? const LoadingState(message: 'Loading movie...')
             : error != null
@@ -169,7 +172,10 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     final selected = _selectedShowtime;
 
     return Scaffold(
-      appBar: AppBar(title: Text(movie.title)),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: Text(movie.title),
+      ),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -233,14 +239,10 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     }
 
     if (_showtimes.isEmpty) {
-      return EmptyState(
+      return const EmptyState(
         icon: Icons.event_busy_outlined,
         title: 'No showtimes available',
         message: 'There are no upcoming showtimes for this movie yet.',
-        action: AppButton.secondary(
-          label: 'Refresh',
-          onPressed: _loadShowtimes,
-        ),
       );
     }
 

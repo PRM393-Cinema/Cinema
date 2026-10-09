@@ -136,22 +136,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               isLoading: _isLoading,
               onPressed: _isLoading ? null : _onSendResetCode,
             ),
-            const SizedBox(height: AppSpacing.md),
-            AppButton.secondary(
-              label: changingPassword ? 'Back to account' : 'Back to login',
-              onPressed: _isLoading
-                  ? null
-                  : () {
-                      if (Navigator.canPop(context)) {
-                        Navigator.pop(context);
-                      } else {
-                        Navigator.pushReplacementNamed(
-                          context,
-                          AppRoutes.login,
-                        );
-                      }
-                    },
-            ),
           ],
         ),
       ),

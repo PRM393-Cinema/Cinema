@@ -107,7 +107,10 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
 
     if (args is! BookingDraft) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Booking Summary')),
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          title: const Text('Booking Summary'),
+        ),
         body: const ErrorState(
           title: 'Draft not found',
           message: 'Please return and select your seats again.',
@@ -120,7 +123,10 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
     final seatLabels = draft.seats.map((seat) => seat.label).join(', ');
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Booking Summary')),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: const Text('Booking Summary'),
+      ),
       body: SafeArea(
         child: Column(
           children: [

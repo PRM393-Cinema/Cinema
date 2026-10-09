@@ -144,7 +144,7 @@ Cập nhật: 10/10/2026. Đây là bảng kiểm tra kết nối API, không ph
 4. **Phân trang:** vé đã đặt hiện chỉ lấy trang đầu tối đa 50 bản ghi; thông báo và lịch sử thanh toán đã đọc đủ các trang. Hai danh sách này tải toàn bộ khi mở/làm mới, chưa tải thêm theo cuộn.
 5. **Quản trị:** các API quản lý user, role, phim, phòng, ghế, suất chiếu, xử lý hoàn tiền và gửi thông báo chưa có UI quản trị trong app khách hàng.
 6. **Thông báo còn thiếu:** DELETE `/api/v1/notifications/{id}` có ở backend nhưng chưa có thao tác xóa trên mobile. Backend chưa có endpoint đánh dấu đã đọc/chưa đọc hoặc số thông báo chưa đọc. `status` hiện là trạng thái gửi email, không phải trạng thái đọc.
-7. **Thông báo trống:** thông báo được tạo từ sự kiện xác nhận/hủy/hết hạn vé, yêu cầu/hoàn tiền. Đăng ký, xác thực email và đặt lại mật khẩu chưa tạo bản ghi trong lịch sử này. Không có dữ liệu mẫu tự chèn cho tài khoản mới; kéo xuống hoặc bấm Refresh để lấy dữ liệu mới. Chưa có cập nhật thời gian thực/push notification.
+7. **Thông báo trống:** thông báo được tạo từ sự kiện xác nhận/hủy/hết hạn vé, yêu cầu/hoàn tiền. Đăng ký, xác thực email và đặt lại mật khẩu chưa tạo bản ghi trong lịch sử này. Không có dữ liệu mẫu tự chèn cho tài khoản mới; kéo xuống để lấy dữ liệu mới. Chưa có cập nhật thời gian thực/push notification.
 
 Chưa kiểm tra thiết bị thật, email thật, thanh toán thật hoặc tải đồng thời nhiều người dùng. Trạng thái kết nối API ở trên được đối chiếu từ code.
 

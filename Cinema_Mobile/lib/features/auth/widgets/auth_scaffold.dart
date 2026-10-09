@@ -13,7 +13,7 @@ class AuthScaffold extends StatelessWidget {
     required this.subtitle,
     required this.child,
     this.titleKey,
-    this.showBack = true,
+    this.showBack = false,
     this.backToHome = false,
     super.key,
   });

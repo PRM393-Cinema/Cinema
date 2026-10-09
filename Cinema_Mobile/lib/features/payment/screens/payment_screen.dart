@@ -319,14 +319,20 @@ class _PaymentScreenState extends State<PaymentScreen>
 
     if (booking == null && _isLoadingBooking) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Payment')),
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          title: const Text('Payment'),
+        ),
         body: const LoadingState(message: 'Loading booking...'),
       );
     }
 
     if (booking == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Payment')),
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          title: const Text('Payment'),
+        ),
         body: ErrorState(
           title: 'Booking not found',
           message:
@@ -342,7 +348,10 @@ class _PaymentScreenState extends State<PaymentScreen>
     final isBusy = _isStartingCheckout || _isVerifying || _isCancelling;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Payment')),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: const Text('Payment'),
+      ),
       body: SafeArea(
         child: Column(
           children: [
