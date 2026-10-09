@@ -368,11 +368,11 @@ class _CinemaNavigationBarState extends State<CinemaNavigationBar>
       return SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(8, 2, 8, 6),
+          padding: const EdgeInsets.fromLTRB(4, 2, 4, 6),
           child: Center(
             heightFactor: 1,
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 488),
+              constraints: const BoxConstraints(maxWidth: 496),
               child: Listener(
                 onPointerDown: _press,
                 onPointerMove: _drag,
@@ -430,7 +430,7 @@ class _CinemaNavigationBarState extends State<CinemaNavigationBar>
                                 ),
                                 Padding(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 4,
+                                    horizontal: 8,
                                   ),
                                   child: LayoutBuilder(
                                     builder: (context, constraints) {
@@ -593,7 +593,7 @@ class _LiquidNavClipper extends CustomClipper<Path> {
     final base = Path()
       ..addRRect(
         RRect.fromRectAndRadius(
-          Rect.fromLTRB(4, 6, size.width - 4, size.height - 6),
+          Rect.fromLTRB(8, 6, size.width - 8, size.height - 6),
           const Radius.circular(36),
         ),
       );
@@ -617,7 +617,7 @@ class _LiquidNavClipper extends CustomClipper<Path> {
           pressure;
       final point =
           tangent.position +
-          Offset(tangent.vector.dy * 4 * pressure, outwardY * bulge);
+          Offset(tangent.vector.dy * 8 * pressure, outwardY * bulge);
       if (step == 0) {
         path.moveTo(point.dx, point.dy);
       } else {
