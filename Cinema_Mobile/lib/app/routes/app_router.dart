@@ -91,6 +91,17 @@ class AppRouter {
     if (uri == null || uri.hasScheme || uri.hasAuthority) return null;
     final args = settings.arguments;
 
+    final guestOnly = switch (uri.path) {
+      AppRoutes.login || AppRoutes.register || AppRoutes.verifyEmail => true,
+      // Account passes the signed-in email through the password change flow.
+      AppRoutes.forgotPassword ||
+      AppRoutes.resetPassword => args is! String || args != session.user?.email,
+      _ => false,
+    };
+    if (session.isAuthenticated && guestOnly) {
+      return _RouteMatch(const RouteSettings(name: AppRoutes.home), _home);
+    }
+
     switch (uri.path) {
       case '/':
       case AppRoutes.home:
