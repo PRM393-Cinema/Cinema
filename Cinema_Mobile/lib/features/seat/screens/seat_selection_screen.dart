@@ -457,6 +457,12 @@ class _SeatMap extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     _ScreenIndicator(width: layout.seatsWidth(seatsPerRow)),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      '${rows.length} rows • ${data.seats.length} seats • Pinch to zoom',
+                      style: AppTextStyles.caption,
+                      textAlign: TextAlign.center,
+                    ),
                     const SizedBox(height: AppSpacing.xl),
                     ...sortedRowKeys.map((rowKey) {
                       final rowSeats = rows[rowKey]!;
@@ -468,7 +474,16 @@ class _SeatMap extends StatelessWidget {
                             _RowLabel(label: rowKey),
                             const SizedBox(width: _SeatMapLayout.labelGap),
                             for (final (index, seat) in rowSeats.indexed) ...[
-                              if (index > 0) SizedBox(width: layout.gap),
+                              if (index > 0)
+                                SizedBox(
+                                  width:
+                                      layout.gap +
+                                      (_SeatMapLayout.aisleAfter(
+                                            rowSeats.length,
+                                          ).contains(index)
+                                          ? _SeatMapLayout.aisleWidth
+                                          : 0),
+                                ),
                               SeatItem(
                                 label: seat.number.toString(),
                                 state: _itemStateOf(seat, data.statusOf(seat)),
@@ -517,6 +532,7 @@ class _SeatMapLayout {
         maxWidth -
         padding * 2 -
         (labelWidth + labelGap) * 2 -
+        aisleAfter(seats).length * aisleWidth -
         gap * (seats - 1);
 
     return _SeatMapLayout(
@@ -530,11 +546,21 @@ class _SeatMapLayout {
   static const labelGap = 6.0;
   static const minSeat = 20.0;
   static const maxSeat = 44.0;
+  static const aisleWidth = 12.0;
+
+  static List<int> aisleAfter(int seats) => seats >= 14
+      ? [4, seats - 4]
+      : seats >= 8
+      ? [seats ~/ 2]
+      : const [];
 
   final double seatSize;
   final double gap;
 
-  double seatsWidth(int seats) => seats * seatSize + (seats - 1) * gap;
+  double seatsWidth(int seats) =>
+      seats * seatSize +
+      (seats - 1) * gap +
+      aisleAfter(seats).length * aisleWidth;
 
   double mapWidth(int seats) {
     return seatsWidth(seats) + (labelWidth + labelGap) * 2 + padding * 2;

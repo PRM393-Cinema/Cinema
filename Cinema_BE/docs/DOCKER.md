@@ -77,12 +77,24 @@ Tài khoản seed (mật khẩu `123456`): `admin@cinema.com`, `nhanvien1@cinema
 
 ### Lịch chiếu demo một tháng
 
-DB mới tự bổ sung 2 phòng demo (03 Standard, 04 IMAX), mỗi phòng 30 ghế, rồi tạo lịch cho tất cả phim `ACTIVE` từ hôm nay trong một tháng theo giờ Việt Nam. Mỗi phòng có các suất 09:00, 12:30, 16:00, 19:30, 23:00 hằng ngày; phòng tiếp theo lệch 15 phút. Với 4 phòng có khoảng 20 suất/ngày, riêng hôm nay chỉ thêm giờ chưa bắt đầu. Lịch dùng đúng thời lượng phim, chừa ít nhất 20 phút dọn phòng, giá khác nhau theo phòng, giờ tối và cuối tuần.
+DB mới tự bổ sung 2 phòng demo (03 Standard, 04 IMAX), rồi tạo lịch cho tất cả phim `ACTIVE` từ hôm nay trong một tháng theo giờ Việt Nam. Mỗi phòng có các suất 09:00, 12:30, 16:00, 19:30, 23:00 hằng ngày; phòng tiếp theo lệch 15 phút. Với 4 phòng có khoảng 20 suất/ngày, riêng hôm nay chỉ thêm giờ chưa bắt đầu. Lịch dùng đúng thời lượng phim, chừa ít nhất 20 phút dọn phòng, giá khác nhau theo phòng, giờ tối và cuối tuần.
+
+Mỗi phòng demo có sơ đồ ghế riêng; Flutter đọc hàng và số ghế thực tế từ API:
+
+| Phòng | Ghế mỗi hàng (A trở đi) | Tổng ghế |
+|---|---|---|
+| 01 IMAX | 10 / 10 / 10 / 12 / 12 | 54 |
+| 02 Standard | 10 / 10 / 10 / 8 | 38 |
+| 03 Standard | 12 / 12 / 12 | 36 |
+| 04 IMAX | 10 / 10 / 10 / 14 / 14 / 14 | 72 |
+
+UI chừa một lối đi giữa hàng 8–12 ghế, hai lối đi cho hàng 14 ghế. Sơ đồ rộng hỗ trợ kéo và phóng to. Migration chỉ bổ sung ghế, giữ nguyên ID và loại ghế cũ để bảo toàn tham chiếu của vé đã đặt.
 
 Với DB đang chạy hoặc khi lịch demo đã hết, bổ sung bằng lệnh sau. Script giữ nguyên dữ liệu cũ và bỏ qua các khung giờ đã có lịch:
 
 ```powershell
 docker compose exec -T postgres psql -X -U postgres -d cinema_showtime_db -v ON_ERROR_STOP=1 -f /db-scripts/migrations/2026-10-10_cinema_more_daily_showtimes.sql
+docker compose exec -T postgres psql -X -U postgres -d cinema_showtime_db -v ON_ERROR_STOP=1 -f /db-scripts/migrations/2026-10-10_cinema_distinct_room_layouts.sql
 ```
 
 Lệnh đọc danh sách phim từ `cinema_movie_db` rồi thêm lịch vào `cinema_showtime_db`; không cần extension PostgreSQL. File nằm trong repo `Project-Cinema-DB`, cần pull cả repo này khi cập nhật.
