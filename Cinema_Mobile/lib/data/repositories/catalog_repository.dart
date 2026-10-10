@@ -43,8 +43,13 @@ class RemoteCatalogRepository implements CatalogRepository {
 
   @override
   Future<List<Showtime>> getOpenShowtimes(int movieId) async {
-    final result = await _movies.getOpenShowtimesByMovie(movieId);
-    return result.items;
+    var result = await _movies.getOpenShowtimesByMovie(movieId);
+    final showtimes = [...result.items];
+    for (var page = 2; page <= result.totalPages; page++) {
+      result = await _movies.getOpenShowtimesByMovie(movieId, page: page);
+      showtimes.addAll(result.items);
+    }
+    return showtimes;
   }
 
   @override
