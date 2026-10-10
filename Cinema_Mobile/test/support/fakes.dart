@@ -5,6 +5,7 @@ import 'package:cinema_fe/data/models/booking.dart';
 import 'package:cinema_fe/data/models/movie.dart';
 import 'package:cinema_fe/data/models/otp_sent_response.dart';
 import 'package:cinema_fe/data/models/payment.dart';
+import 'package:cinema_fe/data/models/paged_result.dart';
 import 'package:cinema_fe/data/models/seat.dart';
 import 'package:cinema_fe/data/models/showtime.dart';
 import 'package:cinema_fe/data/repositories/auth_repository.dart';
@@ -17,6 +18,35 @@ import 'package:url_launcher_platform_interface/url_launcher_platform_interface.
 import 'fixtures.dart';
 
 class FakeAuthRepository implements AuthRepository {
+  @override
+  Future<PagedResult<AuthUser>> users({
+    int page = 1,
+    String? keyword,
+    String? role,
+    bool? enabled,
+  }) async =>
+      throw UnsupportedError('Admin API is not configured in this fake.');
+  @override
+  Future<AuthUser> getUser(int id) async =>
+      throw UnsupportedError('Admin API is not configured in this fake.');
+  @override
+  Future<List<String>> roles() async =>
+      throw UnsupportedError('Admin API is not configured in this fake.');
+  @override
+  Future<AuthUser> createUser({
+    required String fullName,
+    required String email,
+    required String password,
+    String? phone,
+    required List<String> roles,
+  }) async =>
+      throw UnsupportedError('Admin API is not configured in this fake.');
+  @override
+  Future<AuthUser> updateUserRoles(int id, List<String> roles) async =>
+      throw UnsupportedError('Admin API is not configured in this fake.');
+  @override
+  Future<AuthUser> updateUserStatus(int id, bool enabled) async =>
+      throw UnsupportedError('Admin API is not configured in this fake.');
   FakeAuthRepository({
     this.loginErrorMessage,
     this.registerErrorMessage,

@@ -224,6 +224,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ],
               const SizedBox(height: AppSpacing.xl),
+              if (user.roles.contains('ROLE_ADMIN')) ...[
+                AppButton.secondary(
+                  label: 'Manage accounts',
+                  leadingIcon: Icons.admin_panel_settings_outlined,
+                  onPressed: () =>
+                      Navigator.pushNamed(context, AppRoutes.adminUsers),
+                ),
+                const SizedBox(height: AppSpacing.md),
+              ],
               AppButton.secondary(
                 label: 'Change password',
                 leadingIcon: Icons.lock_outline,

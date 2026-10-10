@@ -27,17 +27,20 @@ Cập nhật: 10/10/2026. Đây là bảng kiểm tra kết nối API, không ph
 | Danh sách thông báo/làm mới | `/notifications` | GET `/api/v1/notifications/user/{userId}` | Đã nối; đọc đủ các trang |
 | Chi tiết thông báo/mở vé liên quan | `/notifications/{id}` | GET `/api/v1/notifications/{id}`; GET `/api/v1/bookings/{id}` khi mở vé | Đã nối; tải theo ID, hỗ trợ mở lại URL |
 | Làm mới phiên | Không có màn riêng | POST `/api/v1/auth/refresh` | Đã nối tự động trong lớp API |
+| Quản lý tài khoản Admin | `/admin/users` | GET `/api/v1/auth/users`; GET `/api/v1/auth/roles` | Đã nối; tìm kiếm, lọc quyền/trạng thái, phân trang; chỉ ROLE_ADMIN |
+| Chi tiết/phân quyền/khóa tài khoản | `/admin/users/{id}` | GET `/api/v1/auth/users/{id}`; GET `/api/v1/auth/roles`; PUT `/api/v1/auth/users/{id}/roles`; PATCH `/api/v1/auth/users/{id}/status` | Đã nối; chỉ ROLE_ADMIN |
+| Tạo tài khoản (Admin quản lý) | `/admin/users/new` | GET `/api/v1/auth/roles`; POST `/api/v1/auth/users` | Đã nối; chọn một hoặc nhiều quyền; chỉ ROLE_ADMIN |
 
 ## Tài khoản
 
 | Chức năng | Method | Endpoint | UI hiện có | Nguồn backend |
 |---|---|---|---|---|
-| Danh sách tài khoản | GET | `/api/v1/auth/users` | Chưa có UI nối endpoint này | [UsersController:24](../../Cinema_BE/AuthService/AuthService/Controllers/UsersController.cs#L24) |
-| Chi tiết tài khoản | GET | `/api/v1/auth/users/{id}` | Chưa có UI nối endpoint này | [UsersController:36](../../Cinema_BE/AuthService/AuthService/Controllers/UsersController.cs#L36) |
-| Tạo tài khoản | POST | `/api/v1/auth/users` | Chưa có UI nối endpoint này | [UsersController:43](../../Cinema_BE/AuthService/AuthService/Controllers/UsersController.cs#L43) |
-| Đổi quyền tài khoản | PUT | `/api/v1/auth/users/{id}/roles` | Chưa có UI nối endpoint này | [UsersController:51](../../Cinema_BE/AuthService/AuthService/Controllers/UsersController.cs#L51) |
-| Bật/tắt tài khoản | PATCH | `/api/v1/auth/users/{id}/status` | Chưa có UI nối endpoint này | [UsersController:58](../../Cinema_BE/AuthService/AuthService/Controllers/UsersController.cs#L58) |
-| Danh sách vai trò | GET | `/api/v1/auth/roles` | Chưa có UI nối endpoint này | [RolesController:20](../../Cinema_BE/AuthService/AuthService/Controllers/RolesController.cs#L20) |
+| Danh sách tài khoản | GET | `/api/v1/auth/users` | Admin → Manage accounts · đã nối API | [UsersController:24](../../Cinema_BE/AuthService/AuthService/Controllers/UsersController.cs#L24) |
+| Chi tiết tài khoản | GET | `/api/v1/auth/users/{id}` | Admin → Account details · đã nối API | [UsersController:36](../../Cinema_BE/AuthService/AuthService/Controllers/UsersController.cs#L36) |
+| Tạo tài khoản | POST | `/api/v1/auth/users` | Admin → Create account · đã nối API | [UsersController:43](../../Cinema_BE/AuthService/AuthService/Controllers/UsersController.cs#L43) |
+| Đổi quyền tài khoản | PUT | `/api/v1/auth/users/{id}/roles` | Admin → Account details → Save roles · đã nối API | [UsersController:51](../../Cinema_BE/AuthService/AuthService/Controllers/UsersController.cs#L51) |
+| Bật/tắt tài khoản | PATCH | `/api/v1/auth/users/{id}/status` | Admin → Account details → Lock/Unlock account · đã nối API | [UsersController:58](../../Cinema_BE/AuthService/AuthService/Controllers/UsersController.cs#L58) |
+| Danh sách vai trò | GET | `/api/v1/auth/roles` | Bộ lọc/quyền tại các màn Admin · đã nối API | [RolesController:20](../../Cinema_BE/AuthService/AuthService/Controllers/RolesController.cs#L20) |
 | Đăng ký tài khoản và gửi OTP | POST | `/api/v1/auth/register` | Đăng ký · đã nối API | [AuthController:22](../../Cinema_BE/AuthService/AuthService/Controllers/AuthController.cs#L22) |
 | Xác thực email | POST | `/api/v1/auth/verify-email` | Xác thực email · đã nối API | [AuthController:30](../../Cinema_BE/AuthService/AuthService/Controllers/AuthController.cs#L30) |
 | Gửi lại OTP xác thực | POST | `/api/v1/auth/resend-verification` | Gửi lại OTP · đã nối API | [AuthController:38](../../Cinema_BE/AuthService/AuthService/Controllers/AuthController.cs#L38) |

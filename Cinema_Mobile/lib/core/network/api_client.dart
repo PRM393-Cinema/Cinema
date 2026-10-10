@@ -44,6 +44,18 @@ class ApiClient {
     );
   }
 
+  Future<Object?> put(
+    String path, {
+    Object? body,
+    bool authenticated = false,
+  }) => _send('PUT', path, body: body, authenticated: authenticated);
+
+  Future<Object?> patch(
+    String path, {
+    Object? body,
+    bool authenticated = false,
+  }) => _send('PATCH', path, body: body, authenticated: authenticated);
+
   Future<Object?> _send(
     String method,
     String path, {
@@ -114,6 +126,16 @@ class ApiClient {
       final future = switch (method) {
         'GET' => _httpClient.get(uri, headers: headers),
         'POST' => _httpClient.post(
+          uri,
+          headers: headers,
+          body: body == null ? null : jsonEncode(body),
+        ),
+        'PUT' => _httpClient.put(
+          uri,
+          headers: headers,
+          body: body == null ? null : jsonEncode(body),
+        ),
+        'PATCH' => _httpClient.patch(
           uri,
           headers: headers,
           body: body == null ? null : jsonEncode(body),

@@ -1,4 +1,5 @@
 import '../models/auth_response.dart';
+import '../models/paged_result.dart';
 import '../models/login_request.dart';
 import '../models/otp_sent_response.dart';
 import '../models/register_request.dart';
@@ -8,6 +9,23 @@ import '../services/auth_service.dart';
 import '../storage/auth_token_storage.dart';
 
 abstract interface class AuthRepository {
+  Future<PagedResult<AuthUser>> users({
+    int page = 1,
+    String? keyword,
+    String? role,
+    bool? enabled,
+  });
+  Future<AuthUser> getUser(int id);
+  Future<List<String>> roles();
+  Future<AuthUser> createUser({
+    required String fullName,
+    required String email,
+    required String password,
+    String? phone,
+    required List<String> roles,
+  });
+  Future<AuthUser> updateUserRoles(int id, List<String> roles);
+  Future<AuthUser> updateUserStatus(int id, bool enabled);
   Future<AuthResponse> login({required String email, required String password});
 
   Future<OtpSentResponse> register({
@@ -51,6 +69,43 @@ class RemoteAuthRepository implements AuthRepository {
 
   final AuthService _authService;
   final AuthTokenStorage _tokenStorage;
+
+  @override
+  Future<PagedResult<AuthUser>> users({
+    int page = 1,
+    String? keyword,
+    String? role,
+    bool? enabled,
+  }) => _authService.users(
+    page: page,
+    keyword: keyword,
+    role: role,
+    enabled: enabled,
+  );
+  @override
+  Future<AuthUser> getUser(int id) => _authService.user(id);
+  @override
+  Future<List<String>> roles() => _authService.roles();
+  @override
+  Future<AuthUser> createUser({
+    required String fullName,
+    required String email,
+    required String password,
+    String? phone,
+    required List<String> roles,
+  }) => _authService.createUser(
+    fullName: fullName,
+    email: email,
+    password: password,
+    phone: phone,
+    roles: roles,
+  );
+  @override
+  Future<AuthUser> updateUserRoles(int id, List<String> roles) =>
+      _authService.updateUserRoles(id, roles);
+  @override
+  Future<AuthUser> updateUserStatus(int id, bool enabled) =>
+      _authService.updateUserStatus(id, enabled);
 
   @override
   Future<AuthResponse> login({

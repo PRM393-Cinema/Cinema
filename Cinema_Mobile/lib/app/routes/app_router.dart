@@ -6,6 +6,7 @@ import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/booking_repository.dart';
 import '../../data/repositories/catalog_repository.dart';
 import '../../features/auth/screens/forgot_password_screen.dart';
+import '../../features/admin/screens/admin_users_screen.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/register_screen.dart';
 import '../../features/auth/screens/reset_password_screen.dart';
@@ -90,6 +91,11 @@ class AppRouter {
     final uri = Uri.tryParse(settings.name ?? AppRoutes.home);
     if (uri == null || uri.hasScheme || uri.hasAuthority) return null;
     final args = settings.arguments;
+    if (uri.path.startsWith('/admin/') &&
+        session.isAuthenticated &&
+        !(session.user?.roles.contains('ROLE_ADMIN') ?? false)) {
+      return _RouteMatch(const RouteSettings(name: AppRoutes.home), _home);
+    }
 
     final guestOnly = switch (uri.path) {
       AppRoutes.login || AppRoutes.register || AppRoutes.verifyEmail => true,
@@ -103,6 +109,18 @@ class AppRouter {
     }
 
     switch (uri.path) {
+      case AppRoutes.adminUsers:
+        return _RouteMatch(
+          settings,
+          (_) => AdminUsersScreen(repository: authRepository),
+          signInRequired: true,
+        );
+      case AppRoutes.adminCreateUser:
+        return _RouteMatch(
+          settings,
+          (_) => AdminCreateUserScreen(repository: authRepository),
+          signInRequired: true,
+        );
       case '/':
       case AppRoutes.home:
         return _RouteMatch(const RouteSettings(name: AppRoutes.home), _home);
@@ -154,6 +172,18 @@ class AppRouter {
     }
 
     final segments = uri.pathSegments;
+    if (segments.length == 3 &&
+        segments[0] == 'admin' &&
+        segments[1] == 'users') {
+      final userId = int.tryParse(segments[2]);
+      if (userId == null || userId <= 0) return null;
+      return _RouteMatch(
+        settings,
+        (_) =>
+            AdminUserDetailScreen(repository: authRepository, userId: userId),
+        signInRequired: true,
+      );
+    }
     final id = segments.length > 1 ? int.tryParse(segments[1]) : null;
     if (id == null) return null;
     final page = segments.length == 3 ? segments[2] : null;
