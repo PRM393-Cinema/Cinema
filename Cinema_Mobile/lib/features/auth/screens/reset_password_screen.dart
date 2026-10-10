@@ -9,6 +9,7 @@ import '../widgets/auth_scaffold.dart';
 import '../widgets/auth_success_dialog.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/widgets/app_button.dart';
+import '../../../core/widgets/cinema_page.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../auth_error_messages.dart';
@@ -110,12 +111,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     final email = ModalRoute.of(context)?.settings.arguments as String?;
 
     if (email == null || email.isEmpty) {
-      return Scaffold(
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          title: const Text('Reset password'),
-        ),
-        body: Center(
+      return CinemaPage(
+        title: 'Reset password',
+        child: Center(
           child: AppButton.secondary(
             label: 'Request a new code',
             onPressed: () => Navigator.pushReplacementNamed(

@@ -9,6 +9,7 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/utils/layout.dart';
 import '../../../core/widgets/app_button.dart';
+import '../../../core/widgets/cinema_page.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/cinema_background.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
@@ -108,12 +109,9 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
     final args = ModalRoute.of(context)?.settings.arguments;
 
     if (args is! BookingDraft) {
-      return Scaffold(
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          title: const Text('Booking Summary'),
-        ),
-        body: const ErrorState(
+      return CinemaPage(
+        title: 'Booking Summary',
+        child: const ErrorState(
           title: 'Draft not found',
           message: 'Please return and select your seats again.',
         ),

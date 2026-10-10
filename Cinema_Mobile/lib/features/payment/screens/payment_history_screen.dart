@@ -8,9 +8,10 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/session/session_state.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/utils/layout.dart';
-import '../../../core/widgets/cinema_background.dart';
+
 import '../../../core/widgets/cinema_account_widgets.dart';
 import '../../../core/widgets/loading_state.dart';
+import '../../../core/widgets/cinema_page.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../data/models/payment.dart';
@@ -75,13 +76,8 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      automaticallyImplyLeading: false,
-      title: const Text('Payment history'),
-    ),
-    body: CinemaBackground(child: _body()),
-  );
+  Widget build(BuildContext context) =>
+      CinemaPage(title: 'Payment history', child: _body());
 
   Widget _body() {
     if (_loading) return const LoadingState(message: 'Loading payments...');
@@ -126,6 +122,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
               AppRoutes.bookingDetail(payment.bookingId),
             ),
             child: CinemaPanel(
+              surfaceOpacity: 0.8,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

@@ -10,6 +10,7 @@ import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_network_image.dart';
 import '../../../core/widgets/empty_state.dart';
+import '../../../core/widgets/cinema_page.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_state.dart';
 import '../../../core/widgets/cinema_background.dart';
@@ -151,25 +152,20 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
 
     if (movie == null) {
       final error = _movieError;
-      return Scaffold(
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          title: const Text('Movie Detail'),
-        ),
-        body: CinemaBackground(
-          child: _isLoadingMovie
-              ? const LoadingState(message: 'Loading movie...')
-              : error != null
-              ? ErrorState(
-                  title: 'Unable to load the movie',
-                  message: error,
-                  onRetry: _retryMovie,
-                )
-              : const ErrorState(
-                  title: 'Movie not found',
-                  message: 'Please return home and select a movie again.',
-                ),
-        ),
+      return CinemaPage(
+        title: 'Movie Detail',
+        child: _isLoadingMovie
+            ? const LoadingState(message: 'Loading movie...')
+            : error != null
+            ? ErrorState(
+                title: 'Unable to load the movie',
+                message: error,
+                onRetry: _retryMovie,
+              )
+            : const ErrorState(
+                title: 'Movie not found',
+                message: 'Please return home and select a movie again.',
+              ),
       );
     }
 

@@ -120,14 +120,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: true,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: const Text('Account settings'),
-      ),
       body: CinemaGlassBackground(
         key: _glassBackgroundKey,
         child: CinemaBackground(
-          child: SafeArea(bottom: false, child: Builder(builder: _buildBody)),
+          child: SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                const Padding(
+                  padding: EdgeInsets.all(AppSpacing.lg),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Account settings',
+                      style: AppTextStyles.heading2,
+                    ),
+                  ),
+                ),
+                Expanded(child: Builder(builder: _buildBody)),
+              ],
+            ),
+          ),
         ),
       ),
       bottomNavigationBar: CinemaNavigationBar(
@@ -273,6 +286,7 @@ class _InfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CinemaPanel(
+      surfaceOpacity: 0.8,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

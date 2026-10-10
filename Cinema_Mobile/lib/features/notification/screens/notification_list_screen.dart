@@ -10,9 +10,10 @@ import '../../../core/session/session_state.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/utils/layout.dart';
 import '../../../core/widgets/empty_state.dart';
+import '../../../core/widgets/cinema_page.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_state.dart';
-import '../../../core/widgets/cinema_background.dart';
+
 import '../../../core/widgets/cinema_account_widgets.dart';
 import '../../../data/models/app_notification.dart';
 import '../../../data/repositories/booking_repository.dart';
@@ -86,13 +87,7 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: const Text('Notifications'),
-      ),
-      body: CinemaBackground(child: SafeArea(child: _buildBody())),
-    );
+    return CinemaPage(title: 'Notifications', child: _buildBody());
   }
 
   Widget _buildBody() {
@@ -117,6 +112,7 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
           children: [
             const SizedBox(height: AppSpacing.xxxl),
             CinemaPanel(
+              surfaceOpacity: 0.8,
               child: EmptyState(
                 icon: Icons.notifications_none_outlined,
                 title: 'You’re all caught up',
@@ -187,6 +183,7 @@ class _NotificationTile extends StatelessWidget {
         onTap: onTap,
         borderRadius: AppRadius.borderRadiusMd,
         child: CinemaPanel(
+          surfaceOpacity: 0.8,
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

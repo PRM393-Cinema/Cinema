@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../../../app/routes/app_routes.dart';
 import '../../../app/theme/app_colors.dart';
-import '../../../app/theme/app_radius.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/app_button.dart';
+import '../../../core/widgets/cinema_page.dart';
+import '../../../core/widgets/cinema_account_widgets.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_state.dart';
 import '../../../data/models/booking.dart';
@@ -122,19 +123,16 @@ class _PaymentResultScreenState extends State<PaymentResultScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Payment Result'),
-        automaticallyImplyLeading: false,
-        actions: [
-          IconButton(
-            tooltip: 'Close',
-            onPressed: _goHome,
-            icon: const Icon(Icons.close),
-          ),
-        ],
-      ),
-      body: SafeArea(child: _buildBody()),
+    return CinemaPage(
+      title: 'Payment Result',
+      actions: [
+        IconButton(
+          tooltip: 'Close',
+          onPressed: _goHome,
+          icon: const Icon(Icons.close),
+        ),
+      ],
+      child: _buildBody(),
     );
   }
 
@@ -196,13 +194,18 @@ class _PaymentResultScreenState extends State<PaymentResultScreen> {
   List<Widget> _actions(_Outcome outcome, Booking booking) {
     return switch (outcome) {
       _Outcome.confirmed || _Outcome.refund => [
-        AppButton(label: 'View my bookings', onPressed: _openMyBookings),
+        AppButton(
+          label: 'View my bookings',
+          useGradient: true,
+          onPressed: _openMyBookings,
+        ),
         const SizedBox(height: AppSpacing.md),
         AppButton.secondary(label: 'Back to home', onPressed: _goHome),
       ],
       _Outcome.pending => [
         AppButton(
           label: 'Check again',
+          useGradient: true,
           onPressed: () => _load(verifyAgain: true),
         ),
         if (booking.isAwaitingPayment()) ...[
@@ -219,7 +222,9 @@ class _PaymentResultScreenState extends State<PaymentResultScreen> {
         const SizedBox(height: AppSpacing.md),
         AppButton.secondary(label: 'Back to home', onPressed: _goHome),
       ],
-      _Outcome.failed => [AppButton(label: 'Back to home', onPressed: _goHome)],
+      _Outcome.failed => [
+        AppButton(label: 'Back to home', useGradient: true, onPressed: _goHome),
+      ],
     };
   }
 }
@@ -237,7 +242,7 @@ class _OutcomeHeader extends StatelessWidget {
     final (icon, color, title, message) = switch (outcome) {
       _Outcome.confirmed => (
         Icons.check_circle_outline,
-        AppColors.success,
+        AppColors.primary,
         'Payment successful',
         email == null
             ? 'Your booking is confirmed. Your tickets have been emailed to you.'
@@ -292,12 +297,9 @@ class _TicketCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final showTime = booking.showTime;
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: AppRadius.borderRadiusMd,
-        border: Border.all(color: AppColors.border),
-      ),
+    return CinemaPanel(
+      surfaceOpacity: 0.8,
+      padding: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(

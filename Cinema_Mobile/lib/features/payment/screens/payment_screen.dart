@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/routes/app_routes.dart';
@@ -14,6 +15,7 @@ import '../../../core/utils/layout.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/cinema_background.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
+import '../../../core/widgets/cinema_page.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_state.dart';
 import '../../../data/models/booking.dart';
@@ -322,22 +324,16 @@ class _PaymentScreenState extends State<PaymentScreen>
     final booking = _booking;
 
     if (booking == null && _isLoadingBooking) {
-      return Scaffold(
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          title: const Text('Payment'),
-        ),
-        body: const LoadingState(message: 'Loading booking...'),
+      return CinemaPage(
+        title: 'Payment',
+        child: const LoadingState(message: 'Loading booking...'),
       );
     }
 
     if (booking == null) {
-      return Scaffold(
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          title: const Text('Payment'),
-        ),
-        body: ErrorState(
+      return CinemaPage(
+        title: 'Payment',
+        child: ErrorState(
           title: 'Booking not found',
           message:
               'Open your booking from My Bookings to continue the payment.',

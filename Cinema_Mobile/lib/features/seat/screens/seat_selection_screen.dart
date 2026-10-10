@@ -12,6 +12,7 @@ import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_network_image.dart';
 import '../../../core/widgets/empty_state.dart';
+import '../../../core/widgets/cinema_page.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_state.dart';
 import '../../../core/widgets/cinema_background.dart';
@@ -179,12 +180,9 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
 
     if (args == null) {
       final error = _errorMessage;
-      return Scaffold(
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          title: const Text('Seat Selection'),
-        ),
-        body: _showtimeRequested && _isLoading
+      return CinemaPage(
+        title: 'Seat Selection',
+        child: _showtimeRequested && _isLoading
             ? const LoadingState(message: 'Loading showtime...')
             : _showtimeRequested && error != null
             ? ErrorState(
