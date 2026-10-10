@@ -10,6 +10,8 @@ import '../../../core/utils/formatters.dart';
 import '../../../core/utils/layout.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/error_state.dart';
+import '../../../core/widgets/cinema_background.dart';
+import '../../../core/widgets/cinema_account_widgets.dart';
 import '../../../data/models/booking_draft.dart';
 import '../../../data/repositories/booking_repository.dart';
 
@@ -123,128 +125,145 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
     final seatLabels = draft.seats.map((seat) => seat.label).join(', ');
 
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: const Text('Booking Summary'),
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: centeredPadding(context, AppSpacing.xl),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _SummaryCard(
-                      title: 'Movie',
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            draft.movie.title,
-                            style: AppTextStyles.heading2,
-                          ),
-                          const SizedBox(height: AppSpacing.sm),
-                          _DetailRow(
-                            icon: Icons.calendar_today_outlined,
-                            text: formatLongDate(showtime.startTime),
-                          ),
-                          _DetailRow(
-                            icon: Icons.access_time_outlined,
-                            text: formatTime(showtime.startTime),
-                          ),
-                          _DetailRow(
-                            icon: Icons.meeting_room_outlined,
-                            text: showtime.roomLabel,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.xl),
-                    _SummaryCard(
-                      title: 'Seats',
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(seatLabels, style: AppTextStyles.body),
-                          const SizedBox(height: AppSpacing.xs),
-                          Text(
-                            '${draft.ticketCount} Ticket(s)',
-                            style: AppTextStyles.bodySmall,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.xl),
-                    _SummaryCard(
-                      title: 'Price Details',
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                '${draft.ticketCount}x Ticket (${formatVnd(showtime.price)})',
-                                style: AppTextStyles.body,
-                              ),
-                              Text(
-                                formatVnd(draft.totalPrice),
-                                style: AppTextStyles.body,
-                              ),
-                            ],
-                          ),
-                          const Padding(
-                            padding: EdgeInsets.symmetric(
-                              vertical: AppSpacing.md,
-                            ),
-                            child: Divider(height: 1),
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text(
-                                'Total',
-                                style: AppTextStyles.heading2,
-                              ),
-                              Text(
-                                formatVnd(draft.totalPrice),
-                                style: AppTextStyles.heading2.copyWith(
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    const Text(
-                      'Your seats will be held for 10 minutes while you pay with PayOS.',
-                      style: AppTextStyles.bodySmall,
-                    ),
-                    if (_errorMessage != null) ...[
-                      const SizedBox(height: AppSpacing.lg),
-                      _ErrorBanner(message: _errorMessage!),
-                    ],
-                  ],
+      body: CinemaBackground(
+        child: SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: centeredPadding(context, AppSpacing.lg),
+                child: const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text('Booking Summary', style: AppTextStyles.heading2),
                 ),
               ),
-            ),
-            Container(
-              width: double.infinity,
-              padding: centeredPadding(context, AppSpacing.xl),
-              decoration: const BoxDecoration(
-                color: AppColors.surface,
-                border: Border(top: BorderSide(color: AppColors.border)),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: centeredPadding(context, AppSpacing.xl),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _SummaryCard(
+                        title: 'Movie',
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              draft.movie.title,
+                              style: AppTextStyles.heading2,
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                            _DetailRow(
+                              icon: Icons.calendar_today_outlined,
+                              text: formatLongDate(showtime.startTime),
+                            ),
+                            _DetailRow(
+                              icon: Icons.access_time_outlined,
+                              text: formatTime(showtime.startTime),
+                            ),
+                            _DetailRow(
+                              icon: Icons.meeting_room_outlined,
+                              text: showtime.roomLabel,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.xl),
+                      _SummaryCard(
+                        title: 'Seats',
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(seatLabels, style: AppTextStyles.body),
+                            const SizedBox(height: AppSpacing.xs),
+                            Text(
+                              '${draft.ticketCount} Ticket(s)',
+                              style: AppTextStyles.bodySmall,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.xl),
+                      _SummaryCard(
+                        title: 'Price Details',
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    '${draft.ticketCount}x Ticket (${formatVnd(showtime.price)})',
+                                    style: AppTextStyles.body,
+                                  ),
+                                ),
+                                const SizedBox(width: AppSpacing.sm),
+                                Text(
+                                  formatVnd(draft.totalPrice),
+                                  style: AppTextStyles.body,
+                                ),
+                              ],
+                            ),
+                            const Padding(
+                              padding: EdgeInsets.symmetric(
+                                vertical: AppSpacing.md,
+                              ),
+                              child: Divider(
+                                height: 1,
+                                color: AppColors.border,
+                              ),
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'Total',
+                                  style: AppTextStyles.heading2,
+                                ),
+                                Text(
+                                  formatVnd(draft.totalPrice),
+                                  style: AppTextStyles.heading2.copyWith(
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      const Text(
+                        'Your seats will be held for 10 minutes while you pay with PayOS.',
+                        style: AppTextStyles.bodySmall,
+                      ),
+                      if (_errorMessage != null) ...[
+                        const SizedBox(height: AppSpacing.lg),
+                        _ErrorBanner(message: _errorMessage!),
+                      ],
+                    ],
+                  ),
+                ),
               ),
-              child: AppButton(
-                label: 'Confirm Booking',
-                isLoading: _isSubmitting,
-                onPressed: _isSubmitting ? null : () => _confirmBooking(draft),
+              Padding(
+                padding: centeredPadding(
+                  context,
+                  AppSpacing.lg,
+                ).copyWith(top: AppSpacing.sm),
+                child: CinemaPanel(
+                  surfaceOpacity: 0.72,
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: AppButton(
+                    label: 'Confirm Booking',
+                    useGradient: true,
+                    trailingIcon: Icons.arrow_forward_rounded,
+                    isLoading: _isSubmitting,
+                    onPressed: _isSubmitting
+                        ? null
+                        : () => _confirmBooking(draft),
+                  ),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -264,16 +283,9 @@ class _SummaryCard extends StatelessWidget {
       children: [
         Text(title, style: AppTextStyles.caption),
         const SizedBox(height: AppSpacing.sm),
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: AppRadius.borderRadiusMd,
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            child: SizedBox(width: double.infinity, child: child),
-          ),
+        CinemaPanel(
+          surfaceOpacity: 0.8,
+          child: SizedBox(width: double.infinity, child: child),
         ),
       ],
     );

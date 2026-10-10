@@ -14,6 +14,8 @@ import '../../../core/widgets/app_network_image.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_state.dart';
+import '../../../core/widgets/cinema_background.dart';
+import '../../../core/widgets/cinema_account_widgets.dart';
 import '../../../data/models/booking_draft.dart';
 import '../../../data/models/movie.dart';
 import '../../../data/models/seat.dart';
@@ -205,80 +207,99 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
         .join(', ');
 
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: const Text('Select Seats'),
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            _ShowtimeSummary(movie: args.movie, showtime: showtime),
-            const Divider(height: 1, color: AppColors.border),
-            Expanded(child: _buildSeatMap(data)),
-            const Divider(height: 1, color: AppColors.border),
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.xl,
-                vertical: AppSpacing.lg,
+      body: CinemaBackground(
+        child: SafeArea(
+          child: Column(
+            children: [
+              const Padding(
+                padding: EdgeInsets.all(AppSpacing.lg),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text('Select Seats', style: AppTextStyles.heading2),
+                ),
               ),
-              color: AppColors.surface,
-              child: SafeArea(
-                top: false,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                child: CinemaPanel(
+                  padding: EdgeInsets.zero,
+                  surfaceOpacity: 0.8,
+                  child: _ShowtimeSummary(
+                    movie: args.movie,
+                    showtime: showtime,
+                  ),
+                ),
+              ),
+              Expanded(child: _buildSeatMap(data)),
+              Padding(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: CinemaPanel(
+                  surfaceOpacity: 0.72,
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: SafeArea(
+                    top: false,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        // A large total shrinks instead of pushing the
-                        // button off narrow screens.
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
+                        Row(
+                          children: [
+                            // A large total shrinks instead of pushing the
+                            // button off narrow screens.
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    '${_selectedSeatIds.length} seat(s)',
-                                    style: AppTextStyles.bodySmall,
-                                  ),
-                                  if (selectedLabels.isNotEmpty)
-                                    Flexible(
-                                      child: Text(
-                                        ' • $selectedLabels',
-                                        style: AppTextStyles.bodySmall.copyWith(
-                                          color: AppColors.textPrimary,
+                                  Row(
+                                    children: [
+                                      Text(
+                                        '${_selectedSeatIds.length} seat(s)',
+                                        style: AppTextStyles.bodySmall,
+                                      ),
+                                      if (selectedLabels.isNotEmpty)
+                                        Flexible(
+                                          child: Text(
+                                            ' • $selectedLabels',
+                                            style: AppTextStyles.bodySmall
+                                                .copyWith(
+                                                  color: AppColors.textPrimary,
+                                                ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
                                         ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
+                                    ],
+                                  ),
+                                  FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      formatVnd(totalPrice),
+                                      style: AppTextStyles.heading2.copyWith(
+                                        color: AppColors.primary,
                                       ),
                                     ),
+                                  ),
                                 ],
                               ),
-                              FittedBox(
-                                fit: BoxFit.scaleDown,
-                                alignment: Alignment.centerLeft,
-                                child: Text(
-                                  formatVnd(totalPrice),
-                                  style: AppTextStyles.heading2,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.lg),
-                        AppButton(
-                          label: 'Continue',
-                          onPressed: data != null && _selectedSeatIds.isNotEmpty
-                              ? () => _continue(args, data)
-                              : null,
+                            ),
+                            const SizedBox(width: AppSpacing.lg),
+                            AppButton(
+                              label: 'Continue',
+                              useGradient: true,
+                              trailingIcon: Icons.arrow_forward_rounded,
+                              onPressed:
+                                  data != null && _selectedSeatIds.isNotEmpty
+                                  ? () => _continue(args, data)
+                                  : null,
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

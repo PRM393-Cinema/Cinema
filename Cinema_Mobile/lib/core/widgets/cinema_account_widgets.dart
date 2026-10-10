@@ -812,18 +812,23 @@ class CinemaPanel extends StatelessWidget {
   const CinemaPanel({
     required this.child,
     this.padding = const EdgeInsets.all(AppSpacing.lg),
+    this.surfaceOpacity = 1,
     super.key,
   });
   final Widget child;
   final EdgeInsetsGeometry padding;
+  final double surfaceOpacity;
   @override
   Widget build(BuildContext context) => Container(
     padding: padding,
     decoration: BoxDecoration(
-      gradient: const LinearGradient(
+      gradient: LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [AppColors.surfaceSoft, AppColors.surface],
+        colors: [
+          AppColors.surfaceSoft.withValues(alpha: surfaceOpacity),
+          AppColors.surface.withValues(alpha: surfaceOpacity),
+        ],
       ),
       borderRadius: BorderRadius.circular(20),
       border: Border.all(color: AppColors.border),

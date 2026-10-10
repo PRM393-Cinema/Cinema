@@ -436,6 +436,7 @@ class _SelectionBar extends StatelessWidget {
         top: false,
         child: CinemaPanel(
           padding: const EdgeInsets.all(AppSpacing.md),
+          surfaceOpacity: 0.72,
           child: Center(
             heightFactor: 1,
             child: ConstrainedBox(
