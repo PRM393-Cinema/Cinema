@@ -12,6 +12,8 @@ import '../../../core/widgets/app_network_image.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_state.dart';
+import '../../../core/widgets/cinema_background.dart';
+import '../../../core/widgets/cinema_account_widgets.dart';
 import '../../../data/models/booking_draft.dart';
 import '../../../data/models/movie.dart';
 import '../../../data/models/showtime.dart';
@@ -154,63 +156,87 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
           automaticallyImplyLeading: false,
           title: const Text('Movie Detail'),
         ),
-        body: _isLoadingMovie
-            ? const LoadingState(message: 'Loading movie...')
-            : error != null
-            ? ErrorState(
-                title: 'Unable to load the movie',
-                message: error,
-                onRetry: _retryMovie,
-              )
-            : const ErrorState(
-                title: 'Movie not found',
-                message: 'Please return home and select a movie again.',
-              ),
+        body: CinemaBackground(
+          child: _isLoadingMovie
+              ? const LoadingState(message: 'Loading movie...')
+              : error != null
+              ? ErrorState(
+                  title: 'Unable to load the movie',
+                  message: error,
+                  onRetry: _retryMovie,
+                )
+              : const ErrorState(
+                  title: 'Movie not found',
+                  message: 'Please return home and select a movie again.',
+                ),
+        ),
       );
     }
 
     final selected = _selectedShowtime;
 
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: Text(movie.title),
-      ),
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final isWide = constraints.maxWidth >= 760;
+      extendBody: true,
+      body: CinemaBackground(
+        child: SafeArea(
+          bottom: false,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isWide = constraints.maxWidth >= 760;
 
-            return RefreshIndicator(
-              onRefresh: _loadShowtimes,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 1040),
-                    child: Padding(
-                      padding: EdgeInsets.all(
-                        isWide ? AppSpacing.xxl : AppSpacing.lg,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _MovieOverview(movie: movie, isWide: isWide),
-                          const SizedBox(height: AppSpacing.xxl),
-                          const Text(
-                            'Showtimes',
-                            style: AppTextStyles.heading2,
-                          ),
-                          const SizedBox(height: AppSpacing.md),
-                          _buildShowtimes(),
-                        ],
+              return RefreshIndicator(
+                onRefresh: _loadShowtimes,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1040),
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          isWide ? AppSpacing.xxl : AppSpacing.lg,
+                          AppSpacing.xl,
+                          isWide ? AppSpacing.xxl : AppSpacing.lg,
+                          AppSpacing.xl + MediaQuery.paddingOf(context).bottom,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            CinemaPanel(
+                              child: _MovieOverview(
+                                movie: movie,
+                                isWide: isWide,
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.xxl),
+                            const Row(
+                              children: [
+                                Icon(
+                                  Icons.schedule_rounded,
+                                  color: AppColors.primary,
+                                ),
+                                SizedBox(width: AppSpacing.sm),
+                                Text(
+                                  'Showtimes',
+                                  style: AppTextStyles.heading2,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                            const Text(
+                              'Choose your cinema moment.',
+                              style: AppTextStyles.bodySmall,
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+                            _buildShowtimes(),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
       bottomNavigationBar: _SelectionBar(
@@ -280,8 +306,8 @@ class _MovieOverview extends StatelessWidget {
           children: [
             AppNetworkImage(
               imageUrl: movie.posterUrl,
-              width: isWide ? 220 : 116,
-              height: isWide ? 330 : 174,
+              width: isWide ? 220 : 96,
+              height: isWide ? 330 : 144,
               borderRadius: AppRadius.borderRadiusLg,
             ),
             SizedBox(width: isWide ? AppSpacing.xxl : AppSpacing.lg),
@@ -373,7 +399,7 @@ class _InfoPill extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.surface.withValues(alpha: 0.55),
         borderRadius: AppRadius.borderRadiusSm,
         border: Border.all(color: AppColors.border),
       ),
@@ -399,62 +425,62 @@ class _SelectionBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final selected = showtime;
 
-    return Container(
+    return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.lg,
-        AppSpacing.md,
+        AppSpacing.sm,
         AppSpacing.lg,
-        AppSpacing.lg,
-      ),
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        border: Border(top: BorderSide(color: AppColors.border)),
+        AppSpacing.sm,
       ),
       child: SafeArea(
         top: false,
-        child: Center(
-          heightFactor: 1,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (selected == null)
-                  const Text(
-                    'Choose a showtime to continue.',
-                    style: AppTextStyles.bodySmall,
-                    textAlign: TextAlign.center,
-                  )
-                else
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          '${formatShortDate(selected.startTime)} • '
-                          '${formatTime(selected.startTime)} • '
-                          '${selected.roomLabel}',
-                          style: AppTextStyles.bodySmall.copyWith(
-                            color: AppColors.textPrimary,
+        child: CinemaPanel(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Center(
+            heightFactor: 1,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (selected == null)
+                    const Text(
+                      'Choose a showtime to continue.',
+                      style: AppTextStyles.bodySmall,
+                      textAlign: TextAlign.center,
+                    )
+                  else
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            '${formatShortDate(selected.startTime)} • '
+                            '${formatTime(selected.startTime)} • '
+                            '${selected.roomLabel}',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.textPrimary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                      const SizedBox(width: AppSpacing.md),
-                      Text(
-                        '${formatVnd(selected.price)} / seat',
-                        style: AppTextStyles.bodySmall,
-                      ),
-                    ],
+                        const SizedBox(width: AppSpacing.md),
+                        Text(
+                          '${formatVnd(selected.price)} / seat',
+                          style: AppTextStyles.bodySmall,
+                        ),
+                      ],
+                    ),
+                  const SizedBox(height: AppSpacing.md),
+                  AppButton(
+                    label: 'Continue to Seats',
+                    leadingIcon: Icons.event_seat_outlined,
+                    useGradient: true,
+                    onPressed: onContinue,
                   ),
-                const SizedBox(height: AppSpacing.md),
-                AppButton(
-                  label: 'Continue to Seats',
-                  leadingIcon: Icons.event_seat_outlined,
-                  onPressed: onContinue,
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

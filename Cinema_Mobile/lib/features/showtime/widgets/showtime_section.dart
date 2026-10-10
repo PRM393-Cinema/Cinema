@@ -17,9 +17,6 @@ class ShowtimeSection extends StatelessWidget {
     super.key,
   });
 
-  // Three chips per row on a 375px phone.
-  static const _chipWidth = 104.0;
-
   final List<Showtime> showtimes;
   final int? selectedShowtimeId;
   final ValueChanged<Showtime> onSelected;
@@ -45,23 +42,27 @@ class ShowtimeSection extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
-          Wrap(
-            spacing: AppSpacing.md,
-            runSpacing: AppSpacing.md,
-            children: [
-              for (final showtime in entry.value)
-                SizedBox(
-                  width: _chipWidth,
-                  child: ShowtimeChip(
-                    time: formatTime(showtime.startTime),
-                    room: showtime.roomLabel,
-                    price: formatVnd(showtime.price),
-                    isSelected: showtime.id == selectedShowtimeId,
-                    isAvailable: showtime.isOpen,
-                    onTap: () => onSelected(showtime),
+          LayoutBuilder(
+            builder: (context, constraints) => Wrap(
+              spacing: AppSpacing.md,
+              runSpacing: AppSpacing.md,
+              children: [
+                for (final showtime in entry.value)
+                  SizedBox(
+                    width: constraints.maxWidth >= 300
+                        ? (constraints.maxWidth - AppSpacing.md * 2) / 3
+                        : (constraints.maxWidth - AppSpacing.md) / 2,
+                    child: ShowtimeChip(
+                      time: formatTime(showtime.startTime),
+                      room: showtime.roomLabel,
+                      price: formatVnd(showtime.price),
+                      isSelected: showtime.id == selectedShowtimeId,
+                      isAvailable: showtime.isOpen,
+                      onTap: () => onSelected(showtime),
+                    ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: AppSpacing.lg),
         ],
