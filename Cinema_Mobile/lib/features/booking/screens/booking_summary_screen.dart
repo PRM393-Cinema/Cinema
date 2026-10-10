@@ -248,18 +248,14 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                   context,
                   AppSpacing.lg,
                 ).copyWith(top: AppSpacing.sm),
-                child: CinemaPanel(
-                  surfaceOpacity: 0.72,
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  child: AppButton(
-                    label: 'Confirm Booking',
-                    useGradient: true,
-                    trailingIcon: Icons.arrow_forward_rounded,
-                    isLoading: _isSubmitting,
-                    onPressed: _isSubmitting
-                        ? null
-                        : () => _confirmBooking(draft),
-                  ),
+                child: AppButton(
+                  label: 'Confirm Booking',
+                  useGradient: true,
+                  trailingIcon: Icons.arrow_forward_rounded,
+                  isLoading: _isSubmitting,
+                  onPressed: _isSubmitting
+                      ? null
+                      : () => _confirmBooking(draft),
                 ),
               ),
             ],

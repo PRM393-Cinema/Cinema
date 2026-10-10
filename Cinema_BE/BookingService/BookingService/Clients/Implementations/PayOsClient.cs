@@ -63,9 +63,26 @@ namespace BookingService.Clients.Implementations
 
             var response = await SendAsync(request, cancellationToken);
 
-            var result = await ReadResponseAsync<PayOsCreateResponse>(
-                response,
-                cancellationToken);
+            PayOsCreateResponse result;
+            try
+            {
+                result = await ReadResponseAsync<PayOsCreateResponse>(response, cancellationToken);
+            }
+            catch (ExternalServiceException)
+            {
+                // PayOS may have created the link before a previous DB transaction rolled back.
+                var existing = await GetPaymentStatusAsync(orderCode, cancellationToken);
+                if (existing.OrderCode != orderCode || existing.Amount != amountValue)
+                {
+                    throw new ExternalServiceException("The existing PayOS order does not match this booking.");
+                }
+                return new PayOsPaymentLink
+                {
+                    OrderCode = existing.OrderCode,
+                    PaymentLinkId = existing.PaymentLinkId,
+                    CheckoutUrl = existing.CheckoutUrl
+                };
+            }
 
             if (result.Data == null)
             {
@@ -107,10 +124,16 @@ namespace BookingService.Clients.Implementations
 
             return new PayOsPaymentStatus
             {
+                Amount = result.Data.Amount,
                 OrderCode = result.Data.OrderCode,
                 Status = result.Data.Status ?? string.Empty,
                 PaymentLinkId = result.Data.PaymentLinkId,
-                CheckoutUrl = result.Data.CheckoutUrl
+                // Status responses return the link id, not the checkout URL.
+                CheckoutUrl = result.Data.CheckoutUrl ??
+                    (string.Equals(result.Data.Status, "PENDING", StringComparison.OrdinalIgnoreCase) &&
+                     Guid.TryParseExact(result.Data.PaymentLinkId, "N", out var linkId)
+                        ? $"https://pay.payos.vn/web/{linkId:N}"
+                        : null)
             };
         }
 
@@ -269,12 +292,15 @@ namespace BookingService.Clients.Implementations
             [JsonPropertyName("checkoutUrl")]
             public string? CheckoutUrl { get; set; }
 
-            [JsonPropertyName("id")]
+            [JsonPropertyName("paymentLinkId")]
             public string? PaymentLinkId { get; set; }
         }
 
         private sealed class PayOsStatusData
         {
+            [JsonPropertyName("amount")]
+            public decimal Amount { get; set; }
+
             [JsonPropertyName("orderCode")]
             public long OrderCode { get; set; }
 

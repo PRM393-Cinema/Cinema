@@ -15,6 +15,7 @@ import '../../../data/models/booking.dart';
 import '../../../data/models/payment.dart';
 import '../../../data/repositories/booking_repository.dart';
 import 'my_bookings_screen.dart';
+import '../widgets/booking_cancellation_dialog.dart';
 
 class BookingDetailScreen extends StatefulWidget {
   const BookingDetailScreen({
@@ -122,32 +123,11 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
 
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: const Text('Cancel Booking?', style: AppTextStyles.title),
-        content: Text(
-          isPaid
-              ? 'You will receive a full refund of ${formatVnd(booking.totalAmount)}. '
-                    'The cinema transfers the money back and emails you when it is done.'
-              : 'Your seats will be released for other customers.',
-          style: AppTextStyles.body,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text(
-              'No, Keep It',
-              style: TextStyle(color: AppColors.textSecondary),
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(
-              'Yes, Cancel',
-              style: TextStyle(color: AppColors.error),
-            ),
-          ),
-        ],
+      builder: (_) => BookingCancellationDialog(
+        message: isPaid
+            ? 'You will receive a full refund of ${formatVnd(booking.totalAmount)}. '
+                  'The cinema transfers the money back and emails you when it is done.'
+            : 'Your seats will be released for other customers.',
       ),
     );
 
@@ -165,14 +145,11 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         _booking = cancelled;
         _isCancelling = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            isPaid
-                ? 'Booking cancelled. Your refund has been requested.'
-                : 'Booking cancelled.',
-          ),
-        ),
+      await showBookingCancellationNotice(
+        context,
+        message: isPaid
+            ? 'Your refund has been requested. We will email you once it is completed.'
+            : 'Your seats have been released.',
       );
       // The refund request is created in the background (RabbitMQ).
       await Future<void>.delayed(const Duration(seconds: 2));

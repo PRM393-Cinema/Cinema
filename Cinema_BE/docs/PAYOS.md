@@ -5,12 +5,16 @@ Key PayOS đặt ở đâu: [SETUP_SECRETS.md mục 6](SETUP_SECRETS.md#6-payos-
 ## 1. Luồng đặt vé và thanh toán
 
 1. `POST /api/v1/bookings`: booking `PENDING`, giữ ghế **10 phút** (`expiresAt`). Giờ chiếu và tên phim do server lấy từ MovieService, email nhận vé lấy từ token của khách.
-2. `POST /api/v1/payments/payos/checkout`: trả `checkoutUrl`, app mở link này. Link PayOS **hết hạn cùng lúc** với thời gian giữ ghế.
+2. `POST /api/v1/payments/payos/checkout`: chưa có payment thì tạo mới; đã có thì trả link PayOS cũ theo cùng `orderCode`, không tạo thêm payment. API tra cứu PayOS trả ID link, server khôi phục URL `https://pay.payos.vn/web/{id}` khi link còn `PENDING`. App hiển thị **Continue with PayOS** để mở lại. Link PayOS **hết hạn cùng lúc** với thời gian giữ ghế.
 3. Khách trả tiền, PayOS gọi **webhook** về BookingService. Chữ ký hợp lệ thì payment `SUCCESS`, booking `CONFIRMED` và email vé được gửi (qua RabbitMQ).
 4. PayOS chuyển khách về `returnUrl`. App gọi `POST /api/v1/payments/payos/{orderCode}/verify` để lấy kết quả. Webhook xử lý trước rồi thì verify chỉ trả kết quả, không xác nhận lần hai. Payment `REFUND_PENDING` nghĩa là tiền đã nhận nhưng không giữ được ghế (mục 4).
    - Khách bấm **Huỷ** trên trang PayOS (về `cancelUrl`): verify chuyển payment `FAILED`, booking `CANCELLED` và nhả ghế ngay.
 
 `orderCode` của PayOS chính là id của booking.
+
+Nếu PayOS đã tạo link nhưng lần lưu DB trước thất bại, lần checkout sau khôi phục đơn theo cùng `orderCode` và kiểm tra số tiền trước khi lưu payment. Không đổi mã đơn hoặc tạo link khác để né lỗi đơn tồn tại.
+
+Trang Payment không có nút “I have paid”: khi đã tạo giao dịch, app tự kiểm tra booking và xác minh PayOS mỗi 5 giây trong lúc trang đang mở, đồng thời kiểm tra khi quay lại từ PayOS. Server xác nhận thanh toán xong thì app chuyển sang kết quả; thao tác ở UI không tự đánh dấu đã thanh toán.
 
 ## 2. Trạng thái
 

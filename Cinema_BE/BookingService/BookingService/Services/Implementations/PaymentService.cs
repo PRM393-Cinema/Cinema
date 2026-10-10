@@ -249,13 +249,14 @@ namespace BookingService.Services.Implementations
                     await _bookingRepository.UpdateBookingAsync(
                         booking.Id,
                         booking);
+                    var existingLink = await _payOsClient.GetPaymentStatusAsync(orderCode);
                     await transaction.CommitAsync();
 
                     return new PayOsCheckoutResponse
                     {
                         paymentId = existingPaymentForOrder.Id,
                         orderCode = orderCode,
-                        checkoutUrl = null
+                        checkoutUrl = existingLink.CheckoutUrl
                     };
                 }
 

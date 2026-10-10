@@ -13,12 +13,14 @@ class AuthSuccessDialog extends StatefulWidget {
     required this.title,
     required this.message,
     required this.footer,
+    this.isCancellation = false,
     super.key,
   });
 
   final String title;
   final String message;
   final String footer;
+  final bool isCancellation;
 
   @override
   State<AuthSuccessDialog> createState() => _AuthSuccessDialogState();
@@ -26,6 +28,8 @@ class AuthSuccessDialog extends StatefulWidget {
 
 class _AuthSuccessDialogState extends State<AuthSuccessDialog>
     with SingleTickerProviderStateMixin {
+  Color get _accent =>
+      widget.isCancellation ? AppColors.error : AppColors.primary;
   late final _animation = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 1000),
@@ -108,12 +112,10 @@ class _AuthSuccessDialogState extends State<AuthSuccessDialog>
                   colors: [AppColors.surfaceSoft, AppColors.background],
                 ),
                 borderRadius: BorderRadius.circular(28),
-                border: Border.all(
-                  color: AppColors.primary.withValues(alpha: 0.35),
-                ),
+                border: Border.all(color: _accent.withValues(alpha: 0.35)),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.12),
+                    color: _accent.withValues(alpha: 0.12),
                     blurRadius: 28,
                   ),
                 ],
@@ -127,7 +129,10 @@ class _AuthSuccessDialogState extends State<AuthSuccessDialog>
                       width: 112,
                       height: 112,
                       child: CustomPaint(
-                        painter: _SuccessCheckPainter(_animation),
+                        painter: _SuccessCheckPainter(
+                          _animation,
+                          widget.isCancellation,
+                        ),
                       ),
                     ),
                     const SizedBox(height: AppSpacing.lg),
@@ -145,9 +150,7 @@ class _AuthSuccessDialogState extends State<AuthSuccessDialog>
                     const SizedBox(height: AppSpacing.lg),
                     Text(
                       widget.footer,
-                      style: AppTextStyles.caption.copyWith(
-                        color: AppColors.primary,
-                      ),
+                      style: AppTextStyles.caption.copyWith(color: _accent),
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -162,9 +165,11 @@ class _AuthSuccessDialogState extends State<AuthSuccessDialog>
 }
 
 class _SuccessCheckPainter extends CustomPainter {
-  _SuccessCheckPainter(this.animation) : super(repaint: animation);
+  _SuccessCheckPainter(this.animation, this.isCancellation)
+    : super(repaint: animation);
 
   final Animation<double> animation;
+  final bool isCancellation;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -175,7 +180,7 @@ class _SuccessCheckPainter extends CustomPainter {
     canvas.save();
     canvas.scale(size.width / 100, size.height / 100);
     final pen = Paint()
-      ..color = AppColors.primary
+      ..color = isCancellation ? AppColors.error : AppColors.primary
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3
       ..strokeCap = StrokeCap.round
@@ -187,23 +192,33 @@ class _SuccessCheckPainter extends CustomPainter {
       false,
       pen,
     );
-    final check = Path()
-      ..moveTo(28, 51)
-      ..lineTo(44, 66)
-      ..lineTo(73, 35);
-    final metric = check.computeMetrics().first;
+    final mark = isCancellation
+        ? (Path()
+            ..moveTo(34, 34)
+            ..lineTo(66, 66)
+            ..moveTo(66, 34)
+            ..lineTo(34, 66))
+        : (Path()
+            ..moveTo(28, 51)
+            ..lineTo(44, 66)
+            ..lineTo(73, 35));
+    final metrics = mark.computeMetrics().toList();
+    var remaining =
+        metrics.fold<double>(0, (length, metric) => length + metric.length) *
+        Curves.easeOutCubic.transform(phase(0.5, 1));
     pen.strokeWidth = 4;
-    canvas.drawPath(
-      metric.extractPath(
-        0,
-        metric.length * Curves.easeOutCubic.transform(phase(0.5, 1)),
-      ),
-      pen,
-    );
+    for (final metric in metrics) {
+      canvas.drawPath(
+        metric.extractPath(0, remaining.clamp(0, metric.length)),
+        pen,
+      );
+      remaining = math.max(0, remaining - metric.length);
+    }
     canvas.restore();
   }
 
   @override
   bool shouldRepaint(covariant _SuccessCheckPainter oldDelegate) =>
-      oldDelegate.animation != animation;
+      oldDelegate.animation != animation ||
+      oldDelegate.isCancellation != isCancellation;
 }
