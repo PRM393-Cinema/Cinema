@@ -9,6 +9,15 @@ abstract final class AppRoutes {
   static const home = '/home';
   static const adminDashboard = '/admin/dashboard';
   static const adminProfile = '/admin/profile';
+  static const staffDashboard = '/staff/dashboard';
+  static const staffOperations = '/staff/operations';
+  static const staffProfile = '/staff/profile';
+  static const staffCreateBooking = '/staff/bookings/new';
+  static const staffCreateShowtime = '/staff/showtimes/new';
+  static String staffRecord(String kind, int id) => '/staff/$kind/$id';
+  static String staffEditShowtime(int id) => '/staff/showtimes/$id/edit';
+  static String staffNotify(int bookingId) =>
+      '/staff/bookings/$bookingId/notify';
   static const adminUsers = '/admin/users';
   static const adminCreateUser = '/admin/users/new';
   static String adminUser(int id) => '/admin/users/$id';

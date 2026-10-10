@@ -20,11 +20,13 @@ class ProfileScreen extends StatefulWidget {
   const ProfileScreen({
     required this.authRepository,
     this.adminMode = false,
+    this.staffMode = false,
     super.key,
   });
 
   final AuthRepository authRepository;
   final bool adminMode;
+  final bool staffMode;
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -124,9 +126,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.adminMode) {
+    if (widget.adminMode || widget.staffMode) {
       return AdminPage(
-        title: 'Admin profile',
+        title: widget.staffMode ? 'Staff profile' : 'Admin profile',
+        staffMode: widget.staffMode,
         selectedIndex: 2,
         child: Builder(builder: _buildBody),
       );
@@ -247,7 +250,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
-              if (!widget.adminMode) ...[
+              if (!widget.adminMode && !widget.staffMode) ...[
                 AppButton.secondary(
                   label: 'Payment history',
                   leadingIcon: Icons.receipt_long_outlined,

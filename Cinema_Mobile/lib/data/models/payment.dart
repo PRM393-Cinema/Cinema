@@ -87,6 +87,11 @@ class Refund {
     this.transactionRef,
     required this.createdAt,
     this.processedAt,
+    this.bookingId,
+    this.reason,
+    this.payerAccountNumber,
+    this.payerAccountName,
+    this.payerBankName,
   });
 
   factory Refund.fromJson(Map<String, Object?> json) {
@@ -99,6 +104,11 @@ class Refund {
       transactionRef: readOptionalString(json['transactionRef']),
       createdAt: readRequiredDateTime(json['createdAt']),
       processedAt: readDateTime(json['processedAt']),
+      bookingId: readOptionalInt(json['bookingId']),
+      reason: readOptionalString(json['reason']),
+      payerAccountNumber: readOptionalString(json['payerAccountNumber']),
+      payerAccountName: readOptionalString(json['payerAccountName']),
+      payerBankName: readOptionalString(json['payerBankName']),
     );
   }
 
@@ -110,6 +120,11 @@ class Refund {
   final String? transactionRef;
   final DateTime createdAt;
   final DateTime? processedAt;
+  final int? bookingId;
+  final String? reason;
+  final String? payerAccountNumber;
+  final String? payerAccountName;
+  final String? payerBankName;
 
   bool get isCompleted => status == 'COMPLETED';
 }

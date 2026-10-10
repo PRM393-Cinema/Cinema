@@ -62,6 +62,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       SessionProvider.of(context).setAuthenticated(response.user);
       final isAdmin = response.user.roles.contains('ROLE_ADMIN');
+      final isStaff = !isAdmin && response.user.roles.contains('ROLE_STAFF');
 
       await showGeneralDialog<void>(
         context: context,
@@ -75,10 +76,10 @@ class _LoginScreenState extends State<LoginScreen> {
           type: MaterialType.transparency,
           child: AuthSuccessDialog(
             title: 'Signed in!',
-            message: isAdmin
-                ? 'Welcome back to your admin workspace.'
+            message: isAdmin || isStaff
+                ? 'Welcome back to your ${isAdmin ? 'admin' : 'staff'} workspace.'
                 : 'Welcome back.\nYour next movie is waiting.',
-            footer: isAdmin
+            footer: isAdmin || isStaff
                 ? 'Opening your dashboard…'
                 : 'Taking you to your cinema…',
           ),
@@ -100,6 +101,15 @@ class _LoginScreenState extends State<LoginScreen> {
           pendingRoute?.startsWith('/admin/') == true
               ? pendingRoute!
               : AppRoutes.adminDashboard,
+          (_) => false,
+          arguments: pendingArguments,
+        );
+      } else if (isStaff) {
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          pendingRoute?.startsWith('/staff/') == true
+              ? pendingRoute!
+              : AppRoutes.staffDashboard,
           (_) => false,
           arguments: pendingArguments,
         );

@@ -121,7 +121,13 @@ Lệnh đọc danh sách phim từ `cinema_movie_db` rồi thêm lịch vào `ci
 ### Quản lý tài khoản trên mobile
 
 - Admin local/demo: `admin@cinema.com`, mật khẩu `123456` (seed hiện có; dùng mật khẩu riêng khi triển khai).
-- Admin đăng nhập vào `/admin/dashboard`, dùng dashboard quản trị và nav dưới riêng **Dashboard / Accounts / Profile**. Accounts bao gồm `/admin/users`, `/admin/users/new`, `/admin/users/{id}`; Profile tại `/admin/profile`. Thống kê tài khoản và vai trò lấy từ API thật. Chỉ `ROLE_ADMIN` được vào khu vực này; backend tiếp tục kiểm tra quyền. Customer/Staff dùng giao diện khách hàng.
+- Admin đăng nhập vào `/admin/dashboard`, dùng dashboard quản trị và nav dưới riêng **Dashboard / Accounts / Profile**. Accounts bao gồm `/admin/users`, `/admin/users/new`, `/admin/users/{id}`; Profile tại `/admin/profile`. Thống kê tài khoản và vai trò lấy từ API thật. Chỉ `ROLE_ADMIN` được vào khu vực này; backend tiếp tục kiểm tra quyền. Customer dùng giao diện khách hàng; Staff có dashboard riêng `/staff/dashboard` với nav Dashboard / Operations / Profile.
 - Có thể chọn nhiều vai trò `ROLE_ADMIN`, `ROLE_STAFF`, `ROLE_CUSTOMER`. Tài khoản do Admin tạo được bật và xác thực email ngay, có thể đăng nhập mà không cần OTP.
 - Không thể tự khóa hoặc tự bỏ quyền Admin. Khóa tài khoản thu hồi refresh token; access token đã cấp có thể còn hiệu lực đến khi hết hạn. Quyền mới cập nhật khi đăng nhập/làm mới phiên.
 - Bảng [MOBILE_UI_ENDPOINTS.md](../../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md) liệt kê đủ 6 API đã nối và các API khác còn thiếu UI.
+
+### Khu vực Staff trên mobile
+
+Staff seed local/demo: `nhanvien1@cinema.com`, mật khẩu `123456`. Đăng nhập sẽ vào dashboard Staff; tài khoản có cả Admin và Staff ưu tiên dashboard Admin.
+
+Tab **Operations** gồm vé, suất chiếu, phòng/ghế, thanh toán và hoàn tiền. Xem [STAFF_WORKSPACE.md](../../Cinema_Mobile/docs/STAFF_WORKSPACE.md) về thao tác, quyền và giới hạn backend; [MOBILE_UI_ENDPOINTS.md](../../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md) ghi rõ endpoint đã có UI và phần còn thiếu.

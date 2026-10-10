@@ -60,10 +60,16 @@ class CinemaNavigationBar extends StatefulWidget {
   const CinemaNavigationBar({
     required this.selectedIndex,
     this.backgroundKey,
+    this.destinations = const [
+      ('Home', Icons.movie, AppRoutes.home),
+      ('Tickets', Icons.confirmation_number, AppRoutes.myBookings),
+      ('Account', Icons.person, AppRoutes.profile),
+    ],
     super.key,
-  });
+  }) : assert(destinations.length == 3);
   final int selectedIndex;
   final GlobalKey? backgroundKey;
+  final List<(String, IconData, String)> destinations;
 
   @override
   State<CinemaNavigationBar> createState() => _CinemaNavigationBarState();
@@ -246,11 +252,13 @@ class _CinemaNavigationBarState extends State<CinemaNavigationBar>
   }
 
   void _selectDestination(int index) {
-    if (index == widget.selectedIndex) return;
+    final destination = widget.destinations[index].$3;
+    if (ModalRoute.of(context)?.settings.name == destination) return;
     Navigator.pushNamedAndRemoveUntil(
       context,
-      [AppRoutes.home, AppRoutes.myBookings, AppRoutes.profile][index],
-      (route) => index != 0 && route.settings.name == AppRoutes.home,
+      destination,
+      (route) =>
+          index != 0 && route.settings.name == widget.destinations.first.$3,
     );
   }
 
@@ -458,21 +466,17 @@ class _CinemaNavigationBarState extends State<CinemaNavigationBar>
                                           ),
                                           Row(
                                             children: [
-                                              _destination(
-                                                0,
-                                                'Home',
-                                                Icons.movie,
-                                              ),
-                                              _destination(
-                                                1,
-                                                'Tickets',
-                                                Icons.confirmation_number,
-                                              ),
-                                              _destination(
-                                                2,
-                                                'Account',
-                                                Icons.person,
-                                              ),
+                                              for (
+                                                var index = 0;
+                                                index <
+                                                    widget.destinations.length;
+                                                index++
+                                              )
+                                                _destination(
+                                                  index,
+                                                  widget.destinations[index].$1,
+                                                  widget.destinations[index].$2,
+                                                ),
                                             ],
                                           ),
                                         ],

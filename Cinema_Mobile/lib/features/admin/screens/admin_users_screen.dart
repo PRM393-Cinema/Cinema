@@ -118,7 +118,10 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
       onRefresh: () => _load(page: _result?.pageNumber ?? 1),
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: centeredPadding(context, AppSpacing.lg),
+        padding: centeredPadding(
+          context,
+          AppSpacing.lg,
+        ).copyWith(bottom: 112 + MediaQuery.viewPaddingOf(context).bottom),
         children: [
           AppButton(
             label: 'Create account',
@@ -444,7 +447,9 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
               onRefresh: _saving ? () async {} : _load,
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: centeredPadding(context, AppSpacing.lg),
+                padding: centeredPadding(context, AppSpacing.lg).copyWith(
+                  bottom: 112 + MediaQuery.viewPaddingOf(context).bottom,
+                ),
                 children: [
                   CinemaPanel(
                     surfaceOpacity: 0.8,
@@ -646,7 +651,10 @@ class _AdminCreateUserScreenState extends State<AdminCreateUserScreen> {
             onRetry: _load,
           )
         : SingleChildScrollView(
-            padding: centeredPadding(context, AppSpacing.lg),
+            padding: centeredPadding(
+              context,
+              AppSpacing.lg,
+            ).copyWith(bottom: 112 + MediaQuery.viewPaddingOf(context).bottom),
             child: CinemaPanel(
               surfaceOpacity: 0.8,
               child: Form(

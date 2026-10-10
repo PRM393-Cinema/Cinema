@@ -4,29 +4,26 @@ import '../../../app/routes/app_routes.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
-import '../../../core/network/api_exception.dart';
-import '../../../core/utils/layout.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_state.dart';
-import '../../../data/models/auth_response.dart';
-import '../../../data/repositories/auth_repository.dart';
-import '../widgets/admin_page.dart';
+import '../../../data/models/booking.dart';
+import '../../../data/services/staff_service.dart';
+import '../../admin/widgets/admin_page.dart';
+import '../widgets/staff_feedback.dart';
 
-class AdminDashboardScreen extends StatefulWidget {
-  const AdminDashboardScreen({required this.repository, super.key});
-  final AuthRepository repository;
-
+class StaffDashboardScreen extends StatefulWidget {
+  const StaffDashboardScreen({required this.service, super.key});
+  final StaffService service;
   @override
-  State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
+  State<StaffDashboardScreen> createState() => _StaffDashboardScreenState();
 }
 
-class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
+class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
   List<(String, int, IconData)>? _counts;
-  List<AuthUser> _users = [];
-  String? _error;
+  List<Booking> _pending = [];
   bool _loading = false;
-
+  String? _error;
   @override
   void initState() {
     super.initState();
@@ -40,30 +37,30 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       _error = null;
     });
     try {
-      final pages = await Future.wait([
-        widget.repository.users(),
-        widget.repository.users(enabled: true),
-        widget.repository.users(enabled: false),
-      ]);
-      final roles = await widget.repository.roles();
+      final today = DateUtils.dateOnly(DateTime.now());
+      final end = today
+          .add(const Duration(days: 1))
+          .subtract(const Duration(microseconds: 1));
+      final pending = await widget.service.bookings(status: 'PENDING');
+      final bookings = await widget.service.bookings(start: today, end: end);
+      final refunds = await widget.service.refunds(status: 'PENDING');
+      final shows = await widget.service.showtimes(start: today, end: end);
       if (!mounted) return;
       setState(() {
         _counts = [
-          ('Total accounts', pages[0].totalCount, Icons.people_outline),
-          ('Active', pages[1].totalCount, Icons.verified_user_outlined),
-          ('Locked', pages[2].totalCount, Icons.lock_outline),
-          ('Roles', roles.length, Icons.admin_panel_settings_outlined),
+          (
+            'Bookings today',
+            bookings.totalCount,
+            Icons.confirmation_number_outlined,
+          ),
+          ('Pending bookings', pending.totalCount, Icons.schedule),
+          ('Pending refunds', refunds.totalCount, Icons.currency_exchange),
+          ('Showtimes today', shows.totalCount, Icons.movie_outlined),
         ];
-        _users = pages[0].items.take(5).toList();
+        _pending = pending.items.take(5).toList();
       });
     } on Object catch (error) {
-      if (mounted) {
-        setState(
-          () => _error = error is ApiException
-              ? error.message
-              : 'Unable to load dashboard. Please try again.',
-        );
-      }
+      if (mounted) setState(() => _error = staffError(error));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -71,26 +68,24 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   @override
   Widget build(BuildContext context) => AdminPage(
-    title: 'Dashboard',
+    title: 'Staff dashboard',
     selectedIndex: 0,
+    staffMode: true,
     child: RefreshIndicator(
       onRefresh: _load,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: centeredPadding(
-          context,
-          AppSpacing.lg,
-        ).copyWith(bottom: 112 + MediaQuery.viewPaddingOf(context).bottom),
+        padding: staffPadding(context),
         children: [
-          const Text('Account overview', style: AppTextStyles.title),
+          const Text('Your cinema shift', style: AppTextStyles.title),
           const SizedBox(height: AppSpacing.sm),
           const Text(
-            'Manage access and keep your cinema team organized.',
+            'Bookings, showtimes and refund requests in one workspace.',
             style: AppTextStyles.bodySmall,
           ),
           const SizedBox(height: AppSpacing.xl),
           if (_loading)
-            const LoadingState(message: 'Loading dashboard...')
+            const LoadingState(message: 'Loading shift overview...')
           else if (_error != null)
             ErrorState(
               title: 'Unable to load dashboard',
@@ -99,7 +94,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             )
           else if (_counts != null) ...[
             LayoutBuilder(
-              builder: (context, constraints) => Wrap(
+              builder: (_, constraints) => Wrap(
                 spacing: AppSpacing.md,
                 runSpacing: AppSpacing.md,
                 children: [
@@ -124,30 +119,33 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               ),
             ),
             const SizedBox(height: AppSpacing.xl),
-            const Text('Accounts at a glance', style: AppTextStyles.title),
+            const Text('Pending bookings', style: AppTextStyles.title),
             const SizedBox(height: AppSpacing.md),
-            if (_users.isEmpty)
-              const Text('No accounts found.', style: AppTextStyles.bodySmall),
-            for (final user in _users)
+            if (_pending.isEmpty)
+              const Text(
+                'No pending bookings.',
+                style: AppTextStyles.bodySmall,
+              ),
+            for (final booking in _pending)
               Padding(
                 padding: const EdgeInsets.only(bottom: AppSpacing.md),
                 child: CinemaPanel(
                   surfaceOpacity: 0.8,
                   child: ListTile(
                     contentPadding: EdgeInsets.zero,
-                    leading: Icon(
-                      user.enabled
-                          ? Icons.person_outline
-                          : Icons.person_off_outlined,
-                      color: user.enabled ? AppColors.primary : AppColors.error,
+                    title: Text(
+                      booking.bookingCode,
+                      style: AppTextStyles.title,
                     ),
-                    title: Text(user.displayName, style: AppTextStyles.title),
-                    subtitle: Text(user.email, style: AppTextStyles.bodySmall),
+                    subtitle: Text(
+                      booking.movieTitle ?? 'Movie',
+                      style: AppTextStyles.bodySmall,
+                    ),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () async {
                       await Navigator.pushNamed(
                         context,
-                        AppRoutes.adminUser(user.userId),
+                        AppRoutes.staffRecord('bookings', booking.id),
                       );
                       if (mounted) _load();
                     },

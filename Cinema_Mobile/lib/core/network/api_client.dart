@@ -56,6 +56,9 @@ class ApiClient {
     bool authenticated = false,
   }) => _send('PATCH', path, body: body, authenticated: authenticated);
 
+  Future<Object?> delete(String path, {bool authenticated = false}) =>
+      _send('DELETE', path, authenticated: authenticated);
+
   Future<Object?> _send(
     String method,
     String path, {
@@ -125,6 +128,7 @@ class ApiClient {
     try {
       final future = switch (method) {
         'GET' => _httpClient.get(uri, headers: headers),
+        'DELETE' => _httpClient.delete(uri, headers: headers),
         'POST' => _httpClient.post(
           uri,
           headers: headers,
