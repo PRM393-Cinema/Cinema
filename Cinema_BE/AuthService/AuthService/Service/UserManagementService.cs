@@ -98,7 +98,7 @@ namespace AuthService.Service
             return user.ToResponse();
         }
 
-        // Role mới có trong token khi user đăng nhập lại hoặc refresh (token cũ còn hạn tối đa Jwt:AccessTokenMinutes)
+        // Gateway chặn token có role cũ ở request tiếp theo; user phải đăng nhập lại.
         public async Task<UserResponse> UpdateRolesAsync(long actorId, long userId, UpdateUserRolesRequest request)
         {
             await EnsureActiveAdminAsync(actorId);
@@ -111,6 +111,12 @@ namespace AuthService.Service
                 throw new BusinessException("Không thể tự bỏ quyền admin của chính mình.");
             }
 
+            if (user.Roles.Select(r => r.Name).ToHashSet(StringComparer.Ordinal)
+                .SetEquals(roles.Select(r => r.Name)))
+            {
+                return user.ToResponse();
+            }
+
             user.Roles.Clear();
             foreach (var role in roles)
             {
@@ -118,6 +124,8 @@ namespace AuthService.Service
             }
 
             await _userRepository.SaveChangesAsync();
+
+            await _refreshTokenRepository.DeleteAllByUserIdAsync(userId);
 
             _logger.LogInformation(
                 "Admin {ActorId} set roles of user {UserId} to {Roles}",
@@ -144,8 +152,7 @@ namespace AuthService.Service
 
                 if (!enabled)
                 {
-                    // Đăng xuất mọi thiết bị: không refresh được nữa.
-                    // Access token đang có vẫn dùng được tới khi hết hạn (tối đa Jwt:AccessTokenMinutes).
+                    // Gateway chặn request tiếp theo; thu hồi refresh token trên mọi thiết bị.
                     await _refreshTokenRepository.DeleteAllByUserIdAsync(userId);
                 }
 

@@ -28,7 +28,7 @@ class AppDependencies {
       storage: storage,
       refreshSession: (refreshToken) => authService.refresh(refreshToken),
       onSessionRenewed: session.setAuthenticated,
-      onSessionExpired: session.clear,
+      onSessionExpired: (message) => session.clear(message: message),
     );
 
     final client = ApiClient(tokenProvider: tokenManager);

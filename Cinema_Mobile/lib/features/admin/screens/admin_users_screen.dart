@@ -10,6 +10,7 @@ import '../../../core/utils/formatters.dart';
 import '../../../core/utils/layout.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_text_field.dart';
+import '../../../core/widgets/top_notice.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
 import '../widgets/admin_page.dart';
 import '../../../core/widgets/error_state.dart';
@@ -17,7 +18,6 @@ import '../../../core/widgets/loading_state.dart';
 import '../../../data/models/auth_response.dart';
 import '../../../data/models/paged_result.dart';
 import '../../../data/repositories/auth_repository.dart';
-import '../../auth/widgets/auth_success_dialog.dart';
 
 String _error(Object error) => error is ApiException
     ? error.message
@@ -29,26 +29,8 @@ String _roleName(String role) => switch (role) {
   _ => role,
 };
 
-Future<void> _saved(BuildContext context, String message) =>
-    showGeneralDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      barrierLabel: 'Account updated',
-      barrierColor: Colors.black.withValues(alpha: 0.72),
-      transitionDuration: MediaQuery.disableAnimationsOf(context)
-          ? Duration.zero
-          : const Duration(milliseconds: 180),
-      pageBuilder: (_, _, _) => Material(
-        type: MaterialType.transparency,
-        child: AuthSuccessDialog(
-          title: 'Done',
-          message: message,
-          footer: 'Account management',
-        ),
-      ),
-      transitionBuilder: (_, animation, _, child) =>
-          FadeTransition(opacity: animation, child: child),
-    );
+void _saved(BuildContext context, String message) =>
+    showTopNotice(Overlay.of(context, rootOverlay: true), message);
 
 class AdminUsersScreen extends StatefulWidget {
   const AdminUsersScreen({required this.repository, super.key});
@@ -313,7 +295,7 @@ class AdminUserDetailScreen extends StatefulWidget {
 class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
   AuthUser? _user;
   List<String> _roles = [];
-  Set<String> _selected = {};
+  String? _selected;
   bool _loading = true;
   bool _saving = false;
   String? _message;
@@ -335,7 +317,9 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
       setState(() {
         _user = user;
         _roles = roles;
-        _selected = user.roles.toSet();
+        _selected = user.roles.contains('ROLE_ADMIN')
+            ? 'ROLE_ADMIN'
+            : user.roles.singleOrNull;
       });
     } on Object catch (error) {
       if (mounted) setState(() => _message = _error(error));
@@ -355,14 +339,16 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
       if (!mounted) return;
       setState(() {
         _user = user;
-        _selected = user.roles.toSet();
+        _selected = user.roles.contains('ROLE_ADMIN')
+            ? 'ROLE_ADMIN'
+            : user.roles.singleOrNull;
       });
       final session = SessionProvider.of(context);
       if (session.user?.userId == user.userId) {
         session.setAuthenticated(await widget.repository.currentUser());
         if (!mounted) return;
       }
-      await _saved(context, message);
+      _saved(context, message);
     } on Object catch (error) {
       if (mounted) setState(() => _message = _error(error));
     } finally {
@@ -372,60 +358,10 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
 
   Future<void> _toggleStatus() async {
     final user = _user!;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: CinemaPanel(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                user.enabled ? Icons.lock_outline : Icons.lock_open_outlined,
-                color: AppColors.primary,
-                size: 40,
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              Text(
-                user.enabled ? 'Lock this account?' : 'Unlock this account?',
-                style: AppTextStyles.title,
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Text(
-                user.email,
-                style: AppTextStyles.bodySmall,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              Row(
-                children: [
-                  Expanded(
-                    child: AppButton.secondary(
-                      label: 'Cancel',
-                      onPressed: () => Navigator.pop(ctx, false),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: AppButton(
-                      label: 'Confirm',
-                      useGradient: true,
-                      onPressed: () => Navigator.pop(ctx, true),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
+    await _save(
+      () => widget.repository.updateUserStatus(user.userId, !user.enabled),
+      user.enabled ? 'Account locked.' : 'Account unlocked.',
     );
-    if (confirmed == true && mounted) {
-      await _save(
-        () => widget.repository.updateUserStatus(user.userId, !user.enabled),
-        user.enabled ? 'Account locked.' : 'Account unlocked.',
-      );
-    }
   }
 
   @override
@@ -498,8 +434,7 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
                           selected: _selected,
                           disabled: _saving,
                           keepAdmin: self,
-                          onChanged: (roles) =>
-                              setState(() => _selected = roles),
+                          onChanged: (role) => setState(() => _selected = role),
                         ),
                         if (self)
                           const Text(
@@ -511,12 +446,12 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
                           label: 'Save roles',
                           useGradient: true,
                           isLoading: _saving,
-                          onPressed: _saving || _selected.isEmpty
+                          onPressed: _saving || _selected == null
                               ? null
                               : () => _save(
                                   () => widget.repository.updateUserRoles(
                                     user.userId,
-                                    _selected.toList(),
+                                    [_selected!],
                                   ),
                                   'Account roles updated.',
                                 ),
@@ -526,7 +461,7 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   const Text(
-                    'Role changes take effect after the user signs in again or refreshes their session.',
+                    'Changing roles signs the user out on their next protected request. They must sign in again.',
                     style: AppTextStyles.caption,
                   ),
                   const SizedBox(height: AppSpacing.lg),
@@ -568,7 +503,7 @@ class _AdminCreateUserScreenState extends State<AdminCreateUserScreen> {
   final _password = TextEditingController();
   final _phone = TextEditingController();
   List<String> _roles = [];
-  Set<String> _selected = {};
+  String? _selected;
   bool _loading = true;
   bool _saving = false;
   bool _obscure = true;
@@ -598,7 +533,7 @@ class _AdminCreateUserScreenState extends State<AdminCreateUserScreen> {
       if (!mounted) return;
       setState(() {
         _roles = roles;
-        _selected = roles.contains('ROLE_CUSTOMER') ? {'ROLE_CUSTOMER'} : {};
+        _selected = roles.contains('ROLE_CUSTOMER') ? 'ROLE_CUSTOMER' : null;
       });
     } on Object catch (error) {
       if (mounted) setState(() => _message = _error(error));
@@ -610,7 +545,7 @@ class _AdminCreateUserScreenState extends State<AdminCreateUserScreen> {
   Future<void> _create() async {
     if (_saving ||
         !(_form.currentState?.validate() ?? false) ||
-        _selected.isEmpty) {
+        _selected == null) {
       return;
     }
     FocusScope.of(context).unfocus();
@@ -624,11 +559,11 @@ class _AdminCreateUserScreenState extends State<AdminCreateUserScreen> {
         email: _email.text.trim(),
         password: _password.text,
         phone: _phone.text.trim().isEmpty ? null : _phone.text.trim(),
-        roles: _selected.toList(),
+        roles: [_selected!],
       );
       if (!mounted) return;
       _password.clear();
-      await _saved(context, 'Account created. It can sign in immediately.');
+      _saved(context, 'Account created. It can sign in immediately.');
       if (!mounted) return;
       Navigator.pushReplacementNamed(context, AppRoutes.adminUser(user.userId));
     } on Object catch (error) {
@@ -728,11 +663,11 @@ class _AdminCreateUserScreenState extends State<AdminCreateUserScreen> {
                       roles: _roles,
                       selected: _selected,
                       disabled: _saving,
-                      onChanged: (roles) => setState(() => _selected = roles),
+                      onChanged: (role) => setState(() => _selected = role),
                     ),
-                    if (_selected.isEmpty)
+                    if (_selected == null)
                       Text(
-                        'Select at least one role.',
+                        'Select one role.',
                         style: AppTextStyles.caption.copyWith(
                           color: AppColors.error,
                         ),
@@ -752,7 +687,7 @@ class _AdminCreateUserScreenState extends State<AdminCreateUserScreen> {
                       label: 'Create account',
                       useGradient: true,
                       isLoading: _saving,
-                      onPressed: _saving || _selected.isEmpty ? null : _create,
+                      onPressed: _saving || _selected == null ? null : _create,
                     ),
                   ],
                 ),
@@ -771,31 +706,28 @@ class _RolePicker extends StatelessWidget {
     this.keepAdmin = false,
   });
   final List<String> roles;
-  final Set<String> selected;
-  final ValueChanged<Set<String>> onChanged;
+  final String? selected;
+  final ValueChanged<String?> onChanged;
   final bool disabled;
   final bool keepAdmin;
   @override
-  Widget build(BuildContext context) => Column(
-    children: [
-      for (final role in roles)
-        CheckboxListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text(_roleName(role), style: AppTextStyles.body),
-          value: selected.contains(role),
-          controlAffinity: ListTileControlAffinity.leading,
-          onChanged: disabled || (keepAdmin && role == 'ROLE_ADMIN')
-              ? null
-              : (value) {
-                  final updated = {...selected};
-                  if (value == true) {
-                    updated.add(role);
-                  } else {
-                    updated.remove(role);
-                  }
-                  onChanged(updated);
-                },
-        ),
-    ],
+  Widget build(BuildContext context) => RadioGroup<String>(
+    groupValue: selected,
+    onChanged: onChanged,
+    child: Material(
+      type: MaterialType.transparency,
+      child: Column(
+        children: [
+          for (final role in roles)
+            RadioListTile<String>(
+              contentPadding: EdgeInsets.zero,
+              title: Text(_roleName(role), style: AppTextStyles.body),
+              value: role,
+              controlAffinity: ListTileControlAffinity.leading,
+              enabled: !disabled && !keepAdmin,
+            ),
+        ],
+      ),
+    ),
   );
 }

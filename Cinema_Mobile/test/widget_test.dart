@@ -15,6 +15,35 @@ import 'support/fixtures.dart';
 import 'support/test_app.dart';
 
 void main() {
+  testWidgets('Session expiry shows its reason and removes protected pages', (
+    tester,
+  ) async {
+    final session = SessionState();
+    await tester.pumpWidget(
+      buildTestApp(
+        session: session,
+        authenticated: true,
+        initialRoute: AppRoutes.profile,
+      ),
+    );
+    await pumpRoute(tester);
+    expect(find.text('Account settings'), findsOneWidget);
+
+    session.clear(message: 'Your account has been locked.');
+    session.clear(message: 'Your account has been locked.');
+    await pumpRoute(tester);
+
+    expect(session.isAuthenticated, isFalse);
+    expect(session.user, isNull);
+    expect(find.byKey(const Key('loginTitle')), findsOneWidget);
+    expect(find.text('Your account has been locked.'), findsOneWidget);
+    expect(find.text('Account settings'), findsNothing);
+    expect(
+      Navigator.of(tester.element(find.byType(LoginScreen))).canPop(),
+      isFalse,
+    );
+  });
+
   testWidgets('App without session opens Home', (WidgetTester tester) async {
     await tester.pumpWidget(buildTestApp());
     await pumpRoute(tester);
@@ -358,10 +387,9 @@ Future<void> _loginToHome(WidgetTester tester) async {
   await tester.drag(find.byType(Scrollable).first, const Offset(0, -300));
   await tester.pumpAndSettle();
   await tester.tap(find.byType(AppButton).first);
-  await tester.pump();
-  expect(find.text('Signed in!'), findsOneWidget);
-  await tester.pump(const Duration(seconds: 3));
   await pumpRoute(tester);
+  expect(find.text('Đăng nhập thành công.'), findsNothing);
+  expect(find.byType(Dialog), findsNothing);
 }
 
 Future<void> _enterLoginCredentials(WidgetTester tester) async {

@@ -65,7 +65,7 @@ public class UserManagementTests
     }
 
     [Fact]
-    public async Task LockedUser_CannotLoginOrRefresh_AndAdminCannotLockSelf()
+    public async Task LockedUser_CannotUseExistingTokenLoginOrRefresh_AndAdminCannotLockSelf()
     {
         var adminToken = await _factory.AdminTokenAsync();
         var admin = _factory.ClientFor(adminToken);
@@ -74,18 +74,54 @@ public class UserManagementTests
         var customer = await _factory.RegisterVerifiedCustomerAsync(email, "Secret@123");
         var userId = customer.GetProperty("user").GetProperty("userId").GetInt64();
         var refreshToken = customer.GetProperty("refreshToken").GetString();
+        var customerClient = _factory.ClientFor(customer.GetProperty("accessToken").GetString());
+        Assert.Equal(HttpStatusCode.OK, (await customerClient.GetAsync("/api/v1/auth/me")).StatusCode);
 
         var locked = await admin.PatchAsJsonAsync($"/api/v1/auth/users/{userId}/status", new { enabled = false });
         Assert.Equal(HttpStatusCode.OK, locked.StatusCode);
+
+        var rejected = await customerClient.GetAsync("/api/v1/auth/me");
+        Assert.Equal(HttpStatusCode.Forbidden, rejected.StatusCode);
+        var problem = await rejected.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("ACCOUNT_LOCKED", problem.GetProperty("errorCode").GetString());
 
         Assert.Equal(HttpStatusCode.Unauthorized, (await _factory.CreateClient()
             .PostAsJsonAsync("/api/v1/auth/login", new { email, password = "Secret@123" })).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await _factory.CreateClient()
             .PostAsJsonAsync("/api/v1/auth/refresh", new { refreshToken })).StatusCode);
 
+        Assert.Equal(HttpStatusCode.OK, (await admin.PatchAsJsonAsync(
+            $"/api/v1/auth/users/{userId}/status", new { enabled = true })).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await customerClient.GetAsync("/api/v1/auth/me")).StatusCode);
+
         var me = await admin.GetFromJsonAsync<JsonElement>("/api/v1/auth/me");
         var selfLock = await admin.PatchAsJsonAsync(
             $"/api/v1/auth/users/{me.GetProperty("userId").GetInt64()}/status", new { enabled = false });
         Assert.Equal(HttpStatusCode.BadRequest, selfLock.StatusCode);
+    }
+
+    [Theory]
+    [InlineData("staff", "ROLE_STAFF")]
+    [InlineData("admin", "ROLE_ADMIN")]
+    public async Task ChangingRoles_RevokesOldRefreshToken_ButSavingSameRolesKeepsSession(string role, string roleName)
+    {
+        var admin = _factory.ClientFor(await _factory.AdminTokenAsync());
+        var email = $"role-{Guid.NewGuid():N}@test.local";
+        var customer = await _factory.RegisterVerifiedCustomerAsync(email, "Secret@123");
+        var userId = customer.GetProperty("user").GetProperty("userId").GetInt64();
+        var oldRefreshToken = customer.GetProperty("refreshToken").GetString();
+
+        var changed = await admin.PutAsJsonAsync($"/api/v1/auth/users/{userId}/roles", new { roles = new[] { role } });
+        Assert.Equal(HttpStatusCode.OK, changed.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await _factory.CreateClient()
+            .PostAsJsonAsync("/api/v1/auth/refresh", new { refreshToken = oldRefreshToken })).StatusCode);
+
+        var login = await _factory.LoginAsync(email, "Secret@123");
+        Assert.Equal(roleName, login.GetProperty("user").GetProperty("roles")[0].GetString());
+        var refreshToken = login.GetProperty("refreshToken").GetString();
+        Assert.Equal(HttpStatusCode.OK, (await admin.PutAsJsonAsync(
+            $"/api/v1/auth/users/{userId}/roles", new { roles = new[] { role } })).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await _factory.CreateClient()
+            .PostAsJsonAsync("/api/v1/auth/refresh", new { refreshToken })).StatusCode);
     }
 }

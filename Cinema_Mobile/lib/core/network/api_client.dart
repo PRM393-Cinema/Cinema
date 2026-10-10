@@ -70,32 +70,42 @@ class ApiClient {
     final provider = tokenProvider;
     final token = authenticated ? await provider?.accessToken() : null;
 
-    var response = await _request(method, uri, body, token);
+    try {
+      var response = await _request(method, uri, body, token);
 
-    // The access token lives for an hour: renew it once with the refresh
-    // token and repeat the request before reporting the session as expired.
-    if (response.statusCode == 401 && provider != null && token != null) {
-      final renewedToken = await provider.refreshAccessToken(
-        failedToken: token,
-      );
-      if (renewedToken == null) {
+      // The access token lives for an hour: renew it once with the refresh
+      // token and repeat the request before reporting the session as expired.
+      if (response.statusCode == 401 && provider != null && token != null) {
+        final renewedToken = await provider.refreshAccessToken(
+          failedToken: token,
+        );
+        if (renewedToken == null) {
+          throw const ApiException(
+            statusCode: 401,
+            message: 'Your session has expired. Please sign in again.',
+          );
+        }
+
+        response = await _request(method, uri, body, renewedToken);
+      }
+
+      if (authenticated && response.statusCode == 401) {
+        await provider?.expireSession(
+          message: 'Please sign in again to continue.',
+        );
         throw const ApiException(
           statusCode: 401,
-          message: 'Your session has expired. Please sign in again.',
+          message: 'Please sign in again to continue.',
         );
       }
 
-      response = await _request(method, uri, body, renewedToken);
+      return _decodeResponse(response);
+    } on ApiException catch (error) {
+      if (authenticated && error.requiresSignInAgain) {
+        await provider?.expireSession(message: error.message);
+      }
+      rethrow;
     }
-
-    if (authenticated && response.statusCode == 401) {
-      throw const ApiException(
-        statusCode: 401,
-        message: 'Please sign in again to continue.',
-      );
-    }
-
-    return _decodeResponse(response);
   }
 
   Uri _buildUri(String path, Map<String, Object?>? query) {

@@ -20,9 +20,11 @@ class TokenManager implements AccessTokenProvider {
   final AuthTokenStorage _tokenStorage;
   final RefreshSession _refreshTokens;
   final void Function(AuthUser user)? onSessionRenewed;
-  final void Function()? onSessionExpired;
+  final void Function(String message)? onSessionExpired;
 
   Future<String?>? _pendingRefresh;
+  Future<void>? _pendingExpiry;
+  int _sessionVersion = 0;
 
   @override
   Future<String?> accessToken() {
@@ -37,6 +39,7 @@ class TokenManager implements AccessTokenProvider {
   }
 
   Future<String?> _refresh(String failedToken) async {
+    final sessionVersion = _sessionVersion;
     // Another request may already have renewed the token.
     final current = await _tokenStorage.readAccessToken();
     if (current != null && current != failedToken) {
@@ -45,28 +48,53 @@ class TokenManager implements AccessTokenProvider {
 
     final refreshToken = await _tokenStorage.readRefreshToken();
     if (refreshToken == null || refreshToken.isEmpty) {
-      await _expire();
+      await expireSession(
+        message: 'Your session has expired. Please sign in again.',
+      );
       return null;
     }
 
     try {
       final response = await _refreshTokens(refreshToken);
+      // A lock response must win over a refresh already in flight.
+      if (sessionVersion != _sessionVersion) return null;
       await _tokenStorage.save(response);
+      if (sessionVersion != _sessionVersion) {
+        await _tokenStorage.clear();
+        return null;
+      }
       onSessionRenewed?.call(response.user);
       return response.accessToken;
     } on ApiException catch (error) {
+      if (error.requiresSignInAgain) {
+        await expireSession(message: error.message);
+        return null;
+      }
       // 400/401: the refresh token is invalid, revoked or expired. Network
       // errors keep the session so the user can retry.
       if (error.statusCode == 400 || error.statusCode == 401) {
-        await _expire();
+        await expireSession(
+          message: 'Your session has expired. Please sign in again.',
+        );
         return null;
       }
       rethrow;
     }
   }
 
-  Future<void> _expire() async {
-    await _tokenStorage.clear();
-    onSessionExpired?.call();
+  @override
+  Future<void> expireSession({required String message}) {
+    _sessionVersion++;
+    return _pendingExpiry ??= _clearSession(message).whenComplete(() {
+      _pendingExpiry = null;
+    });
+  }
+
+  Future<void> _clearSession(String message) async {
+    try {
+      await _tokenStorage.clear();
+    } finally {
+      onSessionExpired?.call(message);
+    }
   }
 }

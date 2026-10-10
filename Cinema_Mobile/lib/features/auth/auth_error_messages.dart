@@ -1,6 +1,11 @@
 import '../../core/network/api_exception.dart';
 
 String authErrorMessage(ApiException error) {
+  if (error.isAccountLocked) {
+    return 'Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.';
+  }
+  if (error.requiresSignInAgain) return error.message;
+
   final rawMessage = error.message.trim();
   final normalized = _normalize(rawMessage);
 

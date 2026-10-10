@@ -71,6 +71,17 @@ builder.Services.AddAuthorization(options =>
         policy => policy.RequireRole("ROLE_STAFF", "ROLE_ADMIN"));
 });
 
+var authAddress = builder.Configuration.GetSection("ReverseProxy:Clusters:auth-cluster:Destinations")
+    .GetChildren().Select(destination => destination["Address"])
+    .FirstOrDefault(address => !string.IsNullOrWhiteSpace(address))
+    ?? throw new InvalidOperationException("Thiếu địa chỉ AuthService trong ReverseProxy:Clusters.");
+
+builder.Services.AddHttpClient(AccountStatusMiddleware.HttpClientName, client =>
+{
+    client.BaseAddress = new Uri(authAddress);
+    client.Timeout = TimeSpan.FromSeconds(5);
+});
+
 //====== RATE LIMITING (theo IP) ======
 var rateLimit = builder.Configuration.GetSection("RateLimiting").Get<GatewayRateLimitOptions>()
     ?? new GatewayRateLimitOptions();
@@ -168,6 +179,7 @@ app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseCors();
 app.UseRateLimiter();
 app.UseAuthentication();
+app.UseMiddleware<AccountStatusMiddleware>();
 app.UseAuthorization();
 
 app.MapGet("/", () => Results.Ok(new { service = "Cinema API Gateway", health = "/health", services = "/health/services" }));
@@ -212,3 +224,5 @@ app.Run();
 
 static string GetClientIp(HttpContext context) =>
     context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+public partial class Program { }

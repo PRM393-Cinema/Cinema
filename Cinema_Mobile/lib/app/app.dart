@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/session/session_state.dart';
+import '../core/widgets/top_notice.dart';
 import '../data/repositories/auth_repository.dart';
 import '../data/repositories/booking_repository.dart';
 import '../data/repositories/catalog_repository.dart';
@@ -10,7 +11,7 @@ import 'routes/app_router.dart';
 import 'routes/app_routes.dart';
 import 'theme/app_theme.dart';
 
-class CinemaApp extends StatelessWidget {
+class CinemaApp extends StatefulWidget {
   const CinemaApp({
     required this.authRepository,
     required this.catalogRepository,
@@ -31,21 +32,52 @@ class CinemaApp extends StatelessWidget {
   final PayOsReturn? paymentReturn;
 
   @override
+  State<CinemaApp> createState() => _CinemaAppState();
+}
+
+class _CinemaAppState extends State<CinemaApp> {
+  final _navigatorKey = GlobalKey<NavigatorState>();
+  String? _expirationMessage;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final message = SessionProvider.of(context).expirationMessage;
+    if (message == _expirationMessage) return;
+    _expirationMessage = message;
+    if (message == null) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _navigatorKey.currentState?.pushNamedAndRemoveUntil(
+        AppRoutes.login,
+        (_) => false,
+      );
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final overlay = _navigatorKey.currentState?.overlay;
+        if (overlay != null) showTopNotice(overlay, message);
+      });
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final router = AppRouter(
-      authRepository: authRepository,
-      catalogRepository: catalogRepository,
-      bookingRepository: bookingRepository,
+      authRepository: widget.authRepository,
+      catalogRepository: widget.catalogRepository,
+      bookingRepository: widget.bookingRepository,
       session: SessionProvider.of(context),
-      staffService: staffService,
+      staffService: widget.staffService,
     );
-    final payOsReturn = paymentReturn;
+    final payOsReturn = widget.paymentReturn;
 
     return MaterialApp(
+      navigatorKey: _navigatorKey,
       debugShowCheckedModeBanner: false,
       title: 'CosmoQ Cinema',
       theme: AppTheme.darkTheme,
-      initialRoute: initialRoute,
+      initialRoute: widget.initialRoute,
       onGenerateRoute: router.onGenerateRoute,
       onGenerateInitialRoutes: (name) => router.onGenerateInitialRoutes(
         payOsReturn == null

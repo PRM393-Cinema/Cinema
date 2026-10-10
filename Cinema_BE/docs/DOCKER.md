@@ -122,8 +122,8 @@ Lệnh đọc danh sách phim từ `cinema_movie_db` rồi thêm lịch vào `ci
 
 - Admin local/demo: `admin@cinema.com`, mật khẩu `123456` (seed hiện có; dùng mật khẩu riêng khi triển khai).
 - Admin đăng nhập vào `/admin/dashboard`, dùng dashboard quản trị và nav dưới riêng **Dashboard / Accounts / Profile**. Accounts bao gồm `/admin/users`, `/admin/users/new`, `/admin/users/{id}`; Profile tại `/admin/profile`. Thống kê tài khoản và vai trò lấy từ API thật. Chỉ `ROLE_ADMIN` được vào khu vực này; backend tiếp tục kiểm tra quyền. Customer dùng giao diện khách hàng; Staff có dashboard riêng `/staff/dashboard` với nav Dashboard / Operations / Profile.
-- Có thể chọn nhiều vai trò `ROLE_ADMIN`, `ROLE_STAFF`, `ROLE_CUSTOMER`. Tài khoản do Admin tạo được bật và xác thực email ngay, có thể đăng nhập mà không cần OTP.
-- Không thể tự khóa hoặc tự bỏ quyền Admin. Khóa tài khoản thu hồi refresh token; access token đã cấp có thể còn hiệu lực đến khi hết hạn. Quyền mới cập nhật khi đăng nhập/làm mới phiên.
+- Giao diện chỉ chọn một vai trò `ROLE_ADMIN`, `ROLE_STAFF` hoặc `ROLE_CUSTOMER`. Tài khoản do Admin tạo được bật và xác thực email ngay, có thể đăng nhập mà không cần OTP.
+- Không thể tự khóa hoặc tự bỏ quyền Admin. Khóa tài khoản thu hồi refresh token; gateway kiểm tra trạng thái qua AuthService ở mỗi request có xác thực và trả `403 ACCOUNT_LOCKED` ngay cả khi access token còn hạn. App hiện thông báo, xóa token và chuyển về đăng nhập. Nếu AuthService không khả dụng, gateway trả `503` và app giữ phiên để thử lại. Khi đổi quyền, gateway trả `403 ROLE_CHANGED` cho phiên mang quyền cũ; refresh token bị thu hồi và người dùng phải đăng nhập lại. App chuyển về đăng nhập và hiện thông báo ở đầu màn hình. Lưu lại cùng quyền không thu hồi phiên.
 - Bảng [MOBILE_UI_ENDPOINTS.md](../../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md) liệt kê đủ 6 API đã nối và các API khác còn thiếu UI.
 
 ### Khu vực Staff trên mobile

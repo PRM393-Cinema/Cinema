@@ -54,5 +54,5 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      - name: Build
-        run: dotnet build ApiGateway/ApiGateway.sln --configuration Release
+      - name: Test
+        run: dotnet test ApiGateway/ApiGateway.sln --configuration Release --logger "trx;LogFileName=results.trx"

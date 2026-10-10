@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:cinema_fe/core/network/api_client.dart';
@@ -19,6 +20,9 @@ void main() {
   late bool refreshTokenRevoked;
   late List<AuthUser> renewedUsers;
   late int expiredCalls;
+  late String? expiredMessage;
+  late int protectedStatus;
+  late String? protectedErrorCode;
 
   // Backend stand-in: protected endpoints only accept 'fresh-token'.
   http.Response backend(http.Request request) {
@@ -41,6 +45,13 @@ void main() {
       return http.Response('', 401);
     }
 
+    if (protectedStatus != 200) {
+      return _json(protectedStatus, {
+        'detail': 'Account locked.',
+        'errorCode': ?protectedErrorCode,
+      });
+    }
+
     if (path == '/api/v1/bookings') {
       return _json(409, {
         'status': 409,
@@ -58,7 +69,10 @@ void main() {
       storage: storage,
       refreshSession: (refreshToken) => authService.refresh(refreshToken),
       onSessionRenewed: renewedUsers.add,
-      onSessionExpired: () => expiredCalls++,
+      onSessionExpired: (message) {
+        expiredCalls++;
+        expiredMessage = message;
+      },
     );
     final client = ApiClient(
       httpClient: MockClient((request) async => backend(request)),
@@ -78,6 +92,9 @@ void main() {
     refreshTokenRevoked = false;
     renewedUsers = [];
     expiredCalls = 0;
+    expiredMessage = null;
+    protectedStatus = 200;
+    protectedErrorCode = null;
   });
 
   test(
@@ -154,6 +171,141 @@ void main() {
     expect(requests.single.headers.containsKey('Authorization'), isFalse);
     expect(refreshCalls, 0);
   });
+
+  test('Locked account clears tokens without refreshing', () async {
+    storage.accessToken = 'fresh-token';
+    protectedStatus = 403;
+    protectedErrorCode = 'ACCOUNT_LOCKED';
+    final client = buildClient();
+
+    await expectLater(
+      client.get('/api/v1/bookings/user/3', authenticated: true),
+      throwsA(
+        isA<ApiException>().having(
+          (e) => e.message,
+          'message',
+          'Account locked.',
+        ),
+      ),
+    );
+    expect(expiredCalls, 1);
+    expect(expiredMessage, 'Account locked.');
+    expect(refreshCalls, 0);
+    expect(storage.accessToken, isNull);
+    expect(storage.refreshToken, isNull);
+    expect(storage.user, isNull);
+  });
+
+  test('Concurrent locked requests report one session expiry', () async {
+    storage.accessToken = 'fresh-token';
+    protectedStatus = 403;
+    protectedErrorCode = 'ACCOUNT_LOCKED';
+    final client = buildClient();
+
+    await Future.wait([
+      for (final id in [1, 2, 3])
+        expectLater(
+          client.get('/api/v1/bookings/$id', authenticated: true),
+          throwsA(isA<ApiException>()),
+        ),
+    ]);
+    expect(expiredCalls, 1);
+    expect(refreshCalls, 0);
+  });
+
+  test(
+    'Locked refresh keeps the account-lock reason when signing out',
+    () async {
+      final manager = TokenManager(
+        storage: storage,
+        refreshSession: (_) async => throw const ApiException(
+          statusCode: 403,
+          message: 'Account locked.',
+          details: {'errorCode': 'ACCOUNT_LOCKED'},
+        ),
+        onSessionExpired: (message) {
+          expiredCalls++;
+          expiredMessage = message;
+        },
+      );
+
+      expect(
+        await manager.refreshAccessToken(failedToken: 'expired-token'),
+        isNull,
+      );
+      expect(expiredCalls, 1);
+      expect(expiredMessage, 'Account locked.');
+      expect(storage.accessToken, isNull);
+      expect(storage.refreshToken, isNull);
+    },
+  );
+
+  test(
+    'Storage failure still notifies the UI to leave protected pages',
+    () async {
+      storage.clearError = StateError('Secure storage is unavailable');
+      final manager = TokenManager(
+        storage: storage,
+        refreshSession: (_) async => authResponseFixture,
+        onSessionExpired: (message) {
+          expiredCalls++;
+          expiredMessage = message;
+        },
+      );
+
+      await expectLater(
+        manager.expireSession(message: 'Account locked.'),
+        throwsStateError,
+      );
+      expect(expiredCalls, 1);
+      expect(expiredMessage, 'Account locked.');
+    },
+  );
+
+  for (final status in [403, 503]) {
+    test('Ordinary $status errors keep the session', () async {
+      storage.accessToken = 'fresh-token';
+      protectedStatus = status;
+      final client = buildClient();
+
+      await expectLater(
+        client.get('/api/v1/bookings/user/3', authenticated: true),
+        throwsA(
+          isA<ApiException>().having((e) => e.statusCode, 'statusCode', status),
+        ),
+      );
+      expect(expiredCalls, 0);
+      expect(storage.accessToken, 'fresh-token');
+      expect(storage.refreshToken, 'refresh-token');
+    });
+  }
+
+  test(
+    'A refresh completing after account lock cannot restore the session',
+    () async {
+      final refresh = Completer<AuthResponse>();
+      final started = Completer<void>();
+      final manager = TokenManager(
+        storage: storage,
+        refreshSession: (_) {
+          started.complete();
+          return refresh.future;
+        },
+        onSessionRenewed: renewedUsers.add,
+        onSessionExpired: (_) => expiredCalls++,
+      );
+      final pending = manager.refreshAccessToken(failedToken: 'expired-token');
+      await started.future;
+      await manager.expireSession(message: 'Account locked.');
+      refresh.complete(authResponseFixture);
+
+      expect(await pending, isNull);
+      expect(storage.accessToken, isNull);
+      expect(storage.refreshToken, isNull);
+      expect(renewedUsers, isEmpty);
+      expect(expiredCalls, 1);
+    },
+  );
 
   test('ProblemDetails detail becomes the error message', () async {
     storage.accessToken = 'fresh-token';
@@ -245,6 +397,7 @@ class _MemoryTokenStorage implements AuthTokenStorage {
   String? accessToken;
   String? refreshToken;
   AuthUser? user;
+  Object? clearError;
 
   @override
   Future<void> save(AuthResponse response) async {
@@ -272,6 +425,7 @@ class _MemoryTokenStorage implements AuthTokenStorage {
 
   @override
   Future<void> clear() async {
+    if (clearError != null) throw clearError!;
     accessToken = null;
     refreshToken = null;
     user = null;

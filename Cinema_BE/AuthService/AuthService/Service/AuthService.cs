@@ -272,6 +272,12 @@ namespace AuthService.Service
             var user = await _userRepository.GetByIdAsync(userId)
                 ?? throw new NotFoundException($"Không tìm thấy người dùng với ID {userId}.");
 
+            if (!user.Enabled)
+            {
+                throw new ForbiddenException(
+                    "Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.", "ACCOUNT_LOCKED");
+            }
+
             return user.ToResponse();
         }
 

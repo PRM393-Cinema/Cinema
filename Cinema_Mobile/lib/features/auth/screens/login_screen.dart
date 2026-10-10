@@ -9,10 +9,10 @@ import '../../../core/session/session_state.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_text_field.dart';
+import '../../../core/widgets/top_notice.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../auth_error_messages.dart';
 import '../widgets/auth_scaffold.dart';
-import '../widgets/auth_success_dialog.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({required this.authRepository, super.key});
@@ -64,31 +64,12 @@ class _LoginScreenState extends State<LoginScreen> {
       final isAdmin = response.user.roles.contains('ROLE_ADMIN');
       final isStaff = !isAdmin && response.user.roles.contains('ROLE_STAFF');
 
-      await showGeneralDialog<void>(
-        context: context,
-        barrierDismissible: false,
-        barrierLabel: 'Login successful',
-        barrierColor: Colors.black.withValues(alpha: 0.72),
-        transitionDuration: MediaQuery.disableAnimationsOf(context)
-            ? Duration.zero
-            : const Duration(milliseconds: 180),
-        pageBuilder: (context, _, _) => Material(
-          type: MaterialType.transparency,
-          child: AuthSuccessDialog(
-            title: 'Signed in!',
-            message: isAdmin || isStaff
-                ? 'Welcome back to your ${isAdmin ? 'admin' : 'staff'} workspace.'
-                : 'Welcome back.\nYour next movie is waiting.',
-            footer: isAdmin || isStaff
-                ? 'Opening your dashboard…'
-                : 'Taking you to your cinema…',
-          ),
-        ),
-        transitionBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(opacity: animation, child: child);
-        },
-      );
-      if (!mounted) return;
+      if (isAdmin) {
+        showTopNotice(
+          Overlay.of(context, rootOverlay: true),
+          'Đăng nhập thành công.',
+        );
+      }
 
       final args =
           ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
@@ -127,7 +108,16 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     } on ApiException catch (error) {
-      _showError(authErrorMessage(error));
+      if (error.requiresSignInAgain) {
+        if (!mounted) return;
+        setState(() => _isLoading = false);
+        showTopNotice(
+          Overlay.of(context, rootOverlay: true),
+          authErrorMessage(error),
+        );
+      } else {
+        _showError(authErrorMessage(error));
+      }
     } on FormatException {
       _showError('The server returned an invalid response.');
     } catch (_) {
