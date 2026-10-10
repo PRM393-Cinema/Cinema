@@ -7,6 +7,8 @@ abstract final class AppRoutes {
   static const forgotPassword = '/forgot-password';
   static const resetPassword = '/reset-password';
   static const home = '/home';
+  static const adminDashboard = '/admin/dashboard';
+  static const adminProfile = '/admin/profile';
   static const adminUsers = '/admin/users';
   static const adminCreateUser = '/admin/users/new';
   static String adminUser(int id) => '/admin/users/$id';

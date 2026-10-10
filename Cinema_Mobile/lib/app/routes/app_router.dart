@@ -7,6 +7,7 @@ import '../../data/repositories/booking_repository.dart';
 import '../../data/repositories/catalog_repository.dart';
 import '../../features/auth/screens/forgot_password_screen.dart';
 import '../../features/admin/screens/admin_users_screen.dart';
+import '../../features/admin/screens/admin_dashboard_screen.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/register_screen.dart';
 import '../../features/auth/screens/reset_password_screen.dart';
@@ -45,7 +46,8 @@ class AppRouter {
   Route<dynamic> onGenerateRoute(RouteSettings settings) {
     final match = _match(settings);
     if (match == null) {
-      return _page(const RouteSettings(name: AppRoutes.home), _home);
+      final landing = _landing();
+      return _page(landing.settings, landing.builder);
     }
 
     if (match.signInRequired && !session.isAuthenticated) {
@@ -71,10 +73,12 @@ class AppRouter {
     String initialRoute, {
     bool isPaymentReturn = false,
   }) {
-    final home = _page(const RouteSettings(name: AppRoutes.home), _home);
+    final landing = _landing();
+    final home = _page(landing.settings, landing.builder);
     final match = _match(RouteSettings(name: initialRoute));
     if (match == null ||
         match.settings.name == '/' ||
+        match.settings.name == landing.settings.name ||
         Uri.tryParse(match.settings.name ?? '')?.path == AppRoutes.home ||
         (match.signInRequired &&
             !session.isAuthenticated &&
@@ -86,6 +90,14 @@ class AppRouter {
 
   Widget _home(BuildContext context) =>
       HomeScreen(catalogRepository: catalogRepository);
+
+  _RouteMatch _landing() => session.user?.roles.contains('ROLE_ADMIN') == true
+      ? _RouteMatch(
+          const RouteSettings(name: AppRoutes.adminDashboard),
+          (_) => AdminDashboardScreen(repository: authRepository),
+          signInRequired: true,
+        )
+      : _RouteMatch(const RouteSettings(name: AppRoutes.home), _home);
 
   _RouteMatch? _match(RouteSettings settings) {
     final uri = Uri.tryParse(settings.name ?? AppRoutes.home);
@@ -105,10 +117,22 @@ class AppRouter {
       _ => false,
     };
     if (session.isAuthenticated && guestOnly) {
-      return _RouteMatch(const RouteSettings(name: AppRoutes.home), _home);
+      return _landing();
     }
 
     switch (uri.path) {
+      case AppRoutes.adminDashboard:
+        return _RouteMatch(
+          settings,
+          (_) => AdminDashboardScreen(repository: authRepository),
+          signInRequired: true,
+        );
+      case AppRoutes.adminProfile:
+        return _RouteMatch(
+          settings,
+          (_) => ProfileScreen(authRepository: authRepository, adminMode: true),
+          signInRequired: true,
+        );
       case AppRoutes.adminUsers:
         return _RouteMatch(
           settings,
@@ -123,7 +147,7 @@ class AppRouter {
         );
       case '/':
       case AppRoutes.home:
-        return _RouteMatch(const RouteSettings(name: AppRoutes.home), _home);
+        return _landing();
       case AppRoutes.login:
         return _RouteMatch(
           settings,
@@ -165,8 +189,13 @@ class AppRouter {
         );
       case AppRoutes.profile:
         return _RouteMatch(
-          settings,
-          (_) => ProfileScreen(authRepository: authRepository),
+          session.user?.roles.contains('ROLE_ADMIN') == true
+              ? const RouteSettings(name: AppRoutes.adminProfile)
+              : settings,
+          (_) => ProfileScreen(
+            authRepository: authRepository,
+            adminMode: session.user?.roles.contains('ROLE_ADMIN') == true,
+          ),
           signInRequired: true,
         );
     }

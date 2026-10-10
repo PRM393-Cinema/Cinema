@@ -27,9 +27,13 @@ Cập nhật: 10/10/2026. Đây là bảng kiểm tra kết nối API, không ph
 | Danh sách thông báo/làm mới | `/notifications` | GET `/api/v1/notifications/user/{userId}` | Đã nối; đọc đủ các trang |
 | Chi tiết thông báo/mở vé liên quan | `/notifications/{id}` | GET `/api/v1/notifications/{id}`; GET `/api/v1/bookings/{id}` khi mở vé | Đã nối; tải theo ID, hỗ trợ mở lại URL |
 | Làm mới phiên | Không có màn riêng | POST `/api/v1/auth/refresh` | Đã nối tự động trong lớp API |
+| Dashboard Admin | `/admin/dashboard` | GET `/api/v1/auth/users` (tổng/active/locked); GET `/api/v1/auth/roles` | Đã nối; thống kê từ API thật, ROLE_ADMIN |
+| Hồ sơ Admin | `/admin/profile` | GET `/api/v1/auth/me`; POST `/api/v1/auth/logout` | Đã nối; hồ sơ và đăng xuất trong khu vực Admin |
 | Quản lý tài khoản Admin | `/admin/users` | GET `/api/v1/auth/users`; GET `/api/v1/auth/roles` | Đã nối; tìm kiếm, lọc quyền/trạng thái, phân trang; chỉ ROLE_ADMIN |
 | Chi tiết/phân quyền/khóa tài khoản | `/admin/users/{id}` | GET `/api/v1/auth/users/{id}`; GET `/api/v1/auth/roles`; PUT `/api/v1/auth/users/{id}/roles`; PATCH `/api/v1/auth/users/{id}/status` | Đã nối; chỉ ROLE_ADMIN |
 | Tạo tài khoản (Admin quản lý) | `/admin/users/new` | GET `/api/v1/auth/roles`; POST `/api/v1/auth/users` | Đã nối; chọn một hoặc nhiều quyền; chỉ ROLE_ADMIN |
+
+Admin đăng nhập hoặc mở `/home` khi còn phiên sẽ vào `/admin/dashboard`. Khu vực quản trị có nav dưới riêng: **Dashboard / Accounts / Profile**; màn tạo và chi tiết tài khoản thuộc tab Accounts. Các màn chỉ dành cho ROLE_ADMIN, dùng chung API/AuthService hiện có. Customer/Staff tiếp tục dùng giao diện khách hàng.
 
 ## Tài khoản
 

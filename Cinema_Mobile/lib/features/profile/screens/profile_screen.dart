@@ -14,11 +14,17 @@ import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_state.dart';
 import '../../../data/models/auth_response.dart';
 import '../../../data/repositories/auth_repository.dart';
+import '../../admin/widgets/admin_page.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({required this.authRepository, super.key});
+  const ProfileScreen({
+    required this.authRepository,
+    this.adminMode = false,
+    super.key,
+  });
 
   final AuthRepository authRepository;
+  final bool adminMode;
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -118,6 +124,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.adminMode) {
+      return AdminPage(
+        title: 'Admin profile',
+        selectedIndex: 2,
+        child: Builder(builder: _buildBody),
+      );
+    }
     return Scaffold(
       extendBody: true,
       body: CinemaGlassBackground(
@@ -224,15 +237,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ],
               const SizedBox(height: AppSpacing.xl),
-              if (user.roles.contains('ROLE_ADMIN')) ...[
-                AppButton.secondary(
-                  label: 'Manage accounts',
-                  leadingIcon: Icons.admin_panel_settings_outlined,
-                  onPressed: () =>
-                      Navigator.pushNamed(context, AppRoutes.adminUsers),
-                ),
-                const SizedBox(height: AppSpacing.md),
-              ],
               AppButton.secondary(
                 label: 'Change password',
                 leadingIcon: Icons.lock_outline,
@@ -243,27 +247,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
-              AppButton.secondary(
-                label: 'Payment history',
-                leadingIcon: Icons.receipt_long_outlined,
-                onPressed: () =>
-                    Navigator.pushNamed(context, AppRoutes.paymentHistory),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              AppButton.secondary(
-                label: 'My bookings',
-                leadingIcon: Icons.confirmation_number_outlined,
-                onPressed: () =>
-                    Navigator.pushNamed(context, AppRoutes.myBookings),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              AppButton.secondary(
-                label: 'Notifications',
-                leadingIcon: Icons.notifications_none_outlined,
-                onPressed: () =>
-                    Navigator.pushNamed(context, AppRoutes.notifications),
-              ),
-              const SizedBox(height: AppSpacing.md),
+              if (!widget.adminMode) ...[
+                AppButton.secondary(
+                  label: 'Payment history',
+                  leadingIcon: Icons.receipt_long_outlined,
+                  onPressed: () =>
+                      Navigator.pushNamed(context, AppRoutes.paymentHistory),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                AppButton.secondary(
+                  label: 'My bookings',
+                  leadingIcon: Icons.confirmation_number_outlined,
+                  onPressed: () =>
+                      Navigator.pushNamed(context, AppRoutes.myBookings),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                AppButton.secondary(
+                  label: 'Notifications',
+                  leadingIcon: Icons.notifications_none_outlined,
+                  onPressed: () =>
+                      Navigator.pushNamed(context, AppRoutes.notifications),
+                ),
+                const SizedBox(height: AppSpacing.md),
+              ],
               AppButton.danger(
                 label: 'Sign out',
                 leadingIcon: Icons.logout,

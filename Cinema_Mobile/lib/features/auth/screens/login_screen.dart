@@ -61,6 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       SessionProvider.of(context).setAuthenticated(response.user);
+      final isAdmin = response.user.roles.contains('ROLE_ADMIN');
 
       await showGeneralDialog<void>(
         context: context,
@@ -70,12 +71,16 @@ class _LoginScreenState extends State<LoginScreen> {
         transitionDuration: MediaQuery.disableAnimationsOf(context)
             ? Duration.zero
             : const Duration(milliseconds: 180),
-        pageBuilder: (context, _, _) => const Material(
+        pageBuilder: (context, _, _) => Material(
           type: MaterialType.transparency,
           child: AuthSuccessDialog(
             title: 'Signed in!',
-            message: 'Welcome back.\nYour next movie is waiting.',
-            footer: 'Taking you to your cinema…',
+            message: isAdmin
+                ? 'Welcome back to your admin workspace.'
+                : 'Welcome back.\nYour next movie is waiting.',
+            footer: isAdmin
+                ? 'Opening your dashboard…'
+                : 'Taking you to your cinema…',
           ),
         ),
         transitionBuilder: (context, animation, secondaryAnimation, child) {
@@ -89,7 +94,16 @@ class _LoginScreenState extends State<LoginScreen> {
       final pendingRoute = args?['pendingRoute'] as String?;
       final pendingArguments = args?['pendingArguments'];
 
-      if (pendingRoute != null && pendingRoute != AppRoutes.home) {
+      if (isAdmin) {
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          pendingRoute?.startsWith('/admin/') == true
+              ? pendingRoute!
+              : AppRoutes.adminDashboard,
+          (_) => false,
+          arguments: pendingArguments,
+        );
+      } else if (pendingRoute != null && pendingRoute != AppRoutes.home) {
         Navigator.pushReplacementNamed(
           context,
           pendingRoute,

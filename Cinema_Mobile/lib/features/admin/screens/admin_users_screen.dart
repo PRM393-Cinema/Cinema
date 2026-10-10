@@ -11,7 +11,7 @@ import '../../../core/utils/layout.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
-import '../../../core/widgets/cinema_page.dart';
+import '../widgets/admin_page.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_state.dart';
 import '../../../data/models/auth_response.dart';
@@ -111,7 +111,8 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => CinemaPage(
+  Widget build(BuildContext context) => AdminPage(
+    selectedIndex: 1,
     title: 'Manage accounts',
     child: RefreshIndicator(
       onRefresh: () => _load(page: _result?.pageNumber ?? 1),
@@ -428,7 +429,8 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
   Widget build(BuildContext context) {
     final self = SessionProvider.of(context).user?.userId == widget.userId;
     final user = _user;
-    return CinemaPage(
+    return AdminPage(
+      selectedIndex: 1,
       title: 'Account details',
       child: _loading
           ? const LoadingState(message: 'Loading account...')
@@ -632,7 +634,8 @@ class _AdminCreateUserScreenState extends State<AdminCreateUserScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => CinemaPage(
+  Widget build(BuildContext context) => AdminPage(
+    selectedIndex: 1,
     title: 'Create account',
     child: _loading
         ? const LoadingState(message: 'Loading roles...')

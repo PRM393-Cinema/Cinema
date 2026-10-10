@@ -56,7 +56,7 @@ docker compose up -d --build
 
 > Chỉ **gateway** mở cho máy khác trong mạng. Các service và PostgreSQL chỉ nghe ở `127.0.0.1`: trên máy mình vẫn mở Swagger/pgAdmin bình thường, còn máy khác cùng wifi không gọi thẳng vào được (phải đi qua gateway, nơi kiểm tra quyền và giới hạn số request).
 
-Tài khoản seed (mật khẩu `123456`): `admin@cinema.com`, `nhanvien1@cinema.com`, `khachhang1@gmail.com`. Trên mobile, đăng nhập Admin → Account → **Manage accounts** để tìm kiếm, lọc, phân trang, xem chi tiết, tạo tài khoản, gán quyền và khóa/mở tài khoản (hoặc gọi `POST /api/v1/auth/users` trong `ApiGateway.http`).
+Tài khoản seed (mật khẩu `123456`): `admin@cinema.com`, `nhanvien1@cinema.com`, `khachhang1@gmail.com`. Trên mobile, đăng nhập Admin → **Dashboard → tab Accounts** để tìm kiếm, lọc, phân trang, xem chi tiết, tạo tài khoản, gán quyền và khóa/mở tài khoản (hoặc gọi `POST /api/v1/auth/users` trong `ApiGateway.http`).
 
 **Khi một service lỗi** (retry + circuit breaker, SRS §13.2):
 - BookingService gọi MovieService/PayOS: lỗi tạm thời thì **tự thử lại** tối đa 2 lần. Riêng lệnh tạo link PayOS không thử lại, để tránh tạo trùng.
@@ -121,7 +121,7 @@ Lệnh đọc danh sách phim từ `cinema_movie_db` rồi thêm lịch vào `ci
 ### Quản lý tài khoản trên mobile
 
 - Admin local/demo: `admin@cinema.com`, mật khẩu `123456` (seed hiện có; dùng mật khẩu riêng khi triển khai).
-- Ba màn `/admin/users`, `/admin/users/new`, `/admin/users/{id}` dùng giao diện Cinema chung. Chỉ `ROLE_ADMIN` thấy mục quản lý và vào các route này; backend tiếp tục kiểm tra quyền.
+- Admin đăng nhập vào `/admin/dashboard`, dùng dashboard quản trị và nav dưới riêng **Dashboard / Accounts / Profile**. Accounts bao gồm `/admin/users`, `/admin/users/new`, `/admin/users/{id}`; Profile tại `/admin/profile`. Thống kê tài khoản và vai trò lấy từ API thật. Chỉ `ROLE_ADMIN` được vào khu vực này; backend tiếp tục kiểm tra quyền. Customer/Staff dùng giao diện khách hàng.
 - Có thể chọn nhiều vai trò `ROLE_ADMIN`, `ROLE_STAFF`, `ROLE_CUSTOMER`. Tài khoản do Admin tạo được bật và xác thực email ngay, có thể đăng nhập mà không cần OTP.
 - Không thể tự khóa hoặc tự bỏ quyền Admin. Khóa tài khoản thu hồi refresh token; access token đã cấp có thể còn hiệu lực đến khi hết hạn. Quyền mới cập nhật khi đăng nhập/làm mới phiên.
 - Bảng [MOBILE_UI_ENDPOINTS.md](../../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md) liệt kê đủ 6 API đã nối và các API khác còn thiếu UI.
