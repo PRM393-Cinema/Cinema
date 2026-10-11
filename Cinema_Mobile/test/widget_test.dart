@@ -387,6 +387,10 @@ Future<void> _loginToHome(WidgetTester tester) async {
   await tester.drag(find.byType(Scrollable).first, const Offset(0, -300));
   await tester.pumpAndSettle();
   await tester.tap(find.byType(AppButton).first);
+  await tester.pump();
+  expect(find.text('Signed in!'), findsOneWidget);
+  expect(find.text('Đăng nhập thành công.'), findsNothing);
+  await tester.pump(const Duration(seconds: 3));
   await pumpRoute(tester);
   expect(find.text('Đăng nhập thành công.'), findsNothing);
   expect(find.byType(Dialog), findsNothing);

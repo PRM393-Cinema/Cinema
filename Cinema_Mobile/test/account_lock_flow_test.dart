@@ -7,7 +7,10 @@ import 'package:cinema_fe/core/session/session_state.dart';
 import 'package:cinema_fe/core/widgets/app_button.dart';
 import 'package:cinema_fe/data/models/auth_response.dart';
 import 'package:cinema_fe/data/repositories/auth_repository.dart';
+import 'package:cinema_fe/data/repositories/catalog_repository.dart';
 import 'package:cinema_fe/data/services/auth_service.dart';
+import 'package:cinema_fe/data/services/booking_service.dart';
+import 'package:cinema_fe/data/services/movie_service.dart';
 import 'package:cinema_fe/data/services/staff_service.dart';
 import 'package:cinema_fe/data/storage/auth_token_storage.dart';
 import 'package:cinema_fe/data/storage/token_manager.dart';
@@ -26,6 +29,51 @@ const roleMessage = 'Vai trò tài khoản đã thay đổi. Vui lòng đăng nh
 
 void main() {
   setUp(() => FlutterSecureStorage.setMockInitialValues({}));
+
+  testWidgets(
+    'Home public request expires the old role and shows a top notice',
+    (tester) async {
+      final session = SessionState();
+      final storage = SecureAuthTokenStorage();
+      await storage.save(authResponseFixture);
+      final paths = <String>[];
+      final manager = TokenManager(
+        storage: storage,
+        refreshSession: (_) async => throw StateError('Must not refresh'),
+        onSessionExpired: (message) => session.clear(message: message),
+      );
+      final client = ApiClient(
+        tokenProvider: manager,
+        httpClient: MockClient((request) async {
+          paths.add(request.url.path);
+          return _json(403, {
+            'errorCode': 'ROLE_CHANGED',
+            'detail': roleMessage,
+          });
+        }),
+      );
+      await tester.pumpWidget(
+        buildTestApp(
+          session: session,
+          authenticated: true,
+          user: customerUser,
+          initialRoute: AppRoutes.home,
+          catalogRepository: RemoteCatalogRepository(
+            movieService: MovieService(client: client),
+            bookingService: BookingService(client: client),
+          ),
+        ),
+      );
+      await pumpRoute(tester);
+      expect(paths, ['/api/v1/auth/me']);
+      expect(session.isAuthenticated, isFalse);
+      expect(await storage.readAccessToken(), isNull);
+      expect(find.byKey(const Key('loginTitle')), findsOneWidget);
+      expect(find.byKey(const Key('topNotice')), findsOneWidget);
+      expect(find.text(roleMessage), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   for (final (errorCode, message) in [
     ('ACCOUNT_LOCKED', lockedMessage),
@@ -243,10 +291,7 @@ void main() {
         expect(find.text(dashboard), findsWidgets);
         expect(find.byKey(const Key('loginTitle')), findsNothing);
         expect(find.byType(Dialog), findsNothing);
-        expect(
-          find.text('Đăng nhập thành công.'),
-          role == 'ROLE_ADMIN' ? findsOneWidget : findsNothing,
-        );
+        expect(find.text('Đăng nhập thành công.'), findsOneWidget);
       },
     );
   }

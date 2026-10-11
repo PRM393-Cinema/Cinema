@@ -13,6 +13,7 @@ import '../../../core/widgets/top_notice.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../auth_error_messages.dart';
 import '../widgets/auth_scaffold.dart';
+import '../widgets/auth_success_dialog.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({required this.authRepository, super.key});
@@ -64,11 +65,32 @@ class _LoginScreenState extends State<LoginScreen> {
       final isAdmin = response.user.roles.contains('ROLE_ADMIN');
       final isStaff = !isAdmin && response.user.roles.contains('ROLE_STAFF');
 
-      if (isAdmin) {
+      if (isAdmin || isStaff) {
         showTopNotice(
           Overlay.of(context, rootOverlay: true),
           'Đăng nhập thành công.',
         );
+      } else {
+        await showGeneralDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          barrierLabel: 'Login successful',
+          barrierColor: Colors.black.withValues(alpha: 0.72),
+          transitionDuration: MediaQuery.disableAnimationsOf(context)
+              ? Duration.zero
+              : const Duration(milliseconds: 180),
+          pageBuilder: (_, _, _) => const Material(
+            type: MaterialType.transparency,
+            child: AuthSuccessDialog(
+              title: 'Signed in!',
+              message: 'Welcome back.\nYour next movie is waiting.',
+              footer: 'Taking you to your cinema…',
+            ),
+          ),
+          transitionBuilder: (_, animation, _, child) =>
+              FadeTransition(opacity: animation, child: child),
+        );
+        if (!mounted) return;
       }
 
       final args =

@@ -68,7 +68,14 @@ class ApiClient {
   }) async {
     final uri = _buildUri(path, query);
     final provider = tokenProvider;
-    final token = authenticated ? await provider?.accessToken() : null;
+    final storedToken = authenticated || method == 'GET'
+        ? await provider?.accessToken()
+        : null;
+    if (!authenticated && method == 'GET' && storedToken?.isNotEmpty == true) {
+      // Public movie requests must also detect changes to a signed-in account.
+      await _send('GET', '/api/v1/auth/me', authenticated: true);
+    }
+    final token = authenticated ? storedToken : null;
 
     try {
       var response = await _request(method, uri, body, token);
@@ -170,7 +177,8 @@ class ApiClient {
   }
 
   Object? _decodeResponse(http.Response response) {
-    final body = response.body.trim();
+    // ProblemDetails may omit charset; the API still sends UTF-8 bytes.
+    final body = utf8.decode(response.bodyBytes, allowMalformed: true).trim();
     final isSuccess = response.statusCode >= 200 && response.statusCode < 300;
 
     Object? decoded;

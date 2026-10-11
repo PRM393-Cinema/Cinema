@@ -159,7 +159,48 @@ void main() {
     expect(storage.refreshToken, isNull);
   });
 
+  test('UTF-8 ProblemDetails without charset preserves Vietnamese', () async {
+    const message = 'Vai trò tài khoản đã thay đổi. Vui lòng đăng nhập lại.';
+    final manager = TokenManager(
+      storage: storage,
+      refreshSession: (_) async => throw StateError('Must not refresh'),
+      onSessionExpired: (message) => expiredMessage = message,
+    );
+    final client = ApiClient(
+      tokenProvider: manager,
+      httpClient: MockClient(
+        (_) async => http.Response.bytes(
+          utf8.encode(
+            jsonEncode({'detail': message, 'errorCode': 'ROLE_CHANGED'}),
+          ),
+          403,
+          headers: {'content-type': 'application/problem+json'},
+        ),
+      ),
+    );
+    await expectLater(
+      client.get('/api/v1/auth/me', authenticated: true),
+      throwsA(isA<ApiException>().having((e) => e.message, 'message', message)),
+    );
+    expect(expiredMessage, message);
+    expect(storage.accessToken, isNull);
+  });
+
+  test('UTF-8 success response without charset preserves Vietnamese', () async {
+    final client = ApiClient(
+      httpClient: MockClient(
+        (_) async => http.Response.bytes(
+          utf8.encode(jsonEncode({'fullName': 'Ngữ Nguyễn'})),
+          200,
+          headers: {'content-type': 'application/json'},
+        ),
+      ),
+    );
+    expect(await client.get('/api/v1/movies'), {'fullName': 'Ngữ Nguyễn'});
+  });
+
   test('Public requests are sent without a token', () async {
+    storage.accessToken = null;
     final client = buildClient();
 
     await expectLater(
@@ -171,6 +212,45 @@ void main() {
     expect(requests.single.headers.containsKey('Authorization'), isFalse);
     expect(refreshCalls, 0);
   });
+
+  test(
+    'Signed-in public GET checks the session before fetching movies',
+    () async {
+      storage.accessToken = 'fresh-token';
+      final client = buildClient();
+      await expectLater(
+        client.get('/api/v1/movies/status/ACTIVE'),
+        throwsA(
+          isA<ApiException>().having((e) => e.statusCode, 'statusCode', 401),
+        ),
+      );
+      expect(requests.map((request) => request.url.path), [
+        '/api/v1/auth/me',
+        '/api/v1/movies/status/ACTIVE',
+      ]);
+      expect(requests.first.headers['Authorization'], 'Bearer fresh-token');
+      expect(requests.last.headers.containsKey('Authorization'), isFalse);
+      expect(expiredCalls, 0);
+    },
+  );
+
+  for (final status in [403, 503]) {
+    test('Session check $status blocks public GET without a timer', () async {
+      storage.accessToken = 'fresh-token';
+      protectedStatus = status;
+      protectedErrorCode = 'ROLE_CHANGED';
+      final client = buildClient();
+      await expectLater(
+        client.get('/api/v1/movies/status/ACTIVE'),
+        throwsA(
+          isA<ApiException>().having((e) => e.statusCode, 'statusCode', status),
+        ),
+      );
+      expect(requests.single.url.path, '/api/v1/auth/me');
+      expect(expiredCalls, status == 403 ? 1 : 0);
+      expect(storage.accessToken, status == 403 ? isNull : 'fresh-token');
+    });
+  }
 
   test('Locked account clears tokens without refreshing', () async {
     storage.accessToken = 'fresh-token';
