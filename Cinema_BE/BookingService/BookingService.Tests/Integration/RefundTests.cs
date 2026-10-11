@@ -26,6 +26,46 @@ public class RefundTests
     }
 
     [Fact]
+    public async Task StaffRejectsRefund_RequiresReasonAndBlocksFurtherDecisions()
+    {
+        var showtime = _factory.Showtimes.AddShowtime(DateTime.Now.AddDays(3));
+        var id = await CreatePaidBookingAsync(_factory, _customer, showtime.Id, NewSeat());
+        await _customer.PostAsync($"/api/v1/bookings/{id}/cancel", null);
+        var cancelled = Assert.Single(await _factory.OutboxEventsAsync<BookingDbContext>(EventTypes.BookingRefundRequested, id));
+        await _factory.HandleAsync<PaymentBookingEventsHandler>(cancelled);
+        var refundId = await _factory.QueryAsync<PaymentDbContext, long>(db =>
+            db.Refunds.Where(r => r.BookingId == id).Select(r => r.Id).SingleAsync());
+        var route = $"/api/v1/payments/refunds/{refundId}/reject";
+        Assert.Equal(HttpStatusCode.Forbidden, (await _customer.PostAsJsonAsync(route, new { reason = "Denied" })).StatusCode);
+        foreach (var reason in new[] { "", "   ", new string('x', 501) })
+            Assert.Equal(HttpStatusCode.BadRequest, (await _staff.PostAsJsonAsync(route, new { reason })).StatusCode);
+        var response = await _staff.PostAsJsonAsync(route, new { reason = " Bank account details could not be verified " });
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var refund = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("REJECTED", refund.GetProperty("status").GetString());
+        Assert.Equal("Bank account details could not be verified", refund.GetProperty("note").GetString());
+        Assert.Equal(TestUsers.Staff.Id, refund.GetProperty("processedBy").GetInt64());
+        Assert.Equal("SUCCESS", await PaymentStatusAsync(id));
+        Assert.Equal("REFUND_PENDING", (await _customer.GetFromJsonAsync<JsonElement>($"/api/v1/bookings/{id}"))
+            .GetProperty("status").GetString());
+        Assert.Equal(HttpStatusCode.Conflict, (await _staff.PostAsJsonAsync(route, new { reason = "Again" })).StatusCode);
+        Assert.Equal(HttpStatusCode.Conflict, (await _staff.PostAsJsonAsync(
+            $"/api/v1/payments/refunds/{refundId}/complete", new { transactionRef = "FT123" })).StatusCode);
+        var rejected = Assert.Single(await _factory.OutboxEventsAsync<PaymentDbContext>(EventTypes.PaymentRefundRejected, id));
+        await _factory.HandleAsync<BookingRefundEventsHandler>(rejected);
+        await _factory.HandleAsync<BookingRefundEventsHandler>(rejected);
+        Assert.Equal("CONFIRMED", (await _customer.GetFromJsonAsync<JsonElement>($"/api/v1/bookings/{id}"))
+            .GetProperty("status").GetString());
+        Assert.Equal(HttpStatusCode.Conflict, (await _customer.PostAsync($"/api/v1/bookings/{id}/cancel", null)).StatusCode);
+        Assert.NotEmpty(await _factory.QueryAsync<BookingDbContext, List<long>>(db =>
+            db.SeatReservations.Where(s => s.BookingId == id && s.Status == "BOOKED").Select(s => s.SeatId).ToListAsync()));
+        await _factory.HandleAsync<NotificationEventHandler>(rejected);
+        Assert.Contains(_factory.Emails.To(TestUsers.CustomerA.Email), email => email.Content.Contains("Bank account details could not be verified"));
+        await _factory.HandleAsync<PaymentBookingEventsHandler>(cancelled);
+        Assert.Equal("SUCCESS", await PaymentStatusAsync(id));
+    }
+
+    [Fact]
     public async Task CustomerCancelsPaidBookingEarly_ConsumerRequestsRefundOnce()
     {
         var showtime = _factory.Showtimes.AddShowtime(DateTime.Now.AddDays(3));
@@ -35,7 +75,7 @@ public class RefundTests
         Assert.Equal(HttpStatusCode.OK, cancel.StatusCode);
 
         var cancelled = Assert.Single(
-            await _factory.OutboxEventsAsync<BookingDbContext>(EventTypes.BookingCancelled, id));
+            await _factory.OutboxEventsAsync<BookingDbContext>(EventTypes.BookingRefundRequested, id));
 
         // Consumer nhận event (RabbitMQ có thể giao lại message: chạy 2 lần)
         await _factory.HandleAsync<PaymentBookingEventsHandler>(cancelled);
@@ -48,6 +88,13 @@ public class RefundTests
         Assert.Equal("PENDING", refund.Status);
         Assert.Equal("Ban viec", refund.Reason);
         Assert.Equal("REFUND_PENDING", await PaymentStatusAsync(id));
+        Assert.Equal("REFUND_PENDING", (await _customer.GetFromJsonAsync<JsonElement>($"/api/v1/bookings/{id}"))
+            .GetProperty("status").GetString());
+        Assert.NotEmpty(await _factory.QueryAsync<BookingDbContext, List<long>>(db =>
+            db.SeatReservations.Where(s => s.BookingId == id && s.Status == "BOOKED").Select(s => s.SeatId).ToListAsync()));
+        Assert.Empty(await _factory.OutboxEventsAsync<BookingDbContext>(EventTypes.BookingCancelled, id));
+        Assert.NotEmpty((await _customer.GetFromJsonAsync<List<long>>($"/api/v1/bookings/showtime/{showtime.Id}/occupied-seats"))!);
+        Assert.Equal(HttpStatusCode.Conflict, (await _customer.PostAsync($"/api/v1/bookings/{id}/cancel", null)).StatusCode);
         Assert.Single(await _factory.OutboxEventsAsync<PaymentDbContext>(EventTypes.PaymentRefundRequested, id));
     }
 
@@ -64,19 +111,24 @@ public class RefundTests
     }
 
     [Fact]
-    public async Task StaffRefund_ThenCompleteTransfer_MarksPaymentRefunded()
+    public async Task CustomerRequestsRefund_StaffCompletesTransfer_MarksPaymentRefunded()
     {
         var showtime = _factory.Showtimes.AddShowtime(DateTime.Now.AddDays(3));
         var id = await CreatePaidBookingAsync(_factory, _customer, showtime.Id, NewSeat());
         var paymentId = await _factory.QueryAsync<PaymentDbContext, long>(db =>
             db.Payments.Where(p => p.BookingId == id).Select(p => p.Id).SingleAsync());
 
-        var refundResponse = await _staff.PostAsync($"/api/v1/payments/{paymentId}/refund?reason=Rap%20bao%20tri", null);
+        var cancel = await _customer.PostAsync($"/api/v1/bookings/{id}/cancel?reason=Customer%20request", null);
+        Assert.Equal(HttpStatusCode.OK, cancel.StatusCode);
+        var cancelled = Assert.Single(
+            await _factory.OutboxEventsAsync<BookingDbContext>(EventTypes.BookingRefundRequested, id));
+        await _factory.HandleAsync<PaymentBookingEventsHandler>(cancelled);
+        var refundResponse = await _staff.GetAsync($"/api/v1/payments/{paymentId}/refund");
         Assert.Equal(HttpStatusCode.OK, refundResponse.StatusCode);
         var refund = await refundResponse.Content.ReadFromJsonAsync<JsonElement>();
         var refundId = refund.GetProperty("id").GetInt64();
 
-        Assert.Equal("CANCELLED", (await _customer.GetFromJsonAsync<JsonElement>($"/api/v1/bookings/{id}"))
+        Assert.Equal("REFUND_PENDING", (await _customer.GetFromJsonAsync<JsonElement>($"/api/v1/bookings/{id}"))
             .GetProperty("status").GetString());
         Assert.Equal("0011223344", refund.GetProperty("payerAccountNumber").GetString());
 
@@ -92,6 +144,17 @@ public class RefundTests
         Assert.Equal("COMPLETED", completed.GetProperty("status").GetString());
         Assert.Equal(TestUsers.Staff.Id, completed.GetProperty("processedBy").GetInt64());
         Assert.Equal("REFUNDED", await PaymentStatusAsync(id));
+        var refunded = Assert.Single(await _factory.OutboxEventsAsync<PaymentDbContext>(EventTypes.PaymentRefunded, id));
+        await _factory.HandleAsync<BookingRefundEventsHandler>(refunded);
+        await _factory.HandleAsync<BookingRefundEventsHandler>(refunded);
+        Assert.Equal("CANCELLED", (await _customer.GetFromJsonAsync<JsonElement>($"/api/v1/bookings/{id}"))
+            .GetProperty("status").GetString());
+        Assert.Empty(await _factory.QueryAsync<BookingDbContext, List<long>>(db =>
+            db.SeatReservations.Where(s => s.BookingId == id && s.Status == "BOOKED").Select(s => s.SeatId).ToListAsync()));
+
+        Assert.Equal(HttpStatusCode.Conflict,
+            (await _staff.PostAsJsonAsync($"/api/v1/payments/refunds/{refundId}/reject",
+                new { reason = "Too late" })).StatusCode);
 
         Assert.Equal(HttpStatusCode.Conflict,
             (await _staff.PostAsJsonAsync($"/api/v1/payments/refunds/{refundId}/complete",

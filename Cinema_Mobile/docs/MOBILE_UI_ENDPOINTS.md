@@ -135,11 +135,12 @@ Admin đăng nhập hoặc mở `/home` khi còn phiên sẽ vào `/admin/dashbo
 | Xác minh thanh toán PayOS | POST | `/api/v1/payments/payos/{orderCode}/verify` | Kiểm tra thanh toán/kết quả · đã nối API | [PaymentController:125](../../Cinema_BE/BookingService/BookingService/Controllers/PaymentController.cs#L125) |
 | Nhận webhook PayOS | POST | `/api/v1/payments/payos/webhook` | PayOS gọi server; không phải thao tác UI | [PaymentController:150](../../Cinema_BE/BookingService/BookingService/Controllers/PaymentController.cs#L150) |
 | Xử lý thanh toán | POST | `/api/v1/payments/{id}/process` | Staff → Payment details → Verify with PayOS · đã nối API | [PaymentController:164](../../Cinema_BE/BookingService/BookingService/Controllers/PaymentController.cs#L164) |
-| Yêu cầu hoàn tiền | POST | `/api/v1/payments/{id}/refund` | Staff → Payment details → Request refund · đã nối API | [PaymentController:176](../../Cinema_BE/BookingService/BookingService/Controllers/PaymentController.cs#L176) |
-| Hoàn tiền của giao dịch | GET | `/api/v1/payments/{id}/refund` | Thông tin hoàn tiền trong chi tiết vé · đã nối API | [PaymentController:186](../../Cinema_BE/BookingService/BookingService/Controllers/PaymentController.cs#L186) |
+| Yêu cầu hoàn tiền | POST | `/api/v1/payments/{id}/refund` | API ngoại lệ thủ công chỉ dành cho Admin; Staff không có quyền tạo yêu cầu qua endpoint này. Customer gửi yêu cầu qua POST `/api/v1/bookings/{id}/cancel`: booking chuyển REFUND_PENDING, giữ vé trong Active và giữ ghế. Staff hoàn tất thì mới hủy/nhả ghế; từ chối thì booking về CONFIRMED | [PaymentController:176](../../Cinema_BE/BookingService/BookingService/Controllers/PaymentController.cs#L176) |
+| Hoàn tiền của giao dịch | GET | `/api/v1/payments/{id}/refund` | Customer → chi tiết vé; Staff → Payment details → View refund request · đã nối API | [PaymentController:186](../../Cinema_BE/BookingService/BookingService/Controllers/PaymentController.cs#L186) |
 | Danh sách yêu cầu hoàn tiền | GET | `/api/v1/payments/refunds` | Staff → Operations → Refunds/Dashboard · đã nối API | [PaymentController:200](../../Cinema_BE/BookingService/BookingService/Controllers/PaymentController.cs#L200) |
 | Chi tiết hoàn tiền | GET | `/api/v1/payments/refunds/{refundId}` | Staff → Refund details · đã nối API | [PaymentController:210](../../Cinema_BE/BookingService/BookingService/Controllers/PaymentController.cs#L210) |
-| Xác nhận đã hoàn tiền | POST | `/api/v1/payments/refunds/{refundId}/complete` | Staff → Refund details → Record completed transfer · đã nối API | [PaymentController:224](../../Cinema_BE/BookingService/BookingService/Controllers/PaymentController.cs#L224) |
+| Từ chối hoàn tiền | POST | `/api/v1/payments/refunds/{refundId}/reject` | Staff → Refund details → Reject refund; bắt buộc lý do, chỉ PENDING. Customer thấy lý do từ chối trong chi tiết vé, booking về CONFIRMED và vẫn giữ ghế; nhận thông báo/email | [PaymentController](../../Cinema_BE/BookingService/BookingService/Controllers/PaymentController.cs) |
+| Xác nhận đã hoàn tiền | POST | `/api/v1/payments/refunds/{refundId}/complete` | Staff → Refund details → Record completed transfer · ghi nhận hoàn tiền, booking chờ refund chuyển CANCELLED và nhả ghế qua event | [PaymentController:224](../../Cinema_BE/BookingService/BookingService/Controllers/PaymentController.cs#L224) |
 
 ## Thông báo
 
@@ -160,7 +161,7 @@ Admin đăng nhập hoặc mở `/home` khi còn phiên sẽ vào `/admin/dashbo
 4. **Phân trang:** vé đã đặt hiện chỉ lấy trang đầu tối đa 50 bản ghi; thông báo và lịch sử thanh toán đã đọc đủ các trang. Hai danh sách này tải toàn bộ khi mở/làm mới, chưa tải thêm theo cuộn.
 5. **Quản trị:** các API quản lý user, role, phim, phòng, ghế, suất chiếu, xử lý hoàn tiền và gửi thông báo chưa có UI quản trị trong app khách hàng.
 6. **Thông báo còn thiếu:** DELETE `/api/v1/notifications/{id}` có ở backend nhưng chưa có thao tác xóa trên mobile. Backend chưa có endpoint đánh dấu đã đọc/chưa đọc hoặc số thông báo chưa đọc. `status` hiện là trạng thái gửi email, không phải trạng thái đọc.
-7. **Thông báo trống:** thông báo được tạo từ sự kiện xác nhận/hủy/hết hạn vé, yêu cầu/hoàn tiền. Đăng ký, xác thực email và đặt lại mật khẩu chưa tạo bản ghi trong lịch sử này. Không có dữ liệu mẫu tự chèn cho tài khoản mới; kéo xuống để lấy dữ liệu mới. Chưa có cập nhật thời gian thực/push notification.
+7. **Thông báo trống:** thông báo được tạo từ sự kiện xác nhận/hủy/hết hạn vé, yêu cầu/hoàn tiền/từ chối hoàn tiền. Đăng ký, xác thực email và đặt lại mật khẩu chưa tạo bản ghi trong lịch sử này. Không có dữ liệu mẫu tự chèn cho tài khoản mới; kéo xuống để lấy dữ liệu mới. Chưa có cập nhật thời gian thực/push notification.
 
 Chưa kiểm tra thiết bị thật, email thật, thanh toán thật hoặc tải đồng thời nhiều người dùng. Trạng thái kết nối API ở trên được đối chiếu từ code.
 

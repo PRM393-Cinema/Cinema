@@ -17,7 +17,7 @@ public partial class Refund
 
     public string Reason { get; set; } = null!;
 
-    public string Status { get; set; } = null!; // PENDING / COMPLETED
+    public string Status { get; set; } = null!; // PENDING / COMPLETED / REJECTED
 
     public string? TransactionRef { get; set; }
 

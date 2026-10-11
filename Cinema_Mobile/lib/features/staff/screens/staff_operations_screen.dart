@@ -202,10 +202,11 @@ class _StaffOperationsScreenState extends State<StaffOperationsScreen> {
                             'ALL',
                             'PENDING',
                             'CONFIRMED',
+                            'REFUND_PENDING',
                             'CANCELLED',
                             'EXPIRED',
                           ]
-                        : ['ALL', 'PENDING', 'COMPLETED'])
+                        : ['ALL', 'PENDING', 'COMPLETED', 'REJECTED'])
                   DropdownMenuItem(value: status, child: Text(status)),
               ],
               onChanged: _loading

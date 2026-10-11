@@ -56,6 +56,19 @@ public class EmailTemplatesTests
     }
 
     [Fact]
+    public void RefundRejected_EncodesReason()
+    {
+        var email = EmailTemplates.RefundRejected(new PaymentEventData
+        {
+            BookingCode = "BK-1", RefundCode = "RF-1", Reason = "<script>unsafe</script>"
+        }, "khach@test.local");
+        Assert.Contains("BK-1", email.Subject);
+        Assert.Contains("RF-1", email.Content);
+        Assert.Contains("&lt;script&gt;", email.Content);
+        Assert.DoesNotContain("<script>", email.Content);
+    }
+
+    [Fact]
     public void RefundCompleted_ShowsTransactionReference()
     {
         var email = EmailTemplates.RefundCompleted(new PaymentEventData

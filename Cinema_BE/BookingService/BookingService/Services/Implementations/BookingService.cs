@@ -27,6 +27,7 @@ namespace BookingService.Services.Implementations
         private readonly IBookingRepository _bookingRepository;
         private readonly IBookingSeatRepository _bookingSeatRepository;
         private readonly ISeatReservationRepository _seatReservationRepository;
+        private readonly IRefundRepository _refundRepository;
         private readonly IShowtimeClient _showtimeClient;
         private readonly OutboxWriter<BookingDbContext> _outbox;
         private readonly RefundPolicyOptions _refundPolicy;
@@ -38,6 +39,7 @@ namespace BookingService.Services.Implementations
             IBookingRepository bookingRepository,
             IBookingSeatRepository bookingSeatRepository,
             ISeatReservationRepository seatReservationRepository,
+            IRefundRepository refundRepository,
             IShowtimeClient showtimeClient,
             OutboxWriter<BookingDbContext> outbox,
             IOptions<RefundPolicyOptions> refundPolicy,
@@ -48,6 +50,7 @@ namespace BookingService.Services.Implementations
             _bookingRepository = bookingRepository;
             _bookingSeatRepository = bookingSeatRepository;
             _seatReservationRepository = seatReservationRepository;
+            _refundRepository = refundRepository;
             _showtimeClient = showtimeClient;
             _outbox = outbox;
             _refundPolicy = refundPolicy.Value;
@@ -429,7 +432,7 @@ namespace BookingService.Services.Implementations
                     await _bookingSeatRepository
                         .GetByBookingIdAsync(booking.Id);
 
-                if (status == "CONFIRMED")
+                if (status is "CONFIRMED" or "REFUND_PENDING")
                 {
                     await transaction.CommitAsync();
 
@@ -509,7 +512,7 @@ namespace BookingService.Services.Implementations
 
         // Khách: huỷ booking chưa thanh toán; booking đã thanh toán chỉ huỷ được khi còn đủ thời gian
         // trước giờ chiếu (RefundPolicy:CustomerCancelBeforeHours). Staff/Admin huỷ được mọi lúc.
-        // Booking đã thanh toán bị huỷ: phía payment nhận booking.cancelled và tạo yêu cầu hoàn 100%.
+        // Khách yêu cầu hoàn tiền: REFUND_PENDING, giữ ghế; chỉ huỷ sau payment.refunded.
         public async Task<BookingResponse> CancelBookingAsync(
             long id,
             bool manager,
@@ -538,6 +541,17 @@ namespace BookingService.Services.Implementations
                 if (!manager && status == "CONFIRMED")
                 {
                     EnsureCustomerCanCancelPaidBooking(booking);
+                    if (booking.PaymentId.HasValue &&
+                        await _refundRepository.GetByPaymentIdAsync(booking.PaymentId.Value) != null)
+                        throw new ConflictException("This refund has already been processed. Please contact the cinema.");
+                    booking.Status = "REFUND_PENDING";
+                    var heldSeats = await _bookingSeatRepository.GetByBookingIdAsync(booking.Id);
+                    _outbox.Add(EventTypes.BookingRefundRequested,
+                        EventFactory.Booking(booking, heldSeats, "CONFIRMED",
+                            string.IsNullOrWhiteSpace(reason) ? "Refund requested by customer" : reason.Trim(), "CUSTOMER"));
+                    await _bookingRepository.UpdateBookingAsync(booking.Id, booking);
+                    await transaction.CommitAsync();
+                    return booking.ToResponse(heldSeats.Select(x => x.ToResponse()).ToList());
                 }
                 else if (!manager && status != "PENDING")
                 {
@@ -612,7 +626,7 @@ namespace BookingService.Services.Implementations
                         .GetBookingByIdForUpdateAsync(id);
 
                 if (booking == null ||
-                    NormalizeStatus(booking) is not ("PENDING" or "CONFIRMED"))
+                    NormalizeStatus(booking) is not ("PENDING" or "CONFIRMED" or "REFUND_PENDING"))
                 {
                     await transaction.CommitAsync();
                     continue;
@@ -626,6 +640,23 @@ namespace BookingService.Services.Implementations
             }
 
             return cancelled;
+        }
+
+        public async Task ApplyRefundDecisionAsync(long bookingId, bool completed)
+        {
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            var booking = await GetBookingForUpdateAsync(bookingId);
+            if (NormalizeStatus(booking) == "REFUND_PENDING")
+            {
+                if (completed)
+                    await CancelLockedBookingAsync(booking, "Refund completed", "STAFF");
+                else
+                {
+                    booking.Status = "CONFIRMED";
+                    await _bookingRepository.UpdateBookingAsync(booking.Id, booking);
+                }
+            }
+            await transaction.CommitAsync();
         }
 
         // Job chạy nền gọi định kỳ: booking PENDING quá hạn giữ ghế -> EXPIRED, nhả ghế.

@@ -88,6 +88,14 @@ public class AuthorizationTests
     }
 
     [Fact]
+    public async Task Staff_CannotInitiateManualRefund()
+    {
+        var staff = _factory.ClientFor(TestUsers.StaffToken);
+        Assert.Equal(HttpStatusCode.Forbidden,
+            (await staff.PostAsync("/api/v1/payments/1/refund", null)).StatusCode);
+    }
+
+    [Fact]
     public async Task Notifications_AdminSeesAll_StaffOnlyOwn()
     {
         var staff = _factory.ClientFor(TestUsers.StaffToken);

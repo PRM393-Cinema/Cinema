@@ -26,10 +26,14 @@ class BookingSeat {
 enum BookingStatus {
   pending,
   confirmed,
+  refundPending,
   cancelled,
   expired;
 
   static BookingStatus parse(String value) {
+    if (value.toUpperCase() == 'REFUND_PENDING') {
+      return BookingStatus.refundPending;
+    }
     return BookingStatus.values.firstWhere(
       (status) => status.name == value.toLowerCase(),
       orElse: () => BookingStatus.pending,

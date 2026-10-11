@@ -375,21 +375,32 @@ void main() {
 
       await tester.tap(find.text('Code: BK-CONFIRMED'));
       await pumpRoute(tester);
-      await tester.tap(find.text('Cancel Booking'));
+      await tester.tap(find.text('Request refund'));
       await pumpRoute(tester);
 
       expect(find.textContaining('full refund'), findsOneWidget);
-      await tester.tap(find.text('Yes, Cancel'));
-      await tester.pump();
-      await tester.pump(const Duration(seconds: 3));
+      await tester.tap(find.text('Request'));
+      await pumpRoute(tester);
+      await tester.pump(const Duration(seconds: 2));
       await pumpRoute(tester);
 
       expect(bookings.cancelledIds, [102]);
-      expect(find.text('Cancelled'), findsOneWidget);
+      expect(find.text('Refund pending'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 2));
+      await pumpRoute(tester);
       expect(
         find.text('Refund of ${formatVnd(180000)} in progress'),
         findsOneWidget,
       );
+      expect(bookings.bookings.single.status, BookingStatus.refundPending);
+      expect(find.text('Request refund'), findsNothing);
+      Navigator.of(tester.element(find.text('Booking Detail'))).pop();
+      await pumpRoute(tester);
+      expect(find.text('Code: BK-CONFIRMED'), findsOneWidget);
+      expect(find.text('Refund pending'), findsOneWidget);
+      await tester.tap(find.text('History'));
+      await pumpRoute(tester);
+      expect(find.text('Code: BK-CONFIRMED'), findsNothing);
     });
 
     testWidgets('Paid booking close to the show cannot be cancelled', (

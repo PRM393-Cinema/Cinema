@@ -121,10 +121,10 @@ namespace BookingService.Services.Implementations
             var refund = await _refundRepository.GetByIdForUpdateAsync(refundId)
                 ?? throw new KeyNotFoundException($"Refund with id {refundId} was not found.");
 
-            if (refund.Status == "COMPLETED")
+            if (refund.Status != "PENDING")
             {
                 throw new ConflictException(
-                    $"Refund {refund.RefundCode} has already been completed.");
+                    $"Refund {refund.RefundCode} is {refund.Status}; only pending refunds can be completed.");
             }
 
             var payment = await _paymentRepository.GetByIdForUpdateAsync(refund.PaymentId)
@@ -151,6 +151,34 @@ namespace BookingService.Services.Implementations
             await transaction.CommitAsync();
             _metrics.Refund("completed");
 
+            return refund.ToResponse(payment);
+        }
+
+        public async Task<RefundResponse> RejectRefundAsync(long refundId, string reason, long processedBy)
+        {
+            if (string.IsNullOrWhiteSpace(reason) || reason.Trim().Length > 500)
+                throw new BusinessException("A rejection reason of 1–500 characters is required.");
+
+            await using var transaction = await _outbox.BeginTransactionAsync();
+            // Use the same lock order as completion so only one decision can win.
+            var refund = await _refundRepository.GetByIdForUpdateAsync(refundId)
+                ?? throw new KeyNotFoundException($"Refund with id {refundId} was not found.");
+            if (refund.Status != "PENDING")
+                throw new ConflictException($"Refund {refund.RefundCode} is already {refund.Status}.");
+            var payment = await _paymentRepository.GetByIdForUpdateAsync(refund.PaymentId)
+                ?? throw new KeyNotFoundException($"Payment with id {refund.PaymentId} was not found.");
+            var booking = await _bookingRepository.GetBookingByIdAsync(refund.BookingId);
+            refund.Status = "REJECTED";
+            refund.Note = reason.Trim();
+            refund.ProcessedBy = processedBy;
+            refund.ProcessedAt = DateTime.Now;
+            payment.Status = "SUCCESS";
+            payment.UpdatedAt = refund.ProcessedAt;
+            _outbox.Add(EventTypes.PaymentRefundRejected,
+                EventFactory.Payment(payment, booking, refund, refund.Note));
+            await _refundRepository.UpdateAsync(refund);
+            await transaction.CommitAsync();
+            _metrics.Refund("rejected");
             return refund.ToResponse(payment);
         }
 

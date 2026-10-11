@@ -306,7 +306,9 @@ class FakeBookingRepository implements BookingRepository {
       userId: booking.userId,
       customerEmail: booking.customerEmail,
       showtimeId: booking.showtimeId,
-      status: BookingStatus.cancelled,
+      status: booking.status == BookingStatus.confirmed
+          ? BookingStatus.refundPending
+          : BookingStatus.cancelled,
       totalAmount: booking.totalAmount,
       paymentId: booking.paymentId,
       movieTitle: booking.movieTitle,

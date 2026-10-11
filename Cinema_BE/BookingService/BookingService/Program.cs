@@ -204,7 +204,11 @@ builder.Services
     .AddEventConsumer<PaymentBookingEventsHandler>(
         builder.Configuration,
         "booking-service.payment-updates",
-        EventTypes.BookingCancelled, EventTypes.BookingExpired)
+        EventTypes.BookingCancelled, EventTypes.BookingExpired, EventTypes.BookingRefundRequested)
+    .AddEventConsumer<BookingRefundEventsHandler>(
+        builder.Configuration,
+        "booking-service.refund-decisions",
+        EventTypes.PaymentRefunded, EventTypes.PaymentRefundRejected)
     // MovieService huỷ suất chiếu: huỷ các booking của suất đó
     .AddEventConsumer<ShowtimeCancelledHandler>(
         builder.Configuration,

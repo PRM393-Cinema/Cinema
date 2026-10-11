@@ -19,6 +19,8 @@ namespace BookingService.Services.Interfaces
             string? note,
             long processedBy);
 
+        Task<RefundResponse> RejectRefundAsync(long refundId, string reason, long processedBy);
+
         Task<PagedResult<RefundResponse>> GetRefundsAsync(string? status, int page, int size);
 
         Task<RefundResponse> GetRefundByIdAsync(long id);

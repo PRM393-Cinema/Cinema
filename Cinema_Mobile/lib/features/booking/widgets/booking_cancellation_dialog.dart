@@ -8,8 +8,13 @@ import '../../../core/widgets/cinema_account_widgets.dart';
 import '../../auth/widgets/auth_success_dialog.dart';
 
 class BookingCancellationDialog extends StatelessWidget {
-  const BookingCancellationDialog({required this.message, super.key});
+  const BookingCancellationDialog({
+    required this.message,
+    this.requestRefund = false,
+    super.key,
+  });
   final String message;
+  final bool requestRefund;
 
   @override
   Widget build(BuildContext context) => Dialog(
@@ -23,14 +28,16 @@ class BookingCancellationDialog extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Icon(
-                Icons.cancel_outlined,
+              Icon(
+                requestRefund
+                    ? Icons.currency_exchange_outlined
+                    : Icons.cancel_outlined,
                 size: 64,
-                color: AppColors.error,
+                color: requestRefund ? AppColors.primary : AppColors.error,
               ),
               const SizedBox(height: AppSpacing.lg),
-              const Text(
-                'Cancel booking?',
+              Text(
+                requestRefund ? 'Request refund?' : 'Cancel booking?',
                 style: AppTextStyles.heading2,
                 textAlign: TextAlign.center,
               ),
@@ -45,14 +52,14 @@ class BookingCancellationDialog extends StatelessWidget {
                 children: [
                   Expanded(
                     child: AppButton.secondary(
-                      label: 'Keep',
+                      label: requestRefund ? 'Back' : 'Keep',
                       onPressed: () => Navigator.pop(context, false),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: AppButton.danger(
-                      label: 'Cancel',
+                      label: requestRefund ? 'Request' : 'Cancel',
                       onPressed: () => Navigator.pop(context, true),
                     ),
                   ),
@@ -69,10 +76,11 @@ class BookingCancellationDialog extends StatelessWidget {
 Future<void> showBookingCancellationNotice(
   BuildContext context, {
   required String message,
+  bool refundRequested = false,
 }) => showGeneralDialog<void>(
   context: context,
   barrierDismissible: false,
-  barrierLabel: 'Booking cancelled',
+  barrierLabel: refundRequested ? 'Refund requested' : 'Booking cancelled',
   barrierColor: Colors.black.withValues(alpha: 0.72),
   transitionDuration: MediaQuery.disableAnimationsOf(context)
       ? Duration.zero
@@ -80,10 +88,12 @@ Future<void> showBookingCancellationNotice(
   pageBuilder: (_, _, _) => Material(
     type: MaterialType.transparency,
     child: AuthSuccessDialog(
-      title: 'Booking cancelled',
+      title: refundRequested ? 'Refund requested' : 'Booking cancelled',
       message: message,
-      footer: 'Cancellation completed',
-      isCancellation: true,
+      footer: refundRequested
+          ? 'Awaiting staff review'
+          : 'Cancellation completed',
+      isCancellation: !refundRequested,
     ),
   ),
   transitionBuilder: (_, animation, _, child) =>

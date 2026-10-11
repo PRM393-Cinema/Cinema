@@ -45,7 +45,10 @@ class _AdminPageState extends State<AdminPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
+                    Wrap(
+                      spacing: AppSpacing.sm,
+                      runSpacing: AppSpacing.sm,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         Text(
                           'COSMOQ',
@@ -54,7 +57,6 @@ class _AdminPageState extends State<AdminPage> {
                             letterSpacing: 2,
                           ),
                         ),
-                        const SizedBox(width: AppSpacing.sm),
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 8,

@@ -115,16 +115,14 @@ class StaffService {
           ),
         ),
       );
-  Future<Refund> requestRefund(int paymentId, String reason) async =>
-      Refund.fromJson(
-        readMap(
-          await _client.post(
-            '/api/v1/payments/$paymentId/refund',
-            authenticated: true,
-            query: {'reason': reason},
-          ),
-        ),
-      );
+  Future<Refund> refundOfPayment(int paymentId) async => Refund.fromJson(
+    readMap(
+      await _client.get(
+        '/api/v1/payments/$paymentId/refund',
+        authenticated: true,
+      ),
+    ),
+  );
   Future<PagedResult<Refund>> refunds({int page = 1, String? status}) async =>
       PagedResult.fromJson(
         await _client.get(
@@ -139,6 +137,16 @@ class StaffService {
       await _client.get('/api/v1/payments/refunds/$id', authenticated: true),
     ),
   );
+  Future<Refund> rejectRefund(int id, String reason) async => Refund.fromJson(
+    readMap(
+      await _client.post(
+        '/api/v1/payments/refunds/$id/reject',
+        authenticated: true,
+        body: {'reason': reason},
+      ),
+    ),
+  );
+
   Future<Refund> completeRefund(
     int id,
     String transactionRef,

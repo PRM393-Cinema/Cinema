@@ -107,6 +107,8 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     final paymentId = booking.paymentId;
     final mayHaveRefund =
         booking.status == BookingStatus.cancelled ||
+        booking.status == BookingStatus.confirmed ||
+        booking.status == BookingStatus.refundPending ||
         booking.status == BookingStatus.expired;
     if (paymentId == null || !mayHaveRefund) return null;
 
@@ -125,9 +127,10 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => BookingCancellationDialog(
+        requestRefund: isPaid,
         message: isPaid
-            ? 'You will receive a full refund of ${formatVnd(booking.totalAmount)}. '
-                  'The cinema transfers the money back and emails you when it is done.'
+            ? 'Request a full refund of ${formatVnd(booking.totalAmount)}. '
+                  'Your booking and seats remain active while staff review the request. The booking is cancelled only after the refund is completed.'
             : 'Your seats will be released for other customers.',
       ),
     );
@@ -148,8 +151,9 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
       });
       await showBookingCancellationNotice(
         context,
+        refundRequested: isPaid,
         message: isPaid
-            ? 'Your refund has been requested. We will email you once it is completed.'
+            ? 'Your refund request is pending review. Your booking remains active.'
             : 'Your seats have been released.',
       );
       // The refund request is created in the background (RabbitMQ).
@@ -209,10 +213,10 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         : 'TBA';
 
     final canPay = booking.isAwaitingPayment();
-    final canCancel = booking.canCancel();
+    final canCancel = booking.canCancel() && !(_refund?.isRejected ?? false);
     final paidButTooLate =
         booking.status == BookingStatus.confirmed &&
-        !canCancel &&
+        !booking.canCancel() &&
         booking.showTime != null &&
         booking.showTime!.isAfter(DateTime.now());
 
@@ -239,13 +243,20 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            Wrap(
+                              spacing: AppSpacing.md,
+                              runSpacing: AppSpacing.sm,
+                              crossAxisAlignment: WrapCrossAlignment.center,
                               children: [
-                                Expanded(
-                                  child: Text(
-                                    'Code: ${booking.bookingCode}',
-                                    style: AppTextStyles.caption,
+                                const Icon(
+                                  Icons.local_activity_outlined,
+                                  color: AppColors.primary,
+                                  size: 24,
+                                ),
+                                Text(
+                                  'Your booking',
+                                  style: AppTextStyles.bodySmall.copyWith(
+                                    color: AppColors.textPrimary,
                                   ),
                                 ),
                                 BookingStatusBadge(status: booking.status),
@@ -257,32 +268,41 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                               style: AppTextStyles.heading2,
                             ),
                             const SizedBox(height: AppSpacing.md),
-                            Row(
+                            Text(
+                              'Booking code',
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.xs),
+                            SelectableText(
+                              booking.bookingCode,
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const Padding(
+                              padding: EdgeInsets.symmetric(
+                                vertical: AppSpacing.lg,
+                              ),
+                              child: Divider(
+                                height: 1,
+                                color: AppColors.border,
+                              ),
+                            ),
+                            Wrap(
+                              spacing: AppSpacing.xl,
+                              runSpacing: AppSpacing.md,
                               children: [
-                                const Icon(
-                                  Icons.calendar_today,
-                                  size: 20,
-                                  color: AppColors.textSecondary,
+                                _ShowtimeField(
+                                  icon: Icons.calendar_today_outlined,
+                                  label: 'Show date',
+                                  value: showDateStr,
                                 ),
-                                const SizedBox(width: AppSpacing.sm),
-                                Flexible(
-                                  child: Text(
-                                    showDateStr,
-                                    style: AppTextStyles.body,
-                                  ),
-                                ),
-                                const SizedBox(width: AppSpacing.lg),
-                                const Icon(
-                                  Icons.access_time,
-                                  size: 20,
-                                  color: AppColors.textSecondary,
-                                ),
-                                const SizedBox(width: AppSpacing.sm),
-                                Flexible(
-                                  child: Text(
-                                    showTimeStr,
-                                    style: AppTextStyles.body,
-                                  ),
+                                _ShowtimeField(
+                                  icon: Icons.schedule_outlined,
+                                  label: 'Show time',
+                                  value: showTimeStr,
                                 ),
                               ],
                             ),
@@ -295,14 +315,46 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                     // Seats Card
                     _DetailSection(
                       title: 'Seats & Tickets',
+                      icon: Icons.event_seat_outlined,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(booking.seatLabels, style: AppTextStyles.body),
+                          Wrap(
+                            spacing: AppSpacing.sm,
+                            runSpacing: AppSpacing.sm,
+                            children: [
+                              for (final seat in booking.seats)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: AppSpacing.md,
+                                    vertical: AppSpacing.sm,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary.withValues(
+                                      alpha: 0.08,
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: AppColors.primary.withValues(
+                                        alpha: 0.35,
+                                      ),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    seat.seatLabel,
+                                    style: AppTextStyles.title.copyWith(
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
                           const SizedBox(height: AppSpacing.xs),
                           Text(
                             '${booking.seats.length} Ticket(s)',
-                            style: AppTextStyles.bodySmall,
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.textPrimary,
+                            ),
                           ),
                         ],
                       ),
@@ -312,38 +364,47 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                     // Price Card
                     _DetailSection(
                       title: 'Payment Summary',
+                      icon: Icons.receipt_long_outlined,
                       child: Column(
                         children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text(
-                                'Total Amount',
-                                style: AppTextStyles.body,
-                              ),
-                              Flexible(
-                                child: Text(
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Total Amount',
+                                  style: AppTextStyles.bodySmall.copyWith(
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: AppSpacing.xs),
+                                Text(
                                   formatVnd(booking.totalAmount),
-                                  textAlign: TextAlign.end,
-                                  style: AppTextStyles.title.copyWith(
+                                  style: AppTextStyles.heading1.copyWith(
                                     color: AppColors.primary,
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
+                          const SizedBox(height: AppSpacing.md),
                           if (booking.paymentId != null) ...[
                             const SizedBox(height: AppSpacing.xs),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text(
+                                Text(
                                   'Payment ID',
-                                  style: AppTextStyles.bodySmall,
+                                  style: AppTextStyles.bodySmall.copyWith(
+                                    color: AppColors.textPrimary,
+                                  ),
                                 ),
                                 Text(
                                   '${booking.paymentId}',
-                                  style: AppTextStyles.caption,
+                                  style: AppTextStyles.bodySmall.copyWith(
+                                    color: AppColors.textPrimary,
+                                  ),
                                 ),
                               ],
                             ),
@@ -360,6 +421,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                     // Timeline Card
                     _DetailSection(
                       title: 'Timeline',
+                      icon: Icons.history_outlined,
                       child: Column(
                         children: [
                           _TimelineRow(
@@ -387,7 +449,9 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                         'Paid bookings can be cancelled up to '
                         '${Booking.cancelBeforeShowtime.inHours} hours before the show. '
                         'Please contact the cinema for help.',
-                        style: AppTextStyles.bodySmall,
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.textPrimary,
+                        ),
                       ),
                     ],
                   ],
@@ -415,7 +479,9 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                   ],
                   if (canCancel)
                     AppButton.danger(
-                      label: 'Cancel Booking',
+                      label: booking.status == BookingStatus.confirmed
+                          ? 'Request refund'
+                          : 'Cancel Booking',
                       isLoading: _isCancelling,
                       onPressed: _isCancelling
                           ? null
@@ -437,22 +503,85 @@ class _RefundRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (refund.isRejected) {
+      return Container(
+        margin: const EdgeInsets.only(top: AppSpacing.md),
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        decoration: BoxDecoration(
+          color: AppColors.error.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.error.withValues(alpha: 0.45)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(
+                  Icons.info_outline,
+                  color: AppColors.error,
+                  size: 22,
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(
+                    'Refund request rejected',
+                    style: AppTextStyles.body.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (refund.note != null) ...[
+              const SizedBox(height: AppSpacing.lg),
+              Text(
+                'Rejection reason',
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              SelectableText(
+                refund.note!,
+                style: AppTextStyles.body.copyWith(height: 1.5),
+              ),
+            ],
+          ],
+        ),
+      );
+    }
     final label = refund.isCompleted
         ? 'Refunded ${formatVnd(refund.amount)}'
         : 'Refund of ${formatVnd(refund.amount)} in progress';
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text('Refund', style: AppTextStyles.bodySmall),
-        Flexible(
-          child: Text(
-            label,
-            textAlign: TextAlign.right,
-            style: AppTextStyles.caption.copyWith(
-              color: refund.isCompleted ? AppColors.success : AppColors.warning,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Refund',
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.textPrimary,
+              ),
             ),
-          ),
+            const SizedBox(width: AppSpacing.sm),
+            Flexible(
+              child: Text(
+                label,
+                textAlign: TextAlign.right,
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: refund.isCompleted
+                      ? AppColors.success
+                      : AppColors.warning,
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -460,27 +589,35 @@ class _RefundRow extends StatelessWidget {
 }
 
 class _DetailSection extends StatelessWidget {
-  const _DetailSection({required this.title, required this.child});
+  const _DetailSection({
+    required this.title,
+    required this.icon,
+    required this.child,
+  });
 
   final String title;
+  final IconData icon;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title, style: AppTextStyles.caption),
-        const SizedBox(height: AppSpacing.sm),
-        CinemaPanel(
-          surfaceOpacity: 0.8,
-          padding: EdgeInsets.zero,
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            child: SizedBox(width: double.infinity, child: child),
+    return CinemaPanel(
+      surfaceOpacity: 0.8,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 20, color: AppColors.textSecondary),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(child: Text(title, style: AppTextStyles.title)),
+            ],
           ),
-        ),
-      ],
+          const SizedBox(height: AppSpacing.lg),
+          child,
+        ],
+      ),
     );
   }
 }
@@ -501,7 +638,10 @@ class _TimelineRow extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: AppTextStyles.bodySmall),
+        Text(
+          label,
+          style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary),
+        ),
         const SizedBox(width: AppSpacing.sm),
         Flexible(
           child: Text(
@@ -510,6 +650,43 @@ class _TimelineRow extends StatelessWidget {
             style: AppTextStyles.bodySmall.copyWith(
               color: isWarning ? AppColors.warning : AppColors.textPrimary,
             ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ShowtimeField extends StatelessWidget {
+  const _ShowtimeField({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 20, color: AppColors.primary),
+        const SizedBox(width: AppSpacing.sm),
+        Flexible(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              Text(value, style: AppTextStyles.body),
+            ],
           ),
         ),
       ],

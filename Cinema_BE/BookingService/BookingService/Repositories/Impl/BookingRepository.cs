@@ -151,6 +151,7 @@ namespace BookingService.Repositories.Impl
                     bs.Booking.ShowtimeId == showtimeId &&
                     (
                         bs.Booking.Status == "CONFIRMED" ||
+                        bs.Booking.Status == "REFUND_PENDING" ||
                         (
                             bs.Booking.Status == "PENDING" &&
                             (bs.Booking.ExpiresAt == null || bs.Booking.ExpiresAt > now)
@@ -168,7 +169,7 @@ namespace BookingService.Repositories.Impl
                 .AsNoTracking()
                 .Where(b =>
                     b.ShowtimeId == showtimeId &&
-                    (b.Status == "PENDING" || b.Status == "CONFIRMED"))
+                    (b.Status == "PENDING" || b.Status == "CONFIRMED" || b.Status == "REFUND_PENDING"))
                 .OrderBy(b => b.Id)
                 .Select(b => b.Id)
                 .ToListAsync();

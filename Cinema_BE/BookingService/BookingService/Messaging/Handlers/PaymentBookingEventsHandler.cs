@@ -44,6 +44,10 @@ namespace BookingService.Messaging.Handlers
                             ? $"Booking {data.BookingCode} was cancelled."
                             : data.Reason);
                     break;
+                case EventTypes.BookingRefundRequested:
+                    await _refundService.RequestRefundForBookingAsync(data.BookingId,
+                        data.Reason ?? "Refund requested by customer");
+                    break;
             }
         }
     }

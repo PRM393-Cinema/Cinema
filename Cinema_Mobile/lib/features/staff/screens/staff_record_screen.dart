@@ -9,6 +9,7 @@ import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_state.dart';
+import '../../../core/widgets/status_badge.dart';
 import '../../../data/models/booking.dart';
 import '../../../data/models/payment.dart';
 import '../../../data/models/room.dart';
@@ -122,20 +123,25 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
     );
   }
 
-  Future<void> _refundPayment(PaymentInfo payment) async {
-    final reason = await staffInput(context, 'Request refund', 'Reason');
+  Future<void> _rejectRefund(Refund refund) async {
+    final reason = await staffInput(
+      context,
+      'Reject refund',
+      'Rejection reason',
+      maxLength: 500,
+    );
     if (reason == null || !mounted) return;
     if (!await staffConfirm(
           context,
-          'Create refund request?',
-          'The booking will be cancelled. Complete the bank transfer separately before marking the refund complete.',
+          'Reject this refund?',
+          'The customer will be notified with this reason. No money will be refunded; their active booking stays valid.',
         ) ||
         !mounted) {
       return;
     }
     await _run(() async {
-      await widget.service.requestRefund(payment.id, reason);
-    }, 'Refund request created.');
+      await widget.service.rejectRefund(refund.id, reason);
+    }, 'Refund rejected.');
   }
 
   Future<void> _completeRefund(Refund refund) async {
@@ -214,7 +220,12 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
 
   @override
   Widget build(BuildContext context) => AdminPage(
-    title: 'Record details',
+    title: switch (widget.kind) {
+      'bookings' => 'Booking details',
+      'payments' => 'Payment details',
+      'refunds' => 'Refund details',
+      _ => 'Record details',
+    },
     selectedIndex: 1,
     staffMode: true,
     child: _loading
@@ -252,19 +263,10 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
           ),
   );
   List<Widget> _details(Object item) {
+    if (item is Booking) return _bookingDetails(item);
+    if (item is PaymentInfo) return _paymentDetails(item);
+    if (item is Refund) return _refundDetails(item);
     final rows = switch (item) {
-      Booking b => [
-        ('Booking', b.bookingCode),
-        ('Movie', b.movieTitle ?? 'Not provided'),
-        ('Customer', '#${b.userId} · ${b.customerEmail ?? 'No email'}'),
-        ('Status', b.status.name.toUpperCase()),
-        (
-          'Showtime',
-          b.showTime == null ? '#${b.showtimeId}' : formatDateTime(b.showTime!),
-        ),
-        ('Seats', b.seatLabels),
-        ('Total', formatVnd(b.totalAmount)),
-      ],
       Showtime s => [
         ('Showtime', '#${s.id}'),
         ('Movie', '#${s.movieId}'),
@@ -275,25 +277,6 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
         ('Status', s.status),
       ],
       Room r => [('Room', r.name), ('Seats', '${r.totalSeats}')],
-      PaymentInfo p => [
-        ('Payment', p.paymentCode),
-        ('Booking', '#${p.bookingId}'),
-        ('Amount', formatVnd(p.amount)),
-        ('Method', p.method ?? 'Not provided'),
-        ('Status', p.status.name),
-        ('Reference', p.transactionRef ?? 'Not provided'),
-      ],
-      Refund r => [
-        ('Refund', r.refundCode),
-        ('Booking', '#${r.bookingId ?? '—'}'),
-        ('Amount', formatVnd(r.amount)),
-        ('Status', r.status),
-        ('Reason', r.reason ?? 'Not provided'),
-        ('Bank', r.payerBankName ?? 'Not provided'),
-        ('Account number', r.payerAccountNumber ?? 'Ask the customer'),
-        ('Account holder', r.payerAccountName ?? 'Ask the customer'),
-        ('Transaction', r.transactionRef ?? 'Not recorded'),
-      ],
       _ => <(String, String)>[],
     };
     return [
@@ -312,17 +295,266 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
     ];
   }
 
-  Widget _button(String label, VoidCallback action, {bool danger = false}) =>
-      Padding(
-        padding: const EdgeInsets.only(bottom: AppSpacing.md),
-        child: danger
-            ? AppButton.danger(label: label, onPressed: _busy ? null : action)
-            : AppButton(
-                label: label,
-                useGradient: true,
-                onPressed: _busy ? null : action,
-              ),
+  List<Widget> _refundDetails(Refund refund) => [
+    const Text('Refund amount', style: AppTextStyles.bodySmall),
+    const SizedBox(height: AppSpacing.xs),
+    Text(
+      formatVnd(refund.amount),
+      style: AppTextStyles.heading1.copyWith(color: AppColors.primary),
+    ),
+    const SizedBox(height: AppSpacing.md),
+    Align(
+      alignment: Alignment.centerLeft,
+      child: StatusBadge(
+        label: refund.isCompleted
+            ? 'Completed'
+            : refund.isRejected
+            ? 'Rejected'
+            : 'Awaiting transfer',
+        variant: refund.isCompleted
+            ? StatusBadgeVariant.success
+            : refund.isRejected
+            ? StatusBadgeVariant.error
+            : StatusBadgeVariant.warning,
+      ),
+    ),
+    const SizedBox(height: AppSpacing.md),
+    SelectableText(refund.refundCode, style: AppTextStyles.bodySmall),
+    const Padding(
+      padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+      child: Divider(height: 1, color: AppColors.border),
+    ),
+    _detailField(
+      Icons.local_activity_outlined,
+      'Booking',
+      '#${refund.bookingId ?? '—'}',
+    ),
+    _detailField(
+      Icons.notes_outlined,
+      'Request reason',
+      refund.reason ?? 'Not provided',
+    ),
+    const SizedBox(height: AppSpacing.sm),
+    const Text('Recipient bank account', style: AppTextStyles.title),
+    const SizedBox(height: AppSpacing.lg),
+    _detailField(
+      Icons.account_balance_outlined,
+      'Bank',
+      refund.payerBankName ?? 'Not provided',
+    ),
+    _detailField(
+      Icons.credit_card_outlined,
+      'Account number',
+      refund.payerAccountNumber ?? 'Not provided',
+    ),
+    _detailField(
+      Icons.person_outline,
+      'Account holder',
+      refund.payerAccountName ?? 'Not provided',
+    ),
+    if (refund.isPending &&
+        (refund.payerAccountNumber == null || refund.payerAccountName == null))
+      const Text(
+        'Contact the customer to confirm their bank details before transferring money.',
+        style: AppTextStyles.bodySmall,
+      ),
+    const Padding(
+      padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+      child: Divider(height: 1, color: AppColors.border),
+    ),
+    _detailField(
+      Icons.schedule_outlined,
+      'Requested',
+      formatDateTime(refund.createdAt),
+    ),
+    if (refund.processedAt != null)
+      _detailField(
+        Icons.history_outlined,
+        'Processed',
+        formatDateTime(refund.processedAt!),
+      ),
+    if (refund.transactionRef != null)
+      _detailField(
+        Icons.receipt_long_outlined,
+        'Transfer reference',
+        refund.transactionRef!,
+      ),
+    if (refund.note != null)
+      _detailField(
+        Icons.info_outline,
+        refund.isRejected ? 'Rejection reason' : 'Processing note',
+        refund.note!,
+      ),
+  ];
+
+  List<Widget> _bookingDetails(Booking booking) {
+    final (status, variant) = switch (booking.status) {
+      BookingStatus.confirmed => ('Confirmed', StatusBadgeVariant.success),
+      BookingStatus.refundPending => (
+        'Refund pending',
+        StatusBadgeVariant.warning,
+      ),
+      BookingStatus.pending => ('Awaiting payment', StatusBadgeVariant.warning),
+      BookingStatus.cancelled => ('Cancelled', StatusBadgeVariant.error),
+      BookingStatus.expired => ('Expired', StatusBadgeVariant.neutral),
+    };
+    return [
+      Text(
+        booking.movieTitle ?? 'Movie not provided',
+        style: AppTextStyles.heading2,
+      ),
+      const SizedBox(height: AppSpacing.sm),
+      Align(
+        alignment: Alignment.centerLeft,
+        child: StatusBadge(label: status, variant: variant),
+      ),
+      const SizedBox(height: AppSpacing.md),
+      SelectableText(
+        'Booking: ${booking.bookingCode}',
+        style: AppTextStyles.bodySmall,
+      ),
+      const Divider(height: AppSpacing.xl, color: AppColors.border),
+      _detailField(
+        Icons.schedule_outlined,
+        'Showtime',
+        booking.showTime == null
+            ? '#${booking.showtimeId}'
+            : formatDateTime(booking.showTime!),
+      ),
+      _detailField(
+        Icons.event_seat_outlined,
+        'Seats (${booking.seats.length})',
+        booking.seatLabels.isEmpty ? 'Not provided' : booking.seatLabels,
+      ),
+      _detailField(
+        Icons.person_outline,
+        'Customer #${booking.userId}',
+        booking.customerEmail ?? 'No email',
+      ),
+      const Divider(height: AppSpacing.lg, color: AppColors.border),
+      const Text('Total amount', style: AppTextStyles.bodySmall),
+      const SizedBox(height: AppSpacing.xs),
+      Text(
+        formatVnd(booking.totalAmount),
+        style: AppTextStyles.heading1.copyWith(color: AppColors.primary),
+      ),
+    ];
+  }
+
+  List<Widget> _paymentDetails(PaymentInfo payment) {
+    final (label, variant) = switch (payment.status) {
+      PaymentStatus.success => ('Paid', StatusBadgeVariant.success),
+      PaymentStatus.pending => ('Awaiting payment', StatusBadgeVariant.warning),
+      PaymentStatus.failed => ('Failed', StatusBadgeVariant.error),
+      PaymentStatus.refundPending => (
+        'Refund pending',
+        StatusBadgeVariant.warning,
+      ),
+      PaymentStatus.refunded => ('Refunded', StatusBadgeVariant.neutral),
+      PaymentStatus.unknown => ('Unknown status', StatusBadgeVariant.neutral),
+    };
+    return [
+      const Text('Amount', style: AppTextStyles.bodySmall),
+      Text(
+        formatVnd(payment.amount),
+        style: AppTextStyles.heading1.copyWith(color: AppColors.primary),
+      ),
+      const SizedBox(height: AppSpacing.sm),
+      Align(
+        alignment: Alignment.centerLeft,
+        child: StatusBadge(label: label, variant: variant),
+      ),
+      const SizedBox(height: AppSpacing.md),
+      SelectableText(
+        'Payment: ${payment.paymentCode}',
+        style: AppTextStyles.bodySmall,
+      ),
+      const Divider(height: AppSpacing.xl, color: AppColors.border),
+      _detailField(
+        Icons.confirmation_number_outlined,
+        'Booking',
+        '#${payment.bookingId}',
+      ),
+      _detailField(
+        Icons.credit_card_outlined,
+        'Payment method',
+        payment.method ?? 'Not provided',
+      ),
+      _detailField(
+        Icons.schedule_outlined,
+        'Created',
+        formatDateTime(payment.createdAt),
+      ),
+      if (payment.transactionRef != null)
+        _detailField(
+          Icons.receipt_long_outlined,
+          'Transaction reference',
+          payment.transactionRef!,
+        ),
+      if (payment.status == PaymentStatus.success)
+        const Text(
+          'Customers request refunds from their booking details. Staff process requests in Operations → Refunds.',
+          style: AppTextStyles.bodySmall,
+        ),
+    ];
+  }
+
+  Future<void> _openRefund(PaymentInfo payment) async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      final refund = await widget.service.refundOfPayment(payment.id);
+      if (!mounted) return;
+      await Navigator.pushNamed(
+        context,
+        AppRoutes.staffRecord('refunds', refund.id),
       );
+      if (mounted) await _load();
+    } on Object catch (error) {
+      if (mounted) setState(() => _error = staffError(error));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Widget _detailField(IconData icon, String label, String value) => Padding(
+    padding: const EdgeInsets.only(bottom: AppSpacing.md),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: AppColors.primary, size: 22),
+        const SizedBox(width: AppSpacing.md),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: AppTextStyles.bodySmall),
+              const SizedBox(height: AppSpacing.xs),
+              SelectableText(value, style: AppTextStyles.body),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+
+  Widget _button(
+    String label,
+    VoidCallback action, {
+    bool danger = false,
+    bool secondary = false,
+  }) => Padding(
+    padding: const EdgeInsets.only(bottom: AppSpacing.md),
+    child: danger
+        ? AppButton.danger(label: label, onPressed: _busy ? null : action)
+        : secondary
+        ? AppButton.secondary(label: label, onPressed: _busy ? null : action)
+        : AppButton(
+            label: label,
+            useGradient: true,
+            onPressed: _busy ? null : action,
+          ),
+  );
   List<Widget> _actions(Object item) => switch (item) {
     Booking b => [
       if (b.isAwaitingPayment() && b.paymentId == null)
@@ -339,12 +571,10 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
             await widget.service.confirmBooking(b.id);
           }, 'Booking confirmed.');
         }),
-      if (b.status == BookingStatus.pending ||
-          b.status == BookingStatus.confirmed)
-        _button('Cancel booking', () => _cancelBooking(b), danger: true),
       _button(
         'Send customer notification',
         () => Navigator.pushNamed(context, AppRoutes.staffNotify(b.id)),
+        secondary: true,
       ),
       for (final payment in _payments)
         _button(
@@ -353,7 +583,11 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
             context,
             AppRoutes.staffRecord('payments', payment.id),
           ),
+          secondary: true,
         ),
+      if (b.status == BookingStatus.pending ||
+          b.status == BookingStatus.confirmed)
+        _button('Cancel booking', () => _cancelBooking(b), danger: true),
     ],
     Showtime s => [
       if (s.status != 'CANCELLED')
@@ -426,6 +660,7 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
           context,
           AppRoutes.staffRecord('bookings', p.bookingId),
         ),
+        secondary: true,
       ),
       if (p.method?.toUpperCase() == 'PAYOS' &&
           p.status == PaymentStatus.pending)
@@ -449,12 +684,15 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
             }
           }, 'Payment verified.'),
         ),
-      if (p.status == PaymentStatus.success)
-        _button('Request refund', () => _refundPayment(p), danger: true),
+      if (p.status == PaymentStatus.refundPending ||
+          p.status == PaymentStatus.refunded)
+        _button('View refund request', () => _openRefund(p), secondary: true),
     ],
     Refund r => [
-      if (!r.isCompleted)
+      if (r.isPending)
         _button('Record completed transfer', () => _completeRefund(r)),
+      if (r.isPending)
+        _button('Reject refund', () => _rejectRefund(r), danger: true),
       if (r.bookingId != null)
         _button(
           'View booking',
@@ -462,6 +700,7 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
             context,
             AppRoutes.staffRecord('bookings', r.bookingId!),
           ),
+          secondary: true,
         ),
     ],
     _ => [],

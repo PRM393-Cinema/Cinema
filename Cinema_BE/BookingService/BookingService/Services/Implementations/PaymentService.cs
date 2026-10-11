@@ -323,7 +323,7 @@ namespace BookingService.Services.Implementations
             return await VerifyPayOsPaymentAsync(orderCode, recipientEmail);
         }
 
-        // Staff/Admin hoàn tiền một payment đã thanh toán (FR-PAY-06). Booking còn hiệu lực thì huỷ luôn
+        // Admin hoàn tiền thủ công một payment đã thanh toán (FR-PAY-06). Booking còn hiệu lực thì huỷ luôn
         // (nhả ghế), rồi tạo yêu cầu hoàn 100%. PayOS không có API hoàn tiền: Staff chuyển khoản trả khách
         // rồi xác nhận bằng POST /api/v1/payments/refunds/{refundId}/complete.
         public async Task<RefundResponse> RefundPaymentAsync(

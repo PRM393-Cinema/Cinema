@@ -92,6 +92,7 @@ class Refund {
     this.payerAccountNumber,
     this.payerAccountName,
     this.payerBankName,
+    this.note,
   });
 
   factory Refund.fromJson(Map<String, Object?> json) {
@@ -109,6 +110,7 @@ class Refund {
       payerAccountNumber: readOptionalString(json['payerAccountNumber']),
       payerAccountName: readOptionalString(json['payerAccountName']),
       payerBankName: readOptionalString(json['payerBankName']),
+      note: readOptionalString(json['note']),
     );
   }
 
@@ -116,7 +118,7 @@ class Refund {
   final String refundCode;
   final int paymentId;
   final double amount;
-  final String status; // 'PENDING', 'COMPLETED'
+  final String status; // 'PENDING', 'COMPLETED', 'REJECTED'
   final String? transactionRef;
   final DateTime createdAt;
   final DateTime? processedAt;
@@ -125,6 +127,9 @@ class Refund {
   final String? payerAccountNumber;
   final String? payerAccountName;
   final String? payerBankName;
+  final String? note;
 
   bool get isCompleted => status == 'COMPLETED';
+  bool get isPending => status == 'PENDING';
+  bool get isRejected => status == 'REJECTED';
 }

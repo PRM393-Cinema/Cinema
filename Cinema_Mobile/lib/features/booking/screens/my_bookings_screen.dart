@@ -95,6 +95,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
   bool _isActive(Booking booking, DateTime now) {
     return switch (booking.status) {
       BookingStatus.pending => !booking.isHoldExpired(now),
+      BookingStatus.refundPending => true,
       BookingStatus.confirmed =>
         booking.showTime == null || booking.showTime!.isAfter(now),
       _ => false,
@@ -375,6 +376,10 @@ class BookingStatusBadge extends StatelessWidget {
     final (label, variant) = switch (status) {
       BookingStatus.pending => ('Pending', StatusBadgeVariant.warning),
       BookingStatus.confirmed => ('Confirmed', StatusBadgeVariant.success),
+      BookingStatus.refundPending => (
+        'Refund pending',
+        StatusBadgeVariant.warning,
+      ),
       BookingStatus.cancelled => ('Cancelled', StatusBadgeVariant.error),
       BookingStatus.expired => ('Expired', StatusBadgeVariant.neutral),
     };
