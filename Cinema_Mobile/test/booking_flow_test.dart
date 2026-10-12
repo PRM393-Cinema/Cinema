@@ -84,18 +84,36 @@ void main() {
       expect(continueBtn.onPressed, isNull);
 
       // A1 is free.
-      await tester.tap(find.text('1').first);
+      await tester.tap(
+        find
+            .byWidgetPredicate(
+              (widget) => widget is SeatItem && widget.label == '1',
+            )
+            .first,
+      );
       await tester.pump();
       expect(find.text('1 seat(s)'), findsOneWidget);
       expect(find.text(formatVnd(90000)), findsOneWidget);
 
       // A2 is taken by another booking and cannot be selected.
-      await tester.tap(find.text('2').first);
+      await tester.tap(
+        find
+            .byWidgetPredicate(
+              (widget) => widget is SeatItem && widget.label == '2',
+            )
+            .first,
+      );
       await tester.pump();
       expect(find.text('1 seat(s)'), findsOneWidget);
 
       // Tap again to deselect A1.
-      await tester.tap(find.text('1').first);
+      await tester.tap(
+        find
+            .byWidgetPredicate(
+              (widget) => widget is SeatItem && widget.label == '1',
+            )
+            .first,
+      );
       await tester.pump();
       expect(find.text('0 seat(s)'), findsOneWidget);
     });
@@ -280,7 +298,7 @@ void main() {
       expect(bookings.verifiedIds, [101]);
       expect(find.text('Payment successful'), findsOneWidget);
 
-      await tester.tap(find.byTooltip('Close'));
+      await tester.tap(find.text('Back to home'));
       await pumpRoute(tester);
       expect(find.text('Step Into CosmoQ Cinema'), findsOneWidget);
     });
@@ -514,7 +532,8 @@ void main() {
       await pumpRoute(tester);
 
       expect(find.textContaining('Đặt vé thành công'), findsOneWidget);
-      expect(find.textContaining('Phim: Inception & bạn'), findsOneWidget);
+      expect(find.text('Phim'), findsOneWidget);
+      expect(find.text('Inception & bạn'), findsOneWidget);
     });
 
     testWidgets('Forgot password sends a code and resets the password', (
