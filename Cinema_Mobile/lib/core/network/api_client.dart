@@ -21,6 +21,9 @@ class ApiClient {
   final Duration timeout;
   final AccessTokenProvider? tokenProvider;
 
+  static const sessionCheckInterval = Duration(minutes: 1);
+  DateTime? _lastSessionCheck;
+
   Future<Object?> get(
     String path, {
     Map<String, Object?>? query,
@@ -72,8 +75,7 @@ class ApiClient {
         ? await provider?.accessToken()
         : null;
     if (!authenticated && method == 'GET' && storedToken?.isNotEmpty == true) {
-      // Public movie requests must also detect changes to a signed-in account.
-      await _send('GET', '/api/v1/auth/me', authenticated: true);
+      await _checkSession();
     }
     final token = authenticated ? storedToken : null;
 
@@ -112,6 +114,23 @@ class ApiClient {
         await provider?.expireSession(message: error.message);
       }
       rethrow;
+    }
+  }
+
+  // Public movie pages of a signed-in user also notice a locked account or a
+  // changed role. The check runs at most once a minute, and only those two
+  // answers stop the page: a slow or unavailable AuthService must not take the
+  // catalogue down with it.
+  Future<void> _checkSession() async {
+    final now = DateTime.now();
+    final last = _lastSessionCheck;
+    if (last != null && now.difference(last) < sessionCheckInterval) return;
+    _lastSessionCheck = now;
+
+    try {
+      await _send('GET', '/api/v1/auth/me', authenticated: true);
+    } on ApiException catch (error) {
+      if (error.requiresSignInAgain) rethrow;
     }
   }
 
