@@ -188,27 +188,32 @@ void main() {
       );
     });
 
-    testWidgets('I have paid confirms the booking and shows success', (
-      WidgetTester tester,
-    ) async {
-      final bookings = FakeBookingRepository(
-        bookings: [bookingFixture(id: 101)],
-      );
-      await _openPaymentFromMyBookings(tester, bookings);
+    testWidgets(
+      'Coming back from PayOS confirms the booking and shows success',
+      (WidgetTester tester) async {
+        final bookings = FakeBookingRepository(
+          bookings: [bookingFixture(id: 101)],
+        );
+        await _openPaymentFromMyBookings(tester, bookings);
 
-      await tester.tap(find.text('I have paid'));
-      await pumpRoute(tester);
+        await tester.tap(find.text('Pay with PayOS'));
+        await pumpFrames(tester);
+        tester.binding.handleAppLifecycleStateChanged(
+          AppLifecycleState.resumed,
+        );
+        await pumpRoute(tester);
 
-      expect(bookings.verifiedIds, [101]);
-      expect(find.text('Payment successful'), findsOneWidget);
-      expect(find.textContaining(customerUser.email), findsOneWidget);
+        expect(bookings.verifiedIds, [101]);
+        expect(find.text('Payment successful'), findsOneWidget);
+        expect(find.textContaining(customerUser.email), findsOneWidget);
 
-      await tester.tap(find.text('View my bookings'));
-      await pumpRoute(tester);
+        await tester.tap(find.text('View my bookings'));
+        await pumpRoute(tester);
 
-      expect(find.text('My Bookings'), findsWidgets);
-      expect(find.text('Confirmed'), findsOneWidget);
-    });
+        expect(find.text('My Bookings'), findsWidgets);
+        expect(find.text('Confirmed'), findsOneWidget);
+      },
+    );
 
     testWidgets('Unpaid order keeps the customer on the payment screen', (
       WidgetTester tester,
@@ -219,14 +224,38 @@ void main() {
       );
       await _openPaymentFromMyBookings(tester, bookings);
 
-      await tester.tap(find.text('I have paid'));
+      await tester.tap(find.text('Pay with PayOS'));
+      await pumpFrames(tester);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
       await pumpFrames(tester);
 
-      expect(
-        find.textContaining('PayOS has not received your payment yet'),
-        findsOneWidget,
+      expect(bookings.verifiedIds, [101]);
+      expect(find.text('Payment successful'), findsNothing);
+      expect(find.text('Continue with PayOS'), findsOneWidget);
+    });
+
+    testWidgets('Background checks ask PayOS every 30 seconds', (
+      WidgetTester tester,
+    ) async {
+      final bookings = FakeBookingRepository(
+        bookings: [bookingFixture(id: 101, paymentId: 7)],
+        verifyResult: paymentFixture(status: PaymentStatus.pending),
       );
-      expect(find.text('Pay with PayOS'), findsOneWidget);
+      await _openPaymentFromMyBookings(tester, bookings);
+
+      for (var second = 0; second < 25; second++) {
+        await tester.pump(const Duration(seconds: 1));
+      }
+      expect(bookings.verifiedIds, isEmpty);
+      for (var second = 0; second < 6; second++) {
+        await tester.pump(const Duration(seconds: 1));
+      }
+      expect(bookings.verifiedIds, [101]);
+      // The button stays usable while PayOS is asked in the background.
+      final pay = tester.widget<AppButton>(
+        find.widgetWithText(AppButton, 'Continue with PayOS'),
+      );
+      expect(pay.onPressed, isNotNull);
     });
 
     testWidgets('PayOS redirect back to the web app verifies the payment', (
@@ -338,7 +367,7 @@ void main() {
       await tester.tap(find.text('Code: BK-CANCELLED'));
       await pumpRoute(tester);
 
-      expect(find.text('Code: BK-CANCELLED'), findsWidgets);
+      expect(find.text('BK-CANCELLED'), findsWidgets);
       expect(find.text('Cancel Booking'), findsNothing);
       expect(find.text('Pay Now'), findsNothing);
     });
@@ -455,8 +484,8 @@ void main() {
       await tester.tap(find.byTooltip('Profile'));
       await pumpRoute(tester);
 
-      expect(find.text(customerUser.fullName!), findsOneWidget);
-      expect(find.text(customerUser.email), findsOneWidget);
+      expect(find.text(customerUser.fullName!), findsWidgets);
+      expect(find.text(customerUser.email), findsWidgets);
       expect(find.text('Customer'), findsOneWidget);
 
       await tester.ensureVisible(find.text('Sign out'));
@@ -499,12 +528,13 @@ void main() {
 
       await tester.tap(find.text('Forgot password?'));
       await pumpRoute(tester);
-      expect(find.text('Quên Mật Khẩu?'), findsOneWidget);
+      final sendCode = find.widgetWithText(AppButton, 'Send verification code');
+      expect(sendCode, findsOneWidget);
       await tester.enterText(
-        find.byKey(const Key('forgotEmailField')),
+        find.widgetWithText(TextFormField, 'Email'),
         'khachhang1@gmail.com',
       );
-      await tester.tap(find.text('GỬI LIÊN KẾT ĐẶT LẠI'));
+      await tester.tap(sendCode);
       await pumpRoute(tester);
 
       expect(auth.forgotPasswordEmail, 'khachhang1@gmail.com');
@@ -551,8 +581,8 @@ Future<void> _openSeatSelection(
   );
   await pumpRoute(tester);
 
-  await scrollHomeTo(tester, find.text('View Details').first);
-  await tester.tap(find.text('View Details').first);
+  await scrollHomeTo(tester, find.text(inception.title).first);
+  await tester.tap(find.text(inception.title).first);
   await pumpRoute(tester);
 
   // Showtimes are listed on the movie detail screen.

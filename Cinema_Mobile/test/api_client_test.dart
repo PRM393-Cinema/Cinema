@@ -234,23 +234,55 @@ void main() {
     },
   );
 
-  for (final status in [403, 503]) {
-    test('Session check $status blocks public GET without a timer', () async {
-      storage.accessToken = 'fresh-token';
-      protectedStatus = status;
-      protectedErrorCode = 'ROLE_CHANGED';
-      final client = buildClient();
+  test('Changed role found by the session check blocks public GET', () async {
+    storage.accessToken = 'fresh-token';
+    protectedStatus = 403;
+    protectedErrorCode = 'ROLE_CHANGED';
+    final client = buildClient();
+    await expectLater(
+      client.get('/api/v1/movies/status/ACTIVE'),
+      throwsA(
+        isA<ApiException>().having((e) => e.statusCode, 'statusCode', 403),
+      ),
+    );
+    expect(requests.single.url.path, '/api/v1/auth/me');
+    expect(expiredCalls, 1);
+    expect(storage.accessToken, isNull);
+  });
+
+  test('Unavailable session check does not block public GET', () async {
+    storage.accessToken = 'fresh-token';
+    protectedStatus = 503;
+    final client = buildClient();
+    // The stand-in backend answers 401 to every request without a token.
+    await expectLater(
+      client.get('/api/v1/movies/status/ACTIVE'),
+      throwsA(
+        isA<ApiException>().having((e) => e.statusCode, 'statusCode', 401),
+      ),
+    );
+    expect(requests.map((request) => request.url.path), [
+      '/api/v1/auth/me',
+      '/api/v1/movies/status/ACTIVE',
+    ]);
+    expect(expiredCalls, 0);
+    expect(storage.accessToken, 'fresh-token');
+  });
+
+  test('Public GETs check the session at most once a minute', () async {
+    storage.accessToken = 'fresh-token';
+    final client = buildClient();
+    for (var i = 0; i < 3; i++) {
       await expectLater(
         client.get('/api/v1/movies/status/ACTIVE'),
-        throwsA(
-          isA<ApiException>().having((e) => e.statusCode, 'statusCode', status),
-        ),
+        throwsA(isA<ApiException>()),
       );
-      expect(requests.single.url.path, '/api/v1/auth/me');
-      expect(expiredCalls, status == 403 ? 1 : 0);
-      expect(storage.accessToken, status == 403 ? isNull : 'fresh-token');
-    });
-  }
+    }
+    expect(
+      requests.where((request) => request.url.path == '/api/v1/auth/me'),
+      hasLength(1),
+    );
+  });
 
   test('Locked account clears tokens without refreshing', () async {
     storage.accessToken = 'fresh-token';

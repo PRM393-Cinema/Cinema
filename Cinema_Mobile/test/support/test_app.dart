@@ -61,16 +61,27 @@ Future<void> pumpFrames(
   await tester.pump(duration);
 }
 
+// The home list builds its items lazily, so a `.first` finder for a card
+// below the fold has nothing to evaluate (and throws) until the list scrolls.
 Future<void> scrollHomeTo(WidgetTester tester, Finder finder) async {
-  await tester.scrollUntilVisible(
-    finder,
-    240,
-    scrollable: find
-        .descendant(
-          of: find.byKey(const Key('homeScrollView')),
-          matching: find.byType(Scrollable),
-        )
-        .first,
-  );
+  final scrollable = find
+      .descendant(
+        of: find.byKey(const Key('homeScrollView')),
+        matching: find.byType(Scrollable),
+      )
+      .first;
+  for (var step = 0; step < 50 && !_isBuilt(finder); step++) {
+    await tester.drag(scrollable, const Offset(0, -240));
+    await tester.pump();
+  }
+  await tester.ensureVisible(finder);
   await tester.pump();
+}
+
+bool _isBuilt(Finder finder) {
+  try {
+    return finder.evaluate().isNotEmpty;
+  } on StateError {
+    return false;
+  }
 }

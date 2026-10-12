@@ -54,15 +54,27 @@ class RemoteCatalogRepository implements CatalogRepository {
   Future<Showtime> getShowtime(int showtimeId) =>
       _movies.getShowtime(showtimeId);
 
+  // Customers choose from the coming week. The schedule runs a month ahead,
+  // so only the pages that still reach into that week are fetched (the API
+  // sorts by start time).
+  static const showtimeWindow = Duration(days: 7);
+
   @override
   Future<List<Showtime>> getOpenShowtimes(int movieId) async {
+    final until = DateTime.now().add(showtimeWindow);
     var result = await _movies.getOpenShowtimesByMovie(movieId);
     final showtimes = [...result.items];
-    for (var page = 2; page <= result.totalPages; page++) {
+    for (
+      var page = 2;
+      page <= result.totalPages &&
+          showtimes.isNotEmpty &&
+          showtimes.last.startTime.isBefore(until);
+      page++
+    ) {
       result = await _movies.getOpenShowtimesByMovie(movieId, page: page);
       showtimes.addAll(result.items);
     }
-    return showtimes;
+    return showtimes.where((s) => s.startTime.isBefore(until)).toList();
   }
 
   @override

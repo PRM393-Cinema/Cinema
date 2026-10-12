@@ -85,8 +85,11 @@ public class UserManagementTests
         var problem = await rejected.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("ACCOUNT_LOCKED", problem.GetProperty("errorCode").GetString());
 
-        Assert.Equal(HttpStatusCode.Unauthorized, (await _factory.CreateClient()
-            .PostAsJsonAsync("/api/v1/auth/login", new { email, password = "Secret@123" })).StatusCode);
+        var lockedLogin = await _factory.CreateClient()
+            .PostAsJsonAsync("/api/v1/auth/login", new { email, password = "Secret@123" });
+        Assert.Equal(HttpStatusCode.Unauthorized, lockedLogin.StatusCode);
+        Assert.Equal("ACCOUNT_LOCKED", (await lockedLogin.Content.ReadFromJsonAsync<JsonElement>())
+            .GetProperty("errorCode").GetString());
         Assert.Equal(HttpStatusCode.Unauthorized, (await _factory.CreateClient()
             .PostAsJsonAsync("/api/v1/auth/refresh", new { refreshToken })).StatusCode);
 

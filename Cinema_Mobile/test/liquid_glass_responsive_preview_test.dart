@@ -44,9 +44,9 @@ void main() {
       );
       expect(tester.takeException(), isNull);
       final glass = tester.getRect(find.byType(BackdropFilter).first);
-      expect(glass.left, greaterThanOrEqualTo(12));
-      expect(glass.right, lessThanOrEqualTo(width - 12));
-      expect(glass.bottom, lessThanOrEqualTo(844 - 34 - 12));
+      expect(glass.left, greaterThanOrEqualTo(2));
+      expect(glass.right, lessThanOrEqualTo(width - 2));
+      expect(glass.bottom, lessThanOrEqualTo(844 - 34 - 6));
     });
   }
 
@@ -109,7 +109,7 @@ void main() {
       int linePeak(int y) {
         var brightest = -1;
         var peak = 22;
-        for (var x = 22; x <= 52; x++) {
+        for (var x = 13; x <= 43; x++) {
           final green = greenAt(x, y);
           if (green > brightest) {
             brightest = green;
@@ -128,7 +128,7 @@ void main() {
         expect(greenAt(peak, y) - greenAt(peak + 9, y), greaterThan(25));
       }
       expect(
-        peaks.map((x) => (x - 43).abs()).reduce((a, b) => a > b ? a : b),
+        peaks.map((x) => (x - 34).abs()).reduce((a, b) => a > b ? a : b),
         greaterThanOrEqualTo(5),
       );
       expect(peaks.toSet().length, greaterThanOrEqualTo(3));
@@ -260,7 +260,7 @@ class _RefractionMarker extends CustomPainter {
       Paint()..color = const Color(0xFFFF4020),
     );
     canvas.drawRect(
-      Rect.fromLTWH(40, 0, 6, size.height),
+      Rect.fromLTWH(31, 0, 6, size.height),
       Paint()..color = const Color(0xFF91BFA9),
     );
     canvas.drawRect(

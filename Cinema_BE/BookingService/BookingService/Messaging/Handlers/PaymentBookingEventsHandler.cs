@@ -38,11 +38,14 @@ namespace BookingService.Messaging.Handlers
                         "Booking was cancelled.",
                         cancelPayOsLink: true);
 
+                    // The cinema cancelled a paid booking: refund it even if the customer's
+                    // own request was rejected earlier.
                     await _refundService.RequestRefundForBookingAsync(
                         data.BookingId,
                         string.IsNullOrWhiteSpace(data.Reason)
                             ? $"Booking {data.BookingCode} was cancelled."
-                            : data.Reason);
+                            : data.Reason,
+                        reopenRejected: true);
                     break;
                 case EventTypes.BookingRefundRequested:
                     await _refundService.RequestRefundForBookingAsync(data.BookingId,

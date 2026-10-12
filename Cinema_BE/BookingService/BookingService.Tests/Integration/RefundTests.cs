@@ -224,6 +224,51 @@ public class RefundTests
         Assert.Equal("REFUND_PENDING", await PaymentStatusAsync(paid));
     }
 
+    [Fact]
+    public async Task StaffCannotRejectRefundOfBookingTheCinemaCancelled()
+    {
+        var showtime = _factory.Showtimes.AddShowtime(DateTime.Now.AddDays(3));
+        var id = await CreatePaidBookingAsync(_factory, _customer, showtime.Id, NewSeat());
+
+        Assert.Equal(HttpStatusCode.OK, (await _staff.PostAsync($"/api/v1/bookings/{id}/cancel", null)).StatusCode);
+        var cancelled = Assert.Single(await _factory.OutboxEventsAsync<BookingDbContext>(EventTypes.BookingCancelled, id));
+        await _factory.HandleAsync<PaymentBookingEventsHandler>(cancelled);
+        var refundId = await _factory.QueryAsync<PaymentDbContext, long>(db =>
+            db.Refunds.Where(r => r.BookingId == id).Select(r => r.Id).SingleAsync());
+
+        // Seats are already released: the customer must get the money back
+        var reject = await _staff.PostAsJsonAsync($"/api/v1/payments/refunds/{refundId}/reject", new { reason = "Not eligible" });
+        Assert.Equal(HttpStatusCode.Conflict, reject.StatusCode);
+        Assert.Equal("REFUND_PENDING", await PaymentStatusAsync(id));
+    }
+
+    [Fact]
+    public async Task RejectedRefundIsReopenedWhenTheCinemaCancelsTheBooking()
+    {
+        var showtime = _factory.Showtimes.AddShowtime(DateTime.Now.AddDays(3));
+        var id = await CreatePaidBookingAsync(_factory, _customer, showtime.Id, NewSeat());
+        await _customer.PostAsync($"/api/v1/bookings/{id}/cancel", null);
+        var requested = Assert.Single(await _factory.OutboxEventsAsync<BookingDbContext>(EventTypes.BookingRefundRequested, id));
+        await _factory.HandleAsync<PaymentBookingEventsHandler>(requested);
+        var refundId = await _factory.QueryAsync<PaymentDbContext, long>(db =>
+            db.Refunds.Where(r => r.BookingId == id).Select(r => r.Id).SingleAsync());
+        Assert.Equal(HttpStatusCode.OK, (await _staff.PostAsJsonAsync(
+            $"/api/v1/payments/refunds/{refundId}/reject", new { reason = "Outside the refund policy" })).StatusCode);
+        var rejected = Assert.Single(await _factory.OutboxEventsAsync<PaymentDbContext>(EventTypes.PaymentRefundRejected, id));
+        await _factory.HandleAsync<BookingRefundEventsHandler>(rejected);
+
+        // Later the cinema cancels the booking itself (redelivered event included)
+        Assert.Equal(HttpStatusCode.OK, (await _staff.PostAsync($"/api/v1/bookings/{id}/cancel", null)).StatusCode);
+        var cancelled = Assert.Single(await _factory.OutboxEventsAsync<BookingDbContext>(EventTypes.BookingCancelled, id));
+        await _factory.HandleAsync<PaymentBookingEventsHandler>(cancelled);
+        await _factory.HandleAsync<PaymentBookingEventsHandler>(cancelled);
+
+        Assert.Equal("REFUND_PENDING", await PaymentStatusAsync(id));
+        Assert.Equal("PENDING", await _factory.QueryAsync<PaymentDbContext, string>(db =>
+            db.Refunds.Where(r => r.Id == refundId).Select(r => r.Status).SingleAsync()));
+        Assert.Equal(2, (await _factory.OutboxEventsAsync<PaymentDbContext>(EventTypes.PaymentRefundRequested, id)).Count());
+    }
+
     private Task<string> PaymentStatusAsync(long bookingId)
     {
         return _factory.QueryAsync<PaymentDbContext, string>(db =>

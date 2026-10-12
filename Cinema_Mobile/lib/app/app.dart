@@ -94,7 +94,6 @@ class _CinemaAppState extends State<CinemaApp> {
         payOsReturn == null
             ? name
             : AppRoutes.paymentResult(payOsReturn.orderCode),
-        isPaymentReturn: payOsReturn != null,
       ),
     );
   }
