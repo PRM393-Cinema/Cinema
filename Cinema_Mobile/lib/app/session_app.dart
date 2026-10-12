@@ -14,6 +14,8 @@ class SessionApp extends StatefulWidget {
     required this.onGenerateRoute,
     required this.onGenerateInitialRoutes,
     this.initialRoute,
+    this.builder,
+    this.navigatorObservers = const [],
     super.key,
   });
 
@@ -21,6 +23,10 @@ class SessionApp extends StatefulWidget {
   final RouteFactory onGenerateRoute;
   final InitialRouteListFactory onGenerateInitialRoutes;
   final String? initialRoute;
+
+  // Wraps every page, for example with the website navigation bar.
+  final TransitionBuilder? builder;
+  final List<NavigatorObserver> navigatorObservers;
 
   @override
   State<SessionApp> createState() => _SessionAppState();
@@ -62,6 +68,8 @@ class _SessionAppState extends State<SessionApp> {
       initialRoute: widget.initialRoute,
       onGenerateRoute: widget.onGenerateRoute,
       onGenerateInitialRoutes: widget.onGenerateInitialRoutes,
+      navigatorObservers: widget.navigatorObservers,
+      builder: widget.builder,
     );
   }
 }

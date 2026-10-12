@@ -51,6 +51,7 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
   @override
   Widget build(BuildContext context) => CinemaPage(
     title: 'Notification',
+    width: PageWidth.reading,
     child: FutureBuilder<AppNotification>(
       future: _notification,
       builder: (context, snapshot) {
@@ -69,7 +70,7 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
         }
         final notification = snapshot.data!;
         return SingleChildScrollView(
-          padding: centeredPadding(context, AppSpacing.xl),
+          padding: widthPadding(context, AppSpacing.xl, PageWidth.reading),
           child: CinemaPanel(
             surfaceOpacity: 0.8,
             child: Column(

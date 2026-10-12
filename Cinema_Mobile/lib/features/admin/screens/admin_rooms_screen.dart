@@ -16,6 +16,8 @@ import '../../../data/models/paged_result.dart';
 import '../../../data/models/room.dart';
 import '../../../data/services/staff_service.dart';
 import '../../staff/widgets/staff_feedback.dart';
+import '../../../core/widgets/responsive_columns.dart';
+import '../widgets/admin_layout.dart';
 import '../widgets/admin_page.dart';
 import '../widgets/admin_pager.dart';
 
@@ -151,31 +153,35 @@ class _AdminRoomsScreenState extends State<AdminRoomsScreen> {
         onRefresh: () => _load(page: result?.pageNumber ?? 1),
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: centeredPadding(context, AppSpacing.lg),
+          padding: pagePadding(context, AppSpacing.lg),
           children: [
-            AppButton(
-              key: const Key('addRoomButton'),
-              label: 'Add room',
-              leadingIcon: Icons.add_rounded,
-              useGradient: true,
-              onPressed: busy ? null : _add,
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            Row(
+            AdminControls(
               children: [
-                Expanded(
-                  child: AppTextField(
-                    key: const Key('roomSearchField'),
-                    label: 'Search rooms',
-                    controller: _search,
-                    enabled: !busy,
-                    prefixIcon: const Icon(Icons.search_rounded),
-                  ),
+                AppButton(
+                  key: const Key('addRoomButton'),
+                  label: 'Add room',
+                  leadingIcon: Icons.add_rounded,
+                  useGradient: true,
+                  onPressed: busy ? null : _add,
                 ),
-                IconButton(
-                  tooltip: 'Search rooms',
-                  onPressed: busy ? null : () => _load(),
-                  icon: const Icon(Icons.search_rounded),
+                const SizedBox(height: AppSpacing.lg),
+                Row(
+                  children: [
+                    Expanded(
+                      child: AppTextField(
+                        key: const Key('roomSearchField'),
+                        label: 'Search rooms',
+                        controller: _search,
+                        enabled: !busy,
+                        prefixIcon: const Icon(Icons.search_rounded),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Search rooms',
+                      onPressed: busy ? null : () => _load(),
+                      icon: const Icon(Icons.search_rounded),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -203,17 +209,22 @@ class _AdminRoomsScreenState extends State<AdminRoomsScreen> {
                     style: AppTextStyles.bodySmall,
                   ),
                 ),
-              for (final room in result.items)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                  child: _RoomCard(
-                    room: room,
-                    busy: _busyId == room.id,
-                    onSeatMap: busy ? null : () => _openSeatMap(room),
-                    onRename: busy ? null : () => _rename(room),
-                    onDelete: busy ? null : () => _delete(room),
-                  ),
-                ),
+              CardColumns(
+                runSpacing: 0,
+                children: [
+                  for (final room in result.items)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                      child: _RoomCard(
+                        room: room,
+                        busy: _busyId == room.id,
+                        onSeatMap: busy ? null : () => _openSeatMap(room),
+                        onRename: busy ? null : () => _rename(room),
+                        onDelete: busy ? null : () => _delete(room),
+                      ),
+                    ),
+                ],
+              ),
               if (result.totalPages > 1)
                 AdminPager(
                   page: result.pageNumber,

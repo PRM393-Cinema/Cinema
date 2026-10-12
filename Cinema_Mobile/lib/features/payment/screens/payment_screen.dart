@@ -16,6 +16,7 @@ import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/cinema_background.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
 import '../../../core/widgets/cinema_page.dart';
+import '../../../core/widgets/responsive_columns.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_state.dart';
 import '../../../data/models/booking.dart';
@@ -358,6 +359,69 @@ class _PaymentScreenState extends State<PaymentScreen>
     final remaining = booking.expiresAt?.difference(DateTime.now());
     final holdExpired = booking.isHoldExpired();
     final isBusy = _isStartingCheckout || _isVerifying || _isCancelling;
+    final actions = Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        AppButton(
+          label: _hasPayOsPayment ? 'Continue with PayOS' : 'Pay with PayOS',
+          useGradient: true,
+          leadingIcon: Icons.qr_code_2_outlined,
+          isLoading: _isStartingCheckout,
+          onPressed: holdExpired || isBusy
+              ? null
+              : () => _startCheckout(booking),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        TextButton(
+          onPressed: isBusy ? null : () => _cancelBooking(booking),
+          child: const Text(
+            'Cancel booking',
+            style: TextStyle(color: AppColors.error),
+          ),
+        ),
+      ],
+    );
+    final message = _message == null
+        ? null
+        : _MessageBanner(message: _message!, isError: _messageIsError);
+
+    if (isDesktopLayout(context)) {
+      // Website: the booking and the steps, with the timer and the payment
+      // buttons next to them.
+      return Scaffold(
+        body: CinemaBackground(
+          child: SafeArea(
+            child: SingleChildScrollView(
+              padding: pagePadding(context, AppSpacing.lg),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text('Payment', style: AppTextStyles.heading2),
+                  const SizedBox(height: AppSpacing.xl),
+                  ResponsiveColumns(
+                    main: [
+                      _BookingCard(booking: booking),
+                      const SizedBox(height: AppSpacing.xl),
+                      const _PaymentSteps(),
+                    ],
+                    side: [
+                      _HoldTimer(remaining: remaining, expired: holdExpired),
+                      if (message != null) ...[
+                        const SizedBox(height: AppSpacing.lg),
+                        message,
+                      ],
+                      const SizedBox(height: AppSpacing.lg),
+                      actions,
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       body: CinemaBackground(
@@ -386,12 +450,9 @@ class _PaymentScreenState extends State<PaymentScreen>
                           ),
                           const SizedBox(height: AppSpacing.xl),
                           _BookingCard(booking: booking),
-                          if (_message != null) ...[
+                          if (message != null) ...[
                             const SizedBox(height: AppSpacing.xl),
-                            _MessageBanner(
-                              message: _message!,
-                              isError: _messageIsError,
-                            ),
+                            message,
                           ],
                           const SizedBox(height: AppSpacing.xl),
                           const _PaymentSteps(),
@@ -406,31 +467,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                   context,
                   AppSpacing.lg,
                 ).copyWith(top: AppSpacing.sm),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    AppButton(
-                      label: _hasPayOsPayment
-                          ? 'Continue with PayOS'
-                          : 'Pay with PayOS',
-                      useGradient: true,
-                      leadingIcon: Icons.qr_code_2_outlined,
-                      isLoading: _isStartingCheckout,
-                      onPressed: holdExpired || isBusy
-                          ? null
-                          : () => _startCheckout(booking),
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    TextButton(
-                      onPressed: isBusy ? null : () => _cancelBooking(booking),
-                      child: const Text(
-                        'Cancel booking',
-                        style: TextStyle(color: AppColors.error),
-                      ),
-                    ),
-                  ],
-                ),
+                child: actions,
               ),
             ],
           ),

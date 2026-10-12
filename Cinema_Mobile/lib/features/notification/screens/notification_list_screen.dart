@@ -87,7 +87,11 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return CinemaPage(title: 'Notifications', child: _buildBody());
+    return CinemaPage(
+      title: 'Notifications',
+      width: PageWidth.reading,
+      child: _buildBody(),
+    );
   }
 
   Widget _buildBody() {
@@ -108,7 +112,7 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
         onRefresh: _loadNotifications,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: centeredPadding(context, AppSpacing.xl),
+          padding: widthPadding(context, AppSpacing.xl, PageWidth.reading),
           children: [
             const SizedBox(height: AppSpacing.xxxl),
             CinemaPanel(
@@ -128,7 +132,7 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
       onRefresh: _loadNotifications,
       child: ListView.separated(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: centeredPadding(context, AppSpacing.md),
+        padding: widthPadding(context, AppSpacing.md, PageWidth.reading),
         itemCount: _notifications.length + 1,
         separatorBuilder: (context, index) =>
             const SizedBox(height: AppSpacing.md),
@@ -140,7 +144,7 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
                 Text('Your cinema updates', style: AppTextStyles.heading2),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
-                  '${_notifications.length} notifications',
+                  formatCount(_notifications.length, 'notification'),
                   style: AppTextStyles.caption,
                 ),
                 if (_errorMessage != null) ...[

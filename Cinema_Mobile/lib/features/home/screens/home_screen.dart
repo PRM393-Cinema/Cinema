@@ -8,6 +8,7 @@ import '../../../app/theme/app_text_styles.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/cinema_background.dart';
+import '../../../core/utils/layout.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
 import '../../../core/widgets/app_network_image.dart';
 import '../../../core/widgets/app_text_field.dart';
@@ -91,74 +92,84 @@ class _HomeScreenState extends State<HomeScreen> {
         : (_movies.isNotEmpty ? _movies.first : null);
     final session = SessionProvider.of(context);
 
+    final desktop = isDesktopLayout(context);
+
     return Scaffold(
       extendBody: true,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Text.rich(
-          const TextSpan(
-            children: [
-              TextSpan(
-                text: 'COSMO',
-                style: TextStyle(color: AppColors.primary),
-              ),
-              TextSpan(text: 'Q'),
-            ],
-          ),
-          style: AppTextStyles.heading2.copyWith(
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1,
-            shadows: [
-              Shadow(
-                color: AppColors.primary.withValues(alpha: 0.55),
-                blurRadius: 10,
-              ),
-            ],
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.fade,
-          softWrap: false,
-        ),
-        actions: session.isAuthenticated
-            ? [
-                IconButton(
-                  tooltip: 'My bookings',
-                  onPressed: () =>
-                      Navigator.pushNamed(context, AppRoutes.myBookings),
-                  icon: const Icon(Icons.confirmation_number_outlined),
-                ),
-                IconButton(
-                  tooltip: 'Notifications',
-                  onPressed: () =>
-                      Navigator.pushNamed(context, AppRoutes.notifications),
-                  icon: const Icon(Icons.notifications_none_outlined),
-                ),
-                IconButton(
-                  tooltip: 'Profile',
-                  onPressed: () =>
-                      Navigator.pushNamed(context, AppRoutes.profile),
-                  icon: const Icon(Icons.person_outline),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-              ]
-            : [
-                TextButton(
-                  onPressed: () =>
-                      Navigator.pushNamed(context, AppRoutes.login),
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppColors.textPrimary,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.md,
+      // The website shows its own navigation bar at the top.
+      appBar: desktop
+          ? null
+          : AppBar(
+              automaticallyImplyLeading: false,
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              title: Text.rich(
+                const TextSpan(
+                  children: [
+                    TextSpan(
+                      text: 'COSMO',
+                      style: TextStyle(color: AppColors.primary),
                     ),
-                  ),
-                  child: const Text('Sign in', style: AppTextStyles.button),
+                    TextSpan(text: 'Q'),
+                  ],
                 ),
-                const SizedBox(width: AppSpacing.md),
-              ],
-      ),
+                style: AppTextStyles.heading2.copyWith(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1,
+                  shadows: [
+                    Shadow(
+                      color: AppColors.primary.withValues(alpha: 0.55),
+                      blurRadius: 10,
+                    ),
+                  ],
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.fade,
+                softWrap: false,
+              ),
+              actions: session.isAuthenticated
+                  ? [
+                      IconButton(
+                        tooltip: 'My bookings',
+                        onPressed: () =>
+                            Navigator.pushNamed(context, AppRoutes.myBookings),
+                        icon: const Icon(Icons.confirmation_number_outlined),
+                      ),
+                      IconButton(
+                        tooltip: 'Notifications',
+                        onPressed: () => Navigator.pushNamed(
+                          context,
+                          AppRoutes.notifications,
+                        ),
+                        icon: const Icon(Icons.notifications_none_outlined),
+                      ),
+                      IconButton(
+                        tooltip: 'Profile',
+                        onPressed: () =>
+                            Navigator.pushNamed(context, AppRoutes.profile),
+                        icon: const Icon(Icons.person_outline),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                    ]
+                  : [
+                      TextButton(
+                        onPressed: () =>
+                            Navigator.pushNamed(context, AppRoutes.login),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.textPrimary,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.md,
+                          ),
+                        ),
+                        child: const Text(
+                          'Sign in',
+                          style: AppTextStyles.button,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                    ],
+            ),
       body: CinemaGlassBackground(
         key: _glassBackgroundKey,
         child: CinemaBackground(
@@ -168,10 +179,12 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: CinemaNavigationBar(
-        selectedIndex: 0,
-        backgroundKey: _glassBackgroundKey,
-      ),
+      bottomNavigationBar: desktop
+          ? null
+          : CinemaNavigationBar(
+              selectedIndex: 0,
+              backgroundKey: _glassBackgroundKey,
+            ),
     );
   }
 
@@ -196,12 +209,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
           return Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1120),
+              // Lined up with the website navigation bar.
+              constraints: const BoxConstraints(
+                maxWidth: pageMaxWidth + 2 * AppSpacing.lg,
+              ),
               child: ListView(
                 key: const Key('homeScrollView'),
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: EdgeInsets.all(isWide ? AppSpacing.xxl : AppSpacing.lg)
-                    .copyWith(bottom: MediaQuery.paddingOf(context).bottom),
+                padding: EdgeInsets.symmetric(
+                  horizontal: AppSpacing.lg,
+                  vertical: isWide ? AppSpacing.xxl : AppSpacing.lg,
+                ).copyWith(bottom: MediaQuery.paddingOf(context).bottom),
                 children: [
                   _HomeHeader(isWide: isWide),
                   const SizedBox(height: AppSpacing.xl),

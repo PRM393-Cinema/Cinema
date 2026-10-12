@@ -79,7 +79,8 @@ Khách dùng app (web hoặc điện thoại). Nhân viên và admin dùng **tra
 
 ### D. Bản web (khoảng 2 phút)
 
-- Mở trên máy tính: bố cục rộng, có thẻ phim nổi bật ở trang chủ.
+- Mở trên máy tính: giao diện kiểu website, với thanh điều hướng ở đầu trang (Movies, My tickets, Notifications, tài khoản) thay cho thanh tab dưới đáy. Chọn ghế, xác nhận, thanh toán và chi tiết vé chia hai cột (nội dung bên trái, tổng tiền và nút bấm bên phải); vé xếp hai cột; trang đăng nhập tràn toàn màn hình.
+- Thu nhỏ cửa sổ dưới 900 px (hoặc mở trên điện thoại): trở lại giao diện app với thanh tab dưới đáy.
 - Mỗi màn có địa chỉ riêng (`#/movies/7`, `#/bookings/<id>`). F5 hoặc mở link được gửi vẫn ra đúng màn; trang cần đăng nhập thì đăng nhập xong vào đúng trang đó.
 - Trang quản trị: thanh điều hướng bên trái; thu nhỏ cửa sổ dưới 640 px thì điều hướng gọn vào nút menu. Địa chỉ như `#/admin/movies` cũng mở lại đúng trang.
 
