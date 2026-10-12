@@ -36,6 +36,8 @@ namespace BookingService.Clients.Interfaces
 
     public sealed class PayOsPaymentStatus
     {
+        public decimal Amount { get; init; }
+
         public long OrderCode { get; init; }
 
         public string Status { get; init; } = string.Empty;

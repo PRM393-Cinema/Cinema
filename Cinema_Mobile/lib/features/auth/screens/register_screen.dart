@@ -11,6 +11,7 @@ import '../../../core/widgets/app_text_field.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../auth_error_messages.dart';
 import '../verify_email_arguments.dart';
+import '../widgets/auth_scaffold.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({required this.authRepository, super.key});
@@ -103,109 +104,119 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Create account')),
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(AppSpacing.xl),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 440),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Text(
-                      'Create your account',
-                      style: AppTextStyles.heading1,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    const Text(
-                      'Book tickets and enjoy your favorite movies.',
-                      style: AppTextStyles.bodySmall,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: AppSpacing.xxl),
-                    AppTextField(
-                      label: 'Full name',
-                      hint: 'Enter your full name',
-                      controller: _fullNameController,
-                      enabled: !_isLoading,
-                      keyboardType: TextInputType.name,
-                      prefixIcon: const Icon(Icons.person_outline),
-                      validator: _validateFullName,
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    AppTextField(
-                      label: 'Email',
-                      hint: 'you@example.com',
-                      controller: _emailController,
-                      enabled: !_isLoading,
-                      keyboardType: TextInputType.emailAddress,
-                      prefixIcon: const Icon(Icons.email_outlined),
-                      validator: _validateEmail,
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    AppTextField(
-                      label: 'Phone number',
-                      hint: 'Enter your phone number',
-                      controller: _phoneController,
-                      enabled: !_isLoading,
-                      keyboardType: TextInputType.phone,
-                      prefixIcon: const Icon(Icons.phone_outlined),
-                      validator: _validatePhone,
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    AppTextField(
-                      label: 'Password',
-                      hint: 'Create a strong password',
-                      controller: _passwordController,
-                      obscureText: _obscurePassword,
-                      enabled: !_isLoading,
-                      prefixIcon: const Icon(Icons.lock_outline),
-                      validator: _validatePassword,
-                      suffixIcon: IconButton(
-                        tooltip: _obscurePassword
-                            ? 'Show password'
-                            : 'Hide password',
-                        onPressed: _isLoading
-                            ? null
-                            : () {
-                                setState(() {
-                                  _obscurePassword = !_obscurePassword;
-                                });
-                              },
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined,
-                        ),
-                      ),
-                    ),
-                    if (_errorMessage != null) ...[
-                      const SizedBox(height: AppSpacing.lg),
-                      _AuthError(message: _errorMessage!),
-                    ],
-                    const SizedBox(height: AppSpacing.xxl),
-                    AppButton(
-                      label: 'Create account',
-                      isLoading: _isLoading,
-                      onPressed: _isLoading ? null : _register,
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    AppButton.secondary(
-                      label: 'Already have an account? Sign in',
-                      onPressed: _isLoading
-                          ? null
-                          : () => Navigator.pop(context),
-                    ),
-                  ],
+    return AuthScaffold(
+      showBack: false,
+      title: 'Create your account',
+      titleKey: const Key('registerTitle'),
+      subtitle: 'Book tickets and enjoy your favorite movies.',
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AuthFieldSurface(
+              child: AppTextField(
+                key: const Key('registerFullNameField'),
+                label: 'Full name',
+                hint: 'Enter your full name',
+                isRequired: true,
+                prefixIcon: const Icon(Icons.person_outline),
+                controller: _fullNameController,
+                enabled: !_isLoading,
+                keyboardType: TextInputType.name,
+                validator: _validateFullName,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            AuthFieldSurface(
+              child: AppTextField(
+                key: const Key('registerEmailField'),
+                label: 'Email',
+                hint: 'Enter your email',
+                isRequired: true,
+                prefixIcon: const Icon(Icons.mail_outline),
+                controller: _emailController,
+                enabled: !_isLoading,
+                keyboardType: TextInputType.emailAddress,
+                validator: _validateEmail,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            AuthFieldSurface(
+              child: AppTextField(
+                key: const Key('registerPhoneField'),
+                label: 'Phone number',
+                hint: 'Optional',
+                isRequired: false,
+                prefixIcon: const Icon(Icons.phone_outlined),
+                controller: _phoneController,
+                enabled: !_isLoading,
+                keyboardType: TextInputType.phone,
+                validator: _validatePhone,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            AuthFieldSurface(
+              child: AppTextField(
+                key: const Key('registerPasswordField'),
+                label: 'Password',
+                hint: 'Enter your password',
+                isRequired: true,
+                prefixIcon: const Icon(Icons.lock_outline),
+                controller: _passwordController,
+                enabled: !_isLoading,
+                validator: _validatePassword,
+                obscureText: _obscurePassword,
+                suffixIcon: IconButton(
+                  tooltip: _obscurePassword ? 'Show password' : 'Hide password',
+                  onPressed: _isLoading
+                      ? null
+                      : () {
+                          setState(() => _obscurePassword = !_obscurePassword);
+                        },
+                  icon: Icon(
+                    _obscurePassword
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                  ),
                 ),
               ),
             ),
-          ),
+            if (_errorMessage != null) ...[
+              const SizedBox(height: AppSpacing.lg),
+              _AuthError(message: _errorMessage!),
+            ],
+            const SizedBox(height: AppSpacing.xxl),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: AppRadius.borderRadiusMd,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.24),
+                    blurRadius: 24,
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
+              child: AppButton(
+                label: 'Create account',
+                trailingIcon: Icons.arrow_forward_rounded,
+                useGradient: true,
+                isLoading: _isLoading,
+                onPressed: _isLoading ? null : _register,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            AppButton.secondary(
+              label: 'Already have an account? Sign in',
+              onPressed: _isLoading
+                  ? null
+                  : () => Navigator.pushReplacementNamed(
+                      context,
+                      AppRoutes.login,
+                    ),
+            ),
+          ],
         ),
       ),
     );

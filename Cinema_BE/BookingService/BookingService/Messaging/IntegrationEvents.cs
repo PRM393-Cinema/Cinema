@@ -8,12 +8,14 @@ namespace BookingService.Messaging
         public const string BookingCreated = "booking.created";
         public const string BookingConfirmed = "booking.confirmed";
         public const string BookingCancelled = "booking.cancelled";
+        public const string BookingRefundRequested = "booking.refund_requested";
         public const string BookingExpired = "booking.expired";
         public const string PaymentCreated = "payment.created";
         public const string PaymentSucceeded = "payment.succeeded";
         public const string PaymentFailed = "payment.failed";
         public const string PaymentRefundRequested = "payment.refund_requested";
         public const string PaymentRefunded = "payment.refunded";
+        public const string PaymentRefundRejected = "payment.refund_rejected";
 
         // Do MovieService phát khi huỷ suất chiếu
         public const string ShowtimeCancelled = "showtime.cancelled";

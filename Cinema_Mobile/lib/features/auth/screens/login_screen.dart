@@ -9,8 +9,11 @@ import '../../../core/session/session_state.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_text_field.dart';
+import '../../../core/widgets/top_notice.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../auth_error_messages.dart';
+import '../widgets/auth_scaffold.dart';
+import '../widgets/auth_success_dialog.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({required this.authRepository, super.key});
@@ -59,23 +62,84 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       SessionProvider.of(context).setAuthenticated(response.user);
+      final isAdmin = response.user.roles.contains('ROLE_ADMIN');
+      final isStaff = !isAdmin && response.user.roles.contains('ROLE_STAFF');
+
+      if (isAdmin || isStaff) {
+        showTopNotice(
+          Overlay.of(context, rootOverlay: true),
+          'Đăng nhập thành công.',
+        );
+      } else {
+        await showGeneralDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          barrierLabel: 'Login successful',
+          barrierColor: Colors.black.withValues(alpha: 0.72),
+          transitionDuration: MediaQuery.disableAnimationsOf(context)
+              ? Duration.zero
+              : const Duration(milliseconds: 180),
+          pageBuilder: (_, _, _) => const Material(
+            type: MaterialType.transparency,
+            child: AuthSuccessDialog(
+              title: 'Signed in!',
+              message: 'Welcome back.\nYour next movie is waiting.',
+              footer: 'Taking you to your cinema…',
+            ),
+          ),
+          transitionBuilder: (_, animation, _, child) =>
+              FadeTransition(opacity: animation, child: child),
+        );
+        if (!mounted) return;
+      }
 
       final args =
           ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
       final pendingRoute = args?['pendingRoute'] as String?;
       final pendingArguments = args?['pendingArguments'];
 
-      if (pendingRoute != null) {
+      if (isAdmin) {
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          pendingRoute?.startsWith('/admin/') == true
+              ? pendingRoute!
+              : AppRoutes.adminDashboard,
+          (_) => false,
+          arguments: pendingArguments,
+        );
+      } else if (isStaff) {
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          pendingRoute?.startsWith('/staff/') == true
+              ? pendingRoute!
+              : AppRoutes.staffDashboard,
+          (_) => false,
+          arguments: pendingArguments,
+        );
+      } else if (pendingRoute != null && pendingRoute != AppRoutes.home) {
         Navigator.pushReplacementNamed(
           context,
           pendingRoute,
           arguments: pendingArguments,
         );
       } else {
-        Navigator.pushReplacementNamed(context, AppRoutes.home);
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          AppRoutes.home,
+          (_) => false,
+        );
       }
     } on ApiException catch (error) {
-      _showError(authErrorMessage(error));
+      if (error.requiresSignInAgain) {
+        if (!mounted) return;
+        setState(() => _isLoading = false);
+        showTopNotice(
+          Overlay.of(context, rootOverlay: true),
+          authErrorMessage(error),
+        );
+      } else {
+        _showError(authErrorMessage(error));
+      }
     } on FormatException {
       _showError('The server returned an invalid response.');
     } catch (_) {
@@ -94,108 +158,107 @@ class _LoginScreenState extends State<LoginScreen> {
     });
   }
 
+  void _openForgotPassword() {
+    Navigator.pushNamed(context, AppRoutes.forgotPassword);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(AppSpacing.xl),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 440),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const _BrandMark(),
-                    const SizedBox(height: AppSpacing.xxl),
-                    const Text(
-                      'Welcome back',
-                      style: AppTextStyles.heading1,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    const Text(
-                      'Sign in to continue your cinema experience.',
-                      style: AppTextStyles.bodySmall,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: AppSpacing.xxl),
-                    AppTextField(
-                      label: 'Email',
-                      hint: 'you@example.com',
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      enabled: !_isLoading,
-                      prefixIcon: const Icon(Icons.email_outlined),
-                      validator: _validateEmail,
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    AppTextField(
-                      label: 'Password',
-                      hint: 'Enter your password',
-                      controller: _passwordController,
-                      obscureText: _obscurePassword,
-                      enabled: !_isLoading,
-                      prefixIcon: const Icon(Icons.lock_outline),
-                      validator: _validatePassword,
-                      suffixIcon: IconButton(
-                        tooltip: _obscurePassword
-                            ? 'Show password'
-                            : 'Hide password',
-                        onPressed: _isLoading
-                            ? null
-                            : () {
-                                setState(() {
-                                  _obscurePassword = !_obscurePassword;
-                                });
-                              },
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: _isLoading
-                            ? null
-                            : () => Navigator.pushNamed(
-                                context,
-                                AppRoutes.forgotPassword,
-                              ),
-                        child: const Text('Forgot password?'),
-                      ),
-                    ),
-                    if (_errorMessage != null) ...[
-                      _LoginError(message: _errorMessage!),
-                      const SizedBox(height: AppSpacing.lg),
-                    ] else
-                      const SizedBox(height: AppSpacing.lg),
-                    AppButton(
-                      label: 'Sign in',
-                      isLoading: _isLoading,
-                      onPressed: _isLoading ? null : _login,
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    AppButton.secondary(
-                      label: 'Create an account',
-                      onPressed: _isLoading
-                          ? null
-                          : () => Navigator.pushNamed(
-                              context,
-                              AppRoutes.register,
-                            ),
-                    ),
-                  ],
+    return AuthScaffold(
+      showBack: false,
+      title: 'Welcome back',
+      titleKey: const Key('loginTitle'),
+      subtitle: 'Sign in to continue your cinema experience.',
+      backToHome: true,
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AuthFieldSurface(
+              child: AppTextField(
+                key: const Key('loginEmailField'),
+                label: 'Email',
+                hint: 'Enter your email',
+                isRequired: true,
+                prefixIcon: const Icon(Icons.mail_outline),
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                enabled: !_isLoading,
+                validator: _validateEmail,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            AuthFieldSurface(
+              child: AppTextField(
+                key: const Key('loginPasswordField'),
+                label: 'Password',
+                hint: 'Enter your password',
+                isRequired: true,
+                prefixIcon: const Icon(Icons.lock_outline),
+                controller: _passwordController,
+                obscureText: _obscurePassword,
+                enabled: !_isLoading,
+                validator: _validatePassword,
+                suffixIcon: IconButton(
+                  tooltip: _obscurePassword ? 'Show password' : 'Hide password',
+                  onPressed: _isLoading
+                      ? null
+                      : () {
+                          setState(() => _obscurePassword = !_obscurePassword);
+                        },
+                  icon: Icon(
+                    _obscurePassword
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                  ),
                 ),
               ),
             ),
-          ),
+            const SizedBox(height: AppSpacing.sm),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: _isLoading ? null : _openForgotPassword,
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.primary,
+                  textStyle: AppTextStyles.bodySmall,
+                ),
+                child: const Text('Forgot password?'),
+              ),
+            ),
+            if (_errorMessage != null) ...[
+              const SizedBox(height: AppSpacing.lg),
+              _LoginError(message: _errorMessage!),
+            ],
+            const SizedBox(height: AppSpacing.xl),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: AppRadius.borderRadiusMd,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.24),
+                    blurRadius: 24,
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
+              child: AppButton(
+                label: 'Sign in',
+                trailingIcon: Icons.arrow_forward_rounded,
+                useGradient: true,
+                isLoading: _isLoading,
+                onPressed: _isLoading ? null : _login,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            AppButton.secondary(
+              label: 'Create an account',
+              onPressed: _isLoading
+                  ? null
+                  : () => Navigator.pushNamed(context, AppRoutes.register),
+            ),
+          ],
         ),
       ),
     );
@@ -258,35 +321,6 @@ class _LoginError extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _BrandMark extends StatelessWidget {
-  const _BrandMark();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: AppRadius.borderRadiusLg,
-            border: Border.all(color: AppColors.border),
-          ),
-          child: const SizedBox.square(
-            dimension: AppSpacing.xxxl * 1.5,
-            child: Icon(
-              Icons.local_movies_outlined,
-              color: AppColors.primary,
-              size: AppSpacing.xxxl,
-            ),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.lg),
-        const Text('CosmoQ Cinema', style: AppTextStyles.display),
-      ],
     );
   }
 }

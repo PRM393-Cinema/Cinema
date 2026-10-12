@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:cinema_fe/core/network/api_client.dart';
@@ -19,6 +20,9 @@ void main() {
   late bool refreshTokenRevoked;
   late List<AuthUser> renewedUsers;
   late int expiredCalls;
+  late String? expiredMessage;
+  late int protectedStatus;
+  late String? protectedErrorCode;
 
   // Backend stand-in: protected endpoints only accept 'fresh-token'.
   http.Response backend(http.Request request) {
@@ -41,6 +45,13 @@ void main() {
       return http.Response('', 401);
     }
 
+    if (protectedStatus != 200) {
+      return _json(protectedStatus, {
+        'detail': 'Account locked.',
+        'errorCode': ?protectedErrorCode,
+      });
+    }
+
     if (path == '/api/v1/bookings') {
       return _json(409, {
         'status': 409,
@@ -58,7 +69,10 @@ void main() {
       storage: storage,
       refreshSession: (refreshToken) => authService.refresh(refreshToken),
       onSessionRenewed: renewedUsers.add,
-      onSessionExpired: () => expiredCalls++,
+      onSessionExpired: (message) {
+        expiredCalls++;
+        expiredMessage = message;
+      },
     );
     final client = ApiClient(
       httpClient: MockClient((request) async => backend(request)),
@@ -78,6 +92,9 @@ void main() {
     refreshTokenRevoked = false;
     renewedUsers = [];
     expiredCalls = 0;
+    expiredMessage = null;
+    protectedStatus = 200;
+    protectedErrorCode = null;
   });
 
   test(
@@ -142,7 +159,48 @@ void main() {
     expect(storage.refreshToken, isNull);
   });
 
+  test('UTF-8 ProblemDetails without charset preserves Vietnamese', () async {
+    const message = 'Vai trò tài khoản đã thay đổi. Vui lòng đăng nhập lại.';
+    final manager = TokenManager(
+      storage: storage,
+      refreshSession: (_) async => throw StateError('Must not refresh'),
+      onSessionExpired: (message) => expiredMessage = message,
+    );
+    final client = ApiClient(
+      tokenProvider: manager,
+      httpClient: MockClient(
+        (_) async => http.Response.bytes(
+          utf8.encode(
+            jsonEncode({'detail': message, 'errorCode': 'ROLE_CHANGED'}),
+          ),
+          403,
+          headers: {'content-type': 'application/problem+json'},
+        ),
+      ),
+    );
+    await expectLater(
+      client.get('/api/v1/auth/me', authenticated: true),
+      throwsA(isA<ApiException>().having((e) => e.message, 'message', message)),
+    );
+    expect(expiredMessage, message);
+    expect(storage.accessToken, isNull);
+  });
+
+  test('UTF-8 success response without charset preserves Vietnamese', () async {
+    final client = ApiClient(
+      httpClient: MockClient(
+        (_) async => http.Response.bytes(
+          utf8.encode(jsonEncode({'fullName': 'Ngữ Nguyễn'})),
+          200,
+          headers: {'content-type': 'application/json'},
+        ),
+      ),
+    );
+    expect(await client.get('/api/v1/movies'), {'fullName': 'Ngữ Nguyễn'});
+  });
+
   test('Public requests are sent without a token', () async {
+    storage.accessToken = null;
     final client = buildClient();
 
     await expectLater(
@@ -154,6 +212,212 @@ void main() {
     expect(requests.single.headers.containsKey('Authorization'), isFalse);
     expect(refreshCalls, 0);
   });
+
+  test(
+    'Signed-in public GET checks the session before fetching movies',
+    () async {
+      storage.accessToken = 'fresh-token';
+      final client = buildClient();
+      await expectLater(
+        client.get('/api/v1/movies/status/ACTIVE'),
+        throwsA(
+          isA<ApiException>().having((e) => e.statusCode, 'statusCode', 401),
+        ),
+      );
+      expect(requests.map((request) => request.url.path), [
+        '/api/v1/auth/me',
+        '/api/v1/movies/status/ACTIVE',
+      ]);
+      expect(requests.first.headers['Authorization'], 'Bearer fresh-token');
+      expect(requests.last.headers.containsKey('Authorization'), isFalse);
+      expect(expiredCalls, 0);
+    },
+  );
+
+  test('Changed role found by the session check blocks public GET', () async {
+    storage.accessToken = 'fresh-token';
+    protectedStatus = 403;
+    protectedErrorCode = 'ROLE_CHANGED';
+    final client = buildClient();
+    await expectLater(
+      client.get('/api/v1/movies/status/ACTIVE'),
+      throwsA(
+        isA<ApiException>().having((e) => e.statusCode, 'statusCode', 403),
+      ),
+    );
+    expect(requests.single.url.path, '/api/v1/auth/me');
+    expect(expiredCalls, 1);
+    expect(storage.accessToken, isNull);
+  });
+
+  test('Unavailable session check does not block public GET', () async {
+    storage.accessToken = 'fresh-token';
+    protectedStatus = 503;
+    final client = buildClient();
+    // The stand-in backend answers 401 to every request without a token.
+    await expectLater(
+      client.get('/api/v1/movies/status/ACTIVE'),
+      throwsA(
+        isA<ApiException>().having((e) => e.statusCode, 'statusCode', 401),
+      ),
+    );
+    expect(requests.map((request) => request.url.path), [
+      '/api/v1/auth/me',
+      '/api/v1/movies/status/ACTIVE',
+    ]);
+    expect(expiredCalls, 0);
+    expect(storage.accessToken, 'fresh-token');
+  });
+
+  test('Public GETs check the session at most once a minute', () async {
+    storage.accessToken = 'fresh-token';
+    final client = buildClient();
+    for (var i = 0; i < 3; i++) {
+      await expectLater(
+        client.get('/api/v1/movies/status/ACTIVE'),
+        throwsA(isA<ApiException>()),
+      );
+    }
+    expect(
+      requests.where((request) => request.url.path == '/api/v1/auth/me'),
+      hasLength(1),
+    );
+  });
+
+  test('Locked account clears tokens without refreshing', () async {
+    storage.accessToken = 'fresh-token';
+    protectedStatus = 403;
+    protectedErrorCode = 'ACCOUNT_LOCKED';
+    final client = buildClient();
+
+    await expectLater(
+      client.get('/api/v1/bookings/user/3', authenticated: true),
+      throwsA(
+        isA<ApiException>().having(
+          (e) => e.message,
+          'message',
+          'Account locked.',
+        ),
+      ),
+    );
+    expect(expiredCalls, 1);
+    expect(expiredMessage, 'Account locked.');
+    expect(refreshCalls, 0);
+    expect(storage.accessToken, isNull);
+    expect(storage.refreshToken, isNull);
+    expect(storage.user, isNull);
+  });
+
+  test('Concurrent locked requests report one session expiry', () async {
+    storage.accessToken = 'fresh-token';
+    protectedStatus = 403;
+    protectedErrorCode = 'ACCOUNT_LOCKED';
+    final client = buildClient();
+
+    await Future.wait([
+      for (final id in [1, 2, 3])
+        expectLater(
+          client.get('/api/v1/bookings/$id', authenticated: true),
+          throwsA(isA<ApiException>()),
+        ),
+    ]);
+    expect(expiredCalls, 1);
+    expect(refreshCalls, 0);
+  });
+
+  test(
+    'Locked refresh keeps the account-lock reason when signing out',
+    () async {
+      final manager = TokenManager(
+        storage: storage,
+        refreshSession: (_) async => throw const ApiException(
+          statusCode: 403,
+          message: 'Account locked.',
+          details: {'errorCode': 'ACCOUNT_LOCKED'},
+        ),
+        onSessionExpired: (message) {
+          expiredCalls++;
+          expiredMessage = message;
+        },
+      );
+
+      expect(
+        await manager.refreshAccessToken(failedToken: 'expired-token'),
+        isNull,
+      );
+      expect(expiredCalls, 1);
+      expect(expiredMessage, 'Account locked.');
+      expect(storage.accessToken, isNull);
+      expect(storage.refreshToken, isNull);
+    },
+  );
+
+  test(
+    'Storage failure still notifies the UI to leave protected pages',
+    () async {
+      storage.clearError = StateError('Secure storage is unavailable');
+      final manager = TokenManager(
+        storage: storage,
+        refreshSession: (_) async => authResponseFixture,
+        onSessionExpired: (message) {
+          expiredCalls++;
+          expiredMessage = message;
+        },
+      );
+
+      await expectLater(
+        manager.expireSession(message: 'Account locked.'),
+        throwsStateError,
+      );
+      expect(expiredCalls, 1);
+      expect(expiredMessage, 'Account locked.');
+    },
+  );
+
+  for (final status in [403, 503]) {
+    test('Ordinary $status errors keep the session', () async {
+      storage.accessToken = 'fresh-token';
+      protectedStatus = status;
+      final client = buildClient();
+
+      await expectLater(
+        client.get('/api/v1/bookings/user/3', authenticated: true),
+        throwsA(
+          isA<ApiException>().having((e) => e.statusCode, 'statusCode', status),
+        ),
+      );
+      expect(expiredCalls, 0);
+      expect(storage.accessToken, 'fresh-token');
+      expect(storage.refreshToken, 'refresh-token');
+    });
+  }
+
+  test(
+    'A refresh completing after account lock cannot restore the session',
+    () async {
+      final refresh = Completer<AuthResponse>();
+      final started = Completer<void>();
+      final manager = TokenManager(
+        storage: storage,
+        refreshSession: (_) {
+          started.complete();
+          return refresh.future;
+        },
+        onSessionRenewed: renewedUsers.add,
+        onSessionExpired: (_) => expiredCalls++,
+      );
+      final pending = manager.refreshAccessToken(failedToken: 'expired-token');
+      await started.future;
+      await manager.expireSession(message: 'Account locked.');
+      refresh.complete(authResponseFixture);
+
+      expect(await pending, isNull);
+      expect(storage.accessToken, isNull);
+      expect(storage.refreshToken, isNull);
+      expect(renewedUsers, isEmpty);
+      expect(expiredCalls, 1);
+    },
+  );
 
   test('ProblemDetails detail becomes the error message', () async {
     storage.accessToken = 'fresh-token';
@@ -245,6 +509,7 @@ class _MemoryTokenStorage implements AuthTokenStorage {
   String? accessToken;
   String? refreshToken;
   AuthUser? user;
+  Object? clearError;
 
   @override
   Future<void> save(AuthResponse response) async {
@@ -272,6 +537,7 @@ class _MemoryTokenStorage implements AuthTokenStorage {
 
   @override
   Future<void> clear() async {
+    if (clearError != null) throw clearError!;
     accessToken = null;
     refreshToken = null;
     user = null;

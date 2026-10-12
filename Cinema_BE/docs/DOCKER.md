@@ -56,7 +56,7 @@ docker compose up -d --build
 
 > Chỉ **gateway** mở cho máy khác trong mạng. Các service và PostgreSQL chỉ nghe ở `127.0.0.1`: trên máy mình vẫn mở Swagger/pgAdmin bình thường, còn máy khác cùng wifi không gọi thẳng vào được (phải đi qua gateway, nơi kiểm tra quyền và giới hạn số request).
 
-Tài khoản seed (mật khẩu `123456`): `admin@cinema.com`, `nhanvien1@cinema.com`, `khachhang1@gmail.com`. Cần thêm tài khoản Staff/Admin thì đăng nhập admin rồi gọi `POST /api/v1/auth/users` (ví dụ trong `ApiGateway.http`).
+Tài khoản seed (mật khẩu `123456`): `admin@cinema.com`, `nhanvien1@cinema.com`, `khachhang1@gmail.com`. Trên mobile, đăng nhập Admin → **Dashboard → tab Accounts** để tìm kiếm, lọc, phân trang, xem chi tiết, tạo tài khoản, gán quyền và khóa/mở tài khoản (hoặc gọi `POST /api/v1/auth/users` trong `ApiGateway.http`).
 
 **Khi một service lỗi** (retry + circuit breaker, SRS §13.2):
 - BookingService gọi MovieService/PayOS: lỗi tạm thời thì **tự thử lại** tối đa 2 lần. Riêng lệnh tạo link PayOS không thử lại, để tránh tạo trùng.
@@ -75,7 +75,31 @@ Tài khoản seed (mật khẩu `123456`): `admin@cinema.com`, `nhanvien1@cinema
 
 ## 4. Lưu ý
 
-- **Database trong Docker tách biệt** với PostgreSQL cài trên máy: dữ liệu hai bên khác nhau. Khi repo `Project-Cinema-DB` có thay đổi, chạy `docker compose down -v` để tạo lại DB từ file SQL mới.
+### Lịch chiếu demo một tháng
+
+DB mới tự bổ sung 2 phòng demo (03 Standard, 04 IMAX), rồi tạo lịch cho tất cả phim `ACTIVE` từ hôm nay trong một tháng theo giờ Việt Nam. Mỗi phòng có các suất 09:00, 12:30, 16:00, 19:30, 23:00 hằng ngày; phòng tiếp theo lệch 15 phút. Với 4 phòng có khoảng 20 suất/ngày, riêng hôm nay chỉ thêm giờ chưa bắt đầu. Lịch dùng đúng thời lượng phim, chừa ít nhất 20 phút dọn phòng, giá khác nhau theo phòng, giờ tối và cuối tuần.
+
+Mỗi phòng demo có sơ đồ ghế riêng; Flutter đọc hàng và số ghế thực tế từ API:
+
+| Phòng | Ghế mỗi hàng (A trở đi) | Tổng ghế |
+|---|---|---|
+| 01 IMAX | 10 / 10 / 10 / 12 / 12 | 54 |
+| 02 Standard | 10 / 10 / 10 / 8 | 38 |
+| 03 Standard | 12 / 12 / 12 | 36 |
+| 04 IMAX | 10 / 10 / 10 / 14 / 14 / 14 | 72 |
+
+UI chừa một lối đi giữa hàng 8–12 ghế, hai lối đi cho hàng 14 ghế. Sơ đồ rộng hỗ trợ kéo và phóng to. Migration chỉ bổ sung ghế, giữ nguyên ID và loại ghế cũ để bảo toàn tham chiếu của vé đã đặt.
+
+Với DB đang chạy hoặc khi lịch demo đã hết, bổ sung bằng lệnh sau. Script giữ nguyên dữ liệu cũ và bỏ qua các khung giờ đã có lịch:
+
+```powershell
+docker compose exec -T postgres psql -X -U postgres -d cinema_showtime_db -v ON_ERROR_STOP=1 -f /db-scripts/migrations/2026-10-10_cinema_more_daily_showtimes.sql
+docker compose exec -T postgres psql -X -U postgres -d cinema_showtime_db -v ON_ERROR_STOP=1 -f /db-scripts/migrations/2026-10-10_cinema_distinct_room_layouts.sql
+```
+
+Lệnh đọc danh sách phim từ `cinema_movie_db` rồi thêm lịch vào `cinema_showtime_db`; không cần extension PostgreSQL. File nằm trong repo `Project-Cinema-DB`, cần pull cả repo này khi cập nhật.
+
+- **Database trong Docker tách biệt** với PostgreSQL cài trên máy: dữ liệu hai bên khác nhau. Với DB đang dùng, áp dụng các file migration tương ứng trong `Project-Cinema-DB/migrations`; lịch demo dùng lệnh ở trên. `docker compose down -v` xoá dữ liệu, chỉ dùng khi chủ động muốn tạo lại toàn bộ DB.
 - Docker dùng **cùng cổng** với khi chạy bằng Visual Studio (5000/5100/5168/5063) → không chạy song song hai cách. Muốn debug một service bằng Visual Studio thì dừng container của service đó trước (vd: `docker compose stop booking-service`).
 - Trong Docker, cấu hình lấy từ biến môi trường do `docker-compose.yml` truyền vào (đọc từ `.env`), User Secrets trên máy **không** được dùng.
 - Các container chạy theo giờ Việt Nam (`Asia/Ho_Chi_Minh`) để khớp dữ liệu seed và code dùng `DateTime.Now`.
@@ -93,3 +117,17 @@ Tài khoản seed (mật khẩu `123456`): `admin@cinema.com`, `nhanvien1@cinema
 | Đăng ký xong không nhận được email OTP | Chưa cấu hình SMTP trong `.env` → lấy mã trong `docker compose logs auth-service`, hoặc cấu hình Gmail ([EMAIL_SETUP.md](EMAIL_SETUP.md)) |
 | Thanh toán xong không có email vé / huỷ vé không thấy hoàn tiền | Xem `http://localhost:5063/health`: `rabbitmq` phải `Healthy`. Event chưa gửi được thì nằm chờ, RabbitMQ chạy lại sẽ gửi bù ([MESSAGING.md](MESSAGING.md)) |
 | `relation "outbox_messages" does not exist` / `column ... payer_account_number does not exist` | DB tạo từ file SQL cũ → `docker compose down -v` rồi chạy lại (hoặc chạy các file `2026-10-02_*.sql` trong `Project-Cinema-DB/migrations`) |
+
+### Quản lý tài khoản trên mobile
+
+- Admin local/demo: `admin@cinema.com`, mật khẩu `123456` (seed hiện có; dùng mật khẩu riêng khi triển khai).
+- Admin đăng nhập vào `/admin/dashboard`, dùng dashboard quản trị và nav dưới riêng **Dashboard / Accounts / Profile**. Accounts bao gồm `/admin/users`, `/admin/users/new`, `/admin/users/{id}`; Profile tại `/admin/profile`. Thống kê tài khoản và vai trò lấy từ API thật. Chỉ `ROLE_ADMIN` được vào khu vực này; backend tiếp tục kiểm tra quyền. Customer dùng giao diện khách hàng; Staff có dashboard riêng `/staff/dashboard` với nav Dashboard / Operations / Profile.
+- Giao diện chỉ chọn một vai trò `ROLE_ADMIN`, `ROLE_STAFF` hoặc `ROLE_CUSTOMER`. Tài khoản do Admin tạo được bật và xác thực email ngay, có thể đăng nhập mà không cần OTP.
+- Không thể tự khóa hoặc tự bỏ quyền Admin. Khóa tài khoản thu hồi refresh token; gateway kiểm tra trạng thái qua AuthService ở mỗi request có xác thực và trả `403 ACCOUNT_LOCKED` ngay cả khi access token còn hạn. App hiện thông báo, xóa token và chuyển về đăng nhập. Nếu AuthService không khả dụng, gateway trả `503` và app giữ phiên để thử lại. Khi đổi quyền, gateway trả `403 ROLE_CHANGED` cho phiên mang quyền cũ; refresh token bị thu hồi và người dùng phải đăng nhập lại. App chuyển về đăng nhập và hiện thông báo ở đầu màn hình. Lưu lại cùng quyền không thu hồi phiên.
+- Bảng [MOBILE_UI_ENDPOINTS.md](../../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md) liệt kê đủ 6 API đã nối và các API khác còn thiếu UI.
+
+### Khu vực Staff trên mobile
+
+Staff seed local/demo: `nhanvien1@cinema.com`, mật khẩu `123456`. Đăng nhập sẽ vào dashboard Staff; tài khoản có cả Admin và Staff ưu tiên dashboard Admin.
+
+Tab **Operations** gồm vé, suất chiếu, phòng/ghế, thanh toán và hoàn tiền. Xem [STAFF_WORKSPACE.md](../../Cinema_Mobile/docs/STAFF_WORKSPACE.md) về thao tác, quyền và giới hạn backend; [MOBILE_UI_ENDPOINTS.md](../../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md) ghi rõ endpoint đã có UI và phần còn thiếu.

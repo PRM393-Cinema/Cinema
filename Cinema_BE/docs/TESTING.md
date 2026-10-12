@@ -4,7 +4,8 @@ Mỗi service có một project test xUnit nằm cạnh project chính, và đã
 
 | Service | Project test | Số test |
 |---|---|---|
-| AuthService | `AuthService/AuthService.Tests` | 8 |
+| AuthService | `AuthService/AuthService.Tests` | 10 |
+| ApiGateway | `ApiGateway/ApiGateway.Tests` | 21 |
 | MovieService | `MovieService/MovieService.Tests` | 6 |
 | BookingService | `BookingService/BookingService.Tests` | 43 |
 
@@ -17,6 +18,7 @@ Test tích hợp dùng **PostgreSQL thật**, và một phần dùng **RabbitMQ 
 
 ```powershell
 dotnet test AuthService/AuthService.sln
+dotnet test ApiGateway/ApiGateway.sln
 dotnet test MovieService/MovieService.sln
 dotnet test BookingService/BookingService.sln
 ```
@@ -36,6 +38,8 @@ Mỗi service chạy xong trong khoảng 15–30 giây.
 | Security | Thiếu token, token giả chữ ký, token hết hạn: 401. Khách gọi API của Staff / Admin, xem dữ liệu của người khác: 403 | `BookingService.Tests/Integration/AuthorizationTests.cs`, `AuthService.Tests/Integration/*` |
 | Failure | MovieService chết: đặt vé trả 503. PayOS chết: thanh toán trả 503 và booking vẫn thanh toán lại được | `BookingFlowTests.cs` |
 | Auth | Đăng ký, OTP (khoá sau 5 lần sai), đăng nhập, refresh token xoay vòng, đăng xuất, Admin tạo / khoá tài khoản | `AuthService.Tests/Integration/*` |
+| Khóa tài khoản | Token còn hạn bị từ chối ở gateway sau khi khóa; lỗi kết nối AuthService trả 503 và không chuyển tiếp request | `ApiGateway.Tests/*`, `AuthService.Tests/Integration/UserManagementTests.cs` |
+| Đổi role | Role cũ bị từ chối với `403 ROLE_CHANGED`; thu hồi refresh token khi quyền thay đổi, giữ phiên khi lưu cùng quyền | `ApiGateway.Tests/*`, `AuthService.Tests/Integration/UserManagementTests.cs` |
 | Suất chiếu | Quyền, trùng lịch 409, suất còn đặt được theo phim, huỷ mềm và ghi event `showtime.cancelled` | `MovieService.Tests/Integration/ShowtimeTests.cs` |
 | Giám sát | `/metrics` mở cho Prometheus và đếm booking theo trạng thái; chỉ trả ở cổng nội bộ khi cấu hình `MetricsPort` | `BookingService.Tests/Integration/ObservabilityTests.cs` |
 

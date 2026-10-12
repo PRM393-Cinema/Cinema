@@ -10,8 +10,11 @@ import '../../../core/session/session_state.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/utils/layout.dart';
 import '../../../core/widgets/empty_state.dart';
+import '../../../core/widgets/cinema_page.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_state.dart';
+
+import '../../../core/widgets/cinema_account_widgets.dart';
 import '../../../data/models/app_notification.dart';
 import '../../../data/repositories/booking_repository.dart';
 
@@ -28,6 +31,7 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
   List<AppNotification> _notifications = const [];
   bool _hasStarted = false;
   bool _isLoading = true;
+  bool _isRefreshing = false;
   String? _errorMessage;
 
   @override
@@ -40,6 +44,7 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
   }
 
   Future<void> _loadNotifications() async {
+    if (_isRefreshing) return;
     final userId = SessionProvider.of(context).user?.userId;
     if (userId == null) {
       _showError('Please sign in to see your notifications.');
@@ -47,6 +52,7 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
     }
 
     setState(() {
+      _isRefreshing = true;
       _isLoading = _notifications.isEmpty;
       _errorMessage = null;
     });
@@ -59,6 +65,7 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
       setState(() {
         _notifications = notifications;
         _isLoading = false;
+        _isRefreshing = false;
       });
     } on ApiException catch (error) {
       _showError(error.message);
@@ -73,16 +80,14 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
     if (!mounted) return;
     setState(() {
       _isLoading = false;
+      _isRefreshing = false;
       _errorMessage = message;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Notifications')),
-      body: SafeArea(child: _buildBody()),
-    );
+    return CinemaPage(title: 'Notifications', child: _buildBody());
   }
 
   Widget _buildBody() {
@@ -103,12 +108,16 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
         onRefresh: _loadNotifications,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          children: const [
-            SizedBox(height: AppSpacing.xxxl * 2),
-            EmptyState(
-              icon: Icons.notifications_none_outlined,
-              title: 'No notifications yet',
-              message: 'Booking and payment updates will appear here.',
+          padding: centeredPadding(context, AppSpacing.xl),
+          children: [
+            const SizedBox(height: AppSpacing.xxxl),
+            CinemaPanel(
+              surfaceOpacity: 0.8,
+              child: EmptyState(
+                icon: Icons.notifications_none_outlined,
+                title: 'You’re all caught up',
+                message: 'Booking confirmations, cancellations and refund updates will appear here.',
+              ),
             ),
           ],
         ),
@@ -120,17 +129,38 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
       child: ListView.separated(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: centeredPadding(context, AppSpacing.md),
-        itemCount: _notifications.length,
+        itemCount: _notifications.length + 1,
         separatorBuilder: (context, index) =>
             const SizedBox(height: AppSpacing.md),
         itemBuilder: (context, index) {
-          final notification = _notifications[index];
+          if (index == 0) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Your cinema updates', style: AppTextStyles.heading2),
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  '${_notifications.length} notifications',
+                  style: AppTextStyles.caption,
+                ),
+                if (_errorMessage != null) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    _errorMessage!,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.error,
+                    ),
+                  ),
+                ],
+              ],
+            );
+          }
+          final notification = _notifications[index - 1];
           return _NotificationTile(
             notification: notification,
             onTap: () => Navigator.pushNamed(
               context,
               AppRoutes.notificationDetail(notification.id),
-              arguments: notification,
             ),
           );
         },
@@ -148,20 +178,21 @@ class _NotificationTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: AppRadius.borderRadiusMd,
-        side: const BorderSide(color: AppColors.border),
-      ),
+      color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
         borderRadius: AppRadius.borderRadiusMd,
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
+        child: CinemaPanel(
+          surfaceOpacity: 0.8,
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.mail_outline, color: AppColors.primary),
+              Icon(
+                notification.type.startsWith('REFUND')
+                    ? Icons.receipt_long_outlined
+                    : Icons.confirmation_number_outlined,
+                color: AppColors.primary,
+              ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(
@@ -175,11 +206,22 @@ class _NotificationTile extends StatelessWidget {
                     ),
                     const SizedBox(height: AppSpacing.xs),
                     Text(
+                      notification.plainContent,
+                      style: AppTextStyles.bodySmall,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
                       formatDateTime(notification.createdAt),
                       style: AppTextStyles.caption,
                     ),
                   ],
                 ),
+              ),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.textSecondary,
               ),
             ],
           ),

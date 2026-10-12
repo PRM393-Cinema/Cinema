@@ -18,6 +18,8 @@ abstract interface class BookingRepository {
 
   Future<List<Booking>> getMyBookings(int userId);
 
+  Future<List<PaymentInfo>> getMyPayments(int userId);
+
   Future<Booking> cancelBooking(int bookingId);
 
   Future<PayOsCheckout> startPayOsCheckout(Booking booking);
@@ -28,6 +30,8 @@ abstract interface class BookingRepository {
   Future<Refund?> getRefund(int paymentId);
 
   Future<List<AppNotification>> getMyNotifications(int userId);
+
+  Future<AppNotification> getNotification(int id);
 }
 
 class RemoteBookingRepository implements BookingRepository {
@@ -55,6 +59,18 @@ class RemoteBookingRepository implements BookingRepository {
   Future<List<Booking>> getMyBookings(int userId) async {
     final result = await _bookingService.getBookingsByUser(userId);
     return result.items;
+  }
+
+  @override
+  Future<List<PaymentInfo>> getMyPayments(int userId) async {
+    final payments = <PaymentInfo>[];
+    var result = await _bookingService.getPaymentsByUser(userId);
+    payments.addAll(result.items);
+    for (var page = 2; page <= result.totalPages; page++) {
+      result = await _bookingService.getPaymentsByUser(userId, page: page);
+      payments.addAll(result.items);
+    }
+    return payments;
   }
 
   @override
@@ -98,7 +114,16 @@ class RemoteBookingRepository implements BookingRepository {
 
   @override
   Future<List<AppNotification>> getMyNotifications(int userId) async {
-    final result = await _bookingService.getNotificationsByUser(userId);
-    return result.items;
+    var result = await _bookingService.getNotificationsByUser(userId);
+    final notifications = [...result.items];
+    for (var page = 2; page <= result.totalPages; page++) {
+      result = await _bookingService.getNotificationsByUser(userId, page: page);
+      notifications.addAll(result.items);
+    }
+    return notifications;
   }
+
+  @override
+  Future<AppNotification> getNotification(int id) =>
+      _bookingService.getNotification(id);
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../app/routes/app_routes.dart';
@@ -11,6 +13,8 @@ import '../../../core/widgets/app_text_field.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../auth_error_messages.dart';
 import '../verify_email_arguments.dart';
+import '../widgets/auth_scaffold.dart';
+import '../widgets/auth_success_dialog.dart';
 
 class VerifyEmailScreen extends StatefulWidget {
   const VerifyEmailScreen({required this.authRepository, super.key});
@@ -33,6 +37,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   String? _errorMessage;
   String? _successMessage;
   DateTime? _resendAvailableAt;
+  Timer? _resendTimer;
 
   @override
   void didChangeDependencies() {
@@ -55,6 +60,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
 
   @override
   void dispose() {
+    _resendTimer?.cancel();
     _emailController.dispose();
     _otpController.dispose();
     super.dispose();
@@ -66,7 +72,8 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
       return 0;
     }
 
-    final remaining = availableAt.difference(DateTime.now()).inSeconds;
+    final remaining =
+        (availableAt.difference(DateTime.now()).inMilliseconds / 1000).ceil();
     return remaining > 0 ? remaining : 0;
   }
 
@@ -102,7 +109,31 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
         return;
       }
 
-      Navigator.pushReplacementNamed(context, AppRoutes.login);
+      _resendTimer?.cancel();
+      await showGeneralDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        barrierLabel: 'Account created',
+        barrierColor: Colors.black.withValues(alpha: 0.72),
+        transitionDuration: MediaQuery.disableAnimationsOf(context)
+            ? Duration.zero
+            : const Duration(milliseconds: 180),
+        pageBuilder: (context, _, _) => const Material(
+          type: MaterialType.transparency,
+          child: AuthSuccessDialog(
+            title: 'Account created!',
+            message:
+                'Your email is verified.\nYou’re ready for your next movie.',
+            footer: 'Taking you to sign in…',
+          ),
+        ),
+      );
+      if (!mounted) return;
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        AppRoutes.login,
+        (route) => route.settings.name == AppRoutes.home,
+      );
     } on ApiException catch (error) {
       _showError(authErrorMessage(error));
     } on FormatException {
@@ -114,7 +145,10 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
 
   Future<void> _resendCode() async {
     final args = _arguments;
-    if (args == null || _remainingResendSeconds > 0) {
+    if (args == null ||
+        _isResending ||
+        _isVerifying ||
+        _remainingResendSeconds > 0) {
       return;
     }
 
@@ -148,11 +182,20 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   }
 
   void _setResendCooldown(int seconds) {
+    _resendTimer?.cancel();
     if (seconds <= 0) {
       _resendAvailableAt = null;
       return;
     }
     _resendAvailableAt = DateTime.now().add(Duration(seconds: seconds));
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      setState(() {});
+      if (_remainingResendSeconds == 0) timer.cancel();
+    });
   }
 
   void _showError(String message) {
@@ -172,95 +215,82 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   Widget build(BuildContext context) {
     final remainingSeconds = _remainingResendSeconds;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Verify email')),
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(AppSpacing.xl),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 440),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Text(
-                      'Verify your email',
-                      style: AppTextStyles.heading1,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    const Text(
-                      'Enter the verification code sent to your email.',
-                      style: AppTextStyles.bodySmall,
-                      textAlign: TextAlign.center,
-                    ),
-                    if (_hasRoutePayload) ...[
-                      const SizedBox(height: AppSpacing.sm),
-                      Text(
-                        'Code sent to ${_arguments!.email}',
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.primary,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                    const SizedBox(height: AppSpacing.xxl),
-                    AppTextField(
-                      label: 'Email',
-                      hint: 'you@example.com',
-                      controller: _emailController,
-                      enabled: false,
-                      keyboardType: TextInputType.emailAddress,
-                      prefixIcon: const Icon(Icons.email_outlined),
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    AppTextField(
-                      label: 'Verification code',
-                      hint: '123456',
-                      controller: _otpController,
-                      enabled: !_isVerifying && _hasRoutePayload,
-                      keyboardType: TextInputType.number,
-                      prefixIcon: const Icon(Icons.pin_outlined),
-                      validator: _validateOtp,
-                      onChanged: (_) => setState(() {}),
-                    ),
-                    if (_errorMessage != null) ...[
-                      const SizedBox(height: AppSpacing.lg),
-                      _AuthStatusMessage.error(message: _errorMessage!),
-                    ],
-                    if (_successMessage != null) ...[
-                      const SizedBox(height: AppSpacing.lg),
-                      _AuthStatusMessage.success(message: _successMessage!),
-                    ],
-                    const SizedBox(height: AppSpacing.xxl),
-                    AppButton(
-                      label: 'Verify email',
-                      isLoading: _isVerifying,
-                      onPressed: _isVerifying || !_hasRoutePayload
-                          ? null
-                          : _verifyEmail,
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    AppButton.secondary(
-                      label: remainingSeconds > 0
-                          ? 'Resend code (${remainingSeconds}s)'
-                          : 'Resend code',
-                      isLoading: _isResending,
-                      onPressed:
-                          _isVerifying ||
-                              _isResending ||
-                              !_hasRoutePayload ||
-                              remainingSeconds > 0
-                          ? null
-                          : _resendCode,
-                    ),
-                  ],
+    return AuthScaffold(
+      showBack: false,
+      title: 'Verify your email',
+      subtitle: 'Enter the verification code sent to your email.',
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (_hasRoutePayload) ...[
+              Text(
+                'Code sent to ${_arguments!.email}',
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.primary,
                 ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+            if (_hasRoutePayload) const SizedBox(height: AppSpacing.lg),
+            AuthFieldSurface(
+              child: AppTextField(
+                label: 'Email',
+                hint: 'you@example.com',
+                controller: _emailController,
+                enabled: false,
+                keyboardType: TextInputType.emailAddress,
+                prefixIcon: const Icon(Icons.email_outlined),
               ),
             ),
-          ),
+            const SizedBox(height: AppSpacing.lg),
+            AuthFieldSurface(
+              child: AppTextField(
+                label: 'Verification code',
+                hint: '123456',
+                controller: _otpController,
+                isRequired: true,
+                enabled: !_isVerifying && _hasRoutePayload,
+                keyboardType: TextInputType.number,
+                prefixIcon: const Icon(Icons.pin_outlined),
+                validator: _validateOtp,
+                onChanged: (_) => setState(() {}),
+              ),
+            ),
+            if (_errorMessage != null) ...[
+              const SizedBox(height: AppSpacing.lg),
+              _AuthStatusMessage.error(message: _errorMessage!),
+            ],
+            if (_successMessage != null) ...[
+              const SizedBox(height: AppSpacing.lg),
+              _AuthStatusMessage.success(message: _successMessage!),
+            ],
+            const SizedBox(height: AppSpacing.xxl),
+            AppButton(
+              label: 'Verify email',
+              useGradient: true,
+              trailingIcon: Icons.arrow_forward_rounded,
+              isLoading: _isVerifying,
+              onPressed: _isVerifying || !_hasRoutePayload
+                  ? null
+                  : _verifyEmail,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            AppButton.secondary(
+              label: remainingSeconds > 0
+                  ? 'Resend code (${remainingSeconds}s)'
+                  : 'Resend code',
+              isLoading: _isResending,
+              onPressed:
+                  _isVerifying ||
+                      _isResending ||
+                      !_hasRoutePayload ||
+                      remainingSeconds > 0
+                  ? null
+                  : _resendCode,
+            ),
+          ],
         ),
       ),
     );

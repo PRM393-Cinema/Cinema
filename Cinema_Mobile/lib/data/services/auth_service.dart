@@ -1,5 +1,6 @@
 import '../../core/network/api_client.dart';
 import '../models/auth_response.dart';
+import '../models/paged_result.dart';
 import '../models/json_readers.dart';
 import '../models/login_request.dart';
 import '../models/otp_sent_response.dart';
@@ -11,6 +12,87 @@ class AuthService {
   AuthService({required ApiClient client}) : _apiClient = client;
 
   final ApiClient _apiClient;
+
+  Future<PagedResult<AuthUser>> users({
+    int page = 1,
+    String? keyword,
+    String? role,
+    bool? enabled,
+  }) async => PagedResult.fromJson(
+    await _apiClient.get(
+      '/api/v1/auth/users',
+      authenticated: true,
+      query: {
+        'page': page,
+        'size': 10,
+        'keyword': keyword,
+        'role': role,
+        'enabled': enabled,
+      },
+    ),
+    AuthUser.fromJson,
+  );
+
+  Future<AuthUser> user(int id) async => AuthUser.fromJson(
+    readMap(
+      await _apiClient.get('/api/v1/auth/users/$id', authenticated: true),
+    ),
+  );
+
+  Future<List<String>> roles() async {
+    final response = await _apiClient.get(
+      '/api/v1/auth/roles',
+      authenticated: true,
+    );
+    if (response is! List || response.any((role) => role is! String)) {
+      throw const FormatException('Expected a list of roles.');
+    }
+    return response.cast<String>();
+  }
+
+  Future<AuthUser> createUser({
+    required String fullName,
+    required String email,
+    required String password,
+    String? phone,
+    required List<String> roles,
+  }) async => AuthUser.fromJson(
+    readMap(
+      await _apiClient.post(
+        '/api/v1/auth/users',
+        authenticated: true,
+        body: {
+          'fullName': fullName,
+          'email': email,
+          'password': password,
+          'phone': phone,
+          'roles': roles,
+        },
+      ),
+    ),
+  );
+
+  Future<AuthUser> updateUserRoles(int id, List<String> roles) async =>
+      AuthUser.fromJson(
+        readMap(
+          await _apiClient.put(
+            '/api/v1/auth/users/$id/roles',
+            authenticated: true,
+            body: {'roles': roles},
+          ),
+        ),
+      );
+
+  Future<AuthUser> updateUserStatus(int id, bool enabled) async =>
+      AuthUser.fromJson(
+        readMap(
+          await _apiClient.patch(
+            '/api/v1/auth/users/$id/status',
+            authenticated: true,
+            body: {'enabled': enabled},
+          ),
+        ),
+      );
 
   Future<AuthResponse> login(LoginRequest request) async {
     final response = await _apiClient.post(

@@ -21,7 +21,7 @@ void main() {
     expect(find.text('Showtimes'), findsOneWidget);
     expect(find.text(inception.title), findsWidgets);
 
-    await tester.pageBack();
+    await tester.binding.handlePopRoute();
     await pumpRoute(tester);
     expect(find.text('Step Into CosmoQ Cinema'), findsOneWidget);
   });
@@ -100,7 +100,7 @@ void main() {
     expect(find.textContaining(booking.bookingCode), findsOneWidget);
   });
 
-  testWidgets('A refreshed notification shows the notification list', (
+  testWidgets('A refreshed notification loads its detail by ID', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
@@ -111,7 +111,7 @@ void main() {
     );
     await pumpRoute(tester);
 
-    expect(find.text('Notifications'), findsOneWidget);
+    expect(find.text('Notification'), findsOneWidget);
     expect(find.text(notificationFixture.subject), findsOneWidget);
   });
 
@@ -121,22 +121,30 @@ void main() {
     await tester.pumpWidget(buildTestApp(initialRoute: AppRoutes.myBookings));
     await pumpRoute(tester);
 
-    expect(find.text('Welcome back'), findsOneWidget);
+    expect(find.byKey(const Key('loginTitle')), findsOneWidget);
 
     await tester.enterText(
-      find.widgetWithText(TextFormField, 'Email'),
+      find.descendant(
+        of: find.byKey(const Key('loginEmailField')),
+        matching: find.byType(TextFormField),
+      ),
       'khachhang1@gmail.com',
     );
     await tester.enterText(
-      find.widgetWithText(TextFormField, 'Password'),
+      find.descendant(
+        of: find.byKey(const Key('loginPasswordField')),
+        matching: find.byType(TextFormField),
+      ),
       '123456',
     );
     FocusManager.instance.primaryFocus?.unfocus();
     await tester.pumpAndSettle();
 
-    final signIn = find.widgetWithText(AppButton, 'Sign in');
+    final signIn = find.byType(AppButton).first;
     await tester.ensureVisible(signIn);
     await tester.tap(signIn);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 3));
     await pumpRoute(tester);
 
     expect(find.text('My Bookings'), findsOneWidget);

@@ -21,6 +21,9 @@ class ApiClient {
   final Duration timeout;
   final AccessTokenProvider? tokenProvider;
 
+  static const sessionCheckInterval = Duration(minutes: 1);
+  DateTime? _lastSessionCheck;
+
   Future<Object?> get(
     String path, {
     Map<String, Object?>? query,
@@ -44,6 +47,21 @@ class ApiClient {
     );
   }
 
+  Future<Object?> put(
+    String path, {
+    Object? body,
+    bool authenticated = false,
+  }) => _send('PUT', path, body: body, authenticated: authenticated);
+
+  Future<Object?> patch(
+    String path, {
+    Object? body,
+    bool authenticated = false,
+  }) => _send('PATCH', path, body: body, authenticated: authenticated);
+
+  Future<Object?> delete(String path, {bool authenticated = false}) =>
+      _send('DELETE', path, authenticated: authenticated);
+
   Future<Object?> _send(
     String method,
     String path, {
@@ -53,34 +71,67 @@ class ApiClient {
   }) async {
     final uri = _buildUri(path, query);
     final provider = tokenProvider;
-    final token = authenticated ? await provider?.accessToken() : null;
+    final storedToken = authenticated || method == 'GET'
+        ? await provider?.accessToken()
+        : null;
+    if (!authenticated && method == 'GET' && storedToken?.isNotEmpty == true) {
+      await _checkSession();
+    }
+    final token = authenticated ? storedToken : null;
 
-    var response = await _request(method, uri, body, token);
+    try {
+      var response = await _request(method, uri, body, token);
 
-    // The access token lives for an hour: renew it once with the refresh
-    // token and repeat the request before reporting the session as expired.
-    if (response.statusCode == 401 && provider != null && token != null) {
-      final renewedToken = await provider.refreshAccessToken(
-        failedToken: token,
-      );
-      if (renewedToken == null) {
+      // The access token lives for an hour: renew it once with the refresh
+      // token and repeat the request before reporting the session as expired.
+      if (response.statusCode == 401 && provider != null && token != null) {
+        final renewedToken = await provider.refreshAccessToken(
+          failedToken: token,
+        );
+        if (renewedToken == null) {
+          throw const ApiException(
+            statusCode: 401,
+            message: 'Your session has expired. Please sign in again.',
+          );
+        }
+
+        response = await _request(method, uri, body, renewedToken);
+      }
+
+      if (authenticated && response.statusCode == 401) {
+        await provider?.expireSession(
+          message: 'Please sign in again to continue.',
+        );
         throw const ApiException(
           statusCode: 401,
-          message: 'Your session has expired. Please sign in again.',
+          message: 'Please sign in again to continue.',
         );
       }
 
-      response = await _request(method, uri, body, renewedToken);
+      return _decodeResponse(response);
+    } on ApiException catch (error) {
+      if (authenticated && error.requiresSignInAgain) {
+        await provider?.expireSession(message: error.message);
+      }
+      rethrow;
     }
+  }
 
-    if (authenticated && response.statusCode == 401) {
-      throw const ApiException(
-        statusCode: 401,
-        message: 'Please sign in again to continue.',
-      );
+  // Public movie pages of a signed-in user also notice a locked account or a
+  // changed role. The check runs at most once a minute, and only those two
+  // answers stop the page: a slow or unavailable AuthService must not take the
+  // catalogue down with it.
+  Future<void> _checkSession() async {
+    final now = DateTime.now();
+    final last = _lastSessionCheck;
+    if (last != null && now.difference(last) < sessionCheckInterval) return;
+    _lastSessionCheck = now;
+
+    try {
+      await _send('GET', '/api/v1/auth/me', authenticated: true);
+    } on ApiException catch (error) {
+      if (error.requiresSignInAgain) rethrow;
     }
-
-    return _decodeResponse(response);
   }
 
   Uri _buildUri(String path, Map<String, Object?>? query) {
@@ -113,7 +164,18 @@ class ApiClient {
     try {
       final future = switch (method) {
         'GET' => _httpClient.get(uri, headers: headers),
+        'DELETE' => _httpClient.delete(uri, headers: headers),
         'POST' => _httpClient.post(
+          uri,
+          headers: headers,
+          body: body == null ? null : jsonEncode(body),
+        ),
+        'PUT' => _httpClient.put(
+          uri,
+          headers: headers,
+          body: body == null ? null : jsonEncode(body),
+        ),
+        'PATCH' => _httpClient.patch(
           uri,
           headers: headers,
           body: body == null ? null : jsonEncode(body),
@@ -134,7 +196,8 @@ class ApiClient {
   }
 
   Object? _decodeResponse(http.Response response) {
-    final body = response.body.trim();
+    // ProblemDetails may omit charset; the API still sends UTF-8 bytes.
+    final body = utf8.decode(response.bodyBytes, allowMalformed: true).trim();
     final isSuccess = response.statusCode >= 200 && response.statusCode < 300;
 
     Object? decoded;

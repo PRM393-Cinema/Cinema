@@ -59,7 +59,8 @@ namespace BookingService.Messaging.Handlers
                    cho đơn đặt vé <strong>{E(data.BookingCode ?? data.BookingId.ToString())}</strong>
                    (mã hoàn tiền {E(data.RefundCode ?? "")}).</p>
                 <p><strong>Lý do:</strong> {E(data.Reason ?? "")}</p>
-                <p>Tiền sẽ được chuyển khoản lại vào tài khoản bạn đã dùng để thanh toán. Rạp sẽ gửi email khi hoàn tất.</p>
+                <p>Yêu cầu đang chờ nhân viên xem xét. Với yêu cầu từ khách, vé và ghế vẫn còn hiệu lực trong lúc chờ.
+                   Rạp sẽ gửi email khi hoàn tiền hoặc từ chối yêu cầu.</p>
                 """;
 
             return Build(recipientEmail, $"Yêu cầu hoàn tiền đơn {data.BookingCode}", body);
@@ -76,6 +77,18 @@ namespace BookingService.Messaging.Handlers
                 """;
 
             return Build(recipientEmail, $"Đã hoàn tiền đơn {data.BookingCode}", body);
+        }
+
+        public static EmailMessage RefundRejected(PaymentEventData data, string recipientEmail)
+        {
+            var body = $"""
+                <h2>Yêu cầu hoàn tiền bị từ chối</h2>
+                <p>Yêu cầu hoàn tiền {E(data.RefundCode ?? "")} cho đơn
+                   <strong>{E(data.BookingCode ?? data.BookingId.ToString())}</strong> đã bị từ chối.</p>
+                <p><strong>Lý do:</strong> {E(data.Reason ?? "")}</p>
+                <p>Tiền chưa được hoàn. Vui lòng liên hệ rạp nếu cần hỗ trợ.</p>
+                """;
+            return Build(recipientEmail, $"Yêu cầu hoàn tiền đơn {data.BookingCode} bị từ chối", body);
         }
 
         private static string BookingDetails(BookingEventData data)

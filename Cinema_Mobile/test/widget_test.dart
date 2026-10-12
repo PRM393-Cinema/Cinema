@@ -15,6 +15,35 @@ import 'support/fixtures.dart';
 import 'support/test_app.dart';
 
 void main() {
+  testWidgets('Session expiry shows its reason and removes protected pages', (
+    tester,
+  ) async {
+    final session = SessionState();
+    await tester.pumpWidget(
+      buildTestApp(
+        session: session,
+        authenticated: true,
+        initialRoute: AppRoutes.profile,
+      ),
+    );
+    await pumpRoute(tester);
+    expect(find.text('Account settings'), findsOneWidget);
+
+    session.clear(message: 'Your account has been locked.');
+    session.clear(message: 'Your account has been locked.');
+    await pumpRoute(tester);
+
+    expect(session.isAuthenticated, isFalse);
+    expect(session.user, isNull);
+    expect(find.byKey(const Key('loginTitle')), findsOneWidget);
+    expect(find.text('Your account has been locked.'), findsOneWidget);
+    expect(find.text('Account settings'), findsNothing);
+    expect(
+      Navigator.of(tester.element(find.byType(LoginScreen))).canPop(),
+      isFalse,
+    );
+  });
+
   testWidgets('App without session opens Home', (WidgetTester tester) async {
     await tester.pumpWidget(buildTestApp());
     await pumpRoute(tester);
@@ -29,7 +58,7 @@ void main() {
     await tester.tap(find.text('Sign in').first);
     await pumpRoute(tester);
 
-    expect(find.text('Welcome back'), findsOneWidget);
+    expect(find.byKey(const Key('loginTitle')), findsOneWidget);
   });
 
   testWidgets('Login loading state works', (WidgetTester tester) async {
@@ -96,7 +125,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('Invalid email or password.'), findsOneWidget);
-    expect(find.text('Welcome back'), findsOneWidget);
+    expect(find.byKey(const Key('loginTitle')), findsOneWidget);
     expect(find.text('Find your next movie night'), findsNothing);
   });
 
@@ -154,7 +183,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('This email is already registered.'), findsOneWidget);
-    expect(find.text('Create your account'), findsOneWidget);
+    expect(find.byKey(const Key('registerTitle')), findsOneWidget);
   });
 
   testWidgets('Verify Email success navigates to Login', (
@@ -169,9 +198,11 @@ void main() {
     await tester.ensureVisible(find.byType(AppButton).first);
     await tester.pumpAndSettle();
     await tester.tap(find.byType(AppButton).first);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 3));
     await pumpRoute(tester);
 
-    expect(find.text('Welcome back'), findsOneWidget);
+    expect(find.byKey(const Key('loginTitle')), findsOneWidget);
   });
 
   testWidgets('Invalid OTP displays error on Verify Email', (
@@ -294,26 +325,21 @@ void main() {
     expect(find.text('${formatVnd(90000)} / seat'), findsOneWidget);
   });
 
-  testWidgets(
-    'Guest attempting protected action gets Sign in required prompt',
-    (WidgetTester tester) async {
-      await _openHome(tester, authenticated: false);
-      await _openMovieDetail(tester);
+  testWidgets('Guest attempting protected action goes to Login', (
+    WidgetTester tester,
+  ) async {
+    await _openHome(tester, authenticated: false);
+    await _openMovieDetail(tester);
 
-      await tester.ensureVisible(find.text('Room 1'));
-      await tester.pump();
-      await tester.tap(find.text('Room 1'));
-      await tester.pump();
-      await tester.tap(find.text('Continue to Seats'));
-      await tester.pump();
+    await tester.ensureVisible(find.text('Room 1'));
+    await tester.pump();
+    await tester.tap(find.text('Room 1'));
+    await tester.pump();
+    await tester.tap(find.text('Continue to Seats'));
+    await pumpRoute(tester);
 
-      expect(find.text('Sign in required'), findsOneWidget);
-      expect(
-        find.text('Please sign in to continue with this action.'),
-        findsOneWidget,
-      );
-    },
-  );
+    expect(find.byKey(const Key('loginTitle')), findsOneWidget);
+  });
 }
 
 Widget _verifyEmailTestApp({AuthRepository? authRepository}) {
@@ -349,8 +375,8 @@ Future<void> _openHome(WidgetTester tester, {bool authenticated = true}) async {
 }
 
 Future<void> _openMovieDetail(WidgetTester tester) async {
-  await scrollHomeTo(tester, find.text('View Details').first);
-  await tester.tap(find.text('View Details').first);
+  await scrollHomeTo(tester, find.text(inception.title).first);
+  await tester.tap(find.text(inception.title).first);
   await pumpRoute(tester);
 }
 
@@ -361,16 +387,28 @@ Future<void> _loginToHome(WidgetTester tester) async {
   await tester.drag(find.byType(Scrollable).first, const Offset(0, -300));
   await tester.pumpAndSettle();
   await tester.tap(find.byType(AppButton).first);
+  await tester.pump();
+  expect(find.text('Signed in!'), findsOneWidget);
+  expect(find.text('Đăng nhập thành công.'), findsNothing);
+  await tester.pump(const Duration(seconds: 3));
   await pumpRoute(tester);
+  expect(find.text('Đăng nhập thành công.'), findsNothing);
+  expect(find.byType(Dialog), findsNothing);
 }
 
 Future<void> _enterLoginCredentials(WidgetTester tester) async {
   await tester.enterText(
-    find.widgetWithText(TextFormField, 'Email'),
+    find.descendant(
+      of: find.byKey(const Key('loginEmailField')),
+      matching: find.byType(TextFormField),
+    ),
     'khachhang1@gmail.com',
   );
   await tester.enterText(
-    find.widgetWithText(TextFormField, 'Password'),
+    find.descendant(
+      of: find.byKey(const Key('loginPasswordField')),
+      matching: find.byType(TextFormField),
+    ),
     '123456',
   );
   FocusManager.instance.primaryFocus?.unfocus();
@@ -382,16 +420,31 @@ Future<void> _enterRegisterDetails(
   String email = 'jane@example.com',
 }) async {
   await tester.enterText(
-    find.widgetWithText(TextFormField, 'Full name'),
+    find.descendant(
+      of: find.byKey(const Key('registerFullNameField')),
+      matching: find.byType(TextFormField),
+    ),
     'Jane Customer',
   );
-  await tester.enterText(find.widgetWithText(TextFormField, 'Email'), email);
   await tester.enterText(
-    find.widgetWithText(TextFormField, 'Phone number'),
+    find.descendant(
+      of: find.byKey(const Key('registerEmailField')),
+      matching: find.byType(TextFormField),
+    ),
+    email,
+  );
+  await tester.enterText(
+    find.descendant(
+      of: find.byKey(const Key('registerPhoneField')),
+      matching: find.byType(TextFormField),
+    ),
     '0123456789',
   );
   await tester.enterText(
-    find.widgetWithText(TextFormField, 'Password'),
+    find.descendant(
+      of: find.byKey(const Key('registerPasswordField')),
+      matching: find.byType(TextFormField),
+    ),
     'Secret123',
   );
   FocusManager.instance.primaryFocus?.unfocus();

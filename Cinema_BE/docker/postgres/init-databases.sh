@@ -33,4 +33,15 @@ END $$;
 SQL
 done
 
+echo "==> Them lich chieu demo cho mot thang"
+# Lich chieu demo nam trong repo Project-Cinema-DB moi: thieu file thi bo qua, DB van tao duoc
+for migration in 2026-10-10_cinema_more_daily_showtimes.sql 2026-10-10_cinema_distinct_room_layouts.sql; do
+    file="/db-scripts/migrations/$migration"
+    if [ ! -f "$file" ]; then
+        echo "Bo qua $migration: chua co trong Project-Cinema-DB (git pull repo DB, roi docker compose down -v va up lai)" >&2
+        continue
+    fi
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname cinema_showtime_db -f "$file" > /dev/null
+done
+
 echo "==> Da tao xong 6 database"

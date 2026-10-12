@@ -14,6 +14,8 @@ class AppButton extends StatelessWidget {
     this.variant = AppButtonVariant.primary,
     this.isLoading = false,
     this.leadingIcon,
+    this.trailingIcon,
+    this.useGradient = false,
     super.key,
   });
 
@@ -22,6 +24,8 @@ class AppButton extends StatelessWidget {
     this.onPressed,
     this.isLoading = false,
     this.leadingIcon,
+    this.trailingIcon,
+    this.useGradient = false,
     super.key,
   }) : variant = AppButtonVariant.secondary;
 
@@ -30,6 +34,8 @@ class AppButton extends StatelessWidget {
     this.onPressed,
     this.isLoading = false,
     this.leadingIcon,
+    this.trailingIcon,
+    this.useGradient = false,
     super.key,
   }) : variant = AppButtonVariant.danger;
 
@@ -38,34 +44,57 @@ class AppButton extends StatelessWidget {
   final AppButtonVariant variant;
   final bool isLoading;
   final IconData? leadingIcon;
+  final IconData? trailingIcon;
+  final bool useGradient;
 
   bool get _isDisabled => onPressed == null || isLoading;
 
   @override
   Widget build(BuildContext context) {
     final colors = _ButtonColors.fromVariant(variant);
+    final showGradient = useGradient && !_isDisabled;
 
     return SizedBox(
       height: AppSpacing.xxxl,
-      child: ElevatedButton(
-        onPressed: _isDisabled ? null : onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: colors.background,
-          foregroundColor: colors.foreground,
-          disabledBackgroundColor: variant == AppButtonVariant.secondary
-              ? AppColors.surface
-              : AppColors.surfaceSoft,
-          disabledForegroundColor: AppColors.textSecondary,
-          elevation: 0,
-          side: BorderSide(color: colors.border),
-          shape: RoundedRectangleBorder(borderRadius: AppRadius.borderRadiusMd),
-          textStyle: AppTextStyles.button,
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: showGradient
+              ? const LinearGradient(
+                  colors: [AppColors.primary, AppColors.primaryDark],
+                )
+              : null,
+          borderRadius: AppRadius.borderRadiusMd,
         ),
-        child: _ButtonContent(
-          label: label,
-          isLoading: isLoading,
-          leadingIcon: leadingIcon,
+        child: ElevatedButton(
+          onPressed: _isDisabled ? null : onPressed,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: showGradient
+                ? Colors.transparent
+                : colors.background,
+            foregroundColor: showGradient
+                ? AppColors.background
+                : colors.foreground,
+            disabledBackgroundColor: variant == AppButtonVariant.secondary
+                ? AppColors.surface
+                : AppColors.surfaceSoft,
+            disabledForegroundColor: AppColors.textSecondary,
+            shadowColor: Colors.transparent,
+            elevation: 0,
+            side: BorderSide(
+              color: showGradient ? Colors.transparent : colors.border,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: AppRadius.borderRadiusMd,
+            ),
+            textStyle: AppTextStyles.button,
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+          ),
+          child: _ButtonContent(
+            label: label,
+            isLoading: isLoading,
+            leadingIcon: leadingIcon,
+            trailingIcon: trailingIcon,
+          ),
         ),
       ),
     );
@@ -77,11 +106,13 @@ class _ButtonContent extends StatelessWidget {
     required this.label,
     required this.isLoading,
     this.leadingIcon,
+    this.trailingIcon,
   });
 
   final String label;
   final bool isLoading;
   final IconData? leadingIcon;
+  final IconData? trailingIcon;
 
   @override
   Widget build(BuildContext context) {
@@ -102,6 +133,10 @@ class _ButtonContent extends StatelessWidget {
         Flexible(
           child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
         ),
+        if (trailingIcon != null) ...[
+          const SizedBox(width: AppSpacing.sm),
+          Icon(trailingIcon, size: AppSpacing.xl),
+        ],
       ],
     );
   }

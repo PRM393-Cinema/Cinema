@@ -172,9 +172,9 @@ namespace BookingService.Controllers
 
         // ----- Hoàn tiền (FR-PAY-06) -----
 
-        // Staff/Admin hoàn tiền một payment đã thanh toán: booking còn hiệu lực thì huỷ luôn, tạo yêu cầu hoàn 100%
+        // Admin xử lý ngoại lệ thủ công; Customer yêu cầu hoàn tiền qua luồng huỷ booking.
         [HttpPost("{id:long}/refund")]
-        [Authorize(Policy = AuthorizationPolicies.StaffOrAdmin)]
+        [Authorize(Policy = AuthorizationPolicies.AdminOnly)]
         public async Task<ActionResult<RefundResponse>> Refund(
             long id,
             [FromQuery] string? reason = null)
@@ -218,6 +218,15 @@ namespace BookingService.Controllers
             }
 
             return Ok(refund);
+        }
+
+        [HttpPost("refunds/{refundId:long}/reject")]
+        [Authorize(Policy = AuthorizationPolicies.StaffOrAdmin)]
+        public async Task<ActionResult<RefundResponse>> RejectRefund(
+            long refundId, [FromBody] RejectRefundRequest request)
+        {
+            return Ok(await _refundService.RejectRefundAsync(
+                refundId, request.Reason!, User.GetCurrentUserId()));
         }
 
         // Staff đã chuyển khoản trả khách: ghi mã giao dịch, payment -> REFUNDED, khách nhận email

@@ -12,8 +12,11 @@ import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_network_image.dart';
 import '../../../core/widgets/empty_state.dart';
+import '../../../core/widgets/cinema_page.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_state.dart';
+import '../../../core/widgets/cinema_background.dart';
+import '../../../core/widgets/cinema_account_widgets.dart';
 import '../../../data/models/booking_draft.dart';
 import '../../../data/models/movie.dart';
 import '../../../data/models/seat.dart';
@@ -177,9 +180,9 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
 
     if (args == null) {
       final error = _errorMessage;
-      return Scaffold(
-        appBar: AppBar(title: const Text('Seat Selection')),
-        body: _showtimeRequested && _isLoading
+      return CinemaPage(
+        title: 'Seat Selection',
+        child: _showtimeRequested && _isLoading
             ? const LoadingState(message: 'Loading showtime...')
             : _showtimeRequested && error != null
             ? ErrorState(
@@ -202,77 +205,105 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
         .join(', ');
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Select Seats')),
-      body: SafeArea(
-        child: Column(
-          children: [
-            _ShowtimeSummary(movie: args.movie, showtime: showtime),
-            const Divider(height: 1, color: AppColors.border),
-            Expanded(child: _buildSeatMap(data)),
-            const Divider(height: 1, color: AppColors.border),
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.xl,
-                vertical: AppSpacing.lg,
+      body: CinemaBackground(
+        child: SafeArea(
+          child: Column(
+            children: [
+              const Padding(
+                padding: EdgeInsets.all(AppSpacing.lg),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text('Select Seats', style: AppTextStyles.heading2),
+                ),
               ),
-              color: AppColors.surface,
-              child: SafeArea(
-                top: false,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                child: CinemaPanel(
+                  padding: EdgeInsets.zero,
+                  surfaceOpacity: 0.8,
+                  child: _ShowtimeSummary(
+                    movie: args.movie,
+                    showtime: showtime,
+                  ),
+                ),
+              ),
+              Expanded(child: _buildSeatMap(data)),
+              Padding(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: CinemaPanel(
+                  surfaceOpacity: 0.72,
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: SafeArea(
+                    top: false,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        // A large total shrinks instead of pushing the
-                        // button off narrow screens.
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
+                        Row(
+                          children: [
+                            // A large total shrinks instead of pushing the
+                            // button off narrow screens.
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    '${_selectedSeatIds.length} seat(s)',
-                                    style: AppTextStyles.bodySmall,
-                                  ),
-                                  if (selectedLabels.isNotEmpty)
-                                    Flexible(
-                                      child: Text(
-                                        ' • $selectedLabels',
-                                        style: AppTextStyles.bodySmall.copyWith(
-                                          color: AppColors.textPrimary,
+                                  Row(
+                                    children: [
+                                      // Both parts shorten next to the
+                                      // Continue button on narrow phones.
+                                      Flexible(
+                                        child: Text(
+                                          '${_selectedSeatIds.length} seat(s)',
+                                          style: AppTextStyles.bodySmall,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      if (selectedLabels.isNotEmpty)
+                                        Flexible(
+                                          child: Text(
+                                            ' • $selectedLabels',
+                                            style: AppTextStyles.bodySmall
+                                                .copyWith(
+                                                  color: AppColors.textPrimary,
+                                                ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                  FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      formatVnd(totalPrice),
+                                      style: AppTextStyles.heading2.copyWith(
+                                        color: AppColors.primary,
                                       ),
                                     ),
+                                  ),
                                 ],
                               ),
-                              FittedBox(
-                                fit: BoxFit.scaleDown,
-                                alignment: Alignment.centerLeft,
-                                child: Text(
-                                  formatVnd(totalPrice),
-                                  style: AppTextStyles.heading2,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.lg),
-                        AppButton(
-                          label: 'Continue',
-                          onPressed: data != null && _selectedSeatIds.isNotEmpty
-                              ? () => _continue(args, data)
-                              : null,
+                            ),
+                            const SizedBox(width: AppSpacing.lg),
+                            AppButton(
+                              label: 'Continue',
+                              useGradient: true,
+                              trailingIcon: Icons.arrow_forward_rounded,
+                              onPressed:
+                                  data != null && _selectedSeatIds.isNotEmpty
+                                  ? () => _continue(args, data)
+                                  : null,
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -430,6 +461,21 @@ class _SeatMap extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     _ScreenIndicator(width: layout.seatsWidth(seatsPerRow)),
+                    const SizedBox(height: AppSpacing.sm),
+                    // Wraps instead of widening the column: the map is laid
+                    // out unconstrained, so a long line would push the seats
+                    // off-centre (large text sizes, narrow phones).
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth:
+                            constraints.maxWidth - _SeatMapLayout.padding * 2,
+                      ),
+                      child: Text(
+                        '${rows.length} rows • ${data.seats.length} seats • Pinch to zoom',
+                        style: AppTextStyles.caption,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
                     const SizedBox(height: AppSpacing.xl),
                     ...sortedRowKeys.map((rowKey) {
                       final rowSeats = rows[rowKey]!;
@@ -441,7 +487,16 @@ class _SeatMap extends StatelessWidget {
                             _RowLabel(label: rowKey),
                             const SizedBox(width: _SeatMapLayout.labelGap),
                             for (final (index, seat) in rowSeats.indexed) ...[
-                              if (index > 0) SizedBox(width: layout.gap),
+                              if (index > 0)
+                                SizedBox(
+                                  width:
+                                      layout.gap +
+                                      (_SeatMapLayout.aisleAfter(
+                                            rowSeats.length,
+                                          ).contains(index)
+                                          ? _SeatMapLayout.aisleWidth
+                                          : 0),
+                                ),
                               SeatItem(
                                 label: seat.number.toString(),
                                 state: _itemStateOf(seat, data.statusOf(seat)),
@@ -490,6 +545,7 @@ class _SeatMapLayout {
         maxWidth -
         padding * 2 -
         (labelWidth + labelGap) * 2 -
+        aisleAfter(seats).length * aisleWidth -
         gap * (seats - 1);
 
     return _SeatMapLayout(
@@ -503,11 +559,21 @@ class _SeatMapLayout {
   static const labelGap = 6.0;
   static const minSeat = 20.0;
   static const maxSeat = 44.0;
+  static const aisleWidth = 12.0;
+
+  static List<int> aisleAfter(int seats) => seats >= 14
+      ? [4, seats - 4]
+      : seats >= 8
+      ? [seats ~/ 2]
+      : const [];
 
   final double seatSize;
   final double gap;
 
-  double seatsWidth(int seats) => seats * seatSize + (seats - 1) * gap;
+  double seatsWidth(int seats) =>
+      seats * seatSize +
+      (seats - 1) * gap +
+      aisleAfter(seats).length * aisleWidth;
 
   double mapWidth(int seats) {
     return seatsWidth(seats) + (labelWidth + labelGap) * 2 + padding * 2;

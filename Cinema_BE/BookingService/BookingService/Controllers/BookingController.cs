@@ -149,8 +149,8 @@ namespace BookingService.Controllers
             return Ok(result);
         }
 
-        // Khách: huỷ booking chưa thanh toán, hoặc booking đã thanh toán khi còn ít nhất 2 giờ trước giờ chiếu
-        // (hoàn 100%). Staff/Admin huỷ được mọi lúc. Đã thanh toán thì yêu cầu hoàn tiền được tạo tự động.
+        // Khách: huỷ vé chưa trả tiền; vé đã trả tiền chuyển REFUND_PENDING và giữ ghế đến khi hoàn tất.
+        // Staff/Admin vẫn huỷ trực tiếp. Yêu cầu hoàn tiền được tạo qua outbox.
         [HttpPost("{id:long}/cancel")]
         [Authorize(Policy = AuthorizationPolicies.UserOrStaff)]
         public async Task<ActionResult<BookingResponse>> Cancel(

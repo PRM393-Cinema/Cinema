@@ -15,7 +15,7 @@ public partial class Booking
 
     public long ShowtimeId { get; set; }
 
-    public string Status { get; set; } = null!; //PENDING / CONFIRMED / CANCELLED / EXPIRED
+    public string Status { get; set; } = null!; // PENDING / CONFIRMED / REFUND_PENDING / CANCELLED / EXPIRED
 
     public decimal TotalAmount { get; set; }
 

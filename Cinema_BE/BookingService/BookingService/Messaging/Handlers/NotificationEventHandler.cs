@@ -51,6 +51,13 @@ namespace BookingService.Messaging.Handlers
                         data.CustomerEmail,
                         email => EmailTemplates.RefundRequested(data, email));
                 }
+                case EventTypes.PaymentRefundRejected:
+                {
+                    var data = integrationEvent.GetData<PaymentEventData>();
+                    return SendAsync(integrationEvent, data.UserId, data.BookingId, "REFUND_REJECTED",
+                        data.CustomerEmail,
+                        email => EmailTemplates.RefundRejected(data, email));
+                }
                 case EventTypes.PaymentRefunded:
                 {
                     var data = integrationEvent.GetData<PaymentEventData>();

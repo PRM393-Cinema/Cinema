@@ -249,13 +249,14 @@ namespace BookingService.Services.Implementations
                     await _bookingRepository.UpdateBookingAsync(
                         booking.Id,
                         booking);
+                    var existingLink = await _payOsClient.GetPaymentStatusAsync(orderCode);
                     await transaction.CommitAsync();
 
                     return new PayOsCheckoutResponse
                     {
                         paymentId = existingPaymentForOrder.Id,
                         orderCode = orderCode,
-                        checkoutUrl = null
+                        checkoutUrl = existingLink.CheckoutUrl
                     };
                 }
 
@@ -322,7 +323,7 @@ namespace BookingService.Services.Implementations
             return await VerifyPayOsPaymentAsync(orderCode, recipientEmail);
         }
 
-        // Staff/Admin hoàn tiền một payment đã thanh toán (FR-PAY-06). Booking còn hiệu lực thì huỷ luôn
+        // Admin hoàn tiền thủ công một payment đã thanh toán (FR-PAY-06). Booking còn hiệu lực thì huỷ luôn
         // (nhả ghế), rồi tạo yêu cầu hoàn 100%. PayOS không có API hoàn tiền: Staff chuyển khoản trả khách
         // rồi xác nhận bằng POST /api/v1/payments/refunds/{refundId}/complete.
         public async Task<RefundResponse> RefundPaymentAsync(
@@ -348,7 +349,7 @@ namespace BookingService.Services.Implementations
                 await _bookingService.CancelBookingAsync(booking.Id, manager: true, refundReason);
             }
 
-            return await _refundService.RequestRefundAsync(payment.Id, refundReason);
+            return await _refundService.RequestRefundAsync(payment.Id, refundReason, reopenRejected: true);
         }
 
         public async Task<PaymentResponse> VerifyPayOsPaymentAsync(
@@ -526,7 +527,8 @@ namespace BookingService.Services.Implementations
 
                 var refund = await _refundService.RequestRefundAsync(
                     payment.Id,
-                    "Đã nhận tiền nhưng không giữ được ghế (đơn đã hết hạn hoặc bị huỷ)");
+                    "Đã nhận tiền nhưng không giữ được ghế (đơn đã hết hạn hoặc bị huỷ)",
+                    reopenRejected: true);
 
                 return $"{ex.Message} Refund {refund.RefundCode} was requested.";
             }

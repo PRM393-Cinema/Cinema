@@ -54,8 +54,8 @@ namespace BookingService.Services.Interfaces
             string? recipientEmail);
 
         /// <summary>
-        /// Khách huỷ booking chưa thanh toán, hoặc booking đã thanh toán khi còn đủ thời gian trước giờ chiếu.
-        /// Staff/Admin (manager) huỷ được mọi lúc. Booking đã thanh toán được hoàn tiền qua event booking.cancelled.
+        /// Khách huỷ vé chưa trả tiền; vé đã trả tiền giữ ghế và chuyển REFUND_PENDING để Staff xem xét.
+        /// Staff/Admin (manager) vẫn huỷ trực tiếp.
         /// </summary>
         Task<BookingResponse> CancelBookingAsync(
             long id,
@@ -71,6 +71,8 @@ namespace BookingService.Services.Interfaces
         /// Khách huỷ thanh toán trên PayOS: huỷ booking còn PENDING để nhả ghế.
         /// </summary>
         Task CancelUnpaidBookingAsync(long id);
+
+        Task ApplyRefundDecisionAsync(long bookingId, bool completed);
 
         /// <summary>
         /// Đánh dấu EXPIRED cho các booking PENDING đã quá hạn giữ ghế và nhả ghế.
