@@ -272,7 +272,7 @@ class _BrandMark extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.lg),
         Text(
-          'Cinema App',
+          'CosmoQ Cinema',
           style: AppTextStyles.display.copyWith(
             fontSize: compact ? 28 : 34,
             fontWeight: FontWeight.w700,

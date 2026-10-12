@@ -14,7 +14,7 @@ Key PayOS đặt ở đâu: [SETUP_SECRETS.md mục 6](SETUP_SECRETS.md#6-payos-
 
 Nếu PayOS đã tạo link nhưng lần lưu DB trước thất bại, lần checkout sau khôi phục đơn theo cùng `orderCode` và kiểm tra số tiền trước khi lưu payment. Không đổi mã đơn hoặc tạo link khác để né lỗi đơn tồn tại.
 
-Trang Payment không có nút “I have paid”: khi đã tạo giao dịch, app tự kiểm tra booking và xác minh PayOS mỗi 5 giây trong lúc trang đang mở, đồng thời kiểm tra khi quay lại từ PayOS. Server xác nhận thanh toán xong thì app chuyển sang kết quả; thao tác ở UI không tự đánh dấu đã thanh toán.
+Trang Payment không có nút “I have paid”: khi đã tạo giao dịch, app tự kiểm tra booking mỗi 5 giây và hỏi PayOS mỗi 30 giây trong lúc trang đang mở, đồng thời kiểm tra khi quay lại từ PayOS. Server xác nhận thanh toán xong thì app chuyển sang kết quả; thao tác ở UI không tự đánh dấu đã thanh toán.
 
 ## 2. Trạng thái
 
