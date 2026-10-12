@@ -251,7 +251,7 @@ namespace ShowtimeService.Repository.Impl
 
         public async Task<bool> ExistsByRoomIdAsync(long roomId)
         {
-            return await _context.Seats
+            return await _context.Showtimes
                 .AnyAsync(x => x.RoomId == roomId);
         }
     }
