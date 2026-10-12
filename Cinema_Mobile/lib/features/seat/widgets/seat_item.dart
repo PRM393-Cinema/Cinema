@@ -47,15 +47,24 @@ class SeatItem extends StatelessWidget {
         child: SizedBox.square(
           dimension: size,
           child: Center(
-            child: Text(
-              label,
-              style: AppTextStyles.caption.copyWith(
-                color: style.foreground,
-                fontSize: size < 36 ? 10 : null,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
+            child: !_canTap
+                ? Icon(
+                    Icons.close_rounded,
+                    size: math.min(24, size * 0.65),
+                    color: style.foreground,
+                    semanticLabel: label.isEmpty
+                        ? null
+                        : 'Seat $label, unavailable',
+                  )
+                : Text(
+                    label,
+                    style: AppTextStyles.caption.copyWith(
+                      color: style.foreground,
+                      fontSize: size < 36 ? 10 : null,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
           ),
         ),
       ),
@@ -82,15 +91,10 @@ class _SeatStyle {
         foreground: AppColors.onPrimary,
         border: AppColors.primary,
       ),
-      SeatItemState.held => const _SeatStyle(
-        background: AppColors.surfaceSoft,
-        foreground: AppColors.textSecondary,
-        border: AppColors.warning, // distinct visual for held
-      ),
-      SeatItemState.booked => const _SeatStyle(
-        background: AppColors.surfaceSoft,
-        foreground: AppColors.textSecondary,
-        border: AppColors.surfaceSoft,
+      SeatItemState.held || SeatItemState.booked => const _SeatStyle(
+        background: Colors.transparent,
+        foreground: AppColors.error,
+        border: AppColors.error,
       ),
     };
   }

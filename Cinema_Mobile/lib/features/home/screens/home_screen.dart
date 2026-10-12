@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../app/routes/app_routes.dart';
@@ -16,13 +18,20 @@ import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_state.dart';
 import '../../../data/models/movie.dart';
 import '../../../data/repositories/catalog_repository.dart';
+import '../../../data/repositories/booking_repository.dart';
+import '../../notification/widgets/notification_bell.dart';
 import '../../movie/widgets/movie_card.dart';
 import '../../../core/session/session_state.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({required this.catalogRepository, super.key});
+  const HomeScreen({
+    required this.catalogRepository,
+    required this.bookingRepository,
+    super.key,
+  });
 
   final CatalogRepository catalogRepository;
+  final BookingRepository bookingRepository;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -33,7 +42,18 @@ class _HomeScreenState extends State<HomeScreen> {
   String _query = '';
   List<Movie> _movies = const [];
   bool _isLoading = true;
+  bool _searching = false;
   String? _errorMessage;
+  final _search = TextEditingController();
+  Timer? _searchDelay;
+  int _loadVersion = 0;
+
+  @override
+  void dispose() {
+    _searchDelay?.cancel();
+    _search.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -42,23 +62,32 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadMovies() async {
+    final version = ++_loadVersion;
+    final keyword = _query.trim();
     setState(() {
-      _isLoading = _movies.isEmpty;
+      _isLoading = _movies.isEmpty && keyword.isEmpty;
+      _searching = true;
       _errorMessage = null;
     });
 
     try {
-      final movies = await widget.catalogRepository.getNowShowingMovies();
-      if (!mounted) return;
+      final movies = keyword.isEmpty
+          ? await widget.catalogRepository.getNowShowingMovies()
+          : await widget.catalogRepository.searchMovies(keyword);
+      if (!mounted || version != _loadVersion) return;
       setState(() {
         _movies = movies;
         _isLoading = false;
+        _searching = false;
       });
     } on ApiException catch (error) {
+      if (version != _loadVersion) return;
       _showError(error.message);
     } on FormatException {
+      if (version != _loadVersion) return;
       _showError('The server returned an invalid response.');
     } on Object {
+      if (version != _loadVersion) return;
       _showError('Something went wrong. Please try again.');
     }
   }
@@ -67,6 +96,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!mounted) return;
     setState(() {
       _isLoading = false;
+      _searching = false;
       _errorMessage = message;
     });
   }
@@ -130,12 +160,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Navigator.pushNamed(context, AppRoutes.myBookings),
                   icon: const Icon(Icons.confirmation_number_outlined),
                 ),
-                IconButton(
-                  tooltip: 'Notifications',
-                  onPressed: () =>
-                      Navigator.pushNamed(context, AppRoutes.notifications),
-                  icon: const Icon(Icons.notifications_none_outlined),
-                ),
+                NotificationBell(repository: widget.bookingRepository),
                 IconButton(
                   tooltip: 'Profile',
                   onPressed: () =>
@@ -180,7 +205,7 @@ class _HomeScreenState extends State<HomeScreen> {
       return const LoadingState(message: 'Loading movies...');
     }
 
-    if (_errorMessage != null && _movies.isEmpty) {
+    if (_errorMessage != null && _movies.isEmpty && _query.trim().isEmpty) {
       return ErrorState(
         title: 'Unable to load movies',
         message: _errorMessage!,
@@ -207,15 +232,33 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: AppSpacing.xl),
                   AppTextField(
                     key: const Key('movieSearchField'),
+                    controller: _search,
                     label: 'Search active movies',
                     hint: 'Search by title',
                     prefixIcon: const Icon(Icons.search),
                     onChanged: (value) {
+                      _searchDelay?.cancel();
+                      _loadVersion++;
                       setState(() {
                         _query = value;
                       });
+                      _searchDelay = Timer(
+                        const Duration(milliseconds: 350),
+                        _loadMovies,
+                      );
                     },
                   ),
+                  if (_searching)
+                    const LinearProgressIndicator(
+                      semanticsLabel: 'Loading movies',
+                    ),
+                  if (_errorMessage != null)
+                    Text(
+                      _errorMessage!,
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.error,
+                      ),
+                    ),
                   const SizedBox(height: AppSpacing.xxl),
                   if (featuredMovie != null && isWide) ...[
                     _FeaturedMovie(
@@ -244,7 +287,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  if (_movies.isEmpty)
+                  if (_movies.isEmpty && _query.trim().isEmpty)
                     const EmptyState(
                       icon: Icons.movie_outlined,
                       title: 'No movies showing',

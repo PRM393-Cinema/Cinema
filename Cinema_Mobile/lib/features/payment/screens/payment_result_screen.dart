@@ -125,13 +125,6 @@ class _PaymentResultScreenState extends State<PaymentResultScreen> {
   Widget build(BuildContext context) {
     return CinemaPage(
       title: 'Payment Result',
-      actions: [
-        IconButton(
-          tooltip: 'Close',
-          onPressed: _goHome,
-          icon: const Icon(Icons.close),
-        ),
-      ],
       child: _buildBody(),
     );
   }

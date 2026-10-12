@@ -1,6 +1,6 @@
 # Chức năng, endpoint và giao diện mobile
 
-Nhánh: `feat/Ngữ/UI_Update`. Đối chiếu từ controller backend, service Flutter và router hiện tại. Có **73 endpoint nghiệp vụ** trong các controller; mỗi dòng dưới đây tương ứng một method + đường dẫn. Không tính Swagger, metrics và health check.
+Nhánh: `feat/Ngữ/UI_Update`. Đối chiếu từ controller backend, service Flutter và router hiện tại. Có **74 endpoint nghiệp vụ** trong các controller; mỗi dòng dưới đây tương ứng một method + đường dẫn. Không tính Swagger, metrics và health check.
 
 “Đã nối API” nghĩa là có lời gọi thật trong code; không khẳng định đã thử end-to-end với server, SMTP hay PayOS thật.
 
@@ -10,7 +10,10 @@ Cập nhật: 10/10/2026. Đây là bảng kiểm tra kết nối API, không ph
 
 | Màn/chức năng | Route mobile | Endpoint gọi thật | Trạng thái |
 |---|---|---|---|
-| Home | `/home` | GET `/api/v1/movies/status/ACTIVE` | Đã nối; tìm kiếm hiện lọc local |
+| Home | `/home` | GET `/api/v1/movies/status/ACTIVE`; GET `/api/v1/movies/search?keyword=...` | Đã nối; tìm kiếm API sau 350 ms, chỉ hiển thị phim ACTIVE |
+| Admin quản lý phim | `/admin/movies` | GET `/api/v1/movies`; GET `/api/v1/movies/search`; DELETE `/api/v1/movies/{id}`; PATCH `/api/v1/movies/{id}/activate` | Đã nối; phân trang, xác nhận trước khi xóa |
+| Admin tạo phim | `/admin/movies/new` | POST `/api/v1/movies` | Đã nối; kiểm tra form và thông báo phía trên |
+| Admin sửa phim | `/admin/movies/{id}/edit` | GET `/api/v1/movies/{id}`; PUT `/api/v1/movies/{id}` | Đã nối; tải lại dữ liệu từ ID khi mở URL |
 | Đăng nhập | `/login` | POST `/api/v1/auth/login` | Đã nối |
 | Đăng ký | `/register` | POST `/api/v1/auth/register` | Đã nối |
 | Xác thực email/gửi lại OTP | `/verify-email` | POST `/api/v1/auth/verify-email`; POST `/api/v1/auth/resend-verification` | Đã nối |
@@ -38,7 +41,7 @@ Cập nhật: 10/10/2026. Đây là bảng kiểm tra kết nối API, không ph
 | Chi tiết/xác nhận/hủy vé Staff | `/staff/bookings/{id}` | GET `/api/v1/bookings/{id}`; GET `/api/v1/payments/booking/{bookingId}`; POST `/api/v1/bookings/{id}/confirm`, `/api/v1/bookings/{id}/cancel` | Đã nối; xác nhận tay có điều kiện |
 | Suất chiếu Staff | `/staff/showtimes/{id}`, `/staff/showtimes/new`, `/staff/showtimes/{id}/edit` | GET `/api/showtimes/{id}`, `/api/v1/movies`, `/api/rooms`; POST `/api/showtimes`; PUT `/api/showtimes/{id}`; PATCH `/api/showtimes/{id}/status`; DELETE `/api/showtimes/{id}` | Đã nối; tạo/sửa/mở/đóng/hủy |
 | Phòng/ghế Staff | `/staff/rooms/{id}` | GET `/api/rooms/{id}`, `/api/seats/room/{id}`, `/api/seats/{id}`; POST `/api/seats/generate`; PUT `/api/seats/{id}/type` | Đã nối; không có thao tác phòng/ghế chỉ dành Admin |
-| Thanh toán/hoàn tiền Staff | `/staff/payments/{id}`, `/staff/refunds/{id}` | GET `/api/v1/payments/{id}`, `/api/v1/payments/refunds/{id}`; POST `/api/v1/payments/{id}/process`, `/api/v1/payments/{id}/refund`, `/api/v1/payments/refunds/{id}/complete` | Đã nối; PayOS xác minh thật, hoàn tiền ghi nhận chuyển khoản |
+| Thanh toán/hoàn tiền Staff | `/staff/payments/{id}`, `/staff/refunds/{id}` | GET `/api/v1/payments/{id}`, `/api/v1/payments/refunds/{id}`; GET `/api/v1/payments/{id}/refund`; POST `/api/v1/payments/{id}/process`, `/api/v1/payments/refunds/{id}/complete` | Đã nối; PayOS xác minh thật, hoàn tiền ghi nhận chuyển khoản |
 | Thông báo cho khách | `/staff/bookings/{id}/notify` | GET `/api/v1/bookings/{id}`; POST `/api/v1/notifications`; POST `/api/v1/notifications/{id}/send` | Đã nối; retry cùng ID khi gửi thất bại |
 | Hồ sơ Staff | `/staff/profile` | GET `/api/v1/auth/me`; POST `/api/v1/auth/logout` | Đã nối; đổi mật khẩu dùng luồng OTP chung |
 
@@ -71,10 +74,11 @@ Admin đăng nhập hoặc mở `/home` khi còn phiên sẽ vào `/admin/dashbo
 | Danh sách phim | GET | `/api/v1/movies` | Staff → chọn phim khi tạo/sửa suất chiếu · đã nối API | [MoviesController:22](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L22) |
 | Chi tiết phim | GET | `/api/v1/movies/{id}` | Chi tiết phim · đã nối API | [MoviesController:34](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L34) |
 | Lọc trạng thái phim | GET | `/api/v1/movies/status/{status}` | Home/phim đang chiếu · đã nối API | [MoviesController:42](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L42) |
-| Tìm kiếm phim | GET | `/api/v1/movies/search` | Có ô tìm kiếm local trên Home; chưa gọi API này | [MoviesController:55](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L55) |
-| Tạo phim | POST | `/api/v1/movies` | Chưa có UI nối endpoint này | [MoviesController:68](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L68) |
-| Sửa phim | PUT | `/api/v1/movies/{id}` | Chưa có UI nối endpoint này | [MoviesController:77](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L77) |
-| Xoá phim | DELETE | `/api/v1/movies/{id}` | Chưa có UI nối endpoint này | [MoviesController:85](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L85) |
+| Tìm kiếm phim | GET | `/api/v1/movies/search` | Home và Admin → Manage movies · đã nối API | [MoviesController:55](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L55) |
+| Tạo phim | POST | `/api/v1/movies` | Admin → tab Movies → Create movie · đã nối API | [MoviesController:68](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L68) |
+| Sửa phim | PUT | `/api/v1/movies/{id}` | Admin → Manage movies → Edit · đã nối API | [MoviesController:77](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L77) |
+| Xoá phim | DELETE | `/api/v1/movies/{id}` | Admin → Movies → Delete → xác nhận · xóa mềm sang INACTIVE; Admin vẫn thấy bản ghi, có nút kích hoạt lại | [MoviesController:93](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L93) |
+| Kích hoạt lại phim | PATCH | `/api/v1/movies/{id}/activate` | Admin → Movies → biểu tượng phát ở phim INACTIVE · chuyển về ACTIVE, giữ nguyên dữ liệu | [MoviesController](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs) |
 
 ## Phòng và ghế
 
@@ -157,11 +161,11 @@ Admin đăng nhập hoặc mở `/home` khi còn phiên sẽ vào `/admin/dashbo
 
 1. **Đổi mật khẩu bằng mật khẩu hiện tại:** backend chưa có endpoint cho luồng ba ô trong ảnh mẫu. UI hiện dùng OTP email, có xác nhận mật khẩu mới; sau khi thành công xoá phiên local và yêu cầu đăng nhập lại.
 2. **Sửa hồ sơ:** chưa có API cập nhật hồ sơ cá nhân. Màn tài khoản đang hiển thị dữ liệu thật; không có nút lưu giả.
-3. **Tìm phim:** ô tìm kiếm trên Home lọc danh sách đã tải. `GET /api/v1/movies/search` tồn tại nhưng chưa được gọi từ ô này.
+3. **Tìm phim (cập nhật 11/10/2026):** Home gọi `GET /api/v1/movies/search` sau 350 ms khi ngừng gõ, đọc đủ các trang và chỉ hiển thị phim ACTIVE. Admin dùng cùng endpoint để tìm cả phim ACTIVE/INACTIVE. Backend `MovieRequest` chưa nhận trường status nên form tạo/sửa không đổi trạng thái; nút kích hoạt lại dùng PATCH `/api/v1/movies/{id}/activate`.
 4. **Phân trang:** vé đã đặt hiện chỉ lấy trang đầu tối đa 50 bản ghi; thông báo và lịch sử thanh toán đã đọc đủ các trang. Hai danh sách này tải toàn bộ khi mở/làm mới, chưa tải thêm theo cuộn.
 5. **Quản trị:** các API quản lý user, role, phim, phòng, ghế, suất chiếu, xử lý hoàn tiền và gửi thông báo chưa có UI quản trị trong app khách hàng.
 6. **Thông báo còn thiếu:** DELETE `/api/v1/notifications/{id}` có ở backend nhưng chưa có thao tác xóa trên mobile. Backend chưa có endpoint đánh dấu đã đọc/chưa đọc hoặc số thông báo chưa đọc. `status` hiện là trạng thái gửi email, không phải trạng thái đọc.
-7. **Thông báo trống:** thông báo được tạo từ sự kiện xác nhận/hủy/hết hạn vé, yêu cầu/hoàn tiền/từ chối hoàn tiền. Đăng ký, xác thực email và đặt lại mật khẩu chưa tạo bản ghi trong lịch sử này. Không có dữ liệu mẫu tự chèn cho tài khoản mới; kéo xuống để lấy dữ liệu mới. Chưa có cập nhật thời gian thực/push notification.
+7. **Thông báo trống:** thông báo được tạo từ sự kiện xác nhận/hủy/hết hạn vé, yêu cầu/hoàn tiền/từ chối hoàn tiền. Đăng ký, xác thực email và đặt lại mật khẩu chưa tạo bản ghi trong lịch sử này. Không có dữ liệu mẫu tự chèn cho tài khoản mới; kéo xuống để lấy dữ liệu mới. Chuông Home có chấm báo cho thông báo mới kể từ lần mở danh sách thành công; chuông Home và danh sách tự kiểm tra mỗi 5 giây khi màn hình đang hoạt động; kiểm tra ngay khi mở lại app hoặc quay về Home. Danh sách cập nhật nền, giữ nội dung khi lỗi mạng và không cần reload. Dấu đã xem lưu riêng theo tài khoản trên thiết bị/trình duyệt, chưa đồng bộ giữa các thiết bị. Chưa có push notification.
 
 Chưa kiểm tra thiết bị thật, email thật, thanh toán thật hoặc tải đồng thời nhiều người dùng. Trạng thái kết nối API ở trên được đối chiếu từ code.
 

@@ -6,6 +6,7 @@ import '../services/movie_service.dart';
 
 abstract interface class CatalogRepository {
   Future<List<Movie>> getNowShowingMovies();
+  Future<List<Movie>> searchMovies(String keyword);
 
   // Used when a screen is opened from its URL (web refresh or shared link).
   Future<Movie> getMovie(int movieId);
@@ -27,6 +28,18 @@ class RemoteCatalogRepository implements CatalogRepository {
 
   final MovieService _movies;
   final BookingService _bookings;
+
+  @override
+  Future<List<Movie>> searchMovies(String keyword) async {
+    final first = await _movies.getMovies(keyword: keyword);
+    final movies = [...first.items];
+    for (var page = 2; page <= first.totalPages; page++) {
+      movies.addAll(
+        (await _movies.getMovies(keyword: keyword, page: page)).items,
+      );
+    }
+    return movies.where((movie) => movie.status == 'ACTIVE').toList();
+  }
 
   @override
   Future<List<Movie>> getNowShowingMovies() async {

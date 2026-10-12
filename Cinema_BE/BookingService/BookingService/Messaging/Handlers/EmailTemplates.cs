@@ -14,7 +14,7 @@ namespace BookingService.Messaging.Handlers
                 <h2>Đặt vé thành công</h2>
                 <p>Đơn đặt vé <strong>{E(data.BookingCode)}</strong> của bạn đã được xác nhận.</p>
                 {BookingDetails(data)}
-                <div style="background:#fff3cd;border:1px solid #ffecb5;padding:12px;margin:16px 0;color:#664d03">
+                <div style="background:#111e25;border:1px solid #23616b;border-radius:12px;padding:16px;margin:20px 0;color:#d1e5e8">
                   <strong>ĐẶC BIỆT LƯU Ý:</strong> Vui lòng có mặt trước giờ chiếu ít nhất 15 phút và xuất trình mã đặt vé khi đến rạp.
                 </div>
                 """;
@@ -96,10 +96,12 @@ namespace BookingService.Messaging.Handlers
             var showTime = data.ShowTime?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa cập nhật";
 
             return $"""
-                <p><strong>Phim:</strong> {E(data.MovieTitle ?? "Mobile Cinema")}<br/>
-                   <strong>Suất chiếu:</strong> {E(showTime)}<br/>
-                   <strong>Ghế:</strong> {E(string.Join(", ", data.Seats))}<br/>
-                   <strong>Tổng tiền:</strong> {data.TotalAmount:N0} VND</p>
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#0e141c;border:1px solid #2c3644;border-radius:12px;margin:20px 0">
+                  <tr><td style="padding:14px 12px;color:#aeb8c6;vertical-align:top">Phim: </td><td style="padding:14px 12px;font-weight:bold;overflow-wrap:anywhere">{E(data.MovieTitle ?? "CosmoQ Cinema")}</td></tr>
+                  <tr><td style="padding:10px 12px;color:#aeb8c6;vertical-align:top">Suất chiếu: </td><td style="padding:10px 12px">{E(showTime)}</td></tr>
+                  <tr><td style="padding:10px 12px;color:#aeb8c6;vertical-align:top">Ghế: </td><td style="padding:10px 12px;overflow-wrap:anywhere">{E(string.Join(", ", data.Seats))}</td></tr>
+                  <tr><td style="padding:14px 12px;color:#aeb8c6;vertical-align:top">Tổng tiền: </td><td style="padding:14px 12px;font-size:20px;font-weight:bold;color:#00d4e5">{data.TotalAmount:N0} VND</td></tr>
+                </table>
                 """;
         }
 
@@ -119,11 +121,26 @@ namespace BookingService.Messaging.Handlers
             {
                 RecipientEmail = recipientEmail,
                 Subject = subject,
-                Content = $"""
-                    <html>
-                      <body style="font-family:Arial,sans-serif;color:#202124;line-height:1.5">
-                        {body}
-                        <p>Cảm ơn bạn đã sử dụng Mobile Cinema.</p>
+                Content = $$"""
+                    <!doctype html>
+                    <html lang="vi">
+                      <head>
+                        <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+                        <style>h2 {font-size:24px;line-height:1.35;margin:0 0 20px;color:#f4f7fa} p {margin:0 0 16px}</style>
+                      </head>
+                      <body style="margin:0;background:#080c10;font-family:Arial,sans-serif;color:#e2e8f0;line-height:1.7">
+                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" bgcolor="#080c10">
+                          <tr><td align="center" style="padding:24px 12px">
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#141b25;border:1px solid #2c3644;border-radius:20px">
+                              <tr><td style="padding:28px 24px">
+                                <div data-email-chrome="true" style="color:#00d4e5;font-size:18px;font-weight:bold;letter-spacing:2px;margin-bottom:28px">COSMOQ <span style="color:#aeb8c6;font-size:12px;letter-spacing:1px">CINEMA</span></div>
+                                {{body}}
+                                <p>Cảm ơn bạn đã sử dụng CosmoQ Cinema.</p>
+                                <div data-email-chrome="true" style="border-top:1px solid #2c3644;padding-top:20px;margin-top:24px;color:#aeb8c6;font-size:12px">CosmoQ Cinema · Email tự động, vui lòng không trả lời.</div>
+                              </td></tr>
+                            </table>
+                          </td></tr>
+                        </table>
                       </body>
                     </html>
                     """

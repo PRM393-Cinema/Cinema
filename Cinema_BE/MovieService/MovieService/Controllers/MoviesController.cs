@@ -82,6 +82,14 @@ namespace MovieService.Controllers
             return Ok(result);
         }
 
+        [HttpPatch("{id:long}/activate")]
+        [Authorize(Policy = AuthorizationPolicies.AdminOnly)]
+        public async Task<ActionResult<MovieResponse>> ActivateMovie(long id)
+        {
+            var result = await _movieService.ActivateMovieAsync(id);
+            return Ok(result);
+        }
+
         [HttpDelete("{id:long}")]
         [Authorize(Policy = AuthorizationPolicies.AdminOnly)]
         public async Task<IActionResult> DeleteMovie(long id)

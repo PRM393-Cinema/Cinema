@@ -10,6 +10,7 @@ import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_state.dart';
+import '../../../core/widgets/status_badge.dart';
 import '../../../data/models/booking.dart';
 import '../../../data/models/paged_result.dart';
 import '../../../data/models/payment.dart';
@@ -128,26 +129,31 @@ class _StaffOperationsScreenState extends State<StaffOperationsScreen> {
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
+              spacing: AppSpacing.sm,
               children: [
                 for (final section in sections)
-                  Padding(
-                    padding: const EdgeInsets.only(right: AppSpacing.sm),
-                    child: ChoiceChip(
-                      label: Text(section),
-                      selected: _section == section,
-                      onSelected: _loading
-                          ? null
-                          : (_) {
-                              setState(() {
-                                _section = section;
-                                _status = 'ALL';
-                                _dates = null;
-                                _lookup.clear();
-                                _result = null;
-                              });
-                              _load();
-                            },
+                  ChoiceChip(
+                    label: Text(section),
+                    selected: _section == section,
+                    showCheckmark: false,
+                    selectedColor: AppColors.primary,
+                    labelStyle: AppTextStyles.bodySmall.copyWith(
+                      color: _section == section
+                          ? AppColors.onPrimary
+                          : AppColors.textPrimary,
                     ),
+                    onSelected: _loading
+                        ? null
+                        : (_) {
+                            setState(() {
+                              _section = section;
+                              _status = 'ALL';
+                              _dates = null;
+                              _lookup.clear();
+                              _result = null;
+                            });
+                            _load();
+                          },
                   ),
               ],
             ),
@@ -273,7 +279,7 @@ class _StaffOperationsScreenState extends State<StaffOperationsScreen> {
             )
           else if (_result != null) ...[
             Text(
-              '${_result!.totalCount} results',
+              '${_result!.totalCount} ${_section.toLowerCase()}',
               style: AppTextStyles.caption,
             ),
             const SizedBox(height: AppSpacing.md),
@@ -291,18 +297,26 @@ class _StaffOperationsScreenState extends State<StaffOperationsScreen> {
                 padding: const EdgeInsets.only(bottom: AppSpacing.md),
                 child: CinemaPanel(
                   surfaceOpacity: 0.8,
-                  child: ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(_title(item), style: AppTextStyles.title),
-                    subtitle: Text(
-                      _subtitle(item),
-                      style: AppTextStyles.bodySmall,
-                    ),
-                    trailing: const Icon(
-                      Icons.chevron_right,
-                      color: AppColors.primary,
-                    ),
-                    onTap: () => _open(_route(item)),
+                  child: Material(
+                    type: MaterialType.transparency,
+                    child: item is PaymentInfo
+                        ? _paymentTile(item)
+                        : ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: Text(
+                              _title(item),
+                              style: AppTextStyles.title,
+                            ),
+                            subtitle: Text(
+                              _subtitle(item),
+                              style: AppTextStyles.bodySmall,
+                            ),
+                            trailing: const Icon(
+                              Icons.chevron_right,
+                              color: AppColors.primary,
+                            ),
+                            onTap: () => _open(_route(item)),
+                          ),
                   ),
                 ),
               ),
@@ -339,6 +353,42 @@ class _StaffOperationsScreenState extends State<StaffOperationsScreen> {
       ),
     ),
   );
+
+  Widget _paymentTile(PaymentInfo payment) {
+    final (label, variant) = switch (payment.status) {
+      PaymentStatus.success => ('Paid', StatusBadgeVariant.success),
+      PaymentStatus.failed => ('Failed', StatusBadgeVariant.error),
+      PaymentStatus.pending => ('Awaiting payment', StatusBadgeVariant.warning),
+      PaymentStatus.refundPending => (
+        'Refund pending',
+        StatusBadgeVariant.warning,
+      ),
+      PaymentStatus.refunded => ('Refunded', StatusBadgeVariant.neutral),
+      PaymentStatus.unknown => ('Unknown status', StatusBadgeVariant.neutral),
+    };
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      title: Text(formatVnd(payment.amount), style: AppTextStyles.heading2),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: AppSpacing.sm),
+          StatusBadge(label: label, variant: variant),
+          const SizedBox(height: AppSpacing.md),
+          Text('Booking #${payment.bookingId}', style: AppTextStyles.body),
+          Text(
+            formatDateTime(payment.createdAt),
+            style: AppTextStyles.bodySmall,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text('Payment: ${payment.paymentCode}', style: AppTextStyles.caption),
+        ],
+      ),
+      trailing: const Icon(Icons.chevron_right, color: AppColors.primary),
+      onTap: () => _open(_route(payment)),
+    );
+  }
+
   String _title(Object item) => switch (item) {
     Booking b => b.bookingCode,
     Showtime s => 'Showtime #${s.id}',

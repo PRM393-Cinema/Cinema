@@ -16,6 +16,7 @@ class AppDependencies {
     required this.catalogRepository,
     required this.bookingRepository,
     required this.staffService,
+    required this.movieService,
   });
 
   // Repositories backed by the API gateway. Token renewals and expiry are
@@ -34,6 +35,7 @@ class AppDependencies {
     final client = ApiClient(tokenProvider: tokenManager);
     authService = AuthService(client: client);
     final bookingService = BookingService(client: client);
+    final movieService = MovieService(client: client);
 
     return AppDependencies(
       authRepository: RemoteAuthRepository(
@@ -41,11 +43,12 @@ class AppDependencies {
         storage: storage,
       ),
       catalogRepository: RemoteCatalogRepository(
-        movieService: MovieService(client: client),
+        movieService: movieService,
         bookingService: bookingService,
       ),
       bookingRepository: RemoteBookingRepository(service: bookingService),
       staffService: StaffService(client: client),
+      movieService: movieService,
     );
   }
 
@@ -53,4 +56,5 @@ class AppDependencies {
   final CatalogRepository catalogRepository;
   final BookingRepository bookingRepository;
   final StaffService staffService;
+  final MovieService movieService;
 }

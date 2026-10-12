@@ -6,6 +6,7 @@ import 'package:cinema_fe/data/repositories/auth_repository.dart';
 import 'package:cinema_fe/data/repositories/booking_repository.dart';
 import 'package:cinema_fe/data/repositories/catalog_repository.dart';
 import 'package:cinema_fe/data/services/staff_service.dart';
+import 'package:cinema_fe/data/services/movie_service.dart';
 import 'package:cinema_fe/features/payment/payment_args.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -18,6 +19,7 @@ Widget buildTestApp({
   CatalogRepository? catalogRepository,
   BookingRepository? bookingRepository,
   StaffService? staffService,
+  MovieService? movieService,
   SessionState? session,
   bool authenticated = false,
   AuthUser? user,
@@ -38,6 +40,7 @@ Widget buildTestApp({
       catalogRepository: catalogRepository ?? FakeCatalogRepository(),
       bookingRepository: bookingRepository ?? FakeBookingRepository(),
       staffService: staffService,
+      movieService: movieService,
       initialRoute: initialRoute,
       paymentReturn: paymentReturn,
     ),

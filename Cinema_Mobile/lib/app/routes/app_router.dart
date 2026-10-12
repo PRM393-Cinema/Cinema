@@ -6,6 +6,8 @@ import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/booking_repository.dart';
 import '../../data/repositories/catalog_repository.dart';
 import '../../data/services/staff_service.dart';
+import '../../data/services/movie_service.dart';
+import '../../features/admin/screens/admin_movies_screen.dart';
 import '../../core/widgets/cinema_page.dart';
 import '../../core/widgets/error_state.dart';
 import '../../features/staff/screens/staff_dashboard_screen.dart';
@@ -46,6 +48,7 @@ class AppRouter {
     required this.bookingRepository,
     required this.session,
     this.staffService,
+    this.movieService,
   });
 
   final AuthRepository authRepository;
@@ -53,6 +56,7 @@ class AppRouter {
   final BookingRepository bookingRepository;
   final SessionState session;
   final StaffService? staffService;
+  final MovieService? movieService;
 
   Route<dynamic> onGenerateRoute(RouteSettings settings) {
     final match = _match(settings);
@@ -99,8 +103,10 @@ class AppRouter {
     return [home, onGenerateRoute(RouteSettings(name: initialRoute))];
   }
 
-  Widget _home(BuildContext context) =>
-      HomeScreen(catalogRepository: catalogRepository);
+  Widget _home(BuildContext context) => HomeScreen(
+    catalogRepository: catalogRepository,
+    bookingRepository: bookingRepository,
+  );
 
   _RouteMatch _landing() => session.user?.roles.contains('ROLE_ADMIN') == true
       ? _RouteMatch(
@@ -159,6 +165,32 @@ class AppRouter {
     };
     if (session.isAuthenticated && guestOnly) {
       return _landing();
+    }
+
+    if (uri.path == AppRoutes.adminMovies ||
+        uri.path == AppRoutes.adminCreateMovie ||
+        RegExp(r'^/admin/movies/\d+/edit$').hasMatch(uri.path)) {
+      final service = movieService;
+      return _RouteMatch(
+        settings,
+        (_) => service == null
+            ? const CinemaPage(
+                title: 'Movies',
+                child: ErrorState(
+                  title: 'Service unavailable',
+                  message: 'Movie service is not configured.',
+                ),
+              )
+            : uri.path == AppRoutes.adminMovies
+            ? AdminMoviesScreen(service: service)
+            : AdminMovieEditorScreen(
+                service: service,
+                movieId: uri.path == AppRoutes.adminCreateMovie
+                    ? null
+                    : int.parse(uri.pathSegments[2]),
+              ),
+        signInRequired: true,
+      );
     }
 
     switch (uri.path) {

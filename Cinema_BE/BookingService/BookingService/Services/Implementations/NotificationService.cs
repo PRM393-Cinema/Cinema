@@ -153,6 +153,12 @@ namespace BookingService.Services.Implementations
                 await _notificationRepository.UpdateAsync(notification);
             }
 
+            await SendEmailAsync(notification, email);
+        }
+
+        private async Task SendEmailAsync(Notification notification, EmailMessage email)
+        {
+            NotificationValidator.ValidateEmail(email);
             try
             {
                 await _emailSender.SendAsync(email);
@@ -175,8 +181,8 @@ namespace BookingService.Services.Implementations
                 {
                     _logger.LogError(
                         persistenceException,
-                        "Could not persist failed notification {EventId}.",
-                        eventId);
+                        "Could not persist failed notification {NotificationId}.",
+                        notification.Id);
                 }
 
                 throw new ExternalServiceException(
@@ -193,11 +199,22 @@ namespace BookingService.Services.Implementations
                 return notification.ToResponse();
             }
 
-            await SendNotificationFromEventAsync(
-                notification.EventId ?? $"NOTIFICATION:{notification.Id}",
-                notification.UserId,
-                notification.BookingId,
-                notification.Type,
+            if (notification.EventId == null)
+            {
+                // Older manual sends created a separate SENT row; do not email again.
+                var previousSend = await _notificationRepository.GetByEventIdAsync($"NOTIFICATION:{notification.Id}");
+                if (previousSend?.Status == "SENT")
+                {
+                    notification.Status = "SENT";
+                    notification.SentAt = previousSend.SentAt;
+                    notification.ErrorMessage = null;
+                    await _notificationRepository.UpdateAsync(notification);
+                    return notification.ToResponse();
+                }
+            }
+
+            await SendEmailAsync(
+                notification,
                 new EmailMessage
                 {
                     RecipientEmail = notification.RecipientEmail ?? string.Empty,

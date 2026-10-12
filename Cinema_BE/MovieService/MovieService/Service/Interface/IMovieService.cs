@@ -17,6 +17,7 @@ namespace MovieService.Service.Interface
         Task<MovieResponse> UpdateMovieAsync(long id, MovieRequest request);
 
         Task DeleteMovieAsync(long id);
+        Task<MovieResponse> ActivateMovieAsync(long id);
 
         Task<PagedResult<MovieResponse>> SearchMoviesAsync(string keyword, int page, int size, string sortBy, string sortDir);
     }

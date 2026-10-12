@@ -106,6 +106,7 @@ class _AdminPageState extends State<AdminPage> {
                 AppRoutes.adminDashboard,
               ),
               ('Accounts', Icons.manage_accounts, AppRoutes.adminUsers),
+              ('Movies', Icons.movie_outlined, AppRoutes.adminMovies),
               ('Profile', Icons.person, AppRoutes.adminProfile),
             ],
     ),

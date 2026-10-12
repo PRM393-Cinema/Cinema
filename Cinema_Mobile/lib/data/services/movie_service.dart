@@ -14,6 +14,47 @@ class MovieService {
 
   final ApiClient _apiClient;
 
+  Future<PagedResult<Movie>> getMovies({String? keyword, int page = 1}) async {
+    final search = keyword?.trim();
+    final response = await _apiClient.get(
+      search == null || search.isEmpty
+          ? '/api/v1/movies'
+          : '/api/v1/movies/search',
+      query: {'keyword': search, 'page': page, 'size': maxPageSize},
+    );
+    return PagedResult.fromJson(response, Movie.fromJson);
+  }
+
+  Future<Movie> createMovie(Map<String, Object?> body) async => Movie.fromJson(
+    readMap(
+      await _apiClient.post('/api/v1/movies', authenticated: true, body: body),
+    ),
+  );
+
+  Future<Movie> updateMovie(int id, Map<String, Object?> body) async =>
+      Movie.fromJson(
+        readMap(
+          await _apiClient.put(
+            '/api/v1/movies/$id',
+            authenticated: true,
+            body: body,
+          ),
+        ),
+      );
+
+  Future<void> deleteMovie(int id) async {
+    await _apiClient.delete('/api/v1/movies/$id', authenticated: true);
+  }
+
+  Future<Movie> activateMovie(int id) async => Movie.fromJson(
+    readMap(
+      await _apiClient.patch(
+        '/api/v1/movies/$id/activate',
+        authenticated: true,
+      ),
+    ),
+  );
+
   Future<PagedResult<Movie>> getMoviesByStatus(
     String status, {
     int page = 1,

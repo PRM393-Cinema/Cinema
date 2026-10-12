@@ -68,6 +68,12 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
           );
         }
         final notification = snapshot.data!;
+        final bookingCode = RegExp(r'\bBK-\d+-\d+\b')
+            .firstMatch(notification.subject)
+            ?.group(0);
+        final title = bookingCode == null
+            ? notification.subject
+            : notification.subject.replaceFirst(bookingCode, '').trim();
         return SingleChildScrollView(
           padding: centeredPadding(context, AppSpacing.xl),
           child: CinemaPanel(
@@ -81,25 +87,33 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
                   size: 32,
                 ),
                 const SizedBox(height: AppSpacing.lg),
-                Text(notification.subject, style: AppTextStyles.heading2),
+                Text(title, style: AppTextStyles.heading2),
+                if (bookingCode != null) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  SelectableText(
+                    bookingCode,
+                    style: AppTextStyles.caption.copyWith(letterSpacing: 0.5),
+                  ),
+                ],
                 const SizedBox(height: AppSpacing.sm),
                 Text(
                   formatDateTime(notification.createdAt),
                   style: AppTextStyles.caption,
                 ),
                 const SizedBox(height: AppSpacing.xl),
-                SelectableText(
-                  notification.plainContent,
-                  style: AppTextStyles.body,
-                ),
+                _NotificationBody(content: notification.plainContent),
                 if (notification.bookingId != null) ...[
                   const SizedBox(height: AppSpacing.xl),
-                  AppButton.secondary(
-                    label: 'View booking',
-                    leadingIcon: Icons.confirmation_number_outlined,
-                    onPressed: () => Navigator.pushNamed(
-                      context,
-                      AppRoutes.bookingDetail(notification.bookingId!),
+                  SizedBox(
+                    width: double.infinity,
+                    child: AppButton(
+                      label: 'View booking',
+                      useGradient: true,
+                      leadingIcon: Icons.confirmation_number_outlined,
+                      onPressed: () => Navigator.pushNamed(
+                        context,
+                        AppRoutes.bookingDetail(notification.bookingId!),
+                      ),
                     ),
                   ),
                 ],
@@ -110,4 +124,100 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
       },
     ),
   );
+}
+
+class _NotificationBody extends StatelessWidget {
+  const _NotificationBody({required this.content});
+  final String content;
+
+  @override
+  Widget build(BuildContext context) {
+    final lines = content
+        .split('\n')
+        .where((line) => line.trim().isNotEmpty)
+        .toList();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final (index, line) in lines.indexed)
+          Padding(
+            padding: EdgeInsets.only(
+              bottom: index == lines.length - 1 ? 0 : AppSpacing.md,
+            ),
+            child: _line(line, index),
+          ),
+      ],
+    );
+  }
+
+  Widget _line(String line, int index) {
+    final separator = line.indexOf(':');
+    final label = separator < 0 ? '' : line.substring(0, separator).trim();
+    final value = separator < 0 ? '' : line.substring(separator + 1).trim();
+    final icon = switch (label) {
+      'Phim' => Icons.movie_outlined,
+      'Suất chiếu' => Icons.schedule_rounded,
+      'Ghế' => Icons.event_seat_outlined,
+      'Tổng tiền' => Icons.payments_outlined,
+      _ => null,
+    };
+    if (icon != null && value.isNotEmpty) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 20, color: AppColors.primary),
+          const SizedBox(width: AppSpacing.sm),
+          SizedBox(
+            width: 80,
+            child: Text(label, style: AppTextStyles.bodySmall),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: SelectableText(
+              value,
+              style: AppTextStyles.bodySmall.copyWith(
+                color: label == 'Tổng tiền'
+                    ? AppColors.primary
+                    : AppColors.textPrimary,
+                fontWeight: FontWeight.w600,
+                height: 1.5,
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+    if (label == 'ĐẶC BIỆT LƯU Ý' && value.isNotEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: AppColors.primary.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.18)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Lưu ý',
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            SelectableText(
+              value,
+              style: AppTextStyles.bodySmall.copyWith(height: 1.6),
+            ),
+          ],
+        ),
+      );
+    }
+    return SelectableText(
+      line,
+      style: (index == 0 ? AppTextStyles.title : AppTextStyles.bodySmall)
+          .copyWith(height: 1.6),
+    );
+  }
 }

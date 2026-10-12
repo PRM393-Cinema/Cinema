@@ -8,6 +8,9 @@ abstract final class AppRoutes {
   static const resetPassword = '/reset-password';
   static const home = '/home';
   static const adminDashboard = '/admin/dashboard';
+  static const adminMovies = '/admin/movies';
+  static const adminCreateMovie = '/admin/movies/new';
+  static String adminEditMovie(int id) => '/admin/movies/$id/edit';
   static const adminProfile = '/admin/profile';
   static const staffDashboard = '/staff/dashboard';
   static const staffOperations = '/staff/operations';

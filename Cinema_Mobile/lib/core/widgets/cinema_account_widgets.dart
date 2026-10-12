@@ -66,7 +66,8 @@ class CinemaNavigationBar extends StatefulWidget {
       ('Account', Icons.person, AppRoutes.profile),
     ],
     super.key,
-  }) : assert(destinations.length == 3);
+  }) : assert(destinations.length >= 2),
+       assert(selectedIndex >= 0 && selectedIndex < destinations.length);
   final int selectedIndex;
   final GlobalKey? backgroundKey;
   final List<(String, IconData, String)> destinations;
@@ -99,12 +100,13 @@ class _CinemaNavigationBarState extends State<CinemaNavigationBar>
   @override
   void initState() {
     super.initState();
-    final start = _lastIndicatorPosition ?? widget.selectedIndex.toDouble();
+    final start = (_lastIndicatorPosition ?? widget.selectedIndex.toDouble())
+        .clamp(0.0, (widget.destinations.length - 1).toDouble());
     _indicator = AnimationController(
       vsync: this,
       value: start,
       lowerBound: 0,
-      upperBound: 2,
+      upperBound: (widget.destinations.length - 1).toDouble(),
     )..addListener(_rememberIndicatorPosition);
     _lastIndicatorPosition = start;
     _interaction = AnimationController.unbounded(vsync: this)
@@ -279,7 +281,10 @@ class _CinemaNavigationBarState extends State<CinemaNavigationBar>
     final glass = _glassKey.currentContext?.findRenderObject();
     if (glass is! RenderBox || !glass.hasSize) return;
     final touch = _localTouch(event, glass);
-    final index = (touch.dx * 3).floor().clamp(0, 2);
+    final index = (touch.dx * widget.destinations.length).floor().clamp(
+      0,
+      widget.destinations.length - 1,
+    );
     setState(() {
       _pointerId = event.pointer;
       _pressedIndex = index;
@@ -444,24 +449,31 @@ class _CinemaNavigationBarState extends State<CinemaNavigationBar>
                                   child: LayoutBuilder(
                                     builder: (context, constraints) {
                                       final slotWidth =
-                                          constraints.maxWidth / 3;
+                                          constraints.maxWidth /
+                                          widget.destinations.length;
                                       return Stack(
                                         children: [
                                           AnimatedBuilder(
                                             animation: _indicator,
-                                            builder: (context, child) =>
-                                                Positioned(
-                                                  left:
-                                                      _indicator.value
-                                                              .clamp(0.0, 2.0)
-                                                              .toDouble() *
-                                                          slotWidth +
-                                                      6,
-                                                  top: 15,
-                                                  bottom: 15,
-                                                  width: slotWidth - 12,
-                                                  child: child!,
-                                                ),
+                                            builder: (context, child) => Positioned(
+                                              left:
+                                                  _indicator.value
+                                                          .clamp(
+                                                            0.0,
+                                                            (widget
+                                                                        .destinations
+                                                                        .length -
+                                                                    1)
+                                                                .toDouble(),
+                                                          )
+                                                          .toDouble() *
+                                                      slotWidth +
+                                                  6,
+                                              top: 15,
+                                              bottom: 15,
+                                              width: slotWidth - 12,
+                                              child: child!,
+                                            ),
                                             child: const _LiquidTabCapsule(),
                                           ),
                                           Row(

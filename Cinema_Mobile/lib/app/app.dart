@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../core/session/session_state.dart';
+import '../core/utils/layout.dart';
 import '../core/widgets/top_notice.dart';
 import '../data/repositories/auth_repository.dart';
 import '../data/repositories/booking_repository.dart';
 import '../data/repositories/catalog_repository.dart';
 import '../data/services/staff_service.dart';
+import '../data/services/movie_service.dart';
 import '../features/payment/payment_args.dart';
 import 'routes/app_router.dart';
 import 'routes/app_routes.dart';
@@ -17,6 +19,7 @@ class CinemaApp extends StatefulWidget {
     required this.catalogRepository,
     required this.bookingRepository,
     this.staffService,
+    this.movieService,
     this.initialRoute,
     this.paymentReturn,
     super.key,
@@ -26,6 +29,7 @@ class CinemaApp extends StatefulWidget {
   final CatalogRepository catalogRepository;
   final BookingRepository bookingRepository;
   final StaffService? staffService;
+  final MovieService? movieService;
   final String? initialRoute;
 
   // Set when PayOS redirected the browser back to the web app.
@@ -69,6 +73,7 @@ class _CinemaAppState extends State<CinemaApp> {
       bookingRepository: widget.bookingRepository,
       session: SessionProvider.of(context),
       staffService: widget.staffService,
+      movieService: widget.movieService,
     );
     final payOsReturn = widget.paymentReturn;
 
@@ -77,6 +82,12 @@ class _CinemaAppState extends State<CinemaApp> {
       debugShowCheckedModeBanner: false,
       title: 'CosmoQ Cinema',
       theme: AppTheme.darkTheme,
+      builder: (context, child) => ScrollConfiguration(
+        behavior: const MaterialScrollBehavior().copyWith(
+          scrollbars: MediaQuery.sizeOf(context).width > contentMaxWidth,
+        ),
+        child: child!,
+      ),
       initialRoute: widget.initialRoute,
       onGenerateRoute: router.onGenerateRoute,
       onGenerateInitialRoutes: (name) => router.onGenerateInitialRoutes(

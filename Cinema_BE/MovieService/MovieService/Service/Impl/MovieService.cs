@@ -151,6 +151,21 @@ namespace MovieService.Service.Impl
             return movie.ToResponse();
         }
 
+        public async Task<MovieResponse> ActivateMovieAsync(long id)
+        {
+            var movie = await _movieRepository.GetMovieByIdAsync(id)
+                ?? throw new NotFoundException($"Movie with ID {id} was not found.");
+
+            if (!string.Equals(movie.Status, "ACTIVE", StringComparison.OrdinalIgnoreCase))
+            {
+                movie.Status = "ACTIVE";
+                await _movieRepository.UpdateMovieAsync(movie);
+                await _movieRepository.SaveChangesAsync();
+            }
+
+            return movie.ToResponse();
+        }
+
         // ======= DELETE MOVIE =======
         public async Task DeleteMovieAsync(long id)
         {

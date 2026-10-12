@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../app/routes/app_routes.dart';
@@ -17,6 +19,7 @@ import '../../../core/widgets/loading_state.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
 import '../../../data/models/app_notification.dart';
 import '../../../data/repositories/booking_repository.dart';
+import '../../../data/storage/notification_seen_storage.dart';
 
 class NotificationListScreen extends StatefulWidget {
   const NotificationListScreen({required this.bookingRepository, super.key});
@@ -27,12 +30,41 @@ class NotificationListScreen extends StatefulWidget {
   State<NotificationListScreen> createState() => _NotificationListScreenState();
 }
 
-class _NotificationListScreenState extends State<NotificationListScreen> {
+class _NotificationListScreenState extends State<NotificationListScreen>
+    with WidgetsBindingObserver {
   List<AppNotification> _notifications = const [];
   bool _hasStarted = false;
   bool _isLoading = true;
   bool _isRefreshing = false;
   String? _errorMessage;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _timer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (ModalRoute.of(context)?.isCurrent == true &&
+          WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
+        _loadNotifications(background: true);
+      }
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed &&
+        ModalRoute.of(context)?.isCurrent == true) {
+      _loadNotifications(background: true);
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
 
   @override
   void didChangeDependencies() {
@@ -43,7 +75,7 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
     }
   }
 
-  Future<void> _loadNotifications() async {
+  Future<void> _loadNotifications({bool background = false}) async {
     if (_isRefreshing) return;
     final userId = SessionProvider.of(context).user?.userId;
     if (userId == null) {
@@ -53,26 +85,41 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
 
     setState(() {
       _isRefreshing = true;
-      _isLoading = _notifications.isEmpty;
-      _errorMessage = null;
+      _isLoading = !background && _notifications.isEmpty;
+      if (!background) _errorMessage = null;
     });
 
     try {
       final notifications = await widget.bookingRepository.getMyNotifications(
         userId,
       );
-      if (!mounted) return;
+      if (!mounted || SessionProvider.of(context).user?.userId != userId) {
+        return;
+      }
       setState(() {
         _notifications = notifications;
         _isLoading = false;
         _isRefreshing = false;
+        _errorMessage = null;
       });
+      if (ModalRoute.of(context)?.isCurrent != true) return;
+      final latestId = notifications.fold<int>(
+        0,
+        (latest, item) => item.id > latest ? item.id : latest,
+      );
+      try {
+        await NotificationSeenStorage().markSeen(userId, latestId);
+      } on Object {
+        // Viewing the list still works if local storage is unavailable.
+      }
     } on ApiException catch (error) {
-      _showError(error.message);
+      if (!background) _showError(error.message);
     } on FormatException {
-      _showError('The server returned an invalid response.');
+      if (!background) _showError('The server returned an invalid response.');
     } on Object {
-      _showError('Something went wrong. Please try again.');
+      if (!background) _showError('Something went wrong. Please try again.');
+    } finally {
+      if (mounted) _isRefreshing = false;
     }
   }
 

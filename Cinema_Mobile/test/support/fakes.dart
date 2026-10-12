@@ -185,6 +185,15 @@ class FakeCatalogRepository implements CatalogRepository {
   int seatMapLoads = 0;
 
   @override
+  Future<List<Movie>> searchMovies(String keyword) async =>
+      (await getNowShowingMovies())
+          .where(
+            (movie) =>
+                movie.title.toLowerCase().contains(keyword.toLowerCase()),
+          )
+          .toList();
+
+  @override
   Future<List<Movie>> getNowShowingMovies() async {
     if (moviesErrorMessage != null) {
       throw ApiException(message: moviesErrorMessage!);

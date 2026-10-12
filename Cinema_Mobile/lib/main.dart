@@ -28,6 +28,7 @@ void main() async {
     SessionProvider(
       sessionState: sessionState,
       child: CinemaApp(
+        movieService: dependencies.movieService,
         authRepository: dependencies.authRepository,
         catalogRepository: dependencies.catalogRepository,
         bookingRepository: dependencies.bookingRepository,

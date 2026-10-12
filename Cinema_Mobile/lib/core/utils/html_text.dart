@@ -1,6 +1,17 @@
 // Turns the HTML emails stored by the notification service into plain text.
 String htmlToPlainText(String html) {
   var text = html
+      .replaceAll(
+        RegExp(r'<head\b[^>]*>[\s\S]*?</head>', caseSensitive: false),
+        '',
+      )
+      .replaceAll(
+        RegExp(
+          r'<div\s+data-email-chrome="true"[^>]*>[\s\S]*?</div>',
+          caseSensitive: false,
+        ),
+        '',
+      )
       .replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n')
       .replaceAll(
         RegExp(r'</(p|div|h[1-6]|li|tr|table)>', caseSensitive: false),
