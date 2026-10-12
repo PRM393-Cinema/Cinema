@@ -1,0 +1,50 @@
+# Kiểm tra app Flutter (Cinema_Mobile) cho mỗi pull request vào dev / main:
+# phân tích code, chạy test và build hai bản web (trang khách, trang quản trị)
+name: Flutter
+
+on:
+  pull_request:
+    branches: [dev, main]
+    paths:
+      - 'Cinema_Mobile/**'
+      - '.github/workflows/flutter.yml'
+  push:
+    branches: [dev]
+    paths:
+      - 'Cinema_Mobile/**'
+      - '.github/workflows/flutter.yml'
+
+# App nằm trong thư mục Cinema_Mobile của monorepo
+defaults:
+  run:
+    working-directory: Cinema_Mobile
+
+jobs:
+  check:
+    name: Analyze, test and build web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Cùng phiên bản Flutter với máy của nhóm, để kết quả trên CI giống máy local
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.4
+          cache: true
+
+      - name: Install packages
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+      # Test chạy trên máy ảo, không qua trình duyệt: build để chắc code vẫn chạy được trên web
+      - name: Build customer website
+        run: flutter build web --no-web-resources-cdn
+
+      - name: Build admin website
+        run: flutter build web --no-web-resources-cdn -t lib/main_admin.dart --base-href /admin/ --output "$PWD/build/web/admin"

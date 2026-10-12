@@ -116,3 +116,7 @@ flutter analyze
 ```sh
 flutter test
 ```
+
+Pull requests that change `Cinema_Mobile/` run the same checks on CI, plus a
+build of both websites (`.github/workflows/flutter.yml`). Tests run on Linux,
+where file names are case-sensitive: an import must match the file name exactly.
