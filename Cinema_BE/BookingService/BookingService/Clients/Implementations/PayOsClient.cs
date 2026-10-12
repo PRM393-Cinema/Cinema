@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Runtime.ExceptionServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -68,10 +69,22 @@ namespace BookingService.Clients.Implementations
             {
                 result = await ReadResponseAsync<PayOsCreateResponse>(response, cancellationToken);
             }
-            catch (ExternalServiceException)
+            catch (ExternalServiceException createError)
             {
                 // PayOS may have created the link before a previous DB transaction rolled back.
-                var existing = await GetPaymentStatusAsync(orderCode, cancellationToken);
+                // When there is no such order, report the original error (wrong keys, invalid
+                // amount...) instead of the lookup failure.
+                PayOsPaymentStatus existing;
+                try
+                {
+                    existing = await GetPaymentStatusAsync(orderCode, cancellationToken);
+                }
+                catch (ExternalServiceException)
+                {
+                    ExceptionDispatchInfo.Throw(createError);
+                    throw;
+                }
+
                 if (existing.OrderCode != orderCode || existing.Amount != amountValue)
                 {
                     throw new ExternalServiceException("The existing PayOS order does not match this booking.");
