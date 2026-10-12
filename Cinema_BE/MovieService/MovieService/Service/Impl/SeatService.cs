@@ -107,6 +107,13 @@ namespace ShowtimeService.Service.Impl
                     "Cannot regenerate seats because the room has associated showtimes.");
             }
 
+            // Generating again would add a second A1..; change seats one by one instead.
+            if ((await _seatRepository.GetAllSeatsByRoomAsync(request.RoomId)).Count > 0)
+            {
+                throw new BusinessException(
+                    "The room already has seats.");
+            }
+
             var seats = await _seatRepository.GenerateSeatsAsync(
                 request.RoomId,
                 request.Rows,

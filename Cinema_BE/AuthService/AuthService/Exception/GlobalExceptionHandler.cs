@@ -53,6 +53,11 @@ namespace AuthService.Exception
                 problemDetails.Extensions["errorCode"] = forbidden.ErrorCode;
             }
 
+            if (exception is UnauthorizedException { ErrorCode: not null } unauthorized)
+            {
+                problemDetails.Extensions["errorCode"] = unauthorized.ErrorCode;
+            }
+
             if (exception is TooManyRequestsException tooManyRequests)
             {
                 httpContext.Response.Headers.RetryAfter = tooManyRequests.RetryAfterSeconds.ToString();

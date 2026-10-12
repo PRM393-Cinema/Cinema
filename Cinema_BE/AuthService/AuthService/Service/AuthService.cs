@@ -155,7 +155,7 @@ namespace AuthService.Service
 
             if (!user.Enabled)
             {
-                throw new UnauthorizedException("Tài khoản đã bị vô hiệu hóa.");
+                throw new UnauthorizedException("Tài khoản đã bị vô hiệu hóa.", "ACCOUNT_LOCKED");
             }
 
             if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
@@ -243,7 +243,7 @@ namespace AuthService.Service
             // Tài khoản bị admin khoá thì không được cấp token mới
             if (!stored.User.Enabled)
             {
-                throw new UnauthorizedException("Tài khoản đã bị vô hiệu hóa.");
+                throw new UnauthorizedException("Tài khoản đã bị vô hiệu hóa.", "ACCOUNT_LOCKED");
             }
 
             // Thu hồi token cũ và cấp cặp token mới (rotation)

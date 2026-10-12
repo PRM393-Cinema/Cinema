@@ -7,11 +7,12 @@ namespace BookingService.Services.Interfaces
     // Staff chuyển khoản trả khách rồi xác nhận kèm mã giao dịch.
     public interface IRefundService
     {
-        // Payment đã thanh toán -> yêu cầu hoàn 100%. Gọi lại nhiều lần trả về yêu cầu đã có
-        Task<RefundResponse> RequestRefundAsync(long paymentId, string reason);
+        // Payment đã thanh toán -> yêu cầu hoàn 100%. Gọi lại nhiều lần trả về yêu cầu đã có.
+        // reopenRejected: rạp huỷ vé thì mở lại yêu cầu từng bị từ chối
+        Task<RefundResponse> RequestRefundAsync(long paymentId, string reason, bool reopenRejected = false);
 
         // Booking bị huỷ: payment của booking đã thanh toán thì tạo yêu cầu hoàn, không có thì trả null
-        Task<RefundResponse?> RequestRefundForBookingAsync(long bookingId, string reason);
+        Task<RefundResponse?> RequestRefundForBookingAsync(long bookingId, string reason, bool reopenRejected = false);
 
         Task<RefundResponse> CompleteRefundAsync(
             long refundId,

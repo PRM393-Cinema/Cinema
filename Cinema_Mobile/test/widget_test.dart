@@ -375,8 +375,8 @@ Future<void> _openHome(WidgetTester tester, {bool authenticated = true}) async {
 }
 
 Future<void> _openMovieDetail(WidgetTester tester) async {
-  await scrollHomeTo(tester, find.text('View Details').first);
-  await tester.tap(find.text('View Details').first);
+  await scrollHomeTo(tester, find.text(inception.title).first);
+  await tester.tap(find.text(inception.title).first);
   await pumpRoute(tester);
 }
 

@@ -248,9 +248,15 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                                 children: [
                                   Row(
                                     children: [
-                                      Text(
-                                        '${_selectedSeatIds.length} seat(s)',
-                                        style: AppTextStyles.bodySmall,
+                                      // Both parts shorten next to the
+                                      // Continue button on narrow phones.
+                                      Flexible(
+                                        child: Text(
+                                          '${_selectedSeatIds.length} seat(s)',
+                                          style: AppTextStyles.bodySmall,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                       ),
                                       if (selectedLabels.isNotEmpty)
                                         Flexible(
@@ -456,10 +462,19 @@ class _SeatMap extends StatelessWidget {
                   children: [
                     _ScreenIndicator(width: layout.seatsWidth(seatsPerRow)),
                     const SizedBox(height: AppSpacing.sm),
-                    Text(
-                      '${rows.length} rows • ${data.seats.length} seats • Pinch to zoom',
-                      style: AppTextStyles.caption,
-                      textAlign: TextAlign.center,
+                    // Wraps instead of widening the column: the map is laid
+                    // out unconstrained, so a long line would push the seats
+                    // off-centre (large text sizes, narrow phones).
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth:
+                            constraints.maxWidth - _SeatMapLayout.padding * 2,
+                      ),
+                      child: Text(
+                        '${rows.length} rows • ${data.seats.length} seats • Pinch to zoom',
+                        style: AppTextStyles.caption,
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                     const SizedBox(height: AppSpacing.xl),
                     ...sortedRowKeys.map((rowKey) {

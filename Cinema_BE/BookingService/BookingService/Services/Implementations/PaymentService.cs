@@ -349,7 +349,7 @@ namespace BookingService.Services.Implementations
                 await _bookingService.CancelBookingAsync(booking.Id, manager: true, refundReason);
             }
 
-            return await _refundService.RequestRefundAsync(payment.Id, refundReason);
+            return await _refundService.RequestRefundAsync(payment.Id, refundReason, reopenRejected: true);
         }
 
         public async Task<PaymentResponse> VerifyPayOsPaymentAsync(
@@ -527,7 +527,8 @@ namespace BookingService.Services.Implementations
 
                 var refund = await _refundService.RequestRefundAsync(
                     payment.Id,
-                    "Đã nhận tiền nhưng không giữ được ghế (đơn đã hết hạn hoặc bị huỷ)");
+                    "Đã nhận tiền nhưng không giữ được ghế (đơn đã hết hạn hoặc bị huỷ)",
+                    reopenRejected: true);
 
                 return $"{ex.Message} Refund {refund.RefundCode} was requested.";
             }
