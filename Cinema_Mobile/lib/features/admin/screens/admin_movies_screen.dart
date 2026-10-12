@@ -200,7 +200,10 @@ class _AdminMoviesScreenState extends State<AdminMoviesScreen> {
                 onRetry: () => _load(page: result?.pageNumber ?? 1),
               )
             else if (result != null) ...[
-              Text('${result.totalCount} movies', style: AppTextStyles.caption),
+              Text(
+                formatCount(result.totalCount, 'movie'),
+                style: AppTextStyles.caption,
+              ),
               const SizedBox(height: AppSpacing.md),
               if (result.items.isEmpty)
                 const Padding(
@@ -326,6 +329,66 @@ class _MovieCard extends StatelessWidget {
       ),
     );
   }
+}
+
+// Two fields side by side, one under the other when the form is narrow (a
+// phone-width window), so values are not cut off.
+class _FieldPair extends StatelessWidget {
+  const _FieldPair({required this.first, required this.second});
+
+  static const _sideBySideFrom = 420.0;
+
+  final Widget first;
+  final Widget second;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) => constraints.maxWidth < _sideBySideFrom
+        ? Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              first,
+              const SizedBox(height: AppSpacing.md),
+              second,
+            ],
+          )
+        : Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: first),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(child: second),
+            ],
+          ),
+  );
+}
+
+// A date shown like the text fields around it; tapping opens the picker.
+class _DateField extends StatelessWidget {
+  const _DateField({
+    required this.label,
+    required this.value,
+    required this.onTap,
+    super.key,
+  });
+
+  final String label;
+  final String value;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(12),
+    child: InputDecorator(
+      decoration: InputDecoration(
+        labelText: label,
+        enabled: onTap != null,
+        suffixIcon: const Icon(Icons.event_outlined),
+      ),
+      child: Text(value, maxLines: 1, overflow: TextOverflow.ellipsis),
+    ),
+  );
 }
 
 class _MovieFormDialog extends StatefulWidget {
@@ -474,51 +537,36 @@ class _MovieFormDialogState extends State<_MovieFormDialog> {
                     validator: (value) => _required(value, 200),
                   ),
                   const SizedBox(height: AppSpacing.md),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: AppTextField(
-                          key: const Key('movieDurationField'),
-                          label: 'Duration (minutes)',
-                          controller: _duration,
-                          enabled: !_saving,
-                          keyboardType: TextInputType.number,
-                          validator: _minutes,
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.md),
-                      Expanded(
-                        child: AppButton.secondary(
-                          key: const Key('movieReleaseDateButton'),
-                          label: 'Release ${formatDate(_releaseDate)}',
-                          leadingIcon: Icons.event_outlined,
-                          onPressed: _saving ? null : _pickDate,
-                        ),
-                      ),
-                    ],
+                  _FieldPair(
+                    first: AppTextField(
+                      key: const Key('movieDurationField'),
+                      label: 'Duration (minutes)',
+                      controller: _duration,
+                      enabled: !_saving,
+                      keyboardType: TextInputType.number,
+                      validator: _minutes,
+                    ),
+                    second: _DateField(
+                      key: const Key('movieReleaseDateField'),
+                      label: 'Release date',
+                      value: formatDate(_releaseDate),
+                      onTap: _saving ? null : _pickDate,
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.md),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: AppTextField(
-                          key: const Key('movieGenreField'),
-                          label: 'Genre',
-                          controller: _genre,
-                          enabled: !_saving,
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.md),
-                      Expanded(
-                        child: AppTextField(
-                          key: const Key('movieLanguageField'),
-                          label: 'Language',
-                          controller: _language,
-                          enabled: !_saving,
-                        ),
-                      ),
-                    ],
+                  _FieldPair(
+                    first: AppTextField(
+                      key: const Key('movieGenreField'),
+                      label: 'Genre',
+                      controller: _genre,
+                      enabled: !_saving,
+                    ),
+                    second: AppTextField(
+                      key: const Key('movieLanguageField'),
+                      label: 'Language',
+                      controller: _language,
+                      enabled: !_saving,
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   AppTextField(

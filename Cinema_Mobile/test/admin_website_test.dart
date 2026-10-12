@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:cinema_fe/app/routes/app_routes.dart';
 import 'package:cinema_fe/core/network/api_client.dart';
+import 'package:cinema_fe/core/utils/formatters.dart';
 import 'package:cinema_fe/data/models/auth_response.dart';
 import 'package:cinema_fe/data/services/staff_service.dart';
 import 'package:flutter/material.dart';
@@ -154,6 +155,7 @@ void main() {
       await _openAdmin(tester, api, AppRoutes.adminMovies);
       expect(find.text('Old Movie'), findsOneWidget);
       expect(find.text('Showing'), findsWidgets);
+      expect(find.text('1 movie'), findsOneWidget);
 
       await tester.tap(find.byKey(const Key('addMovieButton')));
       await pumpRoute(tester);
@@ -203,6 +205,7 @@ void main() {
       await tester.tap(find.byKey(const Key('editMovie-1')));
       await pumpRoute(tester);
       expect(find.text('Edit movie'), findsOneWidget);
+      expect(find.text('Sep 1, 2026'), findsOneWidget);
       await tester.ensureVisible(find.byKey(const Key('saveMovieButton')));
       await tester.tap(find.byKey(const Key('saveMovieButton')));
       await pumpRoute(tester);
@@ -238,6 +241,41 @@ void main() {
       expect(body['status'], 'ACTIVE');
       expect(body['title'], 'Night Train');
       expect(find.text('Stopped'), findsNothing);
+    });
+
+    testWidgets('The movie form fits a phone-width window', (tester) async {
+      tester.view.physicalSize = const Size(412, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(
+        buildAdminTestApp(
+          authenticated: true,
+          user: _admin,
+          staffService: _FakeApi().service,
+          initialRoute: AppRoutes.adminMovies,
+        ),
+      );
+      await pumpRoute(tester);
+
+      await tester.tap(find.byKey(const Key('addMovieButton')));
+      await pumpRoute(tester);
+
+      // Fields are stacked, so the release date is shown in full.
+      final duration = find.byKey(const Key('movieDurationField'));
+      final release = find.byKey(const Key('movieReleaseDateField'));
+      expect(
+        find.descendant(
+          of: release,
+          matching: find.text(formatDate(DateUtils.dateOnly(DateTime.now()))),
+        ),
+        findsOneWidget,
+      );
+      expect(tester.getTopLeft(release).dx, tester.getTopLeft(duration).dx);
+      expect(
+        tester.getTopLeft(release).dy,
+        greaterThan(tester.getBottomLeft(duration).dy),
+      );
     });
 
     testWidgets('The status filter and the search ask the right list', (
