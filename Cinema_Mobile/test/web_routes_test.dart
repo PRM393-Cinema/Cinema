@@ -115,15 +115,12 @@ void main() {
     expect(find.text(notificationFixture.subject), findsOneWidget);
   });
 
-  testWidgets('Signed-out link opens Home; Tickets asks to sign in', (
+  testWidgets('Signed-out link asks to sign in, then opens the page', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(buildTestApp(initialRoute: AppRoutes.myBookings));
     await pumpRoute(tester);
 
-    expect(find.text('Step Into CosmoQ Cinema'), findsOneWidget);
-    await tester.tap(find.text('Tickets'));
-    await pumpRoute(tester);
     expect(find.byKey(const Key('loginTitle')), findsOneWidget);
 
     await tester.enterText(

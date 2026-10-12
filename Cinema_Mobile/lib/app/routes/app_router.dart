@@ -80,22 +80,18 @@ class AppRouter {
 
   // Home stays under a page opened from its URL, so its back button leads
   // home instead of leaving the app.
-  List<Route<dynamic>> onGenerateInitialRoutes(
-    String initialRoute, {
-    bool isPaymentReturn = false,
-  }) {
+  List<Route<dynamic>> onGenerateInitialRoutes(String initialRoute) {
     final landing = _landing();
     final home = _page(landing.settings, landing.builder);
     final match = _match(RouteSettings(name: initialRoute));
     if (match == null ||
         match.settings.name == '/' ||
         match.settings.name == landing.settings.name ||
-        Uri.tryParse(match.settings.name ?? '')?.path == AppRoutes.home ||
-        (match.signInRequired &&
-            !session.isAuthenticated &&
-            !isPaymentReturn)) {
+        Uri.tryParse(match.settings.name ?? '')?.path == AppRoutes.home) {
       return [home];
     }
+    // A signed-out link to a protected page opens Sign in and continues to
+    // that page afterwards (onGenerateRoute keeps it as the pending route).
     return [home, onGenerateRoute(RouteSettings(name: initialRoute))];
   }
 
