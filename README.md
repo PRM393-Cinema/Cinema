@@ -34,4 +34,7 @@ Chuẩn bị máy và kịch bản demo: [DEMO.md](DEMO.md).
 
 ## CI
 
-[`.github/workflows/ci.yml`](.github/workflows/ci.yml) build và chạy test backend cho pull request vào `dev` / `main` có thay đổi trong `Cinema_BE/` (xem [TESTING.md](Cinema_BE/docs/TESTING.md)).
+Chạy cho pull request vào `dev` / `main`:
+
+- [`.github/workflows/ci.yml`](.github/workflows/ci.yml): build và chạy test backend khi có thay đổi trong `Cinema_BE/` (xem [TESTING.md](Cinema_BE/docs/TESTING.md)).
+- [`.github/workflows/flutter.yml`](.github/workflows/flutter.yml): `flutter analyze`, `flutter test` và build hai bản web (trang khách, trang quản trị) khi có thay đổi trong `Cinema_Mobile/`.
