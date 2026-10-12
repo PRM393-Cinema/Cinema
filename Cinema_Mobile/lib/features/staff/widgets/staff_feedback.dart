@@ -14,10 +14,8 @@ String staffError(Object error) => error is ApiException
     : error is FormatException
     ? error.message
     : 'Unable to complete the request. Please try again.';
-EdgeInsets staffPadding(BuildContext context) => centeredPadding(
-  context,
-  AppSpacing.lg,
-).copyWith(bottom: 112 + MediaQuery.viewPaddingOf(context).bottom);
+EdgeInsets staffPadding(BuildContext context) =>
+    centeredPadding(context, AppSpacing.lg);
 
 Future<bool> staffConfirm(
   BuildContext context,

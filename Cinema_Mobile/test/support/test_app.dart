@@ -1,5 +1,9 @@
+import 'dart:convert';
+
+import 'package:cinema_fe/admin/admin_app.dart';
 import 'package:cinema_fe/app/app.dart';
 import 'package:cinema_fe/app/routes/app_routes.dart';
+import 'package:cinema_fe/core/network/api_client.dart';
 import 'package:cinema_fe/core/session/session_state.dart';
 import 'package:cinema_fe/data/models/auth_response.dart';
 import 'package:cinema_fe/data/repositories/auth_repository.dart';
@@ -9,6 +13,8 @@ import 'package:cinema_fe/data/services/staff_service.dart';
 import 'package:cinema_fe/features/payment/payment_args.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 
 import 'fakes.dart';
 import 'fixtures.dart';
@@ -17,7 +23,6 @@ Widget buildTestApp({
   AuthRepository? authRepository,
   CatalogRepository? catalogRepository,
   BookingRepository? bookingRepository,
-  StaffService? staffService,
   SessionState? session,
   bool authenticated = false,
   AuthUser? user,
@@ -37,12 +42,58 @@ Widget buildTestApp({
       authRepository: authRepository ?? FakeAuthRepository(),
       catalogRepository: catalogRepository ?? FakeCatalogRepository(),
       bookingRepository: bookingRepository ?? FakeBookingRepository(),
-      staffService: staffService,
       initialRoute: initialRoute,
       paymentReturn: paymentReturn,
     ),
   );
 }
+
+// The admin website (lib/main_admin.dart). Without a staff service, every
+// list the pages load is empty.
+Widget buildAdminTestApp({
+  AuthRepository? authRepository,
+  CatalogRepository? catalogRepository,
+  StaffService? staffService,
+  SessionState? session,
+  bool authenticated = false,
+  AuthUser? user,
+  String initialRoute = AppRoutes.home,
+}) {
+  final sessionState = session ?? SessionState();
+  if (authenticated) {
+    sessionState.setAuthenticated(user ?? customerUser);
+  } else {
+    sessionState.setGuest();
+  }
+
+  return SessionProvider(
+    sessionState: sessionState,
+    child: AdminApp(
+      authRepository: authRepository ?? FakeAuthRepository(),
+      catalogRepository: catalogRepository ?? FakeCatalogRepository(),
+      staffService: staffService ?? emptyStaffService(),
+      initialRoute: initialRoute,
+    ),
+  );
+}
+
+StaffService emptyStaffService() => StaffService(
+  client: ApiClient(
+    httpClient: MockClient(
+      (_) async => http.Response(
+        jsonEncode({
+          'items': <Object>[],
+          'pageNumber': 1,
+          'pageSize': 10,
+          'totalCount': 0,
+          'totalPages': 0,
+        }),
+        200,
+        headers: {'content-type': 'application/json; charset=utf-8'},
+      ),
+    ),
+  ),
+);
 
 Future<void> pumpRoute(WidgetTester tester) async {
   await tester.pumpAndSettle();

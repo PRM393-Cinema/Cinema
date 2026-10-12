@@ -129,8 +129,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (widget.adminMode || widget.staffMode) {
       return AdminPage(
         title: widget.staffMode ? 'Staff profile' : 'Admin profile',
-        staffMode: widget.staffMode,
-        selectedIndex: 2,
+        section: AdminSection.profile,
         child: Builder(builder: _buildBody),
       );
     }

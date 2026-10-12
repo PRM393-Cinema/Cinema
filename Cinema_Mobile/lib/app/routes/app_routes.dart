@@ -18,6 +18,8 @@ abstract final class AppRoutes {
   static String staffEditShowtime(int id) => '/staff/showtimes/$id/edit';
   static String staffNotify(int bookingId) =>
       '/staff/bookings/$bookingId/notify';
+  static const adminMovies = '/admin/movies';
+  static const adminRooms = '/admin/rooms';
   static const adminUsers = '/admin/users';
   static const adminCreateUser = '/admin/users/new';
   static String adminUser(int id) => '/admin/users/$id';

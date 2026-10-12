@@ -16,9 +16,16 @@ import '../widgets/auth_scaffold.dart';
 import '../widgets/auth_success_dialog.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({required this.authRepository, super.key});
+  const LoginScreen({
+    required this.authRepository,
+    this.allowRegister = true,
+    super.key,
+  });
 
   final AuthRepository authRepository;
+
+  // The admin website hides sign-up: admins create staff accounts.
+  final bool allowRegister;
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -251,13 +258,15 @@ class _LoginScreenState extends State<LoginScreen> {
                 onPressed: _isLoading ? null : _login,
               ),
             ),
-            const SizedBox(height: AppSpacing.md),
-            AppButton.secondary(
-              label: 'Create an account',
-              onPressed: _isLoading
-                  ? null
-                  : () => Navigator.pushNamed(context, AppRoutes.register),
-            ),
+            if (widget.allowRegister) ...[
+              const SizedBox(height: AppSpacing.md),
+              AppButton.secondary(
+                label: 'Create an account',
+                onPressed: _isLoading
+                    ? null
+                    : () => Navigator.pushNamed(context, AppRoutes.register),
+              ),
+            ],
           ],
         ),
       ),

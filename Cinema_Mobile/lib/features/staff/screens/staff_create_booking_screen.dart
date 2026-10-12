@@ -126,8 +126,7 @@ class _StaffCreateBookingScreenState extends State<StaffCreateBookingScreen> {
   @override
   Widget build(BuildContext context) => AdminPage(
     title: 'Book for customer',
-    staffMode: true,
-    selectedIndex: 1,
+    section: AdminSection.operations,
     child: SingleChildScrollView(
       padding: staffPadding(context),
       child: Form(

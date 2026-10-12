@@ -1,22 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../../core/session/roles.dart';
 import '../../core/session/session_state.dart';
 import '../../data/models/booking_draft.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/booking_repository.dart';
 import '../../data/repositories/catalog_repository.dart';
-import '../../data/services/staff_service.dart';
-import '../../core/widgets/cinema_page.dart';
-import '../../core/widgets/error_state.dart';
-import '../../features/staff/screens/staff_dashboard_screen.dart';
-import '../../features/staff/screens/staff_operations_screen.dart';
-import '../../features/staff/screens/staff_record_screen.dart';
-import '../../features/staff/screens/staff_create_booking_screen.dart';
-import '../../features/staff/screens/staff_showtime_editor_screen.dart';
-import '../../features/staff/screens/staff_notification_screen.dart';
 import '../../features/auth/screens/forgot_password_screen.dart';
-import '../../features/admin/screens/admin_users_screen.dart';
-import '../../features/admin/screens/admin_dashboard_screen.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/register_screen.dart';
 import '../../features/auth/screens/reset_password_screen.dart';
@@ -32,27 +22,28 @@ import '../../features/payment/payment_args.dart';
 import '../../features/payment/screens/payment_result_screen.dart';
 import '../../features/payment/screens/payment_screen.dart';
 import '../../features/payment/screens/payment_history_screen.dart';
+import '../../features/profile/screens/management_account_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
 import '../../features/seat/screens/seat_selection_screen.dart';
 import 'app_routes.dart';
 
-// Builds screens from route names such as /movies/7. On web the name is the
-// URL, so a refreshed page or a shared link opens the same screen: screens
-// use the object passed by the previous screen and otherwise load it by id.
+// Builds the customer app's screens from route names such as /movies/7. On
+// web the name is the URL, so a refreshed page or a shared link opens the same
+// screen: screens use the object passed by the previous screen and otherwise
+// load it by id. Staff and admin screens live in the admin website
+// (lib/admin/admin_router.dart).
 class AppRouter {
   AppRouter({
     required this.authRepository,
     required this.catalogRepository,
     required this.bookingRepository,
     required this.session,
-    this.staffService,
   });
 
   final AuthRepository authRepository;
   final CatalogRepository catalogRepository;
   final BookingRepository bookingRepository;
   final SessionState session;
-  final StaffService? staffService;
 
   Route<dynamic> onGenerateRoute(RouteSettings settings) {
     final match = _match(settings);
@@ -98,53 +89,18 @@ class AppRouter {
   Widget _home(BuildContext context) =>
       HomeScreen(catalogRepository: catalogRepository);
 
-  _RouteMatch _landing() => session.user?.roles.contains('ROLE_ADMIN') == true
+  // Staff and admin accounts are pointed to the admin website.
+  _RouteMatch _landing() => isManagementAccount(session.user?.roles)
       ? _RouteMatch(
-          const RouteSettings(name: AppRoutes.adminDashboard),
-          (_) => AdminDashboardScreen(repository: authRepository),
-          signInRequired: true,
-        )
-      : session.user?.roles.contains('ROLE_STAFF') == true
-      ? _staffMatch(
-          const RouteSettings(name: AppRoutes.staffDashboard),
-          (service) => StaffDashboardScreen(service: service),
+          const RouteSettings(name: AppRoutes.home),
+          (_) => ManagementAccountScreen(authRepository: authRepository),
         )
       : _RouteMatch(const RouteSettings(name: AppRoutes.home), _home);
-
-  _RouteMatch _staffMatch(
-    RouteSettings settings,
-    Widget Function(StaffService) builder,
-  ) => _RouteMatch(
-    settings,
-    (_) => staffService == null
-        ? const CinemaPage(
-            title: 'Staff workspace',
-            child: ErrorState(
-              title: 'Service unavailable',
-              message: 'Staff service is not configured.',
-            ),
-          )
-        : builder(staffService!),
-    signInRequired: true,
-  );
 
   _RouteMatch? _match(RouteSettings settings) {
     final uri = Uri.tryParse(settings.name ?? AppRoutes.home);
     if (uri == null || uri.hasScheme || uri.hasAuthority) return null;
     final args = settings.arguments;
-    if (uri.path.startsWith('/staff/') &&
-        session.isAuthenticated &&
-        !(session.user?.roles.any(
-              (role) => role == 'ROLE_STAFF' || role == 'ROLE_ADMIN',
-            ) ??
-            false)) {
-      return _landing();
-    }
-    if (uri.path.startsWith('/admin/') &&
-        session.isAuthenticated &&
-        !(session.user?.roles.contains('ROLE_ADMIN') ?? false)) {
-      return _landing();
-    }
 
     final guestOnly = switch (uri.path) {
       AppRoutes.login || AppRoutes.register || AppRoutes.verifyEmail => true,
@@ -158,59 +114,6 @@ class AppRouter {
     }
 
     switch (uri.path) {
-      case AppRoutes.staffDashboard:
-        return _staffMatch(
-          settings,
-          (service) => StaffDashboardScreen(service: service),
-        );
-      case AppRoutes.staffOperations:
-        return _staffMatch(
-          settings,
-          (service) => StaffOperationsScreen(service: service),
-        );
-      case AppRoutes.staffCreateBooking:
-        return _staffMatch(
-          settings,
-          (service) => StaffCreateBookingScreen(
-            service: service,
-            catalog: catalogRepository,
-          ),
-        );
-      case AppRoutes.staffCreateShowtime:
-        return _staffMatch(
-          settings,
-          (service) => StaffShowtimeEditorScreen(service: service),
-        );
-      case AppRoutes.staffProfile:
-        return _RouteMatch(
-          settings,
-          (_) => ProfileScreen(authRepository: authRepository, staffMode: true),
-          signInRequired: true,
-        );
-      case AppRoutes.adminDashboard:
-        return _RouteMatch(
-          settings,
-          (_) => AdminDashboardScreen(repository: authRepository),
-          signInRequired: true,
-        );
-      case AppRoutes.adminProfile:
-        return _RouteMatch(
-          settings,
-          (_) => ProfileScreen(authRepository: authRepository, adminMode: true),
-          signInRequired: true,
-        );
-      case AppRoutes.adminUsers:
-        return _RouteMatch(
-          settings,
-          (_) => AdminUsersScreen(repository: authRepository),
-          signInRequired: true,
-        );
-      case AppRoutes.adminCreateUser:
-        return _RouteMatch(
-          settings,
-          (_) => AdminCreateUserScreen(repository: authRepository),
-          signInRequired: true,
-        );
       case '/':
       case AppRoutes.home:
         return _landing();
@@ -255,70 +158,13 @@ class AppRouter {
         );
       case AppRoutes.profile:
         return _RouteMatch(
-          session.user?.roles.contains('ROLE_ADMIN') == true
-              ? const RouteSettings(name: AppRoutes.adminProfile)
-              : session.user?.roles.contains('ROLE_STAFF') == true
-              ? const RouteSettings(name: AppRoutes.staffProfile)
-              : settings,
-          (_) => ProfileScreen(
-            authRepository: authRepository,
-            adminMode: session.user?.roles.contains('ROLE_ADMIN') == true,
-            staffMode:
-                session.user?.roles.contains('ROLE_ADMIN') != true &&
-                session.user?.roles.contains('ROLE_STAFF') == true,
-          ),
+          settings,
+          (_) => ProfileScreen(authRepository: authRepository),
           signInRequired: true,
         );
     }
 
     final segments = uri.pathSegments;
-    if (segments.length >= 3 && segments[0] == 'staff') {
-      final id = int.tryParse(segments[2]);
-      if (id == null || id <= 0) return null;
-      if (segments.length == 4 &&
-          segments[1] == 'showtimes' &&
-          segments[3] == 'edit') {
-        return _staffMatch(
-          settings,
-          (service) => StaffShowtimeEditorScreen(service: service, id: id),
-        );
-      }
-      if (segments.length == 4 &&
-          segments[1] == 'bookings' &&
-          segments[3] == 'notify') {
-        return _staffMatch(
-          settings,
-          (service) => StaffNotificationScreen(service: service, bookingId: id),
-        );
-      }
-      if (segments.length == 3 &&
-          [
-            'bookings',
-            'showtimes',
-            'rooms',
-            'payments',
-            'refunds',
-          ].contains(segments[1])) {
-        return _staffMatch(
-          settings,
-          (service) =>
-              StaffRecordScreen(service: service, kind: segments[1], id: id),
-        );
-      }
-      return null;
-    }
-    if (segments.length == 3 &&
-        segments[0] == 'admin' &&
-        segments[1] == 'users') {
-      final userId = int.tryParse(segments[2]);
-      if (userId == null || userId <= 0) return null;
-      return _RouteMatch(
-        settings,
-        (_) =>
-            AdminUserDetailScreen(repository: authRepository, userId: userId),
-        signInRequired: true,
-      );
-    }
     final id = segments.length > 1 ? int.tryParse(segments[1]) : null;
     if (id == null) return null;
     final page = segments.length == 3 ? segments[2] : null;

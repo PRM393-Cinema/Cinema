@@ -145,6 +145,17 @@ namespace MovieService.Service.Impl
             movie.PosterUrl = request.PosterUrl?.Trim();
             movie.TrailerUrl = request.TrailerUrl?.Trim();
 
+            // Admin chiếu lại phim đã ngừng (DELETE chỉ chuyển sang INACTIVE)
+            if (!string.IsNullOrWhiteSpace(request.Status))
+            {
+                var status = request.Status.Trim().ToUpperInvariant();
+                if (status is not ("ACTIVE" or "INACTIVE"))
+                {
+                    throw new BusinessException("Status must be ACTIVE or INACTIVE.");
+                }
+                movie.Status = status;
+            }
+
             await _movieRepository.UpdateMovieAsync(movie);
             await _movieRepository.SaveChangesAsync();
 

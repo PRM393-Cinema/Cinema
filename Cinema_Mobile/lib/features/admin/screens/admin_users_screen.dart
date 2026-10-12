@@ -94,7 +94,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
 
   @override
   Widget build(BuildContext context) => AdminPage(
-    selectedIndex: 1,
+    section: AdminSection.accounts,
     title: 'Manage accounts',
     child: RefreshIndicator(
       onRefresh: () => _load(page: _result?.pageNumber ?? 1),
@@ -369,7 +369,7 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
     final self = SessionProvider.of(context).user?.userId == widget.userId;
     final user = _user;
     return AdminPage(
-      selectedIndex: 1,
+      section: AdminSection.accounts,
       title: 'Account details',
       child: _loading
           ? const LoadingState(message: 'Loading account...')
@@ -575,7 +575,7 @@ class _AdminCreateUserScreenState extends State<AdminCreateUserScreen> {
 
   @override
   Widget build(BuildContext context) => AdminPage(
-    selectedIndex: 1,
+    section: AdminSection.accounts,
     title: 'Create account',
     child: _loading
         ? const LoadingState(message: 'Loading roles...')

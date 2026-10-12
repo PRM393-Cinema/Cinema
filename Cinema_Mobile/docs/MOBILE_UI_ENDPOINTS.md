@@ -6,7 +6,7 @@ Nhánh: `feat/Ngữ/UI_Update`. Đối chiếu từ controller backend, service 
 
 ## Màn hình và endpoint đã kết nối
 
-Cập nhật: 10/10/2026. Đây là bảng kiểm tra kết nối API, không phải lịch sử sửa giao diện. Các bảng theo nhóm bên dưới liệt kê cả endpoint chưa nối để đối chiếu phần còn thiếu.
+Cập nhật: 12/10/2026. Đây là bảng kiểm tra kết nối API, không phải lịch sử sửa giao diện. Các bảng theo nhóm bên dưới liệt kê cả endpoint chưa nối để đối chiếu phần còn thiếu.
 
 | Màn/chức năng | Route mobile | Endpoint gọi thật | Trạng thái |
 |---|---|---|---|
@@ -31,18 +31,20 @@ Cập nhật: 10/10/2026. Đây là bảng kiểm tra kết nối API, không ph
 | Hồ sơ Admin | `/admin/profile` | GET `/api/v1/auth/me`; POST `/api/v1/auth/logout` | Đã nối; hồ sơ và đăng xuất trong khu vực Admin |
 | Quản lý tài khoản Admin | `/admin/users` | GET `/api/v1/auth/users`; GET `/api/v1/auth/roles` | Đã nối; tìm kiếm, lọc quyền/trạng thái, phân trang; chỉ ROLE_ADMIN |
 | Chi tiết/phân quyền/khóa tài khoản | `/admin/users/{id}` | GET `/api/v1/auth/users/{id}`; GET `/api/v1/auth/roles`; PUT `/api/v1/auth/users/{id}/roles`; PATCH `/api/v1/auth/users/{id}/status` | Đã nối; chỉ ROLE_ADMIN |
+| Quản lý phim (Admin) | `/admin/movies` | GET `/api/v1/movies`, `/api/v1/movies/status/{status}`, `/api/v1/movies/search`; POST `/api/v1/movies`; PUT `/api/v1/movies/{id}`; DELETE `/api/v1/movies/{id}` | Đã nối; thêm/sửa, ngừng chiếu và chiếu lại, lọc trạng thái, tìm tên, phân trang; chỉ ROLE_ADMIN |
+| Quản lý phòng (Admin) | `/admin/rooms` | GET `/api/rooms`, `/api/rooms/search`; POST `/api/rooms`; POST `/api/seats/generate`; PUT `/api/rooms/{id}`; DELETE `/api/rooms/{id}` | Đã nối; thêm phòng kèm ghế, đổi tên, xoá phòng chưa có suất chiếu, mở sơ đồ ghế; chỉ ROLE_ADMIN |
 | Tạo tài khoản (Admin quản lý) | `/admin/users/new` | GET `/api/v1/auth/roles`; POST `/api/v1/auth/users` | Đã nối; chọn một hoặc nhiều quyền; chỉ ROLE_ADMIN |
 | Dashboard Staff | `/staff/dashboard` | GET `/api/v1/bookings/status/PENDING`; GET `/api/v1/bookings/date-range`; GET `/api/v1/payments/refunds`; GET `/api/showtimes/date-range` | Đã nối; thống kê từ API thật |
 | Nghiệp vụ Staff | `/staff/operations` | GET `/api/v1/bookings`, `/api/v1/bookings/status/{status}`, `/api/v1/bookings/date-range`; GET `/api/showtimes`, `/api/showtimes/date-range`; GET `/api/rooms`, `/api/rooms/search`; GET `/api/v1/payments`, `/api/v1/payments/refunds` | Đã nối; 5 nhóm, lọc/phân trang |
 | Đặt vé hộ khách | `/staff/bookings/new` | POST `/api/v1/bookings`; GET `/api/showtimes/{id}`, `/api/seats/room/{id}`, `/api/v1/bookings/showtime/{id}/occupied-seats` | Đã nối; ID/email khách và chọn ghế thật |
 | Chi tiết/xác nhận/hủy vé Staff | `/staff/bookings/{id}` | GET `/api/v1/bookings/{id}`; GET `/api/v1/payments/booking/{bookingId}`; POST `/api/v1/bookings/{id}/confirm`, `/api/v1/bookings/{id}/cancel` | Đã nối; xác nhận tay có điều kiện |
 | Suất chiếu Staff | `/staff/showtimes/{id}`, `/staff/showtimes/new`, `/staff/showtimes/{id}/edit` | GET `/api/showtimes/{id}`, `/api/v1/movies`, `/api/rooms`; POST `/api/showtimes`; PUT `/api/showtimes/{id}`; PATCH `/api/showtimes/{id}/status`; DELETE `/api/showtimes/{id}` | Đã nối; tạo/sửa/mở/đóng/hủy |
-| Phòng/ghế Staff | `/staff/rooms/{id}` | GET `/api/rooms/{id}`, `/api/seats/room/{id}`, `/api/seats/{id}`; POST `/api/seats/generate`; PUT `/api/seats/{id}/type` | Đã nối; không có thao tác phòng/ghế chỉ dành Admin |
+| Phòng/ghế Staff | `/staff/rooms/{id}` | GET `/api/rooms/{id}`, `/api/seats/room/{id}`, `/api/seats/{id}`; POST `/api/seats/generate`; PUT `/api/seats/{id}/type` | Đã nối; tạo/đổi tên/xoá phòng ở Admin → Rooms |
 | Thanh toán/hoàn tiền Staff | `/staff/payments/{id}`, `/staff/refunds/{id}` | GET `/api/v1/payments/{id}`, `/api/v1/payments/refunds/{id}`; POST `/api/v1/payments/{id}/process`, `/api/v1/payments/{id}/refund`, `/api/v1/payments/refunds/{id}/complete` | Đã nối; PayOS xác minh thật, hoàn tiền ghi nhận chuyển khoản |
 | Thông báo cho khách | `/staff/bookings/{id}/notify` | GET `/api/v1/bookings/{id}`; POST `/api/v1/notifications`; POST `/api/v1/notifications/{id}/send` | Đã nối; retry cùng ID khi gửi thất bại |
 | Hồ sơ Staff | `/staff/profile` | GET `/api/v1/auth/me`; POST `/api/v1/auth/logout` | Đã nối; đổi mật khẩu dùng luồng OTP chung |
 
-Admin đăng nhập hoặc mở `/home` khi còn phiên sẽ vào `/admin/dashboard`. Khu vực quản trị có nav dưới riêng: **Dashboard / Accounts / Profile**; màn tạo và chi tiết tài khoản thuộc tab Accounts. Các màn chỉ dành cho ROLE_ADMIN, dùng chung API/AuthService hiện có. Customer dùng giao diện khách hàng. Staff có ROLE_STAFF đăng nhập vào `/staff/dashboard`, nav **Dashboard / Operations / Profile**. ROLE_ADMIN ưu tiên dashboard Admin nhưng backend cho phép truy cập nghiệp vụ Staff. Customer bị chặn các route `/staff/*`. Xem [STAFF_WORKSPACE.md](STAFF_WORKSPACE.md) về quy trình và giới hạn API.
+Các route `/admin/*` và `/staff/*` thuộc **trang quản trị web** (`lib/main_admin.dart`, phục vụ ở `/admin/`), không có trong app khách. Admin đăng nhập vào `/admin/dashboard`, thanh điều hướng bên trái **Dashboard / Operations / Movies / Rooms / Accounts / Profile**; Staff vào `/staff/dashboard` với **Dashboard / Operations / Profile**. Movies, Rooms, Accounts chỉ dành cho ROLE_ADMIN; Staff mở các trang này được đưa về dashboard. Tài khoản khách mở trang quản trị được chỉ về trang khách; tài khoản Staff/Admin đăng nhập app khách thấy hướng dẫn mở trang quản trị. Xem [STAFF_WORKSPACE.md](STAFF_WORKSPACE.md) về quy trình và giới hạn API.
 
 ## Tài khoản
 
@@ -68,27 +70,27 @@ Admin đăng nhập hoặc mở `/home` khi còn phiên sẽ vào `/admin/dashbo
 
 | Chức năng | Method | Endpoint | UI hiện có | Nguồn backend |
 |---|---|---|---|---|
-| Danh sách phim | GET | `/api/v1/movies` | Staff → chọn phim khi tạo/sửa suất chiếu · đã nối API | [MoviesController:22](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L22) |
+| Danh sách phim | GET | `/api/v1/movies` | Admin → Movies; Staff → chọn phim khi tạo/sửa suất chiếu · đã nối API | [MoviesController:22](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L22) |
 | Chi tiết phim | GET | `/api/v1/movies/{id}` | Chi tiết phim · đã nối API | [MoviesController:34](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L34) |
-| Lọc trạng thái phim | GET | `/api/v1/movies/status/{status}` | Home/phim đang chiếu · đã nối API | [MoviesController:42](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L42) |
-| Tìm kiếm phim | GET | `/api/v1/movies/search` | Có ô tìm kiếm local trên Home; chưa gọi API này | [MoviesController:55](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L55) |
-| Tạo phim | POST | `/api/v1/movies` | Chưa có UI nối endpoint này | [MoviesController:68](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L68) |
-| Sửa phim | PUT | `/api/v1/movies/{id}` | Chưa có UI nối endpoint này | [MoviesController:77](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L77) |
-| Xoá phim | DELETE | `/api/v1/movies/{id}` | Chưa có UI nối endpoint này | [MoviesController:85](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L85) |
+| Lọc trạng thái phim | GET | `/api/v1/movies/status/{status}` | Home/phim đang chiếu; Admin → Movies → lọc Showing/Stopped · đã nối API | [MoviesController:42](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L42) |
+| Tìm kiếm phim | GET | `/api/v1/movies/search` | Admin → Movies → tìm tên · đã nối API; ô tìm trên Home vẫn lọc local | [MoviesController:55](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L55) |
+| Tạo phim | POST | `/api/v1/movies` | Admin → Movies → Add movie · đã nối API | [MoviesController:68](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L68) |
+| Sửa phim | PUT | `/api/v1/movies/{id}` | Admin → Movies → Edit; Show again gửi `status: ACTIVE` · đã nối API | [MoviesController:77](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L77) |
+| Xoá phim | DELETE | `/api/v1/movies/{id}` | Admin → Movies → Stop showing (chuyển `INACTIVE`, không xoá dữ liệu) · đã nối API | [MoviesController:85](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L85) |
 
 ## Phòng và ghế
 
 | Chức năng | Method | Endpoint | UI hiện có | Nguồn backend |
 |---|---|---|---|---|
-| Danh sách phòng | GET | `/api/rooms` | Staff → Rooms/chọn phòng khi tạo suất chiếu · đã nối API | [RoomsController:24](../../Cinema_BE/MovieService/MovieService/Controllers/RoomsController.cs#L24) |
+| Danh sách phòng | GET | `/api/rooms` | Admin → Rooms; Staff → Rooms/chọn phòng khi tạo suất chiếu · đã nối API | [RoomsController:24](../../Cinema_BE/MovieService/MovieService/Controllers/RoomsController.cs#L24) |
 | Chi tiết phòng | GET | `/api/rooms/{roomId}` | Staff → Room details · đã nối API | [RoomsController:41](../../Cinema_BE/MovieService/MovieService/Controllers/RoomsController.cs#L41) |
-| Tạo phòng | POST | `/api/rooms` | Chưa có UI nối endpoint này | [RoomsController:52](../../Cinema_BE/MovieService/MovieService/Controllers/RoomsController.cs#L52) |
-| Sửa phòng | PUT | `/api/rooms/{roomId}` | Chưa có UI nối endpoint này | [RoomsController:67](../../Cinema_BE/MovieService/MovieService/Controllers/RoomsController.cs#L67) |
-| Xoá phòng | DELETE | `/api/rooms/{roomId}` | Chưa có UI nối endpoint này | [RoomsController:80](../../Cinema_BE/MovieService/MovieService/Controllers/RoomsController.cs#L80) |
+| Tạo phòng | POST | `/api/rooms` | Admin → Rooms → Add room (kèm sinh ghế) · đã nối API | [RoomsController:52](../../Cinema_BE/MovieService/MovieService/Controllers/RoomsController.cs#L52) |
+| Sửa phòng | PUT | `/api/rooms/{roomId}` | Admin → Rooms → Rename (giữ nguyên ghế) · đã nối API | [RoomsController:67](../../Cinema_BE/MovieService/MovieService/Controllers/RoomsController.cs#L67) |
+| Xoá phòng | DELETE | `/api/rooms/{roomId}` | Admin → Rooms → Delete (xoá cả ghế; bị từ chối khi phòng có suất chiếu) · đã nối API | [RoomsController:80](../../Cinema_BE/MovieService/MovieService/Controllers/RoomsController.cs#L80) |
 | Tìm phòng | GET | `/api/rooms/search` | Staff → tìm phòng · đã nối API | [RoomsController:91](../../Cinema_BE/MovieService/MovieService/Controllers/RoomsController.cs#L91) |
 | Chi tiết ghế | GET | `/api/seats/{seatId}` | Staff → đọc ghế trước khi đổi loại · đã nối API | [SeatsController:23](../../Cinema_BE/MovieService/MovieService/Controllers/SeatsController.cs#L23) |
 | Ghế trong phòng | GET | `/api/seats/room/{roomId}` | Sơ đồ ghế · đã nối API | [SeatsController:36](../../Cinema_BE/MovieService/MovieService/Controllers/SeatsController.cs#L36) |
-| Sinh sơ đồ ghế | POST | `/api/seats/generate` | Staff → phòng trống → Generate seat layout · đã nối API | [SeatsController:48](../../Cinema_BE/MovieService/MovieService/Controllers/SeatsController.cs#L48) |
+| Sinh sơ đồ ghế | POST | `/api/seats/generate` | Admin → Rooms → Add room; Staff → phòng trống → Generate seat layout · đã nối API | [SeatsController:48](../../Cinema_BE/MovieService/MovieService/Controllers/SeatsController.cs#L48) |
 | Đổi loại ghế | PUT | `/api/seats/{seatId}/type` | Staff → Room details → đổi NORMAL/VIP · đã nối API | [SeatsController:60](../../Cinema_BE/MovieService/MovieService/Controllers/SeatsController.cs#L60) |
 | Xoá ghế | DELETE | `/api/seats/{seatId}` | Chưa có UI nối endpoint này | [SeatsController:73](../../Cinema_BE/MovieService/MovieService/Controllers/SeatsController.cs#L73) |
 
@@ -159,7 +161,7 @@ Admin đăng nhập hoặc mở `/home` khi còn phiên sẽ vào `/admin/dashbo
 2. **Sửa hồ sơ:** chưa có API cập nhật hồ sơ cá nhân. Màn tài khoản đang hiển thị dữ liệu thật; không có nút lưu giả.
 3. **Tìm phim:** ô tìm kiếm trên Home lọc danh sách đã tải. `GET /api/v1/movies/search` tồn tại nhưng chưa được gọi từ ô này.
 4. **Phân trang:** vé đã đặt hiện chỉ lấy trang đầu tối đa 50 bản ghi; thông báo và lịch sử thanh toán đã đọc đủ các trang. Hai danh sách này tải toàn bộ khi mở/làm mới, chưa tải thêm theo cuộn.
-5. **Quản trị:** các API quản lý user, role, phim, phòng, ghế, suất chiếu, xử lý hoàn tiền và gửi thông báo chưa có UI quản trị trong app khách hàng.
+5. **Quản trị:** quản lý user, role, phim, phòng, ghế, suất chiếu, xử lý hoàn tiền và gửi thông báo nằm trong trang quản trị web (`lib/main_admin.dart`), không có trong app khách.
 6. **Thông báo còn thiếu:** DELETE `/api/v1/notifications/{id}` có ở backend nhưng chưa có thao tác xóa trên mobile. Backend chưa có endpoint đánh dấu đã đọc/chưa đọc hoặc số thông báo chưa đọc. `status` hiện là trạng thái gửi email, không phải trạng thái đọc.
 7. **Thông báo trống:** thông báo được tạo từ sự kiện xác nhận/hủy/hết hạn vé, yêu cầu/hoàn tiền/từ chối hoàn tiền. Đăng ký, xác thực email và đặt lại mật khẩu chưa tạo bản ghi trong lịch sử này. Không có dữ liệu mẫu tự chèn cho tài khoản mới; kéo xuống để lấy dữ liệu mới. Chưa có cập nhật thời gian thực/push notification.
 
@@ -175,3 +177,7 @@ Chưa kiểm tra thiết bị thật, email thật, thanh toán thật hoặc t�
 - [Mật khẩu mới](../lib/features/auth/screens/reset_password_screen.dart)
 - [Danh sách thông báo](../lib/features/notification/screens/notification_list_screen.dart)
 - [Chi tiết thông báo](../lib/features/notification/screens/notification_detail_screen.dart)
+- [Trang quản trị: route và phân quyền](../lib/admin/admin_router.dart)
+- [Khung trang quản trị](../lib/features/admin/widgets/admin_page.dart)
+- [Quản lý phim](../lib/features/admin/screens/admin_movies_screen.dart)
+- [Quản lý phòng](../lib/features/admin/screens/admin_rooms_screen.dart)

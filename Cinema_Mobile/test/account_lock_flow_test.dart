@@ -102,7 +102,7 @@ void main() {
         'roles': ['ROLE_STAFF'],
       });
       await tester.pumpWidget(
-        buildTestApp(
+        buildAdminTestApp(
           session: session,
           authenticated: true,
           user: staffUser,
@@ -197,12 +197,9 @@ void main() {
     });
   }
 
-  for (final (role, dashboard) in [
-    ('ROLE_STAFF', 'Staff dashboard'),
-    ('ROLE_ADMIN', 'Dashboard'),
-  ]) {
+  for (final role in ['ROLE_STAFF', 'ROLE_ADMIN']) {
     testWidgets(
-      'Changed customer role opens $dashboard after signing in again',
+      'Customer changed to $role is sent to the admin website after signing in',
       (tester) async {
         final session = SessionState();
         final storage = SecureAuthTokenStorage();
@@ -261,7 +258,6 @@ void main() {
               service: authService,
               storage: storage,
             ),
-            staffService: StaffService(client: client),
             initialRoute: AppRoutes.profile,
           ),
         );
@@ -288,7 +284,7 @@ void main() {
 
         expect(session.isAuthenticated, isTrue);
         expect(session.user?.roles, [role]);
-        expect(find.text(dashboard), findsWidgets);
+        expect(find.byKey(const Key('managementAccountTitle')), findsOneWidget);
         expect(find.byKey(const Key('loginTitle')), findsNothing);
         expect(find.byType(Dialog), findsNothing);
         expect(find.text('Đăng nhập thành công.'), findsOneWidget);

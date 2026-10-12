@@ -69,6 +69,9 @@ class CinemaBackdrop extends CustomPainter {
   }
 
   void _paintFilmStrip(Canvas canvas, Size size) {
+    // A web page loaded in a hidden tab can be 0 px wide: the ribbon then has
+    // no length to place film holes along.
+    if (size.width <= 0) return;
     final ribbon = Path()
       ..moveTo(-size.width * 0.14, logoCenter.dy - size.width * 0.3)
       ..cubicTo(

@@ -226,8 +226,7 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
       'refunds' => 'Refund details',
       _ => 'Record details',
     },
-    selectedIndex: 1,
-    staffMode: true,
+    section: AdminSection.operations,
     child: _loading
         ? const LoadingState(message: 'Loading record...')
         : _item == null

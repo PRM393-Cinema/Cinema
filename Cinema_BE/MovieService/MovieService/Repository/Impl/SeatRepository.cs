@@ -75,6 +75,13 @@ namespace ShowtimeService.Repository.Impl
             return true;
         }
 
+        public async Task DeleteSeatsByRoomIdAsync(long roomId)
+        {
+            await _context.Seats
+                .Where(x => x.RoomId == roomId)
+                .ExecuteDeleteAsync();
+        }
+
         public async Task<bool> ExistByRoomIdAndSeatRowAndSeatNumberAsync(long roomId, string seatRow, int seatNumber)
         {
             return await _context.Seats

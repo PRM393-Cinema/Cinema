@@ -3,6 +3,7 @@ import '../models/app_notification.dart';
 import '../models/booking.dart';
 import '../models/json_readers.dart';
 import '../models/movie.dart';
+import '../models/movie_draft.dart';
 import '../models/paged_result.dart';
 import '../models/payment.dart';
 import '../models/room.dart';
@@ -284,6 +285,111 @@ class StaffService {
         ),
         Movie.fromJson,
       );
+
+  // ----- Admin: movies -----
+
+  // All movies, newest first; a keyword searches titles, a status (ACTIVE /
+  // INACTIVE) filters the list.
+  Future<PagedResult<Movie>> catalogMovies({
+    int page = 1,
+    int size = 10,
+    String? keyword,
+    String? status,
+  }) async {
+    final search = keyword?.trim() ?? '';
+    return PagedResult.fromJson(
+      await _client.get(
+        search.isNotEmpty
+            ? '/api/v1/movies/search'
+            : status != null
+            ? '/api/v1/movies/status/$status'
+            : '/api/v1/movies',
+        authenticated: true,
+        query: {
+          'page': page,
+          'size': size,
+          'sortBy': 'createdAt',
+          'sortDir': 'desc',
+          if (search.isNotEmpty) 'keyword': search,
+        },
+      ),
+      Movie.fromJson,
+    );
+  }
+
+  Future<Movie> createMovie(MovieDraft draft) async => Movie.fromJson(
+    readMap(
+      await _client.post(
+        '/api/v1/movies',
+        authenticated: true,
+        body: draft.toJson(),
+      ),
+    ),
+  );
+
+  // A status of ACTIVE shows a stopped movie again; null keeps the status.
+  Future<Movie> updateMovie(int id, MovieDraft draft, {String? status}) async =>
+      Movie.fromJson(
+        readMap(
+          await _client.put(
+            '/api/v1/movies/$id',
+            authenticated: true,
+            body: {...draft.toJson(), 'status': ?status},
+          ),
+        ),
+      );
+
+  // The API keeps the movie and marks it INACTIVE.
+  Future<void> stopShowingMovie(int id) async {
+    await _client.delete('/api/v1/movies/$id', authenticated: true);
+  }
+
+  // ----- Admin: rooms -----
+
+  // Creates the room only; its seats come from generateSeats.
+  Future<Room> createRoom({
+    required String name,
+    required int rows,
+    required int seatsPerRow,
+  }) async => Room.fromJson(
+    readMap(
+      await _client.post(
+        '/api/rooms',
+        authenticated: true,
+        body: {
+          'name': name.trim(),
+          'totalSeats': rows * seatsPerRow,
+          'rows': rows,
+          'seatsPerRow': seatsPerRow,
+        },
+      ),
+    ),
+  );
+
+  // The API keeps the real seat count of a room that has seats, so the row
+  // values only describe the current capacity.
+  Future<Room> renameRoom(Room room, String name) async {
+    final seats = room.totalSeats < 1 ? 1 : room.totalSeats;
+    return Room.fromJson(
+      readMap(
+        await _client.put(
+          '/api/rooms/${room.id}',
+          authenticated: true,
+          body: {
+            'name': name.trim(),
+            'totalSeats': seats,
+            'rows': 1,
+            'seatsPerRow': seats,
+          },
+        ),
+      ),
+    );
+  }
+
+  // Refused by the API while the room has showtimes.
+  Future<void> deleteRoom(int id) async {
+    await _client.delete('/api/rooms/$id', authenticated: true);
+  }
 
   Future<AppNotification> createNotification(
     Booking booking,

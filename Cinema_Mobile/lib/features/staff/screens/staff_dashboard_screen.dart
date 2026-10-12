@@ -69,8 +69,7 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
   @override
   Widget build(BuildContext context) => AdminPage(
     title: 'Staff dashboard',
-    selectedIndex: 0,
-    staffMode: true,
+    section: AdminSection.dashboard,
     child: RefreshIndicator(
       onRefresh: _load,
       child: ListView(

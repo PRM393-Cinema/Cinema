@@ -95,8 +95,20 @@ namespace ShowtimeService.Service.Impl
 
             try
             {
-                existingRoom.Name = request.Name;
-                existingRoom.TotalSeats = request.Rows * request.SeatsPerRow;
+                var name = request.Name.Trim();
+                if (!string.Equals(existingRoom.Name, name, StringComparison.Ordinal) &&
+                    await _roomRepository.ExistRoomAsync(name))
+                {
+                    throw new BadRequestException(
+                        $"Room with name '{name}' already exists.");
+                }
+
+                existingRoom.Name = name;
+                // A room that already has seats keeps its real capacity (rows can differ in length)
+                var seats = await _seatRepository.GetAllSeatsByRoomAsync(roomId);
+                existingRoom.TotalSeats = seats.Count > 0
+                    ? seats.Count
+                    : request.Rows * request.SeatsPerRow;
                 var updatedRoom = await _roomRepository.UpdateRoomAsync(roomId, existingRoom);
                 await _unitOfWork.CommitTransactionAsync();
                 return updatedRoom?.ToResponse();
@@ -127,7 +139,20 @@ namespace ShowtimeService.Service.Impl
                     $"Cannot delete room with ID {roomId} because it has associated showtimes.");
             }
 
-            return await _roomRepository.DeleteRoomAsync(roomId);
+            // seats.room_id has no ON DELETE CASCADE. Without showtimes no booking refers to these seats.
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                await _seatRepository.DeleteSeatsByRoomIdAsync(roomId);
+                var deleted = await _roomRepository.DeleteRoomAsync(roomId);
+                await _unitOfWork.CommitTransactionAsync();
+                return deleted;
+            }
+            catch
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
         }
 
         public async Task<PagedResult<RoomResponse>> SearchRoomsAsync(

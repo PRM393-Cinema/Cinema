@@ -117,8 +117,7 @@ class _StaffOperationsScreenState extends State<StaffOperationsScreen> {
   @override
   Widget build(BuildContext context) => AdminPage(
     title: 'Operations',
-    selectedIndex: 1,
-    staffMode: true,
+    section: AdminSection.operations,
     child: RefreshIndicator(
       onRefresh: () => _load(),
       child: ListView(
