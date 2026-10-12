@@ -10,12 +10,16 @@ class CinemaPage extends StatelessWidget {
     required this.title,
     required this.child,
     this.actions = const [],
+    this.width = PageWidth.form,
     super.key,
   });
 
   final String title;
   final Widget child;
   final List<Widget> actions;
+
+  // How wide the page is on the website; the title lines up with it.
+  final PageWidth width;
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -24,7 +28,7 @@ class CinemaPage extends StatelessWidget {
         child: Column(
           children: [
             Padding(
-              padding: centeredPadding(context, AppSpacing.lg),
+              padding: widthPadding(context, AppSpacing.lg, width),
               child: Row(
                 children: [
                   Expanded(child: Text(title, style: AppTextStyles.heading2)),

@@ -9,6 +9,7 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/session/session_state.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/utils/layout.dart';
+import '../../../core/widgets/responsive_columns.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/cinema_background.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
@@ -121,44 +122,59 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Padding(
-                    padding: centeredPadding(context, AppSpacing.lg),
+                    padding: pagePadding(context, AppSpacing.lg),
                     child: const Text(
                       'My Bookings',
                       style: AppTextStyles.heading2,
                     ),
                   ),
                   Padding(
-                    padding: centeredPadding(
+                    padding: pagePadding(
                       context,
                       AppSpacing.md,
                     ).copyWith(top: 0),
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: AppColors.surface.withValues(alpha: 0.55),
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.08),
+                    // A narrow tab switch on the website, full width in the app.
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: isDesktopLayout(context)
+                              ? 420
+                              : double.infinity,
                         ),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(4),
-                        child: TabBar(
-                          dividerColor: Colors.transparent,
-                          dividerHeight: 0,
-                          indicatorSize: TabBarIndicatorSize.tab,
-                          indicator: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.10),
-                            borderRadius: BorderRadius.circular(14),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: AppColors.surface.withValues(alpha: 0.55),
+                            borderRadius: BorderRadius.circular(18),
                             border: Border.all(
-                              color: AppColors.primary.withValues(alpha: 0.24),
+                              color: Colors.white.withValues(alpha: 0.08),
                             ),
                           ),
-                          labelColor: AppColors.primary,
-                          unselectedLabelColor: AppColors.textSecondary,
-                          tabs: const [
-                            Tab(text: 'Active', height: 44),
-                            Tab(text: 'History', height: 44),
-                          ],
+                          child: Padding(
+                            padding: const EdgeInsets.all(4),
+                            child: TabBar(
+                              dividerColor: Colors.transparent,
+                              dividerHeight: 0,
+                              indicatorSize: TabBarIndicatorSize.tab,
+                              indicator: BoxDecoration(
+                                color: AppColors.primary.withValues(
+                                  alpha: 0.10,
+                                ),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: AppColors.primary.withValues(
+                                    alpha: 0.24,
+                                  ),
+                                ),
+                              ),
+                              labelColor: AppColors.primary,
+                              unselectedLabelColor: AppColors.textSecondary,
+                              tabs: const [
+                                Tab(text: 'Active', height: 44),
+                                Tab(text: 'History', height: 44),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -169,10 +185,13 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
             ),
           ),
         ),
-        bottomNavigationBar: CinemaNavigationBar(
-          selectedIndex: 1,
-          backgroundKey: _glassBackgroundKey,
-        ),
+        // The website has its navigation at the top.
+        bottomNavigationBar: isDesktopLayout(context)
+            ? null
+            : CinemaNavigationBar(
+                selectedIndex: 1,
+                backgroundKey: _glassBackgroundKey,
+              ),
       ),
     );
   }
@@ -235,21 +254,23 @@ class _BookingList extends StatelessWidget {
                 ),
               ],
             )
-          : ListView.separated(
+          : ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: centeredPadding(context, AppSpacing.md).copyWith(
+              padding: pagePadding(context, AppSpacing.md).copyWith(
                 bottom: AppSpacing.md + MediaQuery.paddingOf(context).bottom,
               ),
-              itemCount: bookings.length,
-              separatorBuilder: (context, index) =>
-                  const SizedBox(height: AppSpacing.md),
-              itemBuilder: (context, index) {
-                final booking = bookings[index];
-                return _BookingCard(
-                  booking: booking,
-                  onTap: () => onTap(booking),
-                );
-              },
+              children: [
+                // Two columns of tickets on the website, one in the app.
+                CardColumns(
+                  children: [
+                    for (final booking in bookings)
+                      _BookingCard(
+                        booking: booking,
+                        onTap: () => onTap(booking),
+                      ),
+                  ],
+                ),
+              ],
             ),
     );
   }

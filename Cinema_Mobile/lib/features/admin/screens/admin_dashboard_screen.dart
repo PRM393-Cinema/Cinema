@@ -11,6 +11,8 @@ import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_state.dart';
 import '../../../data/models/auth_response.dart';
 import '../../../data/repositories/auth_repository.dart';
+import '../../../core/widgets/responsive_columns.dart';
+import '../widgets/admin_layout.dart';
 import '../widgets/admin_page.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
@@ -77,7 +79,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       onRefresh: _load,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: centeredPadding(
+        padding: pagePadding(
           context,
           AppSpacing.lg,
         ).copyWith(bottom: 112 + MediaQuery.viewPaddingOf(context).bottom),
@@ -98,62 +100,51 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               onRetry: _load,
             )
           else if (_counts != null) ...[
-            LayoutBuilder(
-              builder: (context, constraints) => Wrap(
-                spacing: AppSpacing.md,
-                runSpacing: AppSpacing.md,
-                children: [
-                  for (final (label, count, icon) in _counts!)
-                    SizedBox(
-                      width: (constraints.maxWidth - AppSpacing.md) / 2,
-                      child: CinemaPanel(
-                        surfaceOpacity: 0.8,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Icon(icon, color: AppColors.primary),
-                            const SizedBox(height: AppSpacing.md),
-                            Text('$count', style: AppTextStyles.display),
-                            const SizedBox(height: AppSpacing.xs),
-                            Text(label, style: AppTextStyles.bodySmall),
-                          ],
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
+            StatTiles(tiles: _counts!),
             const SizedBox(height: AppSpacing.xl),
             const Text('Accounts at a glance', style: AppTextStyles.title),
             const SizedBox(height: AppSpacing.md),
             if (_users.isEmpty)
               const Text('No accounts found.', style: AppTextStyles.bodySmall),
-            for (final user in _users)
-              Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                child: CinemaPanel(
-                  surfaceOpacity: 0.8,
-                  child: ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: Icon(
-                      user.enabled
-                          ? Icons.person_outline
-                          : Icons.person_off_outlined,
-                      color: user.enabled ? AppColors.primary : AppColors.error,
+            CardColumns(
+              runSpacing: 0,
+              children: [
+                for (final user in _users)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                    child: CinemaPanel(
+                      surfaceOpacity: 0.8,
+                      child: ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: Icon(
+                          user.enabled
+                              ? Icons.person_outline
+                              : Icons.person_off_outlined,
+                          color: user.enabled
+                              ? AppColors.primary
+                              : AppColors.error,
+                        ),
+                        title: Text(
+                          user.displayName,
+                          style: AppTextStyles.title,
+                        ),
+                        subtitle: Text(
+                          user.email,
+                          style: AppTextStyles.bodySmall,
+                        ),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () async {
+                          await Navigator.pushNamed(
+                            context,
+                            AppRoutes.adminUser(user.userId),
+                          );
+                          if (mounted) _load();
+                        },
+                      ),
                     ),
-                    title: Text(user.displayName, style: AppTextStyles.title),
-                    subtitle: Text(user.email, style: AppTextStyles.bodySmall),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () async {
-                      await Navigator.pushNamed(
-                        context,
-                        AppRoutes.adminUser(user.userId),
-                      );
-                      if (mounted) _load();
-                    },
                   ),
-                ),
-              ),
+              ],
+            ),
           ],
         ],
       ),

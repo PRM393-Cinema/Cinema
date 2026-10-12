@@ -7,6 +7,7 @@ import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/utils/layout.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_network_image.dart';
 import '../../../core/widgets/empty_state.dart';
@@ -179,6 +180,11 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
           child: LayoutBuilder(
             builder: (context, constraints) {
               final isWide = constraints.maxWidth >= 760;
+              final desktop = isDesktopLayout(context);
+              // On the website the page lines up with the navigation bar.
+              final side = desktop
+                  ? AppSpacing.lg
+                  : (isWide ? AppSpacing.xxl : AppSpacing.lg);
 
               return RefreshIndicator(
                 onRefresh: _loadShowtimes,
@@ -186,12 +192,16 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                   physics: const AlwaysScrollableScrollPhysics(),
                   child: Center(
                     child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1040),
+                      constraints: BoxConstraints(
+                        maxWidth: desktop
+                            ? pageMaxWidth + 2 * AppSpacing.lg
+                            : 1040,
+                      ),
                       child: Padding(
                         padding: EdgeInsets.fromLTRB(
-                          isWide ? AppSpacing.xxl : AppSpacing.lg,
+                          side,
                           AppSpacing.xl,
-                          isWide ? AppSpacing.xxl : AppSpacing.lg,
+                          side,
                           AppSpacing.xl + MediaQuery.paddingOf(context).bottom,
                         ),
                         child: Column(
@@ -420,6 +430,7 @@ class _SelectionBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final selected = showtime;
+    if (isDesktopLayout(context)) return _desktop(context, selected);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -484,4 +495,58 @@ class _SelectionBar extends StatelessWidget {
       ),
     );
   }
+
+  // Website: one row as wide as the page, the button on the right.
+  Widget _desktop(BuildContext context, Showtime? selected) => Padding(
+    padding: centeredPadding(
+      context,
+      AppSpacing.lg,
+      maxWidth: pageMaxWidth,
+    ).copyWith(top: AppSpacing.sm, bottom: AppSpacing.md),
+    child: CinemaPanel(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.md,
+      ),
+      surfaceOpacity: 0.85,
+      child: Row(
+        children: [
+          Expanded(
+            child: selected == null
+                ? const Text(
+                    'Choose a showtime to continue.',
+                    style: AppTextStyles.body,
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '${formatShortDate(selected.startTime)} • '
+                        '${formatTime(selected.startTime)} • '
+                        '${selected.roomLabel}',
+                        style: AppTextStyles.title,
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        '${formatVnd(selected.price)} / seat',
+                        style: AppTextStyles.bodySmall,
+                      ),
+                    ],
+                  ),
+          ),
+          const SizedBox(width: AppSpacing.lg),
+          SizedBox(
+            width: 280,
+            child: AppButton(
+              label: 'Continue to Seats',
+              leadingIcon: Icons.event_seat_outlined,
+              useGradient: true,
+              onPressed: onContinue,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }

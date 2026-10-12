@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/routes/app_routes.dart';
+import '../../../core/utils/layout.dart';
 import '../../../core/widgets/cinema_background.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_radius.dart';
@@ -53,7 +54,9 @@ class AuthScaffold extends StatelessWidget {
       body: SafeArea(
         child: Center(
           child: SizedBox(
-            width: 560,
+            // The website shows the backdrop across the whole window, with
+            // the form in the middle; the app keeps a phone-sized stage.
+            width: isDesktopLayout(context) ? double.infinity : 560,
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final topSpace = (constraints.maxHeight * 0.16)

@@ -8,6 +8,7 @@ import '../../../app/theme/app_text_styles.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/utils/layout.dart';
+import '../../../core/widgets/responsive_columns.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/cinema_page.dart';
 import '../../../core/widgets/error_state.dart';
@@ -122,13 +123,99 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
     final showtime = draft.showtime;
     final seatLabels = draft.seats.map((seat) => seat.label).join(', ');
 
+    final movieCard = _SummaryCard(
+      title: 'Movie',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(draft.movie.title, style: AppTextStyles.heading2),
+          const SizedBox(height: AppSpacing.sm),
+          _DetailRow(
+            icon: Icons.calendar_today_outlined,
+            text: formatLongDate(showtime.startTime),
+          ),
+          _DetailRow(
+            icon: Icons.access_time_outlined,
+            text: formatTime(showtime.startTime),
+          ),
+          _DetailRow(
+            icon: Icons.meeting_room_outlined,
+            text: showtime.roomLabel,
+          ),
+        ],
+      ),
+    );
+    final seatsCard = _SummaryCard(
+      title: 'Seats',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(seatLabels, style: AppTextStyles.body),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            '${draft.ticketCount} Ticket(s)',
+            style: AppTextStyles.bodySmall,
+          ),
+        ],
+      ),
+    );
+    final priceCard = _SummaryCard(
+      title: 'Price Details',
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  '${draft.ticketCount}x Ticket (${formatVnd(showtime.price)})',
+                  style: AppTextStyles.body,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Text(formatVnd(draft.totalPrice), style: AppTextStyles.body),
+            ],
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
+            child: Divider(height: 1, color: AppColors.border),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Total', style: AppTextStyles.heading2),
+              Text(
+                formatVnd(draft.totalPrice),
+                style: AppTextStyles.heading2.copyWith(
+                  color: AppColors.primary,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+    const holdNote = Text(
+      'Your seats will be held for 10 minutes while you pay with PayOS.',
+      style: AppTextStyles.bodySmall,
+    );
+    final error = _errorMessage;
+    final confirmButton = AppButton(
+      label: 'Confirm Booking',
+      useGradient: true,
+      trailingIcon: Icons.arrow_forward_rounded,
+      isLoading: _isSubmitting,
+      onPressed: _isSubmitting ? null : () => _confirmBooking(draft),
+    );
+    final desktop = isDesktopLayout(context);
+
     return Scaffold(
       body: CinemaBackground(
         child: SafeArea(
           child: Column(
             children: [
               Padding(
-                padding: centeredPadding(context, AppSpacing.lg),
+                padding: pagePadding(context, AppSpacing.lg),
                 child: const Align(
                   alignment: Alignment.centerLeft,
                   child: Text('Booking Summary', style: AppTextStyles.heading2),
@@ -136,126 +223,39 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
               ),
               Expanded(
                 child: SingleChildScrollView(
-                  padding: centeredPadding(context, AppSpacing.xl),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _SummaryCard(
-                        title: 'Movie',
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              draft.movie.title,
-                              style: AppTextStyles.heading2,
-                            ),
-                            const SizedBox(height: AppSpacing.sm),
-                            _DetailRow(
-                              icon: Icons.calendar_today_outlined,
-                              text: formatLongDate(showtime.startTime),
-                            ),
-                            _DetailRow(
-                              icon: Icons.access_time_outlined,
-                              text: formatTime(showtime.startTime),
-                            ),
-                            _DetailRow(
-                              icon: Icons.meeting_room_outlined,
-                              text: showtime.roomLabel,
-                            ),
-                          ],
-                        ),
-                      ),
+                  padding: pagePadding(context, AppSpacing.xl),
+                  // Website: the order with the price and Confirm next to it.
+                  child: ResponsiveColumns(
+                    main: [
+                      movieCard,
                       const SizedBox(height: AppSpacing.xl),
-                      _SummaryCard(
-                        title: 'Seats',
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(seatLabels, style: AppTextStyles.body),
-                            const SizedBox(height: AppSpacing.xs),
-                            Text(
-                              '${draft.ticketCount} Ticket(s)',
-                              style: AppTextStyles.bodySmall,
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.xl),
-                      _SummaryCard(
-                        title: 'Price Details',
-                        child: Column(
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    '${draft.ticketCount}x Ticket (${formatVnd(showtime.price)})',
-                                    style: AppTextStyles.body,
-                                  ),
-                                ),
-                                const SizedBox(width: AppSpacing.sm),
-                                Text(
-                                  formatVnd(draft.totalPrice),
-                                  style: AppTextStyles.body,
-                                ),
-                              ],
-                            ),
-                            const Padding(
-                              padding: EdgeInsets.symmetric(
-                                vertical: AppSpacing.md,
-                              ),
-                              child: Divider(
-                                height: 1,
-                                color: AppColors.border,
-                              ),
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text(
-                                  'Total',
-                                  style: AppTextStyles.heading2,
-                                ),
-                                Text(
-                                  formatVnd(draft.totalPrice),
-                                  style: AppTextStyles.heading2.copyWith(
-                                    color: AppColors.primary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
+                      seatsCard,
+                      if (!desktop) const SizedBox(height: AppSpacing.xl),
+                    ],
+                    side: [
+                      priceCard,
                       const SizedBox(height: AppSpacing.lg),
-                      const Text(
-                        'Your seats will be held for 10 minutes while you pay with PayOS.',
-                        style: AppTextStyles.bodySmall,
-                      ),
-                      if (_errorMessage != null) ...[
+                      holdNote,
+                      if (error != null) ...[
                         const SizedBox(height: AppSpacing.lg),
-                        _ErrorBanner(message: _errorMessage!),
+                        _ErrorBanner(message: error),
+                      ],
+                      if (desktop) ...[
+                        const SizedBox(height: AppSpacing.xl),
+                        confirmButton,
                       ],
                     ],
                   ),
                 ),
               ),
-              Padding(
-                padding: centeredPadding(
-                  context,
-                  AppSpacing.lg,
-                ).copyWith(top: AppSpacing.sm),
-                child: AppButton(
-                  label: 'Confirm Booking',
-                  useGradient: true,
-                  trailingIcon: Icons.arrow_forward_rounded,
-                  isLoading: _isSubmitting,
-                  onPressed: _isSubmitting
-                      ? null
-                      : () => _confirmBooking(draft),
+              if (!desktop)
+                Padding(
+                  padding: centeredPadding(
+                    context,
+                    AppSpacing.lg,
+                  ).copyWith(top: AppSpacing.sm),
+                  child: confirmButton,
                 ),
-              ),
             ],
           ),
         ),

@@ -12,6 +12,8 @@ import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/top_notice.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
+import '../../../core/widgets/responsive_columns.dart';
+import '../widgets/admin_layout.dart';
 import '../widgets/admin_page.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_state.dart';
@@ -100,78 +102,95 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
       onRefresh: () => _load(page: _result?.pageNumber ?? 1),
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: centeredPadding(
+        padding: pagePadding(
           context,
           AppSpacing.lg,
         ).copyWith(bottom: 112 + MediaQuery.viewPaddingOf(context).bottom),
         children: [
-          AppButton(
-            label: 'Create account',
-            leadingIcon: Icons.person_add_alt_1_rounded,
-            useGradient: true,
-            onPressed: _loading ? null : () => _open(AppRoutes.adminCreateUser),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          Row(
+          AdminControls(
             children: [
-              Expanded(
-                child: AppTextField(
-                  label: 'Search name or email',
-                  controller: _search,
-                  enabled: !_loading,
-                  prefixIcon: const Icon(Icons.search_rounded),
-                ),
+              AppButton(
+                label: 'Create account',
+                leadingIcon: Icons.person_add_alt_1_rounded,
+                useGradient: true,
+                onPressed: _loading
+                    ? null
+                    : () => _open(AppRoutes.adminCreateUser),
               ),
-              IconButton(
-                tooltip: 'Search accounts',
-                onPressed: _loading ? null : () => _load(),
-                icon: const Icon(Icons.search_rounded),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
-          Row(
-            children: [
-              Expanded(
-                child: DropdownButton<String>(
-                  isExpanded: true,
-                  value: _role ?? 'all',
-                  items: [
-                    const DropdownMenuItem(
-                      value: 'all',
-                      child: Text('All roles'),
+              const SizedBox(height: AppSpacing.lg),
+              Row(
+                children: [
+                  Expanded(
+                    child: AppTextField(
+                      label: 'Search name or email',
+                      controller: _search,
+                      enabled: !_loading,
+                      prefixIcon: const Icon(Icons.search_rounded),
                     ),
-                    for (final role in _roles)
-                      DropdownMenuItem(
-                        value: role,
-                        child: Text(_roleName(role)),
-                      ),
-                  ],
-                  onChanged: _loading
-                      ? null
-                      : (value) {
-                          setState(() => _role = value == 'all' ? null : value);
-                          _load();
-                        },
-                ),
+                  ),
+                  IconButton(
+                    tooltip: 'Search accounts',
+                    onPressed: _loading ? null : () => _load(),
+                    icon: const Icon(Icons.search_rounded),
+                  ),
+                ],
               ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: DropdownButton<String>(
-                  isExpanded: true,
-                  value: _status,
-                  items: const [
-                    DropdownMenuItem(value: 'all', child: Text('All statuses')),
-                    DropdownMenuItem(value: 'active', child: Text('Active')),
-                    DropdownMenuItem(value: 'locked', child: Text('Locked')),
-                  ],
-                  onChanged: _loading
-                      ? null
-                      : (value) {
-                          setState(() => _status = value!);
-                          _load();
-                        },
-                ),
+              const SizedBox(height: AppSpacing.md),
+              Row(
+                children: [
+                  Expanded(
+                    child: DropdownButton<String>(
+                      isExpanded: true,
+                      value: _role ?? 'all',
+                      items: [
+                        const DropdownMenuItem(
+                          value: 'all',
+                          child: Text('All roles'),
+                        ),
+                        for (final role in _roles)
+                          DropdownMenuItem(
+                            value: role,
+                            child: Text(_roleName(role)),
+                          ),
+                      ],
+                      onChanged: _loading
+                          ? null
+                          : (value) {
+                              setState(
+                                () => _role = value == 'all' ? null : value,
+                              );
+                              _load();
+                            },
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: DropdownButton<String>(
+                      isExpanded: true,
+                      value: _status,
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'all',
+                          child: Text('All statuses'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'active',
+                          child: Text('Active'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'locked',
+                          child: Text('Locked'),
+                        ),
+                      ],
+                      onChanged: _loading
+                          ? null
+                          : (value) {
+                              setState(() => _status = value!);
+                              _load();
+                            },
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -199,52 +218,60 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                   style: AppTextStyles.bodySmall,
                 ),
               ),
-            for (final user in _result?.items ?? <AuthUser>[])
-              Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(20),
-                  onTap: () => _open(AppRoutes.adminUser(user.userId)),
-                  child: CinemaPanel(
-                    surfaceOpacity: 0.8,
-                    child: Row(
-                      children: [
-                        Icon(
-                          user.enabled
-                              ? Icons.person_outline_rounded
-                              : Icons.person_off_outlined,
-                          color: user.enabled
-                              ? AppColors.primary
-                              : AppColors.error,
-                        ),
-                        const SizedBox(width: AppSpacing.md),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                user.displayName,
-                                style: AppTextStyles.title,
+            CardColumns(
+              runSpacing: 0,
+              children: [
+                for (final user in _result?.items ?? <AuthUser>[])
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(20),
+                      onTap: () => _open(AppRoutes.adminUser(user.userId)),
+                      child: CinemaPanel(
+                        surfaceOpacity: 0.8,
+                        child: Row(
+                          children: [
+                            Icon(
+                              user.enabled
+                                  ? Icons.person_outline_rounded
+                                  : Icons.person_off_outlined,
+                              color: user.enabled
+                                  ? AppColors.primary
+                                  : AppColors.error,
+                            ),
+                            const SizedBox(width: AppSpacing.md),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    user.displayName,
+                                    style: AppTextStyles.title,
+                                  ),
+                                  const SizedBox(height: AppSpacing.xs),
+                                  Text(
+                                    user.email,
+                                    style: AppTextStyles.bodySmall,
+                                  ),
+                                  const SizedBox(height: AppSpacing.sm),
+                                  Text(
+                                    '${user.roles.map(_roleName).join(', ')} · ${user.enabled ? 'Active' : 'Locked'}',
+                                    style: AppTextStyles.caption,
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: AppSpacing.xs),
-                              Text(user.email, style: AppTextStyles.bodySmall),
-                              const SizedBox(height: AppSpacing.sm),
-                              Text(
-                                '${user.roles.map(_roleName).join(', ')} · ${user.enabled ? 'Active' : 'Locked'}',
-                                style: AppTextStyles.caption,
-                              ),
-                            ],
-                          ),
+                            ),
+                            const Icon(
+                              Icons.chevron_right_rounded,
+                              color: AppColors.textSecondary,
+                            ),
+                          ],
                         ),
-                        const Icon(
-                          Icons.chevron_right_rounded,
-                          color: AppColors.textSecondary,
-                        ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-              ),
+              ],
+            ),
             if ((_result?.totalPages ?? 0) > 1)
               Row(
                 children: [

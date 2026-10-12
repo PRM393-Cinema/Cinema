@@ -11,6 +11,7 @@ import '../features/admin/screens/admin_movies_screen.dart';
 import '../features/admin/screens/admin_rooms_screen.dart';
 import '../features/admin/screens/admin_users_screen.dart';
 import '../features/admin/screens/staff_only_screen.dart';
+import '../features/admin/widgets/admin_page.dart';
 import '../features/auth/screens/forgot_password_screen.dart';
 import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/reset_password_screen.dart';
@@ -65,7 +66,14 @@ class AdminRouter {
       _Access.admin => isAdminAccount(roles),
     };
     final target = allowed ? match : _landing();
-    return _page(target.settings, target.builder);
+    if (target.access == _Access.public) {
+      return _page(target.settings, target.builder);
+    }
+    // Staff and admin pages sit next to the navigation.
+    return _page(
+      target.settings,
+      (_) => AdminViewport(child: Builder(builder: target.builder)),
+    );
   }
 
   // The navigation is on every page, so a page opened from its URL needs no

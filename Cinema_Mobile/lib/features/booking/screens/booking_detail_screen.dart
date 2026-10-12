@@ -7,6 +7,7 @@ import '../../../app/theme/app_text_styles.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/utils/layout.dart';
+import '../../../core/widgets/responsive_columns.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
 import '../../../core/widgets/cinema_page.dart';
@@ -220,8 +221,229 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         booking.showTime != null &&
         booking.showTime!.isAfter(DateTime.now());
 
+    final headerCard = CinemaPanel(
+      surfaceOpacity: 0.8,
+      padding: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              spacing: AppSpacing.md,
+              runSpacing: AppSpacing.sm,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                const Icon(
+                  Icons.local_activity_outlined,
+                  color: AppColors.primary,
+                  size: 24,
+                ),
+                Text(
+                  'Your booking',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                BookingStatusBadge(status: booking.status),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              booking.movieTitle ?? 'Unknown Movie',
+              style: AppTextStyles.heading2,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              'Booking code',
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            SelectableText(
+              booking.bookingCode,
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+              child: Divider(height: 1, color: AppColors.border),
+            ),
+            Wrap(
+              spacing: AppSpacing.xl,
+              runSpacing: AppSpacing.md,
+              children: [
+                _ShowtimeField(
+                  icon: Icons.calendar_today_outlined,
+                  label: 'Show date',
+                  value: showDateStr,
+                ),
+                _ShowtimeField(
+                  icon: Icons.schedule_outlined,
+                  label: 'Show time',
+                  value: showTimeStr,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+    final seatsCard = _DetailSection(
+      title: 'Seats & Tickets',
+      icon: Icons.event_seat_outlined,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              for (final seat in booking.seats)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.sm,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: AppColors.primary.withValues(alpha: 0.35),
+                    ),
+                  ),
+                  child: Text(
+                    seat.seatLabel,
+                    style: AppTextStyles.title.copyWith(
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            '${booking.seats.length} Ticket(s)',
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+    final paymentCard = _DetailSection(
+      title: 'Payment Summary',
+      icon: Icons.receipt_long_outlined,
+      child: Column(
+        children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Total Amount',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  formatVnd(booking.totalAmount),
+                  style: AppTextStyles.heading1.copyWith(
+                    color: AppColors.primary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          if (booking.paymentId != null) ...[
+            const SizedBox(height: AppSpacing.xs),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Payment ID',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                Text(
+                  '${booking.paymentId}',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+          ],
+          if (_refund != null) ...[
+            const SizedBox(height: AppSpacing.xs),
+            _RefundRow(refund: _refund!),
+          ],
+        ],
+      ),
+    );
+    final timelineCard = _DetailSection(
+      title: 'Timeline',
+      icon: Icons.history_outlined,
+      child: Column(
+        children: [
+          _TimelineRow(
+            label: 'Created',
+            value: formatDateTime(booking.createdAt),
+          ),
+          if (booking.expiresAt != null &&
+              booking.status == BookingStatus.pending)
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.sm),
+              child: _TimelineRow(
+                label: 'Expires',
+                value: formatDateTime(booking.expiresAt!),
+                isWarning: true,
+              ),
+            ),
+        ],
+      ),
+    );
+    final lateNote = Text(
+      'Paid bookings can be cancelled up to '
+      '${Booking.cancelBeforeShowtime.inHours} hours before the show. '
+      'Please contact the cinema for help.',
+      style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary),
+    );
+    final actions = Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (canPay) ...[
+          AppButton(
+            label: 'Pay Now',
+            useGradient: true,
+            leadingIcon: Icons.qr_code_2_rounded,
+            onPressed: _isCancelling ? null : () => _payNow(booking),
+          ),
+          const SizedBox(height: AppSpacing.md),
+        ],
+        if (canCancel)
+          AppButton.danger(
+            label: booking.status == BookingStatus.confirmed
+                ? 'Request refund'
+                : 'Cancel Booking',
+            isLoading: _isCancelling,
+            onPressed: _isCancelling ? null : () => _cancelBooking(booking),
+          ),
+      ],
+    );
+    final hasActions = canPay || canCancel;
+    final desktop = isDesktopLayout(context);
+
     return CinemaPage(
       title: 'Booking Detail',
+      width: PageWidth.page,
       child: Column(
         children: [
           if (_isRefreshing) const LinearProgressIndicator(minHeight: 2),
@@ -230,229 +452,30 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
               onRefresh: _refresh,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: centeredPadding(context, AppSpacing.xl),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Header Card
-                    CinemaPanel(
-                      surfaceOpacity: 0.8,
-                      padding: EdgeInsets.zero,
-                      child: Padding(
-                        padding: const EdgeInsets.all(AppSpacing.lg),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Wrap(
-                              spacing: AppSpacing.md,
-                              runSpacing: AppSpacing.sm,
-                              crossAxisAlignment: WrapCrossAlignment.center,
-                              children: [
-                                const Icon(
-                                  Icons.local_activity_outlined,
-                                  color: AppColors.primary,
-                                  size: 24,
-                                ),
-                                Text(
-                                  'Your booking',
-                                  style: AppTextStyles.bodySmall.copyWith(
-                                    color: AppColors.textPrimary,
-                                  ),
-                                ),
-                                BookingStatusBadge(status: booking.status),
-                              ],
-                            ),
-                            const SizedBox(height: AppSpacing.sm),
-                            Text(
-                              booking.movieTitle ?? 'Unknown Movie',
-                              style: AppTextStyles.heading2,
-                            ),
-                            const SizedBox(height: AppSpacing.md),
-                            Text(
-                              'Booking code',
-                              style: AppTextStyles.bodySmall.copyWith(
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                            const SizedBox(height: AppSpacing.xs),
-                            SelectableText(
-                              booking.bookingCode,
-                              style: AppTextStyles.bodySmall.copyWith(
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                            const Padding(
-                              padding: EdgeInsets.symmetric(
-                                vertical: AppSpacing.lg,
-                              ),
-                              child: Divider(
-                                height: 1,
-                                color: AppColors.border,
-                              ),
-                            ),
-                            Wrap(
-                              spacing: AppSpacing.xl,
-                              runSpacing: AppSpacing.md,
-                              children: [
-                                _ShowtimeField(
-                                  icon: Icons.calendar_today_outlined,
-                                  label: 'Show date',
-                                  value: showDateStr,
-                                ),
-                                _ShowtimeField(
-                                  icon: Icons.schedule_outlined,
-                                  label: 'Show time',
-                                  value: showTimeStr,
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                padding: pagePadding(context, AppSpacing.xl),
+                // Website: the ticket on the left, payment and actions on
+                // the right.
+                child: ResponsiveColumns(
+                  main: [
+                    headerCard,
                     const SizedBox(height: AppSpacing.xl),
-
-                    // Seats Card
-                    _DetailSection(
-                      title: 'Seats & Tickets',
-                      icon: Icons.event_seat_outlined,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Wrap(
-                            spacing: AppSpacing.sm,
-                            runSpacing: AppSpacing.sm,
-                            children: [
-                              for (final seat in booking.seats)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: AppSpacing.md,
-                                    vertical: AppSpacing.sm,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primary.withValues(
-                                      alpha: 0.08,
-                                    ),
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(
-                                      color: AppColors.primary.withValues(
-                                        alpha: 0.35,
-                                      ),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    seat.seatLabel,
-                                    style: AppTextStyles.title.copyWith(
-                                      color: AppColors.primary,
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                          const SizedBox(height: AppSpacing.xs),
-                          Text(
-                            '${booking.seats.length} Ticket(s)',
-                            style: AppTextStyles.bodySmall.copyWith(
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    seatsCard,
                     const SizedBox(height: AppSpacing.xl),
-
-                    // Price Card
-                    _DetailSection(
-                      title: 'Payment Summary',
-                      icon: Icons.receipt_long_outlined,
-                      child: Column(
-                        children: [
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Total Amount',
-                                  style: AppTextStyles.bodySmall.copyWith(
-                                    color: AppColors.textPrimary,
-                                  ),
-                                ),
-                                const SizedBox(height: AppSpacing.xs),
-                                Text(
-                                  formatVnd(booking.totalAmount),
-                                  style: AppTextStyles.heading1.copyWith(
-                                    color: AppColors.primary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: AppSpacing.md),
-                          if (booking.paymentId != null) ...[
-                            const SizedBox(height: AppSpacing.xs),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'Payment ID',
-                                  style: AppTextStyles.bodySmall.copyWith(
-                                    color: AppColors.textPrimary,
-                                  ),
-                                ),
-                                Text(
-                                  '${booking.paymentId}',
-                                  style: AppTextStyles.bodySmall.copyWith(
-                                    color: AppColors.textPrimary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                          if (_refund != null) ...[
-                            const SizedBox(height: AppSpacing.xs),
-                            _RefundRow(refund: _refund!),
-                          ],
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.xl),
-
-                    // Timeline Card
-                    _DetailSection(
-                      title: 'Timeline',
-                      icon: Icons.history_outlined,
-                      child: Column(
-                        children: [
-                          _TimelineRow(
-                            label: 'Created',
-                            value: formatDateTime(booking.createdAt),
-                          ),
-                          if (booking.expiresAt != null &&
-                              booking.status == BookingStatus.pending)
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                top: AppSpacing.sm,
-                              ),
-                              child: _TimelineRow(
-                                label: 'Expires',
-                                value: formatDateTime(booking.expiresAt!),
-                                isWarning: true,
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
+                    if (desktop) timelineCard,
+                  ],
+                  side: [
+                    paymentCard,
+                    if (!desktop) ...[
+                      const SizedBox(height: AppSpacing.xl),
+                      timelineCard,
+                    ],
                     if (paidButTooLate) ...[
                       const SizedBox(height: AppSpacing.lg),
-                      Text(
-                        'Paid bookings can be cancelled up to '
-                        '${Booking.cancelBeforeShowtime.inHours} hours before the show. '
-                        'Please contact the cinema for help.',
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
+                      lateNote,
+                    ],
+                    if (desktop && hasActions) ...[
+                      const SizedBox(height: AppSpacing.xl),
+                      actions,
                     ],
                   ],
                 ),
@@ -461,34 +484,10 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
           ),
 
           // Bottom Actions
-          if (canPay || canCancel)
+          if (!desktop && hasActions)
             Padding(
               padding: centeredPadding(context, AppSpacing.lg),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (canPay) ...[
-                    AppButton(
-                      label: 'Pay Now',
-                      useGradient: true,
-                      leadingIcon: Icons.qr_code_2_rounded,
-                      onPressed: _isCancelling ? null : () => _payNow(booking),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                  ],
-                  if (canCancel)
-                    AppButton.danger(
-                      label: booking.status == BookingStatus.confirmed
-                          ? 'Request refund'
-                          : 'Cancel Booking',
-                      isLoading: _isCancelling,
-                      onPressed: _isCancelling
-                          ? null
-                          : () => _cancelBooking(booking),
-                    ),
-                ],
-              ),
+              child: actions,
             ),
         ],
       ),

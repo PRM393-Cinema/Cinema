@@ -9,6 +9,7 @@ import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/utils/layout.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_network_image.dart';
 import '../../../core/widgets/empty_state.dart';
@@ -203,6 +204,109 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
     final selectedLabels = _selectedSeats(data)
         .map((seat) => seat.label)
         .join(', ');
+    final onContinue = data != null && _selectedSeatIds.isNotEmpty
+        ? () => _continue(args, data)
+        : null;
+
+    if (isDesktopLayout(context)) {
+      // Website: the seat map with the order summary next to it.
+      return Scaffold(
+        body: CinemaBackground(
+          child: SafeArea(
+            child: Padding(
+              padding: pagePadding(context, AppSpacing.lg),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text('Select Seats', style: AppTextStyles.heading2),
+                  const SizedBox(height: AppSpacing.lg),
+                  Expanded(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          child: CinemaPanel(
+                            surfaceOpacity: 0.45,
+                            child: _buildSeatMap(data),
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.xl),
+                        SizedBox(
+                          width: 360,
+                          child: SingleChildScrollView(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                CinemaPanel(
+                                  padding: EdgeInsets.zero,
+                                  surfaceOpacity: 0.8,
+                                  child: _ShowtimeSummary(
+                                    movie: args.movie,
+                                    showtime: showtime,
+                                  ),
+                                ),
+                                const SizedBox(height: AppSpacing.md),
+                                CinemaPanel(
+                                  surfaceOpacity: 0.8,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      const Text(
+                                        'Your seats',
+                                        style: AppTextStyles.title,
+                                      ),
+                                      const SizedBox(height: AppSpacing.sm),
+                                      Text(
+                                        selectedLabels.isEmpty
+                                            ? 'Choose your seats on the map.'
+                                            : selectedLabels,
+                                        style: selectedLabels.isEmpty
+                                            ? AppTextStyles.bodySmall
+                                            : AppTextStyles.body,
+                                      ),
+                                      const SizedBox(height: AppSpacing.lg),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            '${_selectedSeatIds.length} seat(s)',
+                                            style: AppTextStyles.bodySmall,
+                                          ),
+                                          const Spacer(),
+                                          Text(
+                                            formatVnd(totalPrice),
+                                            style: AppTextStyles.heading2
+                                                .copyWith(
+                                                  color: AppColors.primary,
+                                                ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: AppSpacing.lg),
+                                      AppButton(
+                                        label: 'Continue',
+                                        useGradient: true,
+                                        trailingIcon:
+                                            Icons.arrow_forward_rounded,
+                                        onPressed: onContinue,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       body: CinemaBackground(
@@ -290,10 +394,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                               label: 'Continue',
                               useGradient: true,
                               trailingIcon: Icons.arrow_forward_rounded,
-                              onPressed:
-                                  data != null && _selectedSeatIds.isNotEmpty
-                                  ? () => _continue(args, data)
-                                  : null,
+                              onPressed: onContinue,
                             ),
                           ],
                         ),

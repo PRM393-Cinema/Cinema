@@ -49,6 +49,11 @@ flutter run -d chrome -t lib/main_admin.dart --web-port 5501 --dart-define=CUSTO
 ## Build for the web
 
 The responsive Flutter web app uses the same customer flows and API as mobile.
+Windows at least 900 px wide get the website layout: navigation at the top
+instead of the tab bar, and pages in columns (seat map with the order summary,
+booking details with payment and actions on the right). Narrower windows and
+phones get the app layout. The breakpoint and page widths are in
+`lib/core/utils/layout.dart`.
 Build it for deployment with an HTTPS API endpoint:
 
 ```sh

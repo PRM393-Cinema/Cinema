@@ -81,6 +81,14 @@ class AdminPage extends StatelessWidget {
 
   static const drawerBelow = 640.0;
   static const labelsFrom = 1100.0;
+  static const _railWidth = 88.0;
+  static const _extendedRailWidth = 240.0;
+
+  // Width the navigation takes next to the page in a window this wide (with
+  // its divider); 0 when it is in a drawer.
+  static double navigationWidth(double windowWidth) => windowWidth < drawerBelow
+      ? 0
+      : (windowWidth >= labelsFrom ? _extendedRailWidth : _railWidth) + 1;
 
   @override
   Widget build(BuildContext context) {
@@ -124,12 +132,15 @@ class AdminPage extends StatelessWidget {
             child: SafeArea(
               child: Row(
                 children: [
-                  _NavigationSide(
-                    admin: admin,
-                    extended: constraints.maxWidth >= labelsFrom,
-                    destinations: destinations,
-                    selected: selected,
-                    onOpen: open,
+                  SizedBox(
+                    width: navigationWidth(constraints.maxWidth) - 1,
+                    child: _NavigationSide(
+                      admin: admin,
+                      extended: constraints.maxWidth >= labelsFrom,
+                      destinations: destinations,
+                      selected: selected,
+                      onOpen: open,
+                    ),
                   ),
                   const VerticalDivider(
                     width: 1,
@@ -143,6 +154,27 @@ class AdminPage extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+// Gives a staff or admin page the size of its content area (the window minus
+// the navigation), so pages that size and centre their content from
+// MediaQuery line up with the page title instead of the whole window.
+class AdminViewport extends StatelessWidget {
+  const AdminViewport({required this.child, super.key});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+    final width = media.size.width;
+    return MediaQuery(
+      data: media.copyWith(
+        size: Size(width - AdminPage.navigationWidth(width), media.size.height),
+      ),
+      child: child,
     );
   }
 }
@@ -237,7 +269,8 @@ class _NavigationSide extends StatelessWidget {
   Widget build(BuildContext context) {
     return NavigationRail(
       extended: extended,
-      minExtendedWidth: 220,
+      minWidth: AdminPage._railWidth,
+      minExtendedWidth: AdminPage._extendedRailWidth,
       backgroundColor: AppColors.surface.withValues(alpha: 0.72),
       selectedIndex: selected < 0 ? null : selected,
       onDestinationSelected: onOpen,

@@ -76,8 +76,11 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
   }
 
   @override
-  Widget build(BuildContext context) =>
-      CinemaPage(title: 'Payment history', child: _body());
+  Widget build(BuildContext context) => CinemaPage(
+    title: 'Payment history',
+    width: PageWidth.reading,
+    child: _body(),
+  );
 
   Widget _body() {
     if (_loading) return const LoadingState(message: 'Loading payments...');
@@ -92,7 +95,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
       onRefresh: _load,
       child: ListView.separated(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: centeredPadding(context, AppSpacing.lg),
+        padding: widthPadding(context, AppSpacing.lg, PageWidth.reading),
         itemCount: _payments.isEmpty ? 1 : _payments.length,
         separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.md),
         itemBuilder: (context, index) {

@@ -18,6 +18,8 @@ import '../../../data/models/movie_draft.dart';
 import '../../../data/models/paged_result.dart';
 import '../../../data/services/staff_service.dart';
 import '../../staff/widgets/staff_feedback.dart';
+import '../../../core/widgets/responsive_columns.dart';
+import '../widgets/admin_layout.dart';
 import '../widgets/admin_page.dart';
 import '../widgets/admin_pager.dart';
 
@@ -148,47 +150,51 @@ class _AdminMoviesScreenState extends State<AdminMoviesScreen> {
         onRefresh: () => _load(page: result?.pageNumber ?? 1),
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: centeredPadding(context, AppSpacing.lg),
+          padding: pagePadding(context, AppSpacing.lg),
           children: [
-            AppButton(
-              key: const Key('addMovieButton'),
-              label: 'Add movie',
-              leadingIcon: Icons.add_rounded,
-              useGradient: true,
-              onPressed: busy ? null : () => _edit(),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            Row(
+            AdminControls(
               children: [
-                Expanded(
-                  child: AppTextField(
-                    key: const Key('movieSearchField'),
-                    label: 'Search titles',
-                    controller: _search,
-                    enabled: !busy,
-                    prefixIcon: const Icon(Icons.search_rounded),
-                  ),
+                AppButton(
+                  key: const Key('addMovieButton'),
+                  label: 'Add movie',
+                  leadingIcon: Icons.add_rounded,
+                  useGradient: true,
+                  onPressed: busy ? null : () => _edit(),
                 ),
-                IconButton(
-                  tooltip: 'Search movies',
-                  onPressed: busy ? null : _searchMovies,
-                  icon: const Icon(Icons.search_rounded),
+                const SizedBox(height: AppSpacing.lg),
+                Row(
+                  children: [
+                    Expanded(
+                      child: AppTextField(
+                        key: const Key('movieSearchField'),
+                        label: 'Search titles',
+                        controller: _search,
+                        enabled: !busy,
+                        prefixIcon: const Icon(Icons.search_rounded),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Search movies',
+                      onPressed: busy ? null : _searchMovies,
+                      icon: const Icon(Icons.search_rounded),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.md),
+                DropdownButton<String>(
+                  key: const Key('movieStatusFilter'),
+                  isExpanded: true,
+                  value: _status ?? 'all',
+                  items: const [
+                    DropdownMenuItem(value: 'all', child: Text('All movies')),
+                    DropdownMenuItem(value: _showing, child: Text('Showing')),
+                    DropdownMenuItem(value: _stopped, child: Text('Stopped')),
+                  ],
+                  onChanged: busy
+                      ? null
+                      : (value) => _filter(value == 'all' ? null : value),
                 ),
               ],
-            ),
-            const SizedBox(height: AppSpacing.md),
-            DropdownButton<String>(
-              key: const Key('movieStatusFilter'),
-              isExpanded: true,
-              value: _status ?? 'all',
-              items: const [
-                DropdownMenuItem(value: 'all', child: Text('All movies')),
-                DropdownMenuItem(value: _showing, child: Text('Showing')),
-                DropdownMenuItem(value: _stopped, child: Text('Stopped')),
-              ],
-              onChanged: busy
-                  ? null
-                  : (value) => _filter(value == 'all' ? null : value),
             ),
             const SizedBox(height: AppSpacing.lg),
             if (_loading)
@@ -214,18 +220,23 @@ class _AdminMoviesScreenState extends State<AdminMoviesScreen> {
                     style: AppTextStyles.bodySmall,
                   ),
                 ),
-              for (final movie in result.items)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                  child: _MovieCard(
-                    movie: movie,
-                    busy: _busyId == movie.id,
-                    onEdit: busy ? null : () => _edit(movie),
-                    onSetShowing: busy
-                        ? null
-                        : (showing) => _setShowing(movie, showing: showing),
-                  ),
-                ),
+              CardColumns(
+                runSpacing: 0,
+                children: [
+                  for (final movie in result.items)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                      child: _MovieCard(
+                        movie: movie,
+                        busy: _busyId == movie.id,
+                        onEdit: busy ? null : () => _edit(movie),
+                        onSetShowing: busy
+                            ? null
+                            : (showing) => _setShowing(movie, showing: showing),
+                      ),
+                    ),
+                ],
+              ),
               if (result.totalPages > 1)
                 AdminPager(
                   page: result.pageNumber,

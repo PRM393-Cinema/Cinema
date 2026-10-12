@@ -5,13 +5,14 @@ import '../data/repositories/auth_repository.dart';
 import '../data/repositories/booking_repository.dart';
 import '../data/repositories/catalog_repository.dart';
 import '../features/payment/payment_args.dart';
+import 'customer_frame.dart';
 import 'routes/app_router.dart';
 import 'routes/app_routes.dart';
 import 'session_app.dart';
 
 // Customer app, on the web and on phones. Staff and admins use the admin
 // website instead (lib/main_admin.dart).
-class CinemaApp extends StatelessWidget {
+class CinemaApp extends StatefulWidget {
   const CinemaApp({
     required this.authRepository,
     required this.catalogRepository,
@@ -30,18 +31,34 @@ class CinemaApp extends StatelessWidget {
   final PayOsReturn? paymentReturn;
 
   @override
+  State<CinemaApp> createState() => _CinemaAppState();
+}
+
+class _CinemaAppState extends State<CinemaApp> {
+  final _routes = RouteTracker();
+
+  @override
+  void dispose() {
+    _routes.current.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final router = AppRouter(
-      authRepository: authRepository,
-      catalogRepository: catalogRepository,
-      bookingRepository: bookingRepository,
+      authRepository: widget.authRepository,
+      catalogRepository: widget.catalogRepository,
+      bookingRepository: widget.bookingRepository,
       session: SessionProvider.of(context),
     );
-    final payOsReturn = paymentReturn;
+    final payOsReturn = widget.paymentReturn;
 
     return SessionApp(
       title: 'CosmoQ Cinema',
-      initialRoute: initialRoute,
+      initialRoute: widget.initialRoute,
+      navigatorObservers: [_routes],
+      builder: (context, child) =>
+          CustomerFrame(routes: _routes, child: child ?? const SizedBox()),
       onGenerateRoute: router.onGenerateRoute,
       onGenerateInitialRoutes: (name) => router.onGenerateInitialRoutes(
         payOsReturn == null

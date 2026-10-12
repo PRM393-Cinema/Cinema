@@ -5,6 +5,7 @@ import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/utils/layout.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
@@ -16,6 +17,8 @@ import '../../../data/models/payment.dart';
 import '../../../data/models/room.dart';
 import '../../../data/models/showtime.dart';
 import '../../../data/services/staff_service.dart';
+import '../../../core/widgets/responsive_columns.dart';
+import '../../admin/widgets/admin_layout.dart';
 import '../../admin/widgets/admin_page.dart';
 import '../widgets/staff_feedback.dart';
 
@@ -122,145 +125,146 @@ class _StaffOperationsScreenState extends State<StaffOperationsScreen> {
       onRefresh: () => _load(),
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: staffPadding(context),
+        padding: pagePadding(context, AppSpacing.lg),
         children: [
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                for (final section in sections)
-                  Padding(
-                    padding: const EdgeInsets.only(right: AppSpacing.sm),
-                    child: ChoiceChip(
-                      label: Text(section),
-                      selected: _section == section,
-                      onSelected: _loading
-                          ? null
-                          : (_) {
-                              setState(() {
-                                _section = section;
-                                _status = 'ALL';
-                                _dates = null;
-                                _lookup.clear();
-                                _result = null;
-                              });
-                              _load();
-                            },
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          if (_section == 'Bookings' || _section == 'Rooms')
-            Row(
-              children: [
-                Expanded(
-                  child: AppTextField(
-                    controller: _lookup,
-                    label: _section == 'Rooms'
-                        ? 'Search room name'
-                        : 'Booking ID',
-                    keyboardType: _section == 'Rooms'
-                        ? TextInputType.text
-                        : TextInputType.number,
-                  ),
-                ),
-                IconButton(
-                  tooltip: _section == 'Rooms'
-                      ? 'Search rooms'
-                      : 'Open booking',
-                  icon: const Icon(Icons.search),
-                  onPressed: _loading
-                      ? null
-                      : () {
-                          if (_section == 'Rooms') {
-                            _load();
-                            return;
-                          }
-                          final id = int.tryParse(_lookup.text.trim());
-                          if (id == null || id <= 0) {
-                            setState(
-                              () => _error = 'Enter a valid booking ID.',
-                            );
-                            return;
-                          }
-                          _open(AppRoutes.staffRecord('bookings', id));
-                        },
-                ),
-              ],
-            ),
-          if (_section == 'Bookings' || _section == 'Refunds')
-            DropdownButton<String>(
-              value: _status,
-              isExpanded: true,
-              items: [
-                for (final status
-                    in _section == 'Bookings'
-                        ? [
-                            'ALL',
-                            'PENDING',
-                            'CONFIRMED',
-                            'REFUND_PENDING',
-                            'CANCELLED',
-                            'EXPIRED',
-                          ]
-                        : ['ALL', 'PENDING', 'COMPLETED', 'REJECTED'])
-                  DropdownMenuItem(value: status, child: Text(status)),
-              ],
-              onChanged: _loading
-                  ? null
-                  : (value) {
-                      setState(() {
-                        _status = value!;
-                        _dates = null;
-                      });
-                      _load();
-                    },
-            ),
-          if (_section == 'Bookings' || _section == 'Showtimes')
-            Row(
-              children: [
-                Expanded(
-                  child: AppButton.secondary(
-                    label: _dates == null
-                        ? 'Filter dates'
-                        : '${formatShortDate(_dates!.start)} – ${formatShortDate(_dates!.end)}',
-                    leadingIcon: Icons.date_range_outlined,
-                    onPressed: _loading ? null : _pickDates,
-                  ),
-                ),
-                if (_dates != null)
-                  IconButton(
-                    tooltip: 'Clear date filter',
-                    onPressed: _loading
+          _SectionChips(
+            children: [
+              for (final section in sections)
+                Padding(
+                  padding: const EdgeInsets.only(right: AppSpacing.sm),
+                  child: ChoiceChip(
+                    label: Text(section),
+                    selected: _section == section,
+                    onSelected: _loading
                         ? null
-                        : () {
-                            setState(() => _dates = null);
+                        : (_) {
+                            setState(() {
+                              _section = section;
+                              _status = 'ALL';
+                              _dates = null;
+                              _lookup.clear();
+                              _result = null;
+                            });
                             _load();
                           },
-                    icon: const Icon(Icons.clear),
                   ),
-              ],
-            ),
-          if (_section == 'Bookings' || _section == 'Showtimes')
-            Padding(
-              padding: const EdgeInsets.only(top: AppSpacing.md),
-              child: AppButton(
-                label: _section == 'Bookings'
-                    ? 'Book for a customer'
-                    : 'Create showtime',
-                useGradient: true,
-                leadingIcon: Icons.add,
-                onPressed: _loading
-                    ? null
-                    : () => _open(
-                        _section == 'Bookings'
-                            ? AppRoutes.staffCreateBooking
-                            : AppRoutes.staffCreateShowtime,
+                ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          AdminControls(
+            children: [
+              if (_section == 'Bookings' || _section == 'Rooms')
+                Row(
+                  children: [
+                    Expanded(
+                      child: AppTextField(
+                        controller: _lookup,
+                        label: _section == 'Rooms'
+                            ? 'Search room name'
+                            : 'Booking ID',
+                        keyboardType: _section == 'Rooms'
+                            ? TextInputType.text
+                            : TextInputType.number,
                       ),
-              ),
-            ),
+                    ),
+                    IconButton(
+                      tooltip: _section == 'Rooms'
+                          ? 'Search rooms'
+                          : 'Open booking',
+                      icon: const Icon(Icons.search),
+                      onPressed: _loading
+                          ? null
+                          : () {
+                              if (_section == 'Rooms') {
+                                _load();
+                                return;
+                              }
+                              final id = int.tryParse(_lookup.text.trim());
+                              if (id == null || id <= 0) {
+                                setState(
+                                  () => _error = 'Enter a valid booking ID.',
+                                );
+                                return;
+                              }
+                              _open(AppRoutes.staffRecord('bookings', id));
+                            },
+                    ),
+                  ],
+                ),
+              if (_section == 'Bookings' || _section == 'Refunds')
+                DropdownButton<String>(
+                  value: _status,
+                  isExpanded: true,
+                  items: [
+                    for (final status
+                        in _section == 'Bookings'
+                            ? [
+                                'ALL',
+                                'PENDING',
+                                'CONFIRMED',
+                                'REFUND_PENDING',
+                                'CANCELLED',
+                                'EXPIRED',
+                              ]
+                            : ['ALL', 'PENDING', 'COMPLETED', 'REJECTED'])
+                      DropdownMenuItem(value: status, child: Text(status)),
+                  ],
+                  onChanged: _loading
+                      ? null
+                      : (value) {
+                          setState(() {
+                            _status = value!;
+                            _dates = null;
+                          });
+                          _load();
+                        },
+                ),
+              if (_section == 'Bookings' || _section == 'Showtimes')
+                Row(
+                  children: [
+                    Expanded(
+                      child: AppButton.secondary(
+                        label: _dates == null
+                            ? 'Filter dates'
+                            : '${formatShortDate(_dates!.start)} – ${formatShortDate(_dates!.end)}',
+                        leadingIcon: Icons.date_range_outlined,
+                        onPressed: _loading ? null : _pickDates,
+                      ),
+                    ),
+                    if (_dates != null)
+                      IconButton(
+                        tooltip: 'Clear date filter',
+                        onPressed: _loading
+                            ? null
+                            : () {
+                                setState(() => _dates = null);
+                                _load();
+                              },
+                        icon: const Icon(Icons.clear),
+                      ),
+                  ],
+                ),
+              if (_section == 'Bookings' || _section == 'Showtimes')
+                Padding(
+                  padding: const EdgeInsets.only(top: AppSpacing.md),
+                  child: AppButton(
+                    label: _section == 'Bookings'
+                        ? 'Book for a customer'
+                        : 'Create showtime',
+                    useGradient: true,
+                    leadingIcon: Icons.add,
+                    onPressed: _loading
+                        ? null
+                        : () => _open(
+                            _section == 'Bookings'
+                                ? AppRoutes.staffCreateBooking
+                                : AppRoutes.staffCreateShowtime,
+                          ),
+                  ),
+                ),
+            ],
+          ),
           const SizedBox(height: AppSpacing.lg),
           if (_loading)
             const LoadingState(message: 'Loading operations...')
@@ -285,26 +289,31 @@ class _StaffOperationsScreenState extends State<StaffOperationsScreen> {
                   textAlign: TextAlign.center,
                 ),
               ),
-            for (final item in _result!.items)
-              Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                child: CinemaPanel(
-                  surfaceOpacity: 0.8,
-                  child: ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(_title(item), style: AppTextStyles.title),
-                    subtitle: Text(
-                      _subtitle(item),
-                      style: AppTextStyles.bodySmall,
+            CardColumns(
+              runSpacing: 0,
+              children: [
+                for (final item in _result!.items)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                    child: CinemaPanel(
+                      surfaceOpacity: 0.8,
+                      child: ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(_title(item), style: AppTextStyles.title),
+                        subtitle: Text(
+                          _subtitle(item),
+                          style: AppTextStyles.bodySmall,
+                        ),
+                        trailing: const Icon(
+                          Icons.chevron_right,
+                          color: AppColors.primary,
+                        ),
+                        onTap: () => _open(_route(item)),
+                      ),
                     ),
-                    trailing: const Icon(
-                      Icons.chevron_right,
-                      color: AppColors.primary,
-                    ),
-                    onTap: () => _open(_route(item)),
                   ),
-                ),
-              ),
+              ],
+            ),
             if (_result!.totalPages > 1)
               Row(
                 children: [
@@ -365,4 +374,19 @@ class _StaffOperationsScreenState extends State<StaffOperationsScreen> {
     Refund r => AppRoutes.staffRecord('refunds', r.id),
     _ => AppRoutes.staffOperations,
   };
+}
+
+// Operations sections: one scrolling row on a phone, wrapped on the website.
+class _SectionChips extends StatelessWidget {
+  const _SectionChips({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) => isDesktopLayout(context)
+      ? Wrap(runSpacing: AppSpacing.sm, children: children)
+      : SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(children: children),
+        );
 }

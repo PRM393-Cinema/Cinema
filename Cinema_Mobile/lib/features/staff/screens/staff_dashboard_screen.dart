@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/routes/app_routes.dart';
-import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
+import '../../../core/utils/layout.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_state.dart';
 import '../../../data/models/booking.dart';
 import '../../../data/services/staff_service.dart';
+import '../../../core/widgets/responsive_columns.dart';
+import '../../admin/widgets/admin_layout.dart';
 import '../../admin/widgets/admin_page.dart';
 import '../widgets/staff_feedback.dart';
 
@@ -74,7 +76,7 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
       onRefresh: _load,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: staffPadding(context),
+        padding: pagePadding(context, AppSpacing.lg),
         children: [
           const Text('Your cinema shift', style: AppTextStyles.title),
           const SizedBox(height: AppSpacing.sm),
@@ -92,31 +94,7 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
               onRetry: _load,
             )
           else if (_counts != null) ...[
-            LayoutBuilder(
-              builder: (_, constraints) => Wrap(
-                spacing: AppSpacing.md,
-                runSpacing: AppSpacing.md,
-                children: [
-                  for (final (label, count, icon) in _counts!)
-                    SizedBox(
-                      width: (constraints.maxWidth - AppSpacing.md) / 2,
-                      child: CinemaPanel(
-                        surfaceOpacity: 0.8,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Icon(icon, color: AppColors.primary),
-                            const SizedBox(height: AppSpacing.md),
-                            Text('$count', style: AppTextStyles.display),
-                            const SizedBox(height: AppSpacing.xs),
-                            Text(label, style: AppTextStyles.bodySmall),
-                          ],
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
+            StatTiles(tiles: _counts!),
             const SizedBox(height: AppSpacing.xl),
             const Text('Pending bookings', style: AppTextStyles.title),
             const SizedBox(height: AppSpacing.md),
@@ -125,32 +103,37 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
                 'No pending bookings.',
                 style: AppTextStyles.bodySmall,
               ),
-            for (final booking in _pending)
-              Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                child: CinemaPanel(
-                  surfaceOpacity: 0.8,
-                  child: ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(
-                      booking.bookingCode,
-                      style: AppTextStyles.title,
+            CardColumns(
+              runSpacing: 0,
+              children: [
+                for (final booking in _pending)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                    child: CinemaPanel(
+                      surfaceOpacity: 0.8,
+                      child: ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                          booking.bookingCode,
+                          style: AppTextStyles.title,
+                        ),
+                        subtitle: Text(
+                          booking.movieTitle ?? 'Movie',
+                          style: AppTextStyles.bodySmall,
+                        ),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () async {
+                          await Navigator.pushNamed(
+                            context,
+                            AppRoutes.staffRecord('bookings', booking.id),
+                          );
+                          if (mounted) _load();
+                        },
+                      ),
                     ),
-                    subtitle: Text(
-                      booking.movieTitle ?? 'Movie',
-                      style: AppTextStyles.bodySmall,
-                    ),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () async {
-                      await Navigator.pushNamed(
-                        context,
-                        AppRoutes.staffRecord('bookings', booking.id),
-                      );
-                      if (mounted) _load();
-                    },
                   ),
-                ),
-              ),
+              ],
+            ),
           ],
         ],
       ),
