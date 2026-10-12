@@ -44,6 +44,9 @@ class _PaymentScreenState extends State<PaymentScreen>
     with WidgetsBindingObserver {
   // Picks up confirmations made by the PayOS webhook while the app is open.
   static const _pollInterval = Duration(seconds: 5);
+  // Asking PayOS costs a call from the backend: every 6th poll (30 s) is
+  // enough to notice a payment made on another device.
+  static const _verifyEveryPolls = 6;
 
   Booking? _booking;
   bool _bookingRequested = false;
@@ -53,7 +56,11 @@ class _PaymentScreenState extends State<PaymentScreen>
   bool _checkoutOpened = false;
   bool _hasPayOsPayment = false;
   bool _isStartingCheckout = false;
+  // _isVerifying shows a busy button; background checks only set
+  // _verifyInFlight so the buttons stay usable.
   bool _isVerifying = false;
+  bool _verifyInFlight = false;
+  int _polls = 0;
   bool _isCancelling = false;
   bool _hasLeft = false;
   String? _message;
@@ -130,7 +137,7 @@ class _PaymentScreenState extends State<PaymentScreen>
     final booking = _booking;
     if (booking == null ||
         _hasLeft ||
-        _isVerifying ||
+        _verifyInFlight ||
         _isCancelling ||
         _isStartingCheckout) {
       return;
@@ -148,7 +155,7 @@ class _PaymentScreenState extends State<PaymentScreen>
         _booking = latest;
         _hasPayOsPayment = _hasPayOsPayment || latest.paymentId != null;
       });
-      if (_hasPayOsPayment) {
+      if (_hasPayOsPayment && ++_polls % _verifyEveryPolls == 0) {
         await _verifyPayment(quietWhenPending: true);
       }
     } on ApiException {
@@ -214,12 +221,15 @@ class _PaymentScreenState extends State<PaymentScreen>
 
   Future<void> _verifyPayment({bool quietWhenPending = false}) async {
     final booking = _booking;
-    if (booking == null || _isVerifying || _hasLeft) return;
+    if (booking == null || _verifyInFlight || _hasLeft) return;
 
-    setState(() {
-      _isVerifying = true;
-      if (!quietWhenPending) _message = null;
-    });
+    _verifyInFlight = true;
+    if (!quietWhenPending) {
+      setState(() {
+        _isVerifying = true;
+        _message = null;
+      });
+    }
 
     try {
       final payment = await widget.bookingRepository.verifyPayOsPayment(
@@ -257,6 +267,8 @@ class _PaymentScreenState extends State<PaymentScreen>
       _showMessage('The server returned an invalid response.', isError: true);
     } on Object {
       _showMessage('Something went wrong. Please try again.', isError: true);
+    } finally {
+      _verifyInFlight = false;
     }
   }
 
