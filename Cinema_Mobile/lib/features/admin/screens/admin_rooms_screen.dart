@@ -4,6 +4,7 @@ import '../../../app/routes/app_routes.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
+import '../../../core/utils/formatters.dart';
 import '../../../core/utils/layout.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_text_field.dart';
@@ -188,7 +189,10 @@ class _AdminRoomsScreenState extends State<AdminRoomsScreen> {
                 onRetry: () => _load(page: result?.pageNumber ?? 1),
               )
             else if (result != null) ...[
-              Text('${result.totalCount} rooms', style: AppTextStyles.caption),
+              Text(
+                formatCount(result.totalCount, 'room'),
+                style: AppTextStyles.caption,
+              ),
               const SizedBox(height: AppSpacing.md),
               if (result.items.isEmpty)
                 const Padding(

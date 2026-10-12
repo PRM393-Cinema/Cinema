@@ -19,7 +19,7 @@ namespace MovieService.Repository.Impl
         {
             var query = _context.Movies.AsNoTracking();
 
-            return await PagedList<Movie>.CreateAsync(query, pageNumber, pageSize);
+            return await PagedList<Movie>.CreateAsync(Sort(query, sortBy, sortDir), pageNumber, pageSize);
         }
 
         public async Task<PagedList<Movie>> GetByStatusAsync(string status, int pageNumber, int pageSize, string sortBy, string sortDir)
@@ -28,7 +28,7 @@ namespace MovieService.Repository.Impl
             .AsNoTracking()
             .Where(m => m.Status == status);
 
-            return await PagedList<Movie>.CreateAsync(query, pageNumber, pageSize);
+            return await PagedList<Movie>.CreateAsync(Sort(query, sortBy, sortDir), pageNumber, pageSize);
         }
 
         public async Task<PagedList<Movie>> SearchByTitleAsync(string keyword, int pageNumber, int pageSize, string sortBy, string sortDir)
@@ -37,9 +37,26 @@ namespace MovieService.Repository.Impl
 
             if (!string.IsNullOrEmpty(keyword))
             {
-                query = query.Where(m => m.Title.Contains(keyword));
+                // Không phân biệt hoa thường: "dune" tìm được "Dune"
+                var lowered = keyword.ToLower();
+                query = query.Where(m => m.Title.ToLower().Contains(lowered));
             }
-            return await PagedList<Movie>.CreateAsync(query, pageNumber, pageSize);
+            return await PagedList<Movie>.CreateAsync(Sort(query, sortBy, sortDir), pageNumber, pageSize);
+        }
+
+        // Không sắp xếp thì Postgres trả hàng theo vị trí lưu trữ: phim vừa sửa nhảy sang chỗ khác,
+        // có khi sang trang khác. Id là khoá phụ để các phim cùng giá trị luôn đứng cùng một thứ tự.
+        private static IQueryable<Movie> Sort(IQueryable<Movie> query, string sortBy, string sortDir)
+        {
+            var descending = string.Equals(sortDir, "desc", StringComparison.OrdinalIgnoreCase);
+            IOrderedQueryable<Movie> ordered = sortBy?.Trim().ToLowerInvariant() switch
+            {
+                "title" => descending ? query.OrderByDescending(m => m.Title) : query.OrderBy(m => m.Title),
+                "releasedate" => descending ? query.OrderByDescending(m => m.ReleaseDate) : query.OrderBy(m => m.ReleaseDate),
+                "durationminutes" => descending ? query.OrderByDescending(m => m.DurationMinutes) : query.OrderBy(m => m.DurationMinutes),
+                _ => descending ? query.OrderByDescending(m => m.CreatedAt) : query.OrderBy(m => m.CreatedAt),
+            };
+            return descending ? ordered.ThenByDescending(m => m.Id) : ordered.ThenBy(m => m.Id);
         }
 
         public async Task<Movie?> GetMovieByIdAsync(long id)

@@ -111,6 +111,63 @@ public class AdminCatalogTests
         Assert.Equal(4, (await _staff.GetFromJsonAsync<JsonElement>($"/api/seats/room/{roomId}")).GetArrayLength());
     }
 
+    [Fact]
+    public async Task MovieLists_StayNewestFirst_AfterEdits()
+    {
+        var tag = Guid.NewGuid().ToString("N")[..8];
+        var ids = new List<long>();
+        foreach (var name in new[] { "First", "Second", "Third" })
+        {
+            var created = await _admin.PostAsJsonAsync("/api/v1/movies", MovieBody($"{name} {tag}"));
+            Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+            ids.Add((await created.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt64());
+        }
+
+        // Editing a movie must not move it in the list
+        Assert.Equal(HttpStatusCode.OK, (await _admin.PutAsJsonAsync($"/api/v1/movies/{ids[0]}", MovieBody($"First {tag} edited"))).StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, (await _admin.DeleteAsync($"/api/v1/movies/{ids[1]}")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await _admin.PutAsJsonAsync($"/api/v1/movies/{ids[1]}", MovieBody($"Second {tag}", "ACTIVE"))).StatusCode);
+
+        var newestFirst = new[] { ids[2], ids[1], ids[0] };
+        Assert.Equal(newestFirst, await MovieIdsAsync("/api/v1/movies?page=1&size=50", ids));
+        Assert.Equal(newestFirst, await MovieIdsAsync("/api/v1/movies/status/ACTIVE?page=1&size=50", ids));
+        Assert.Equal(newestFirst, await MovieIdsAsync($"/api/v1/movies/search?keyword={tag}&page=1&size=50", ids));
+        Assert.Equal(ids, await MovieIdsAsync($"/api/v1/movies/search?keyword={tag}&page=1&size=50&sortDir=asc", ids));
+    }
+
+    [Fact]
+    public async Task MovieSearch_IgnoresCase()
+    {
+        var tag = Guid.NewGuid().ToString("N")[..8];
+        var created = await _admin.PostAsJsonAsync("/api/v1/movies", MovieBody($"Dune Case {tag}"));
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        var id = (await created.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt64();
+
+        Assert.Equal(new[] { id }, await MovieIdsAsync($"/api/v1/movies/search?keyword=dune%20case%20{tag.ToUpperInvariant()}", new[] { id }));
+    }
+
+    [Fact]
+    public async Task Rooms_AreListedByName_AndSearchIgnoresCase()
+    {
+        var tag = Guid.NewGuid().ToString("N")[..8];
+        var zeta = await CreateRoomWithSeatsAsync($"Zeta {tag}", rows: 1, seatsPerRow: 1);
+        var alpha = await CreateRoomWithSeatsAsync($"Alpha {tag}", rows: 1, seatsPerRow: 1);
+
+        var found = await _admin.GetFromJsonAsync<JsonElement>($"/api/rooms/search?keyword={tag.ToUpperInvariant()}&pageNumber=1&pageSize=50");
+        var roomIds = found.GetProperty("items").EnumerateArray().Select(r => r.GetProperty("id").GetInt64()).ToArray();
+        Assert.Equal(new[] { alpha, zeta }, roomIds);
+    }
+
+    private async Task<IReadOnlyList<long>> MovieIdsAsync(string url, IEnumerable<long> only)
+    {
+        var page = await _admin.GetFromJsonAsync<JsonElement>(url);
+        var wanted = only.ToHashSet();
+        return page.GetProperty("items").EnumerateArray()
+            .Select(m => m.GetProperty("id").GetInt64())
+            .Where(wanted.Contains)
+            .ToList();
+    }
+
     private async Task<long> CreateRoomWithSeatsAsync(string name, int rows, int seatsPerRow)
     {
         var created = await _admin.PostAsJsonAsync("/api/rooms", new

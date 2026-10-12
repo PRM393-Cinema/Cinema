@@ -186,7 +186,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
             )
           else ...[
             Text(
-              '${_result?.totalCount ?? 0} accounts',
+              formatCount(_result?.totalCount ?? 0, 'account'),
               style: AppTextStyles.caption,
             ),
             const SizedBox(height: AppSpacing.md),

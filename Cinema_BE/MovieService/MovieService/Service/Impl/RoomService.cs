@@ -28,7 +28,7 @@ namespace ShowtimeService.Service.Impl
         public async Task<PagedResult<RoomResponse>> GetAllRoomsAsync(int pageNumber, int pageSize, string sortBy, string sortDir)
         {
             var p = PaginationUtils.Normalize(pageNumber, pageSize, sortBy, sortDir);
-            var result = await _roomRepository.GetAllRoomsAsync(pageNumber, pageSize, sortBy, sortDir);
+            var result = await _roomRepository.GetAllRoomsAsync(p.PageNumber, p.PageSize, p.SortBy, p.SortDir);
             return result.ToPagedResult();
         }
 

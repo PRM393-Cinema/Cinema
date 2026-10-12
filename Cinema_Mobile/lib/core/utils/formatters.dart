@@ -12,6 +12,10 @@ String formatVnd(num amount) => _vnd.format(amount);
 
 String formatDate(DateTime value) => DateFormat('MMM d, yyyy').format(value);
 
+// "1 movie", "3 movies".
+String formatCount(int count, String singular, [String? plural]) =>
+    '$count ${count == 1 ? singular : plural ?? '${singular}s'}';
+
 String formatLongDate(DateTime value) {
   return DateFormat('EEEE, MMM d, yyyy').format(value);
 }
