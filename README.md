@@ -29,6 +29,8 @@ git clone https://github.com/PRM393-Cinema/Project-Cinema-DB.git
 
 Lệnh trong `Cinema_BE/docs` chạy trong thư mục `Cinema_BE`; lệnh Flutter chạy trong `Cinema_Mobile`.
 
+Chuẩn bị máy và kịch bản demo: [DEMO.md](DEMO.md).
+
 ## CI
 
 [`.github/workflows/ci.yml`](.github/workflows/ci.yml) build và chạy test backend cho pull request vào `dev` / `main` có thay đổi trong `Cinema_BE/` (xem [TESTING.md](Cinema_BE/docs/TESTING.md)).
