@@ -160,8 +160,7 @@ class _StaffShowtimeEditorScreenState extends State<StaffShowtimeEditorScreen> {
   @override
   Widget build(BuildContext context) => AdminPage(
     title: widget.id == null ? 'Create showtime' : 'Edit showtime',
-    staffMode: true,
-    selectedIndex: 1,
+    section: AdminSection.operations,
     child: _loading
         ? const LoadingState(message: 'Loading movies and rooms...')
         : _movies.isEmpty || _rooms.isEmpty

@@ -121,8 +121,7 @@ class _StaffNotificationScreenState extends State<StaffNotificationScreen> {
   @override
   Widget build(BuildContext context) => AdminPage(
     title: 'Customer notification',
-    staffMode: true,
-    selectedIndex: 1,
+    section: AdminSection.operations,
     child: _loading
         ? const LoadingState(message: 'Loading booking...')
         : _booking == null

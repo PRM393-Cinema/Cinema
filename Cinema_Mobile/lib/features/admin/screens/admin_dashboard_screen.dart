@@ -72,7 +72,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   Widget build(BuildContext context) => AdminPage(
     title: 'Dashboard',
-    selectedIndex: 0,
+    section: AdminSection.dashboard,
     child: RefreshIndicator(
       onRefresh: _load,
       child: ListView(

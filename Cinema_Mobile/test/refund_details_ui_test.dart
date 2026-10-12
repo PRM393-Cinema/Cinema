@@ -60,7 +60,7 @@ void main() {
           ),
         );
         await tester.pumpWidget(
-          buildTestApp(
+          buildAdminTestApp(
             authenticated: true,
             user: AuthUser.fromJson({
               ...customerUser.toJson(),

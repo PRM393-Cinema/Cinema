@@ -11,6 +11,30 @@ abstract final class ApiConfig {
     'PAYMENT_RETURN_URL',
   );
 
+  // Admin website for staff and admin accounts. Override with
+  // --dart-define=ADMIN_URL=https://...
+  static const String _adminUrlOverride = String.fromEnvironment('ADMIN_URL');
+
+  // On web the admin website is served from /admin/ next to the customer
+  // site. Phones have no default: the address is configured per deployment.
+  static String? get adminUrl {
+    if (_adminUrlOverride.isNotEmpty) {
+      return _adminUrlOverride;
+    }
+    if (!kIsWeb) {
+      return null;
+    }
+
+    final current = Uri.base;
+    final folder = current.path.substring(0, current.path.lastIndexOf('/') + 1);
+    return Uri(
+      scheme: current.scheme,
+      host: current.host,
+      port: current.port,
+      path: '${folder}admin/',
+    ).toString();
+  }
+
   // The Android emulator reaches the host machine through 10.0.2.2, while web,
   // desktop and the iOS simulator share localhost with the backend.
   static String get baseUrl {
@@ -44,6 +68,33 @@ abstract final class ApiConfig {
     }
 
     return '$baseUrl/';
+  }
+
+  // From the admin website (/admin/) back to the customer site, on web.
+  // Override with --dart-define=CUSTOMER_URL=https://...
+  static const String _customerUrlOverride = String.fromEnvironment(
+    'CUSTOMER_URL',
+  );
+
+  static String? get customerUrl {
+    if (_customerUrlOverride.isNotEmpty) {
+      return _customerUrlOverride;
+    }
+    if (!kIsWeb) {
+      return null;
+    }
+
+    final current = Uri.base;
+    var folder = current.path.substring(0, current.path.lastIndexOf('/') + 1);
+    if (folder.endsWith('admin/')) {
+      folder = folder.substring(0, folder.length - 'admin/'.length);
+    }
+    return Uri(
+      scheme: current.scheme,
+      host: current.host,
+      port: current.port,
+      path: folder,
+    ).toString();
   }
 
   static String _withoutTrailingSlash(String url) {

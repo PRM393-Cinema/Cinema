@@ -20,7 +20,7 @@ void main() {
   ) async {
     final repository = _AdminRepository();
     await tester.pumpWidget(
-      buildTestApp(
+      buildAdminTestApp(
         authRepository: repository,
         authenticated: true,
         user: _admin,
@@ -61,7 +61,7 @@ void main() {
       }),
     );
     await tester.pumpWidget(
-      buildTestApp(
+      buildAdminTestApp(
         authRepository: repository,
         authenticated: true,
         user: _admin,
@@ -85,7 +85,7 @@ void main() {
   ) async {
     final repository = _AdminRepository();
     await tester.pumpWidget(
-      buildTestApp(
+      buildAdminTestApp(
         authRepository: repository,
         authenticated: true,
         user: _admin,
@@ -127,7 +127,7 @@ void main() {
       'roles': ['ROLE_CUSTOMER', 'ROLE_ADMIN'],
     });
     await tester.pumpWidget(
-      buildTestApp(
+      buildAdminTestApp(
         authRepository: _AdminRepository(user: user),
         authenticated: true,
         user: user,
@@ -154,7 +154,7 @@ void main() {
   ) async {
     final repository = _AdminRepository();
     await tester.pumpWidget(
-      buildTestApp(
+      buildAdminTestApp(
         authRepository: repository,
         authenticated: true,
         user: _admin,

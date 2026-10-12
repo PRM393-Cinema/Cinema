@@ -1,10 +1,10 @@
 # Khu vực Staff
 
-Staff local/demo: `nhanvien1@cinema.com` / `123456` (tài khoản seed). Đăng nhập với ROLE_STAFF vào `/staff/dashboard`; nếu có ROLE_ADMIN thì ưu tiên dashboard Admin.
+Staff local/demo: `nhanvien1@cinema.com` / `123456` (tài khoản seed). Staff làm việc trên **trang quản trị web** (`flutter run -d chrome -t lib/main_admin.dart`, build vào `/admin/`). Đăng nhập với ROLE_STAFF vào `/staff/dashboard`; nếu có ROLE_ADMIN thì ưu tiên dashboard Admin. App khách không có màn Staff: tài khoản Staff đăng nhập ở đó thấy hướng dẫn mở trang quản trị.
 
 ## Điều hướng và quyền
 
-Nav liquid glass **Dashboard / Operations / Profile** dùng component Cinema chung. Màn con giữ tab Operations, bấm Operations để về danh sách. Customer không được vào `/staff/*`; backend tiếp tục kiểm tra quyền từng endpoint. Staff không có quản lý người dùng, phân quyền, tạo/sửa/xóa phim hoặc phòng, xóa ghế.
+Thanh điều hướng bên trái **Dashboard / Operations / Profile**; cửa sổ hẹp hơn 640 px thì mở bằng nút menu. Màn con giữ mục Operations và có nút Back; bấm Operations để về danh sách. Customer không được vào `/staff/*`; backend tiếp tục kiểm tra quyền từng endpoint. Staff không có quản lý người dùng, phân quyền, tạo/sửa/xóa phim hoặc phòng (Admin làm ở Movies, Rooms), xóa ghế.
 
 ## Nghiệp vụ đã nối API
 

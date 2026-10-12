@@ -5,7 +5,7 @@ Hệ thống đặt vé xem phim: backend microservice ASP.NET Core 8 và app Fl
 | Thư mục | Nội dung | Tài liệu |
 |---|---|---|
 | `Cinema_BE/` | AuthService, MovieService, BookingService, ApiGateway; chạy cả hệ thống bằng Docker Compose | [Cinema_BE/docs](Cinema_BE/docs) |
-| `Cinema_Mobile/` | App Flutter (web, Android, Windows), gọi API Gateway ở cổng 5000 | [Cinema_Mobile/README.md](Cinema_Mobile/README.md) |
+| `Cinema_Mobile/` | App Flutter cho khách (web, Android, Windows) và trang quản trị web cho nhân viên, admin; gọi API Gateway ở cổng 5000 | [Cinema_Mobile/README.md](Cinema_Mobile/README.md) |
 
 ## Cài đặt
 
@@ -26,6 +26,7 @@ git clone https://github.com/PRM393-Cinema/Project-Cinema-DB.git
 
 1. Backend: làm theo [Cinema_BE/docs/DOCKER.md](Cinema_BE/docs/DOCKER.md) (tạo `.env` rồi `docker compose up -d --build`).
 2. App: làm theo [Cinema_Mobile/README.md](Cinema_Mobile/README.md) (`flutter run -d chrome`).
+3. Trang quản trị (nhân viên, admin): `flutter run -d chrome -t lib/main_admin.dart`.
 
 Lệnh trong `Cinema_BE/docs` chạy trong thư mục `Cinema_BE`; lệnh Flutter chạy trong `Cinema_Mobile`.
 

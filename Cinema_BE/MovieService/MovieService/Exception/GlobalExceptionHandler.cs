@@ -22,6 +22,8 @@ namespace MovieService.Exception
                 NotFoundException => (StatusCodes.Status404NotFound, "Resource Not Found"),
                 ConflictException => (StatusCodes.Status409Conflict, "Conflict"),
                 BusinessException => (StatusCodes.Status400BadRequest, "Bad Request"),
+                // Room/seat validation throws this one (it used to fall through to 500)
+                ShowtimeService.Exception.BadRequestException => (StatusCodes.Status400BadRequest, "Bad Request"),
                 _ => (StatusCodes.Status500InternalServerError, "Server Error")
             };
 

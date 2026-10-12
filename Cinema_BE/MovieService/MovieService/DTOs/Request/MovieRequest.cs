@@ -21,6 +21,9 @@ namespace MovieService.DTOs.Request
 
         public string? PosterUrl { get; set; }
 
-        public string? TrailerUrl { get; set; }     
+        public string? TrailerUrl { get; set; }
+
+        // Chỉ dùng khi sửa phim: ACTIVE (đang chiếu) / INACTIVE (ngừng chiếu). Bỏ trống thì giữ nguyên
+        public string? Status { get; set; }
     }
 }
