@@ -71,8 +71,35 @@ namespace ShowtimeService.Repository.Impl
                 return false;
             }
             _context.Seats.Remove(existingSeat);
+            await SetRoomTotalSeatsAsync(existingSeat.RoomId, -1);
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        // Thêm / bỏ ghế và cập nhật sức chứa phòng trong cùng một lần lưu
+        public async Task ChangeRoomSeatsAsync(
+            long roomId,
+            IReadOnlyCollection<Seat> added,
+            IReadOnlyCollection<long> removedSeatIds)
+        {
+            var removed = await _context.Seats
+                .Where(s => s.RoomId == roomId && removedSeatIds.Contains(s.Id))
+                .ToListAsync();
+
+            _context.Seats.RemoveRange(removed);
+            await _context.Seats.AddRangeAsync(added);
+            await SetRoomTotalSeatsAsync(roomId, added.Count - removed.Count);
+            await _context.SaveChangesAsync();
+        }
+
+        // Sức chứa = số ghế đang lưu + thay đổi chưa lưu
+        private async Task SetRoomTotalSeatsAsync(long roomId, int change)
+        {
+            var room = await _context.Rooms.FindAsync(roomId);
+            if (room != null)
+            {
+                room.TotalSeats = await _context.Seats.CountAsync(s => s.RoomId == roomId) + change;
+            }
         }
 
         public async Task DeleteSeatsByRoomIdAsync(long roomId)
@@ -110,6 +137,7 @@ namespace ShowtimeService.Repository.Impl
             }
 
             await _context.Seats.AddRangeAsync(seats);
+            await SetRoomTotalSeatsAsync(roomId, seats.Count);
             await _context.SaveChangesAsync();
 
             var query = _context.Seats

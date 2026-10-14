@@ -12,6 +12,7 @@ namespace ShowtimeService.Repository.Interface
         Task<PagedList<Seat>> GenerateSeatsAsync (long roomId, int rows, int seatsPerRow);
         Task<Seat?> UpdateSeatAsync(long seatId, Seat seat);
         Task<bool> DeleteSeatAsync(long seatId);
+        Task ChangeRoomSeatsAsync(long roomId, IReadOnlyCollection<Seat> added, IReadOnlyCollection<long> removedSeatIds);
         Task DeleteSeatsByRoomIdAsync(long roomId);
         Task<bool> ExistByRoomIdAndSeatRowAndSeatNumberAsync(long roomId, string seatRow, int seatNumber);
     }

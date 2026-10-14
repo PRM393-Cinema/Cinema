@@ -1,15 +1,20 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../app/routes/app_routes.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
+import '../../../core/session/roles.dart';
+import '../../../core/session/session_state.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_state.dart';
 import '../../../core/widgets/status_badge.dart';
+import '../../../core/widgets/top_notice.dart';
 import '../../../data/models/booking.dart';
 import '../../../data/models/payment.dart';
 import '../../../data/models/room.dart';
@@ -17,6 +22,7 @@ import '../../../data/models/seat.dart';
 import '../../../data/models/showtime.dart';
 import '../../../data/services/staff_service.dart';
 import '../../admin/widgets/admin_page.dart';
+import '../widgets/room_seat_map.dart';
 import '../widgets/staff_feedback.dart';
 
 class StaffRecordScreen extends StatefulWidget {
@@ -34,17 +40,79 @@ class StaffRecordScreen extends StatefulWidget {
 }
 
 class _StaffRecordScreenState extends State<StaffRecordScreen> {
+  // A room's seat map follows changes made by other staff while it is open.
+  static const _liveInterval = Duration(seconds: 5);
+  static const _highlightFor = Duration(seconds: 4);
+
   Object? _item;
   List<Seat> _seats = [];
   List<PaymentInfo> _payments = [];
   bool _loading = true;
   bool _busy = false;
   String? _error;
+  Timer? _liveTimer;
+  Timer? _highlightTimer;
+  bool _refreshing = false;
+  bool _liveFailed = false;
+  DateTime? _updatedAt;
+  Set<int> _newSeatIds = {};
+
   @override
   void initState() {
     super.initState();
     _load();
+    if (widget.kind == 'rooms') {
+      _liveTimer = Timer.periodic(_liveInterval, (_) => _refreshRoom());
+    }
   }
+
+  @override
+  void dispose() {
+    _liveTimer?.cancel();
+    _highlightTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _refreshRoom() async {
+    if (_loading || _busy || _refreshing || _item is! Room) return;
+    _refreshing = true;
+    try {
+      final room = await widget.service.room(widget.id);
+      final seats = await widget.service.seats(widget.id);
+      if (!mounted || _busy) return;
+      _showSeats(seats, room: room);
+      if (_liveFailed) setState(() => _liveFailed = false);
+    } on Object {
+      if (mounted && !_liveFailed) setState(() => _liveFailed = true);
+    } finally {
+      _refreshing = false;
+    }
+  }
+
+  // Shows a newer seat map; seats that were not on the old one glow for a
+  // few seconds.
+  void _showSeats(List<Seat> seats, {Room? room}) {
+    final known = {for (final seat in _seats) seat.id};
+    final added = {
+      for (final seat in seats)
+        if (!known.contains(seat.id)) seat.id,
+    };
+    setState(() {
+      _seats = seats;
+      if (room != null) _item = room;
+      _updatedAt = DateTime.now();
+      if (known.isNotEmpty && added.isNotEmpty) _newSeatIds = added;
+    });
+    if (known.isNotEmpty && added.isNotEmpty) {
+      _highlightTimer?.cancel();
+      _highlightTimer = Timer(_highlightFor, () {
+        if (mounted) setState(() => _newSeatIds = {});
+      });
+    }
+  }
+
+  void _notice(String message) =>
+      showTopNotice(Overlay.of(context, rootOverlay: true), message);
 
   Future<void> _load() async {
     setState(() {
@@ -70,6 +138,7 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
           _item = item;
           _seats = seats;
           _payments = payments;
+          _updatedAt = DateTime.now();
         });
       }
     } on Object catch (error) {
@@ -165,19 +234,50 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
     }, 'Refund recorded as completed.');
   }
 
-  Future<void> _editSeat(Seat seat, String type) async {
-    if (!await staffConfirm(
-          context,
-          'Change seat type?',
-          '${seat.label}: $type. The backend blocks changes when the room already has showtimes.',
-        ) ||
-        !mounted) {
-      return;
+  // Changes one seat on the map without reloading the page.
+  Future<void> _setSeatType(Seat seat, String type) async {
+    if (_busy || seat.type.toUpperCase() == type) return;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      final updated = await widget.service.setSeatType(seat.id, type);
+      if (!mounted) return;
+      setState(() {
+        _seats = [for (final s in _seats) s.id == updated.id ? updated : s];
+      });
+      _notice('${seat.label} is now ${seatTypeLabel(type)}.');
+    } on Object catch (error) {
+      if (mounted) _notice(staffError(error));
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
-    await _run(() async {
-      await widget.service.seat(seat.id);
-      await widget.service.setSeatType(seat.id, type);
-    }, 'Seat type updated.');
+  }
+
+  Future<void> _changeSeatCount(Room room) async {
+    final before = _seats.length;
+    setState(() => _busy = true);
+    final seats = await showDialog<List<Seat>>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => SeatCountDialog(
+        service: widget.service,
+        roomId: room.id,
+        seats: _seats,
+      ),
+    );
+    if (!mounted) return;
+    setState(() => _busy = false);
+    if (seats == null) return;
+    _showSeats(seats);
+    final change = seats.length - before;
+    _notice(
+      '${room.name} now has ${seats.length} seats '
+      '(${change > 0 ? '+' : '-'}${change.abs()}).',
+    );
+    // The room's own seat count comes with the next refresh.
+    await _refreshRoom();
   }
 
   Future<void> _generate(Room room) async {
@@ -275,7 +375,10 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
         ('Price', formatVnd(s.price)),
         ('Status', s.status),
       ],
-      Room r => [('Room', r.name), ('Seats', '${r.totalSeats}')],
+      Room r => [
+        ('Room', r.name),
+        ('Seats', '${_seats.isEmpty ? r.totalSeats : _seats.length}'),
+      ],
       _ => <(String, String)>[],
     };
     return [
@@ -631,26 +734,29 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
         }, danger: true),
     ],
     Room r => [
-      if (_seats.isEmpty) _button('Generate seat layout', () => _generate(r)),
+      if (_seats.isEmpty)
+        _button('Generate seat layout', () => _generate(r))
+      else if (isAdminAccount(SessionProvider.of(context).user?.roles))
+        _button('Change seat count', () => _changeSeatCount(r)),
+      _LiveStatus(updatedAt: _updatedAt, failed: _liveFailed),
+      const SizedBox(height: AppSpacing.md),
+      if (_seats.isNotEmpty) ...[
+        CinemaPanel(
+          surfaceOpacity: 0.8,
+          child: RoomSeatMap(
+            seats: _seats,
+            highlighted: _newSeatIds,
+            onTypeSelected: _busy ? null : _setSeatType,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+      ],
       const Text(
-        'Seat changes are blocked for rooms with existing showtimes.',
+        'Tap a seat to change its type. Seat changes are blocked for rooms '
+        'with existing showtimes.',
         style: AppTextStyles.caption,
       ),
       const SizedBox(height: AppSpacing.md),
-      for (final seat in _seats)
-        ListTile(
-          title: Text(seat.label, style: AppTextStyles.body),
-          subtitle: Text(seat.type, style: AppTextStyles.caption),
-          trailing: PopupMenuButton<String>(
-            enabled: !_busy,
-            tooltip: 'Change seat type',
-            onSelected: (type) => _editSeat(seat, type),
-            itemBuilder: (_) => [
-              for (final type in ['NORMAL', 'VIP'])
-                PopupMenuItem(value: type, child: Text(type)),
-            ],
-          ),
-        ),
     ],
     PaymentInfo p => [
       _button(
@@ -704,6 +810,36 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
     ],
     _ => [],
   };
+}
+
+class _LiveStatus extends StatelessWidget {
+  const _LiveStatus({required this.updatedAt, required this.failed});
+
+  final DateTime? updatedAt;
+  final bool failed;
+
+  @override
+  Widget build(BuildContext context) {
+    String two(int n) => n.toString().padLeft(2, '0');
+    final at = updatedAt;
+    final text = failed
+        ? 'Cannot reach the server. Retrying...'
+        : at == null
+        ? 'Live'
+        : 'Live • updated ${two(at.hour)}:${two(at.minute)}:${two(at.second)}';
+    return Row(
+      key: const Key('roomLiveStatus'),
+      children: [
+        Icon(
+          Icons.circle,
+          size: 10,
+          color: failed ? AppColors.warning : AppColors.success,
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        Flexible(child: Text(text, style: AppTextStyles.caption)),
+      ],
+    );
+  }
 }
 
 class _StaffActionCancelled implements Exception {

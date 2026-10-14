@@ -6,7 +6,7 @@ Mỗi service có một project test xUnit nằm cạnh project chính, và đã
 |---|---|---|
 | AuthService | `AuthService/AuthService.Tests` | 10 |
 | ApiGateway | `ApiGateway/ApiGateway.Tests` | 21 |
-| MovieService | `MovieService/MovieService.Tests` | 6 |
+| MovieService | `MovieService/MovieService.Tests` | 15 |
 | BookingService | `BookingService/BookingService.Tests` | 43 |
 
 ## 1. Chạy test
@@ -41,6 +41,7 @@ Mỗi service chạy xong trong khoảng 15–30 giây.
 | Khóa tài khoản | Token còn hạn bị từ chối ở gateway sau khi khóa; lỗi kết nối AuthService trả 503 và không chuyển tiếp request | `ApiGateway.Tests/*`, `AuthService.Tests/Integration/UserManagementTests.cs` |
 | Đổi role | Role cũ bị từ chối với `403 ROLE_CHANGED`; thu hồi refresh token khi quyền thay đổi, giữ phiên khi lưu cùng quyền | `ApiGateway.Tests/*`, `AuthService.Tests/Integration/UserManagementTests.cs` |
 | Suất chiếu | Quyền, trùng lịch 409, suất còn đặt được theo phim, huỷ mềm và ghi event `showtime.cancelled` | `MovieService.Tests/Integration/ShowtimeTests.cs` |
+| Sơ đồ ghế | Sinh ghế một lần, đổi loại ghế; đổi số ghế lấp hàng cuối rồi sang hàng mới, bớt từ ghế cuối, chỉ Admin, không quá hàng Z, chặn khi phòng có suất chiếu | `MovieService.Tests/Integration/SeatTests.cs` |
 | Giám sát | `/metrics` mở cho Prometheus và đếm booking theo trạng thái; chỉ trả ở cổng nội bộ khi cấu hình `MetricsPort` | `BookingService.Tests/Integration/ObservabilityTests.cs` |
 
 Trong test, MovieService, PayOS và SMTP được thay bằng bản giả: không gọi PayOS thật, không gửi email thật. JWT trong test được ký bằng key riêng của test.
