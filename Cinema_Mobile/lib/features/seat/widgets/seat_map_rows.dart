@@ -8,21 +8,37 @@ import '../../../app/theme/app_text_styles.dart';
 import '../../../data/models/seat.dart';
 
 // The seats of a room grouped by row, rows in order (A..Z, then AA) and seats
-// by number: the order the API lists them in.
-List<(String, List<Seat>)> seatRowsOf(Iterable<Seat> seats) {
+// by number: the order the API lists them in. On a seat map ([sweetboxLast])
+// rows of sweetbox (couple) seats go to the back of the room, as in the
+// cinema.
+List<(String, List<Seat>)> seatRowsOf(
+  Iterable<Seat> seats, {
+  bool sweetboxLast = true,
+}) {
   final rows = <String, List<Seat>>{};
   for (final seat in seats) {
     rows.putIfAbsent(seat.row, () => []).add(seat);
   }
+  bool back(String key) =>
+      sweetboxLast && rows[key]!.every((seat) => seat.isSweetbox);
   final keys = rows.keys.toList()
-    ..sort(
-      (a, b) => a.length != b.length ? a.length - b.length : a.compareTo(b),
-    );
+    ..sort((a, b) {
+      final order = (back(a) ? 1 : 0) - (back(b) ? 1 : 0);
+      if (order != 0) return order;
+      return a.length != b.length ? a.length - b.length : a.compareTo(b);
+    });
   return [
     for (final key in keys)
       (key, rows[key]!..sort((a, b) => a.number.compareTo(b.number))),
   ];
 }
+
+// True when the seats on both sides of [index] are the two halves of one
+// sweetbox.
+bool _pairAt(List<Seat> seats, int index) =>
+    index > 0 &&
+    index < seats.length &&
+    seats[index - 1].sweetboxPartnerIn([seats[index]]) != null;
 
 int widestRowOf(List<(String, List<Seat>)> rows) =>
     rows.fold(0, (widest, row) => math.max(widest, row.$2.length));
@@ -78,6 +94,7 @@ class SeatMapLayout {
 }
 
 // The rows of a seat map, lettered on both sides, with aisles in long rows.
+// The two seats of a sweetbox sit close together and no aisle splits them.
 // [seatBuilder] draws one seat at the layout's size.
 class SeatMapRows extends StatelessWidget {
   const SeatMapRows({
@@ -87,9 +104,20 @@ class SeatMapRows extends StatelessWidget {
     super.key,
   });
 
+  static const pairGap = 2.0;
+
   final List<(String, List<Seat>)> rows;
   final SeatMapLayout layout;
   final Widget Function(Seat seat, double size) seatBuilder;
+
+  double _gapBefore(List<Seat> seats, int index) {
+    if (_pairAt(seats, index)) return pairGap;
+    final aisles = {
+      for (final aisle in SeatMapLayout.aisleAfter(seats.length))
+        _pairAt(seats, aisle) ? aisle - 1 : aisle,
+    };
+    return layout.gap + (aisles.contains(index) ? SeatMapLayout.aisleWidth : 0);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -105,15 +133,7 @@ class SeatMapRows extends StatelessWidget {
                 _RowLabel(label: rowKey),
                 const SizedBox(width: SeatMapLayout.labelGap),
                 for (final (index, seat) in rowSeats.indexed) ...[
-                  if (index > 0)
-                    SizedBox(
-                      width:
-                          layout.gap +
-                          (SeatMapLayout.aisleAfter(rowSeats.length)
-                                  .contains(index)
-                              ? SeatMapLayout.aisleWidth
-                              : 0),
-                    ),
+                  if (index > 0) SizedBox(width: _gapBefore(rowSeats, index)),
                   seatBuilder(seat, layout.seatSize),
                 ],
                 const SizedBox(width: SeatMapLayout.labelGap),

@@ -12,32 +12,12 @@ import '../../../core/widgets/cinema_account_widgets.dart';
 import '../../../data/models/seat.dart';
 import '../../../data/services/staff_service.dart';
 import '../../seat/widgets/seat_map_rows.dart';
+import '../../seat/widgets/seat_type_style.dart';
 import 'staff_feedback.dart';
-
-const seatTypes = ['NORMAL', 'VIP', 'SWEETBOX'];
 
 // Rows are lettered A to Z; the admin room form allows 30 seats per row.
 const maxSeatRows = 26;
 const maxSeatsPerRow = 30;
-
-const _sweetbox = Color(0xFFEC4899);
-
-String seatTypeLabel(String type) => switch (type.toUpperCase()) {
-  'VIP' => 'VIP',
-  'SWEETBOX' => 'Sweetbox',
-  _ => 'Standard',
-};
-
-(Color fill, Color border, Color text) _seatColors(String type) =>
-    switch (type.toUpperCase()) {
-      'VIP' => (
-        AppColors.warning.withValues(alpha: 0.18),
-        AppColors.warning,
-        AppColors.warning,
-      ),
-      'SWEETBOX' => (_sweetbox.withValues(alpha: 0.18), _sweetbox, _sweetbox),
-      _ => (AppColors.surface, AppColors.border, AppColors.textPrimary),
-    };
 
 // The seat map of a room for staff: seats coloured by type, in rows facing
 // the screen like the customer seat map. Tapping a seat offers its types;
@@ -80,6 +60,11 @@ class RoomSeatMap extends StatelessWidget {
                 seatBuilder: (seat, size) => _RoomSeat(
                   key: ValueKey('roomSeat-${seat.label}'),
                   seat: seat,
+                  pair: seats
+                      .where(
+                        (s) => s.row == seat.row && s.number == seat.pairNumber,
+                      )
+                      .firstOrNull,
                   size: size,
                   highlighted: highlighted.contains(seat.id),
                   onTypeSelected: onTypeSelected,
@@ -118,6 +103,7 @@ class RoomSeatMap extends StatelessWidget {
 class _RoomSeat extends StatelessWidget {
   const _RoomSeat({
     required this.seat,
+    required this.pair,
     required this.size,
     required this.highlighted,
     required this.onTypeSelected,
@@ -125,13 +111,17 @@ class _RoomSeat extends StatelessWidget {
   });
 
   final Seat seat;
+
+  // The seat a sweetbox would pair with (1 with 2, 4 with 3), if the row has
+  // it. A sweetbox changes type together with its pair.
+  final Seat? pair;
   final double size;
   final bool highlighted;
   final void Function(Seat seat, String type)? onTypeSelected;
 
   @override
   Widget build(BuildContext context) {
-    final (fill, border, text) = _seatColors(seat.type);
+    final (fill, border, text) = seatTypeColors(seat.type);
     final radius = BorderRadius.circular(math.min(AppRadius.sm, size / 5));
     final tile = AnimatedContainer(
       duration: const Duration(milliseconds: 400),
@@ -166,6 +156,19 @@ class _RoomSeat extends StatelessWidget {
     );
 
     final select = onTypeSelected;
+    final pair = this.pair;
+    final paired = seat.isSweetbox && (pair?.isSweetbox ?? false);
+    String itemLabel(String type) {
+      if (type == 'SWEETBOX') {
+        return pair == null
+            ? 'Sweetbox (no ${seat.row}${seat.pairNumber} to pair with)'
+            : 'Sweetbox (with ${pair.label})';
+      }
+      return paired
+          ? '${seatTypeLabel(type)} (with ${pair!.label})'
+          : seatTypeLabel(type);
+    }
+
     return PopupMenuButton<String>(
       enabled: select != null,
       tooltip: '${seat.label} • ${seatTypeLabel(seat.type)}',
@@ -175,7 +178,8 @@ class _RoomSeat extends StatelessWidget {
           CheckedPopupMenuItem(
             value: type,
             checked: seat.type.toUpperCase() == type,
-            child: Text(seatTypeLabel(type)),
+            enabled: type != 'SWEETBOX' || pair != null,
+            child: Text(itemLabel(type)),
           ),
       ],
       child: tile,
@@ -227,7 +231,7 @@ class _LegendEntry extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (fill, border, _) = _seatColors(type);
+    final (fill, border, _) = seatTypeColors(type);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -252,28 +256,38 @@ class _LegendEntry extends StatelessWidget {
 
 // What a new seat count does to a room, the way the API applies it: new seats
 // fill the last row up to [seatsPerRow], then the next rows (A to Z); fewer
-// seats remove the last ones. Labels are in seat map order.
+// seats remove the last ones, and a sweetbox seat whose pair is removed
+// becomes a standard seat ([unpaired]). Labels are in A to Z order.
 class SeatCountPlan {
   const SeatCountPlan({
     this.added = const [],
     this.removed = const [],
+    this.unpaired = const [],
     this.error,
   });
 
   final List<String> added;
   final List<String> removed;
+  final List<String> unpaired;
   final String? error;
 }
 
 SeatCountPlan planSeatCount(List<Seat> seats, int total, int seatsPerRow) {
-  final ordered = [for (final (_, row) in seatRowsOf(seats)) ...row];
+  final rows = seatRowsOf(seats, sweetboxLast: false);
+  final ordered = [for (final (_, row) in rows) ...row];
   if (total < ordered.length) {
+    final kept = ordered.take(total).toList();
+    final removed = ordered.skip(total).toList();
     return SeatCountPlan(
-      removed: [for (final seat in ordered.skip(total)) seat.label],
+      removed: [for (final seat in removed) seat.label],
+      unpaired: [
+        for (final seat in kept)
+          if (seat.sweetboxPartnerIn(removed) != null) seat.label,
+      ],
     );
   }
 
-  final lastRow = ordered.isEmpty ? <Seat>[] : seatRowsOf(seats).last.$2;
+  final lastRow = ordered.isEmpty ? <Seat>[] : rows.last.$2;
   final added = <String>[];
   var row = lastRow.isEmpty ? null : lastRow.last.row;
   var inRow = lastRow.length;
@@ -415,9 +429,11 @@ class _SeatCountDialogState extends State<SeatCountDialog> {
       SeatCountPlan(:final added) when added.isNotEmpty =>
         '$current to ${current + added.length} seats (+${added.length}): '
             'adds ${describeSeats(added)}.',
-      SeatCountPlan(:final removed) when removed.isNotEmpty =>
+      SeatCountPlan(:final removed, :final unpaired) when removed.isNotEmpty =>
         '$current to ${current - removed.length} seats (-${removed.length}): '
-            'removes ${describeSeats(removed)}.',
+            'removes ${describeSeats(removed)}.'
+            '${unpaired.isEmpty ? '' : ' ${describeSeats(unpaired)} becomes '
+                      'a standard seat: its sweetbox pair is removed.'}',
       _ => 'No change: the room has $current seats.',
     };
     final canSave =

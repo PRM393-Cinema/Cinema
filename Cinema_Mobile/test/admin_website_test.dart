@@ -451,6 +451,44 @@ void main() {
       await pumpRoute(tester);
       expect(summary(), '4 rows • 11 seats');
       expect(find.byKey(const ValueKey('roomSeat-D2')), findsOneWidget);
+
+      // A sweetbox takes its pair along (1 with 2); a seat without a pair
+      // cannot become one.
+      await tester.tap(find.byKey(const ValueKey('roomSeat-C3')));
+      await pumpRoute(tester);
+      final lonely = find.widgetWithText(
+        CheckedPopupMenuItem<String>,
+        'Sweetbox (no C4 to pair with)',
+      );
+      expect(
+        tester.widget<CheckedPopupMenuItem<String>>(lonely).enabled,
+        false,
+      );
+      await tester.tapAt(Offset.zero);
+      await pumpRoute(tester);
+
+      await tester.tap(find.byKey(const ValueKey('roomSeat-B1')));
+      await pumpRoute(tester);
+      await tester.tap(
+        find.widgetWithText(CheckedPopupMenuItem<String>, 'Sweetbox (with B2)'),
+      );
+      await pumpRoute(tester);
+      expect(find.text('B1 and B2 are now Sweetbox.'), findsOneWidget);
+      expect(find.text('Sweetbox (2)'), findsOneWidget);
+
+      // Removing B2 would leave B1 without its pair.
+      await tester.tap(find.text('Change seat count'));
+      await pumpRoute(tester);
+      await _type(tester, 'seatCountField', '4');
+      expect(
+        find.text(
+          '11 to 4 seats (-7): removes B2–B3, C1–C3, D1–D2. B1 becomes a '
+          'standard seat: its sweetbox pair is removed.',
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('Cancel'));
+      await pumpRoute(tester);
     });
   });
 }
@@ -588,9 +626,25 @@ class _FakeApi {
       return _json(map);
     }
     if (path.startsWith('/api/seats/')) {
-      final seat = seats.values
-          .expand((map) => map)
-          .firstWhere((seat) => seat['id'] == int.parse(segments[2]));
+      // Like the API, a sweetbox changes type together with its pair.
+      final map = seats.values.firstWhere(
+        (map) => map.any((seat) => seat['id'] == int.parse(segments[2])),
+      );
+      final seat = map.firstWhere((s) => s['id'] == int.parse(segments[2]));
+      final number = seat['seatNumber'] as int;
+      final pair = map
+          .where(
+            (s) =>
+                s['seatRow'] == seat['seatRow'] &&
+                s['seatNumber'] == (number.isOdd ? number + 1 : number - 1),
+          )
+          .firstOrNull;
+      if (pair != null &&
+          (body['seatType'] == 'SWEETBOX' ||
+              (seat['seatType'] == 'SWEETBOX' &&
+                  pair['seatType'] == 'SWEETBOX'))) {
+        pair['seatType'] = body['seatType'];
+      }
       seat['seatType'] = body['seatType'];
       return _json(seat);
     }

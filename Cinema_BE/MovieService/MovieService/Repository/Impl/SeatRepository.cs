@@ -51,40 +51,26 @@ namespace ShowtimeService.Repository.Impl
                 .ToListAsync();
         }
 
-        public async Task<Seat?> UpdateSeatAsync(long seatId, Seat seat)
-        {
-            var existingSeat = await _context.Seats.FindAsync(seatId);
-            if (existingSeat == null)
-            {
-                return null;
-            }
-            _context.Entry(existingSeat).CurrentValues.SetValues(seat);
-            await _context.SaveChangesAsync();
-            return existingSeat;
-        }
-
-        public async Task<bool> DeleteSeatAsync(long seatId)
-        {
-            var existingSeat = await _context.Seats.FindAsync(seatId);
-            if (existingSeat == null)
-            {
-                return false;
-            }
-            _context.Seats.Remove(existingSeat);
-            await SetRoomTotalSeatsAsync(existingSeat.RoomId, -1);
-            await _context.SaveChangesAsync();
-            return true;
-        }
-
-        // Thêm / bỏ ghế và cập nhật sức chứa phòng trong cùng một lần lưu
+        // Thêm / bỏ / đổi loại ghế và cập nhật sức chứa phòng trong cùng một lần lưu
         public async Task ChangeRoomSeatsAsync(
             long roomId,
             IReadOnlyCollection<Seat> added,
-            IReadOnlyCollection<long> removedSeatIds)
+            IReadOnlyCollection<long> removedSeatIds,
+            IReadOnlyDictionary<long, string>? newTypes = null)
         {
-            var removed = await _context.Seats
-                .Where(s => s.RoomId == roomId && removedSeatIds.Contains(s.Id))
+            var changedIds = removedSeatIds.Concat(newTypes?.Keys ?? []).ToList();
+            var changed = await _context.Seats
+                .Where(s => s.RoomId == roomId && changedIds.Contains(s.Id))
                 .ToListAsync();
+            var removed = changed.Where(s => removedSeatIds.Contains(s.Id)).ToList();
+
+            foreach (var seat in changed.Except(removed))
+            {
+                if (newTypes != null && newTypes.TryGetValue(seat.Id, out var type))
+                {
+                    seat.SeatType = type;
+                }
+            }
 
             _context.Seats.RemoveRange(removed);
             await _context.Seats.AddRangeAsync(added);

@@ -16,6 +16,7 @@ import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_state.dart';
 import '../../../core/widgets/cinema_background.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
+import '../../../core/widgets/top_notice.dart';
 import '../../../data/models/booking_draft.dart';
 import '../../../data/models/movie.dart';
 import '../../../data/models/seat.dart';
@@ -108,8 +109,14 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
       setState(() {
         _data = data;
         _isLoading = false;
-        // Drop selections that someone else took in the meantime.
+        // Drop selections that someone else took in the meantime, with the
+        // other half of a sweetbox that lost its partner.
         _selectedSeatIds.removeWhere((id) => data.reservations.containsKey(id));
+        _selectedSeatIds.removeWhere((id) {
+          final seat = data.seats.where((s) => s.id == id).firstOrNull;
+          final partner = seat?.sweetboxPartnerIn(data.seats);
+          return partner != null && !_selectedSeatIds.contains(partner.id);
+        });
       });
     } on ApiException catch (error) {
       _showError(error.message);
@@ -128,17 +135,35 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
     });
   }
 
+  // A sweetbox is a couple seat: picking either half picks both (1 with 2,
+  // 4 with 3), and so does letting it go.
   void _toggleSeat(Seat seat, SeatReservationStatus status) {
-    if (status == SeatReservationStatus.held ||
+    final data = _data;
+    if (data == null ||
+        status == SeatReservationStatus.held ||
         status == SeatReservationStatus.booked) {
       return; // Cannot select
     }
-    setState(() {
-      if (_selectedSeatIds.contains(seat.id)) {
+    final partner = seat.sweetboxPartnerIn(data.seats);
+    if (_selectedSeatIds.contains(seat.id)) {
+      setState(() {
         _selectedSeatIds.remove(seat.id);
-      } else {
-        _selectedSeatIds.add(seat.id);
-      }
+        if (partner != null) _selectedSeatIds.remove(partner.id);
+      });
+      return;
+    }
+    if (partner != null &&
+        data.statusOf(partner) != SeatReservationStatus.available) {
+      showTopNotice(
+        Overlay.of(context, rootOverlay: true),
+        '${seat.label} is a sweetbox (couple seat) and ${partner.label} is '
+        'taken, so it cannot be booked.',
+      );
+      return;
+    }
+    setState(() {
+      _selectedSeatIds.add(seat.id);
+      if (partner != null) _selectedSeatIds.add(partner.id);
     });
   }
 
@@ -567,6 +592,7 @@ class _SeatMap extends StatelessWidget {
                       seatBuilder: (seat, size) => SeatItem(
                         label: seat.number.toString(),
                         state: _itemStateOf(seat, data.statusOf(seat)),
+                        type: seat.type,
                         size: size,
                         onTap: () => onSeatTap(seat, data.statusOf(seat)),
                       ),
@@ -577,7 +603,12 @@ class _SeatMap extends StatelessWidget {
                         maxWidth:
                             constraints.maxWidth - SeatMapLayout.padding * 2,
                       ),
-                      child: const SeatLegend(),
+                      child: SeatLegend(
+                        types: {
+                          for (final seat in data.seats)
+                            seat.type.toUpperCase(),
+                        },
+                      ),
                     ),
                   ],
                 ),

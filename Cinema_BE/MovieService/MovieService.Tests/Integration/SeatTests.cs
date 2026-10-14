@@ -115,6 +115,83 @@ public class SeatTests
         Assert.Equal(HttpStatusCode.BadRequest, locked.StatusCode);
     }
 
+    [Fact]
+    public async Task Sweetbox_SeatsChangeTypeAsAPair()
+    {
+        var roomId = await CreateRoomWithSeatsAsync(rows: 2, seatsPerRow: 3);
+        var ids = (await SeatsAsync(roomId)).ToDictionary(s => s.Label, s => s.Id);
+
+        // Số lẻ ghép với số chẵn bên phải: A1 kéo theo A2
+        Assert.Equal(HttpStatusCode.OK, (await SetTypeAsync(ids["A1"], "SWEETBOX")).StatusCode);
+        Assert.Equal("SWEETBOX", (await TypesAsync(roomId))["A2"]);
+
+        // A3 không có A4 để ghép đôi
+        Assert.Equal(HttpStatusCode.BadRequest, (await SetTypeAsync(ids["A3"], "SWEETBOX")).StatusCode);
+
+        // Đổi một nửa cặp sang ghế đơn thì cả cặp đổi theo
+        Assert.Equal(HttpStatusCode.OK, (await SetTypeAsync(ids["A2"], "VIP")).StatusCode);
+        var types = await TypesAsync(roomId);
+        Assert.Equal(("VIP", "VIP", "NORMAL"), (types["A1"], types["A2"], types["A3"]));
+
+        // Xoá một ghế sweetbox: ghế còn lại của cặp thành ghế thường
+        await SetTypeAsync(ids["B2"], "SWEETBOX");
+        Assert.Equal("SWEETBOX", (await TypesAsync(roomId))["B1"]);
+        Assert.Equal(HttpStatusCode.NoContent, (await _admin.DeleteAsync($"/api/seats/{ids["B1"]}")).StatusCode);
+        Assert.Equal("NORMAL", (await TypesAsync(roomId))["B2"]);
+        Assert.Equal(5, await TotalSeatsAsync(roomId));
+    }
+
+    [Fact]
+    public async Task SeatCount_RemovingHalfOfASweetboxLeavesAStandardSeat()
+    {
+        var roomId = await CreateRoomWithSeatsAsync(rows: 1, seatsPerRow: 4);
+        var a3 = (await SeatsAsync(roomId)).Single(s => s.Label == "A3").Id;
+        await SetTypeAsync(a3, "SWEETBOX");
+
+        var shrunk = await _admin.PutAsJsonAsync($"/api/seats/room/{roomId}/capacity", new { totalSeats = 3 });
+        Assert.Equal(HttpStatusCode.OK, shrunk.StatusCode);
+        var types = await TypesAsync(roomId);
+        Assert.False(types.ContainsKey("A4"));
+        Assert.Equal("NORMAL", types["A3"]);
+    }
+
+    [Fact]
+    public async Task SeatsForBooking_SweetboxIsBookedInPairs()
+    {
+        var roomId = await CreateRoomWithSeatsAsync(rows: 1, seatsPerRow: 4);
+        var ids = (await SeatsAsync(roomId)).ToDictionary(s => s.Label, s => s.Id);
+        await SetTypeAsync(ids["A2"], "SWEETBOX");
+
+        var start = _factory.NextFreeDay();
+        var showtime = await _staff.PostAsJsonAsync("/api/showtimes", new
+        {
+            movieId = _factory.MovieId,
+            roomId,
+            startTime = start,
+            endTime = start.AddHours(2),
+            price = 90_000
+        });
+        var showtimeId = (await showtime.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt64();
+
+        var half = await _staff.PostAsJsonAsync($"/api/showtimes/{showtimeId}/seats", new[] { ids["A2"] });
+        Assert.Equal(HttpStatusCode.BadRequest, half.StatusCode);
+        Assert.Contains("A1", await half.Content.ReadAsStringAsync());
+
+        Assert.Equal(HttpStatusCode.OK,
+            (await _staff.PostAsJsonAsync($"/api/showtimes/{showtimeId}/seats", new[] { ids["A1"], ids["A2"] })).StatusCode);
+        Assert.Equal(HttpStatusCode.OK,
+            (await _staff.PostAsJsonAsync($"/api/showtimes/{showtimeId}/seats", new[] { ids["A3"] })).StatusCode);
+    }
+
+    private Task<HttpResponseMessage> SetTypeAsync(long seatId, string type) =>
+        _staff.PutAsJsonAsync($"/api/seats/{seatId}/type", new { seatIds = new[] { seatId }, seatType = type });
+
+    private async Task<Dictionary<string, string>> TypesAsync(long roomId)
+    {
+        var seats = await _staff.GetFromJsonAsync<JsonElement>($"/api/seats/room/{roomId}");
+        return seats.EnumerateArray().ToDictionary(Label, s => s.GetProperty("seatType").GetString()!);
+    }
+
     private async Task<long> CreateRoomWithSeatsAsync(int rows, int seatsPerRow)
     {
         var room = await _admin.PostAsJsonAsync("/api/rooms", new

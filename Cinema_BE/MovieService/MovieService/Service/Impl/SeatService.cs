@@ -162,11 +162,35 @@ namespace ShowtimeService.Service.Impl
                     "Cannot update seat type because the room has associated showtimes.");
             }
 
-            seat.SeatType = request.SeatType.Trim();
+            // Sweetbox là ghế đôi: đổi một ghế thì ghế cặp đổi theo
+            var type = request.SeatType.Trim().ToUpperInvariant();
+            var partner = SeatPairs.PartnerOf(
+                seat,
+                await _seatRepository.GetAllSeatsByRoomAsync(seat.RoomId));
+            var newTypes = new Dictionary<long, string> { [seat.Id] = type };
 
-            var updatedSeat = await _seatRepository.UpdateSeatAsync(seatId, seat);
+            if (SeatPairs.IsSweetbox(type))
+            {
+                if (partner == null)
+                {
+                    throw new BusinessException(
+                        $"Seat {SeatPairs.Label(seat)} has no seat " +
+                        $"{seat.SeatRow}{SeatPairs.PartnerNumber(seat.SeatNumber)} to pair with: " +
+                        "sweetbox seats come in pairs.");
+                }
 
-            return updatedSeat.ToResponse();
+                newTypes[partner.Id] = type;
+            }
+            else if (partner != null &&
+                SeatPairs.IsSweetbox(seat.SeatType) &&
+                SeatPairs.IsSweetbox(partner.SeatType))
+            {
+                newTypes[partner.Id] = type;
+            }
+
+            await _seatRepository.ChangeRoomSeatsAsync(seat.RoomId, [], [], newTypes);
+
+            return (await _seatRepository.GetSeatByIdAsync(seatId))?.ToResponse();
         }
 
         public async Task<bool> DeleteSeatAsync(long seatId)
@@ -194,7 +218,16 @@ namespace ShowtimeService.Service.Impl
                     "Cannot delete seat because the room has associated showtimes.");
             }
 
-            return await _seatRepository.DeleteSeatAsync(seatId);
+            // Bỏ một ghế sweetbox thì ghế cặp còn lại thành ghế thường
+            var partner = SeatPairs.IsSweetbox(seat.SeatType)
+                ? SeatPairs.PartnerOf(seat, await _seatRepository.GetAllSeatsByRoomAsync(seat.RoomId))
+                : null;
+            var newTypes = partner != null && SeatPairs.IsSweetbox(partner.SeatType)
+                ? new Dictionary<long, string> { [partner.Id] = SeatPairs.Normal }
+                : null;
+
+            await _seatRepository.ChangeRoomSeatsAsync(seat.RoomId, [], [seatId], newTypes);
+            return true;
         }
 
         // Đổi số ghế của phòng mà không đánh số lại ghế cũ: ghế mới lấp đầy hàng cuối rồi
@@ -229,13 +262,10 @@ namespace ShowtimeService.Service.Impl
 
             var seats = await _seatRepository.GetAllSeatsByRoomAsync(roomId);
             var change = request.TotalSeats - seats.Count;
+            List<Seat> removed = change < 0 ? seats.TakeLast(-change).ToList() : [];
+            var added = new List<Seat>();
 
-            if (change < 0)
-            {
-                var removed = seats.TakeLast(-change).Select(s => s.Id).ToList();
-                await _seatRepository.ChangeRoomSeatsAsync(roomId, [], removed);
-            }
-            else if (change > 0)
+            if (change > 0)
             {
                 var seatsPerRow = request.SeatsPerRow
                     ?? (seats.Count > 0
@@ -243,11 +273,26 @@ namespace ShowtimeService.Service.Impl
                         : throw new BusinessException(
                             "Seats per row is required for a room without seats."));
                 var seatType = string.IsNullOrWhiteSpace(request.SeatType)
-                    ? "NORMAL"
-                    : request.SeatType.Trim();
+                    ? SeatPairs.Normal
+                    : request.SeatType.Trim().ToUpperInvariant();
 
-                var added = PlanAddedSeats(roomId, seats, change, seatsPerRow, seatType);
-                await _seatRepository.ChangeRoomSeatsAsync(roomId, added, []);
+                added = PlanAddedSeats(roomId, seats, change, seatsPerRow, seatType);
+            }
+
+            if (change != 0)
+            {
+                // Ghế sweetbox mất ghế cặp (ghế cặp bị bỏ, hay ghế mới lẻ đôi) thành ghế thường
+                var unpaired = SeatPairs.Unpaired(seats.Except(removed).Concat(added).ToList());
+                foreach (var seat in unpaired.Intersect(added))
+                {
+                    seat.SeatType = SeatPairs.Normal;
+                }
+
+                await _seatRepository.ChangeRoomSeatsAsync(
+                    roomId,
+                    added,
+                    removed.Select(s => s.Id).ToList(),
+                    unpaired.Except(added).ToDictionary(s => s.Id, _ => SeatPairs.Normal));
             }
 
             var updated = await _seatRepository.GetAllSeatsByRoomAsync(roomId);

@@ -22,6 +22,7 @@ import '../../../data/models/seat.dart';
 import '../../../data/models/showtime.dart';
 import '../../../data/services/staff_service.dart';
 import '../../admin/widgets/admin_page.dart';
+import '../../seat/widgets/seat_type_style.dart';
 import '../widgets/room_seat_map.dart';
 import '../widgets/staff_feedback.dart';
 
@@ -234,7 +235,8 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
     }, 'Refund recorded as completed.');
   }
 
-  // Changes one seat on the map without reloading the page.
+  // Changes a seat on the map without reloading the page. A sweetbox changes
+  // together with its pair, so the map is read again.
   Future<void> _setSeatType(Seat seat, String type) async {
     if (_busy || seat.type.toUpperCase() == type) return;
     setState(() {
@@ -242,12 +244,20 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
       _error = null;
     });
     try {
-      final updated = await widget.service.setSeatType(seat.id, type);
+      await widget.service.setSeatType(seat.id, type);
+      final seats = await widget.service.seats(widget.id);
       if (!mounted) return;
-      setState(() {
-        _seats = [for (final s in _seats) s.id == updated.id ? updated : s];
-      });
-      _notice('${seat.label} is now ${seatTypeLabel(type)}.');
+      final before = {for (final s in _seats) s.id: s.type};
+      final changed = [
+        for (final s in seats)
+          if (before[s.id] != null && before[s.id] != s.type) s.label,
+      ];
+      _showSeats(seats);
+      final labels = changed.isEmpty ? [seat.label] : changed;
+      _notice(
+        '${labels.join(' and ')} ${labels.length > 1 ? 'are' : 'is'} now '
+        '${seatTypeLabel(type)}.',
+      );
     } on Object catch (error) {
       if (mounted) _notice(staffError(error));
     } finally {
