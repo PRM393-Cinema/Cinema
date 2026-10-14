@@ -49,6 +49,26 @@ class _StaffCreateBookingScreenState extends State<StaffCreateBookingScreen> {
 
   String? _id(String? value) =>
       (int.tryParse(value?.trim() ?? '') ?? 0) > 0 ? null : 'Enter a valid ID.';
+
+  // A sweetbox is booked as a couple: its other half is picked with it.
+  void _toggle(ShowtimeSeatsData map, Seat seat) {
+    final partner = seat.sweetboxPartnerIn(map.seats);
+    setState(() {
+      _error = null;
+      if (_selected.remove(seat.id)) {
+        if (partner != null) _selected.remove(partner.id);
+      } else if (partner != null &&
+          map.statusOf(partner) != SeatReservationStatus.available) {
+        _error =
+            '${seat.label} is a sweetbox (couple seat) and ${partner.label} '
+            'is taken.';
+      } else {
+        _selected.add(seat.id);
+        if (partner != null) _selected.add(partner.id);
+      }
+    });
+  }
+
   Future<void> _loadSeats() async {
     final id = int.tryParse(_show.text.trim());
     if (id == null || id <= 0 || _busy) return;
@@ -208,13 +228,8 @@ class _StaffCreateBookingScreenState extends State<StaffCreateBookingScreen> {
                             : _selected.contains(seat.id)
                             ? SeatItemState.selected
                             : SeatItemState.available,
-                        onTap: _busy
-                            ? null
-                            : () => setState(() {
-                                if (!_selected.add(seat.id)) {
-                                  _selected.remove(seat.id);
-                                }
-                              }),
+                        type: seat.type,
+                        onTap: _busy ? null : () => _toggle(_map!, seat),
                       ),
                     ),
                 ],

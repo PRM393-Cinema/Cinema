@@ -10,8 +10,11 @@ namespace ShowtimeService.Repository.Interface
         Task<Seat?> GetSeatByIdAsync(long seatId);
         Task<List<Seat>> GetSeatsByIdsAsync(IEnumerable<long> seatIds);
         Task<PagedList<Seat>> GenerateSeatsAsync (long roomId, int rows, int seatsPerRow);
-        Task<Seat?> UpdateSeatAsync(long seatId, Seat seat);
-        Task<bool> DeleteSeatAsync(long seatId);
+        Task ChangeRoomSeatsAsync(
+            long roomId,
+            IReadOnlyCollection<Seat> added,
+            IReadOnlyCollection<long> removedSeatIds,
+            IReadOnlyDictionary<long, string>? newTypes = null);
         Task DeleteSeatsByRoomIdAsync(long roomId);
         Task<bool> ExistByRoomIdAndSeatRowAndSeatNumberAsync(long roomId, string seatRow, int seatNumber);
     }

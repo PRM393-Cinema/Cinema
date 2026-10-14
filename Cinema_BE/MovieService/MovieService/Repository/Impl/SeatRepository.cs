@@ -51,28 +51,41 @@ namespace ShowtimeService.Repository.Impl
                 .ToListAsync();
         }
 
-        public async Task<Seat?> UpdateSeatAsync(long seatId, Seat seat)
+        // Thêm / bỏ / đổi loại ghế và cập nhật sức chứa phòng trong cùng một lần lưu
+        public async Task ChangeRoomSeatsAsync(
+            long roomId,
+            IReadOnlyCollection<Seat> added,
+            IReadOnlyCollection<long> removedSeatIds,
+            IReadOnlyDictionary<long, string>? newTypes = null)
         {
-            var existingSeat = await _context.Seats.FindAsync(seatId);
-            if (existingSeat == null)
+            var changedIds = removedSeatIds.Concat(newTypes?.Keys ?? []).ToList();
+            var changed = await _context.Seats
+                .Where(s => s.RoomId == roomId && changedIds.Contains(s.Id))
+                .ToListAsync();
+            var removed = changed.Where(s => removedSeatIds.Contains(s.Id)).ToList();
+
+            foreach (var seat in changed.Except(removed))
             {
-                return null;
+                if (newTypes != null && newTypes.TryGetValue(seat.Id, out var type))
+                {
+                    seat.SeatType = type;
+                }
             }
-            _context.Entry(existingSeat).CurrentValues.SetValues(seat);
+
+            _context.Seats.RemoveRange(removed);
+            await _context.Seats.AddRangeAsync(added);
+            await SetRoomTotalSeatsAsync(roomId, added.Count - removed.Count);
             await _context.SaveChangesAsync();
-            return existingSeat;
         }
 
-        public async Task<bool> DeleteSeatAsync(long seatId)
+        // Sức chứa = số ghế đang lưu + thay đổi chưa lưu
+        private async Task SetRoomTotalSeatsAsync(long roomId, int change)
         {
-            var existingSeat = await _context.Seats.FindAsync(seatId);
-            if (existingSeat == null)
+            var room = await _context.Rooms.FindAsync(roomId);
+            if (room != null)
             {
-                return false;
+                room.TotalSeats = await _context.Seats.CountAsync(s => s.RoomId == roomId) + change;
             }
-            _context.Seats.Remove(existingSeat);
-            await _context.SaveChangesAsync();
-            return true;
         }
 
         public async Task DeleteSeatsByRoomIdAsync(long roomId)
@@ -110,6 +123,7 @@ namespace ShowtimeService.Repository.Impl
             }
 
             await _context.Seats.AddRangeAsync(seats);
+            await SetRoomTotalSeatsAsync(roomId, seats.Count);
             await _context.SaveChangesAsync();
 
             var query = _context.Seats

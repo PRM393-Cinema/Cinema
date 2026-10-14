@@ -18,7 +18,7 @@ Cập nhật: 12/10/2026. Đây là bảng kiểm tra kết nối API, không ph
 | Đặt mật khẩu mới | `/reset-password` | POST `/api/v1/auth/reset-password`; POST `/api/v1/auth/logout` | Đã nối; cần email từ bước gửi mã |
 | Tài khoản/đăng xuất | `/profile` | GET `/api/v1/auth/me`; POST `/api/v1/auth/logout` | Đã nối |
 | Chi tiết phim và suất chiếu | `/movies/{id}` | GET `/api/v1/movies/{id}`; GET `/api/showtimes/movie/{movieId}/open` | Đã nối |
-| Chọn ghế | `/showtimes/{id}/seats` | GET `/api/showtimes/{showtimeId}`; GET `/api/seats/room/{roomId}`; GET `/api/v1/bookings/showtime/{showtimeId}/occupied-seats` | Đã nối |
+| Chọn ghế | `/showtimes/{id}/seats` | GET `/api/showtimes/{showtimeId}`; GET `/api/seats/room/{roomId}`; GET `/api/v1/bookings/showtime/{showtimeId}/occupied-seats` | Đã nối; màu theo loại ghế, hàng sweetbox ở cuối; sweetbox chọn / bỏ theo cặp (1-2, 3-4), server cũng từ chối đặt nửa cặp |
 | Xác nhận đặt vé | `/showtimes/{id}/summary` | POST `/api/v1/bookings` | Đã nối; ghế được truyền từ màn chọn ghế |
 | Vé đã đặt | `/bookings` | GET `/api/v1/bookings/user/{userId}` | Đã nối; mới lấy trang đầu |
 | Chi tiết/hủy vé | `/bookings/{id}` | GET `/api/v1/bookings/{id}`; POST `/api/v1/bookings/{id}/cancel`; GET `/api/v1/payments/{id}/refund` | Đã nối |
@@ -39,7 +39,7 @@ Cập nhật: 12/10/2026. Đây là bảng kiểm tra kết nối API, không ph
 | Đặt vé hộ khách | `/staff/bookings/new` | POST `/api/v1/bookings`; GET `/api/showtimes/{id}`, `/api/seats/room/{id}`, `/api/v1/bookings/showtime/{id}/occupied-seats` | Đã nối; ID/email khách và chọn ghế thật |
 | Chi tiết/xác nhận/hủy vé Staff | `/staff/bookings/{id}` | GET `/api/v1/bookings/{id}`; GET `/api/v1/payments/booking/{bookingId}`; POST `/api/v1/bookings/{id}/confirm`, `/api/v1/bookings/{id}/cancel` | Đã nối; xác nhận tay có điều kiện |
 | Suất chiếu Staff | `/staff/showtimes/{id}`, `/staff/showtimes/new`, `/staff/showtimes/{id}/edit` | GET `/api/showtimes/{id}`, `/api/v1/movies`, `/api/rooms`; POST `/api/showtimes`; PUT `/api/showtimes/{id}`; PATCH `/api/showtimes/{id}/status`; DELETE `/api/showtimes/{id}` | Đã nối; tạo/sửa/mở/đóng/hủy |
-| Phòng/ghế Staff | `/staff/rooms/{id}` | GET `/api/rooms/{id}`, `/api/seats/room/{id}`, `/api/seats/{id}`; POST `/api/seats/generate`; PUT `/api/seats/{id}/type` | Đã nối; tạo/đổi tên/xoá phòng ở Admin → Rooms |
+| Phòng/ghế Staff | `/staff/rooms/{id}` | GET `/api/rooms/{id}`, `/api/seats/room/{id}`; POST `/api/seats/generate`; PUT `/api/seats/{id}/type`; PUT `/api/seats/room/{id}/capacity` (Admin) | Đã nối; sơ đồ ghế theo hàng, màu theo loại ghế, tự làm mới mỗi 5 giây; Admin đổi số ghế (ghế mới lấp hàng cuối rồi sang hàng mới); tạo/đổi tên/xoá phòng ở Admin → Rooms |
 | Thanh toán/hoàn tiền Staff | `/staff/payments/{id}`, `/staff/refunds/{id}` | GET `/api/v1/payments/{id}`, `/api/v1/payments/refunds/{id}`; POST `/api/v1/payments/{id}/process`, `/api/v1/payments/{id}/refund`, `/api/v1/payments/refunds/{id}/complete` | Đã nối; PayOS xác minh thật, hoàn tiền ghi nhận chuyển khoản |
 | Thông báo cho khách | `/staff/bookings/{id}/notify` | GET `/api/v1/bookings/{id}`; POST `/api/v1/notifications`; POST `/api/v1/notifications/{id}/send` | Đã nối; retry cùng ID khi gửi thất bại |
 | Hồ sơ Staff | `/staff/profile` | GET `/api/v1/auth/me`; POST `/api/v1/auth/logout` | Đã nối; đổi mật khẩu dùng luồng OTP chung |
@@ -88,11 +88,12 @@ Các route `/admin/*` và `/staff/*` thuộc **trang quản trị web** (`lib/ma
 | Sửa phòng | PUT | `/api/rooms/{roomId}` | Admin → Rooms → Rename (giữ nguyên ghế) · đã nối API | [RoomsController:67](../../Cinema_BE/MovieService/MovieService/Controllers/RoomsController.cs#L67) |
 | Xoá phòng | DELETE | `/api/rooms/{roomId}` | Admin → Rooms → Delete (xoá cả ghế; bị từ chối khi phòng có suất chiếu) · đã nối API | [RoomsController:80](../../Cinema_BE/MovieService/MovieService/Controllers/RoomsController.cs#L80) |
 | Tìm phòng | GET | `/api/rooms/search` | Staff → tìm phòng · đã nối API | [RoomsController:91](../../Cinema_BE/MovieService/MovieService/Controllers/RoomsController.cs#L91) |
-| Chi tiết ghế | GET | `/api/seats/{seatId}` | Staff → đọc ghế trước khi đổi loại · đã nối API | [SeatsController:23](../../Cinema_BE/MovieService/MovieService/Controllers/SeatsController.cs#L23) |
+| Chi tiết ghế | GET | `/api/seats/{seatId}` | Chưa có UI dùng (đổi loại ghế trả về ghế mới) | [SeatsController:23](../../Cinema_BE/MovieService/MovieService/Controllers/SeatsController.cs#L23) |
 | Ghế trong phòng | GET | `/api/seats/room/{roomId}` | Sơ đồ ghế · đã nối API | [SeatsController:36](../../Cinema_BE/MovieService/MovieService/Controllers/SeatsController.cs#L36) |
 | Sinh sơ đồ ghế | POST | `/api/seats/generate` | Admin → Rooms → Add room; Staff → phòng trống → Generate seat layout · đã nối API | [SeatsController:48](../../Cinema_BE/MovieService/MovieService/Controllers/SeatsController.cs#L48) |
-| Đổi loại ghế | PUT | `/api/seats/{seatId}/type` | Staff → Room details → đổi NORMAL/VIP · đã nối API | [SeatsController:60](../../Cinema_BE/MovieService/MovieService/Controllers/SeatsController.cs#L60) |
-| Xoá ghế | DELETE | `/api/seats/{seatId}` | Chưa có UI nối endpoint này | [SeatsController:73](../../Cinema_BE/MovieService/MovieService/Controllers/SeatsController.cs#L73) |
+| Đổi loại ghế | PUT | `/api/seats/{seatId}/type` | Staff → Room details → bấm ghế trên sơ đồ → NORMAL/VIP/SWEETBOX; sweetbox đổi cả cặp, ghế không có ghế cặp không thành sweetbox được · đã nối API | [SeatsController:60](../../Cinema_BE/MovieService/MovieService/Controllers/SeatsController.cs#L60) |
+| Đổi số ghế | PUT | `/api/seats/room/{roomId}/capacity` | Admin → Room details → Change seat count (thêm cuối sơ đồ / bỏ ghế cuối; chặn khi phòng có suất chiếu) · đã nối API | [SeatsController:74](../../Cinema_BE/MovieService/MovieService/Controllers/SeatsController.cs#L74) |
+| Xoá ghế | DELETE | `/api/seats/{seatId}` | Chưa có UI nối endpoint này | [SeatsController:87](../../Cinema_BE/MovieService/MovieService/Controllers/SeatsController.cs#L87) |
 
 ## Suất chiếu
 

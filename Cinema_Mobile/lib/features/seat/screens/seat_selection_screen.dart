@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
 import '../../../app/routes/app_routes.dart';
@@ -18,6 +16,7 @@ import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_state.dart';
 import '../../../core/widgets/cinema_background.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
+import '../../../core/widgets/top_notice.dart';
 import '../../../data/models/booking_draft.dart';
 import '../../../data/models/movie.dart';
 import '../../../data/models/seat.dart';
@@ -25,6 +24,7 @@ import '../../../data/models/showtime.dart';
 import '../../../data/repositories/catalog_repository.dart';
 import '../widgets/seat_item.dart';
 import '../widgets/seat_legend.dart';
+import '../widgets/seat_map_rows.dart';
 
 class SeatSelectionScreen extends StatefulWidget {
   const SeatSelectionScreen({
@@ -109,8 +109,14 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
       setState(() {
         _data = data;
         _isLoading = false;
-        // Drop selections that someone else took in the meantime.
+        // Drop selections that someone else took in the meantime, with the
+        // other half of a sweetbox that lost its partner.
         _selectedSeatIds.removeWhere((id) => data.reservations.containsKey(id));
+        _selectedSeatIds.removeWhere((id) {
+          final seat = data.seats.where((s) => s.id == id).firstOrNull;
+          final partner = seat?.sweetboxPartnerIn(data.seats);
+          return partner != null && !_selectedSeatIds.contains(partner.id);
+        });
       });
     } on ApiException catch (error) {
       _showError(error.message);
@@ -129,17 +135,35 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
     });
   }
 
+  // A sweetbox is a couple seat: picking either half picks both (1 with 2,
+  // 4 with 3), and so does letting it go.
   void _toggleSeat(Seat seat, SeatReservationStatus status) {
-    if (status == SeatReservationStatus.held ||
+    final data = _data;
+    if (data == null ||
+        status == SeatReservationStatus.held ||
         status == SeatReservationStatus.booked) {
       return; // Cannot select
     }
-    setState(() {
-      if (_selectedSeatIds.contains(seat.id)) {
+    final partner = seat.sweetboxPartnerIn(data.seats);
+    if (_selectedSeatIds.contains(seat.id)) {
+      setState(() {
         _selectedSeatIds.remove(seat.id);
-      } else {
-        _selectedSeatIds.add(seat.id);
-      }
+        if (partner != null) _selectedSeatIds.remove(partner.id);
+      });
+      return;
+    }
+    if (partner != null &&
+        data.statusOf(partner) != SeatReservationStatus.available) {
+      showTopNotice(
+        Overlay.of(context, rootOverlay: true),
+        '${seat.label} is a sweetbox (couple seat) and ${partner.label} is '
+        'taken, so it cannot be booked.',
+      );
+      return;
+    }
+    setState(() {
+      _selectedSeatIds.add(seat.id);
+      if (partner != null) _selectedSeatIds.add(partner.id);
     });
   }
 
@@ -515,28 +539,12 @@ class _SeatMap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Group seats by row
-    final Map<String, List<Seat>> rows = {};
-    for (final seat in data.seats) {
-      rows.putIfAbsent(seat.row, () => []).add(seat);
-    }
-
-    // Sort rows alphabetically (A, B, C...)
-    final sortedRowKeys = rows.keys.toList()..sort();
-
-    // Sort seats in each row by seat number
-    for (final row in sortedRowKeys) {
-      rows[row]!.sort((a, b) => a.number.compareTo(b.number));
-    }
-
-    final seatsPerRow = rows.values.fold<int>(
-      0,
-      (widest, row) => math.max(widest, row.length),
-    );
+    final rows = seatRowsOf(data.seats);
+    final seatsPerRow = widestRowOf(rows);
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final layout = _SeatMapLayout.fit(
+        final layout = SeatMapLayout.fit(
           maxWidth: constraints.maxWidth,
           seatsPerRow: seatsPerRow,
         );
@@ -557,11 +565,11 @@ class _SeatMap extends StatelessWidget {
             ),
             child: Center(
               child: Padding(
-                padding: const EdgeInsets.all(_SeatMapLayout.padding),
+                padding: const EdgeInsets.all(SeatMapLayout.padding),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _ScreenIndicator(width: layout.seatsWidth(seatsPerRow)),
+                    SeatScreenIndicator(width: layout.seatsWidth(seatsPerRow)),
                     const SizedBox(height: AppSpacing.sm),
                     // Wraps instead of widening the column: the map is laid
                     // out unconstrained, so a long line would push the seats
@@ -569,7 +577,7 @@ class _SeatMap extends StatelessWidget {
                     ConstrainedBox(
                       constraints: BoxConstraints(
                         maxWidth:
-                            constraints.maxWidth - _SeatMapLayout.padding * 2,
+                            constraints.maxWidth - SeatMapLayout.padding * 2,
                       ),
                       child: Text(
                         '${rows.length} rows • ${data.seats.length} seats • Pinch to zoom',
@@ -578,47 +586,29 @@ class _SeatMap extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: AppSpacing.xl),
-                    ...sortedRowKeys.map((rowKey) {
-                      final rowSeats = rows[rowKey]!;
-                      return Padding(
-                        padding: EdgeInsets.only(bottom: layout.gap),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _RowLabel(label: rowKey),
-                            const SizedBox(width: _SeatMapLayout.labelGap),
-                            for (final (index, seat) in rowSeats.indexed) ...[
-                              if (index > 0)
-                                SizedBox(
-                                  width:
-                                      layout.gap +
-                                      (_SeatMapLayout.aisleAfter(
-                                            rowSeats.length,
-                                          ).contains(index)
-                                          ? _SeatMapLayout.aisleWidth
-                                          : 0),
-                                ),
-                              SeatItem(
-                                label: seat.number.toString(),
-                                state: _itemStateOf(seat, data.statusOf(seat)),
-                                size: layout.seatSize,
-                                onTap: () =>
-                                    onSeatTap(seat, data.statusOf(seat)),
-                              ),
-                            ],
-                            const SizedBox(width: _SeatMapLayout.labelGap),
-                            _RowLabel(label: rowKey),
-                          ],
-                        ),
-                      );
-                    }),
+                    SeatMapRows(
+                      rows: rows,
+                      layout: layout,
+                      seatBuilder: (seat, size) => SeatItem(
+                        label: seat.number.toString(),
+                        state: _itemStateOf(seat, data.statusOf(seat)),
+                        type: seat.type,
+                        size: size,
+                        onTap: () => onSeatTap(seat, data.statusOf(seat)),
+                      ),
+                    ),
                     const SizedBox(height: AppSpacing.lg),
                     ConstrainedBox(
                       constraints: BoxConstraints(
                         maxWidth:
-                            constraints.maxWidth - _SeatMapLayout.padding * 2,
+                            constraints.maxWidth - SeatMapLayout.padding * 2,
                       ),
-                      child: const SeatLegend(),
+                      child: SeatLegend(
+                        types: {
+                          for (final seat in data.seats)
+                            seat.type.toUpperCase(),
+                        },
+                      ),
                     ),
                   ],
                 ),
@@ -629,111 +619,4 @@ class _SeatMap extends StatelessWidget {
       },
     );
   }
-}
-
-// Sizes the seat map so the widest row fits the screen: seats shrink on
-// phones (down to [minSeat]) and grow up to [maxSeat] on larger screens.
-class _SeatMapLayout {
-  const _SeatMapLayout({required this.seatSize, required this.gap});
-
-  factory _SeatMapLayout.fit({
-    required double maxWidth,
-    required int seatsPerRow,
-  }) {
-    final seats = math.max(seatsPerRow, 1);
-    final gap = maxWidth < 600 ? 6.0 : AppSpacing.md;
-    final available =
-        maxWidth -
-        padding * 2 -
-        (labelWidth + labelGap) * 2 -
-        aisleAfter(seats).length * aisleWidth -
-        gap * (seats - 1);
-
-    return _SeatMapLayout(
-      seatSize: (available / seats).clamp(minSeat, maxSeat).toDouble(),
-      gap: gap,
-    );
-  }
-
-  static const padding = AppSpacing.md;
-  static const labelWidth = 20.0;
-  static const labelGap = 6.0;
-  static const minSeat = 20.0;
-  static const maxSeat = 44.0;
-  static const aisleWidth = 12.0;
-
-  static List<int> aisleAfter(int seats) => seats >= 14
-      ? [4, seats - 4]
-      : seats >= 8
-      ? [seats ~/ 2]
-      : const [];
-
-  final double seatSize;
-  final double gap;
-
-  double seatsWidth(int seats) =>
-      seats * seatSize +
-      (seats - 1) * gap +
-      aisleAfter(seats).length * aisleWidth;
-
-  double mapWidth(int seats) {
-    return seatsWidth(seats) + (labelWidth + labelGap) * 2 + padding * 2;
-  }
-}
-
-class _RowLabel extends StatelessWidget {
-  const _RowLabel({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: _SeatMapLayout.labelWidth,
-      child: Text(
-        label,
-        style: AppTextStyles.bodySmall.copyWith(
-          color: AppColors.textPrimary,
-          fontWeight: FontWeight.w600,
-        ),
-        textAlign: TextAlign.center,
-      ),
-    );
-  }
-}
-
-class _ScreenIndicator extends StatelessWidget {
-  const _ScreenIndicator({required this.width});
-
-  final double width;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        CustomPaint(size: Size(width, 24), painter: _ScreenCurvePainter()),
-        const SizedBox(height: AppSpacing.sm),
-        const Text('SCREEN', style: AppTextStyles.caption),
-      ],
-    );
-  }
-}
-
-class _ScreenCurvePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppColors.primary.withAlpha(128)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.0;
-
-    final path = Path()
-      ..moveTo(0, size.height)
-      ..quadraticBezierTo(size.width / 2, 0, size.width, size.height);
-
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

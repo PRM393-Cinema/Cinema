@@ -68,6 +68,24 @@ namespace ShowtimeService.Service.Impl
                     $"Seat(s) {string.Join(", ", invalidIds)} do not belong to the room of showtime {showtimeId}.");
             }
 
+            // Sweetbox là ghế đôi: phải đặt cả hai ghế của cặp
+            if (seats.Any(s => SeatPairs.IsSweetbox(s.SeatType)))
+            {
+                var roomSeats = await _seatRepository.GetAllSeatsByRoomAsync(showtime.RoomId);
+                foreach (var seat in seats.Where(s => SeatPairs.IsSweetbox(s.SeatType)))
+                {
+                    var partner = SeatPairs.PartnerOf(seat, roomSeats);
+                    if (partner != null &&
+                        SeatPairs.IsSweetbox(partner.SeatType) &&
+                        !requestedIds.Contains(partner.Id))
+                    {
+                        throw new BusinessException(
+                            $"Sweetbox seats are booked in pairs: book {SeatPairs.Label(seat)} " +
+                            $"together with {SeatPairs.Label(partner)}.");
+                    }
+                }
+            }
+
             // Giá ghế = giá suất chiếu (khớp dữ liệu hiện có: booking_seats.price = showtimes.price).
             return seats
                 .OrderBy(s => requestedIds.IndexOf(s.Id))
