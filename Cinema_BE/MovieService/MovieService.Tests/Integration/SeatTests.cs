@@ -162,16 +162,7 @@ public class SeatTests
         var ids = (await SeatsAsync(roomId)).ToDictionary(s => s.Label, s => s.Id);
         await SetTypeAsync(ids["A2"], "SWEETBOX");
 
-        var start = _factory.NextFreeDay();
-        var showtime = await _staff.PostAsJsonAsync("/api/showtimes", new
-        {
-            movieId = _factory.MovieId,
-            roomId,
-            startTime = start,
-            endTime = start.AddHours(2),
-            price = 90_000
-        });
-        var showtimeId = (await showtime.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt64();
+        var showtimeId = (await CreateShowtimeAsync(roomId, price: 90_000)).GetProperty("id").GetInt64();
 
         var half = await _staff.PostAsJsonAsync($"/api/showtimes/{showtimeId}/seats", new[] { ids["A2"] });
         Assert.Equal(HttpStatusCode.BadRequest, half.StatusCode);
@@ -181,6 +172,48 @@ public class SeatTests
             (await _staff.PostAsJsonAsync($"/api/showtimes/{showtimeId}/seats", new[] { ids["A1"], ids["A2"] })).StatusCode);
         Assert.Equal(HttpStatusCode.OK,
             (await _staff.PostAsJsonAsync($"/api/showtimes/{showtimeId}/seats", new[] { ids["A3"] })).StatusCode);
+    }
+
+    [Fact]
+    public async Task SeatsForBooking_PriceDependsOnTheSeatType()
+    {
+        var roomId = await CreateRoomWithSeatsAsync(rows: 1, seatsPerRow: 4);
+        var ids = (await SeatsAsync(roomId)).ToDictionary(s => s.Label, s => s.Id);
+        await SetTypeAsync(ids["A1"], "SWEETBOX");
+        await SetTypeAsync(ids["A3"], "VIP");
+
+        // 95.000đ: VIP +20% = 114.000đ; sweetbox +30% = 28.500đ, làm tròn thành 29.000đ
+        var showtime = await CreateShowtimeAsync(roomId, price: 95_000);
+        var prices = showtime.GetProperty("seatPrices");
+        Assert.Equal(95_000m, prices.GetProperty("NORMAL").GetDecimal());
+        Assert.Equal(114_000m, prices.GetProperty("VIP").GetDecimal());
+        Assert.Equal(124_000m, prices.GetProperty("SWEETBOX").GetDecimal());
+
+        var seats = await _staff.PostAsJsonAsync(
+            $"/api/showtimes/{showtime.GetProperty("id").GetInt64()}/seats",
+            new[] { ids["A1"], ids["A2"], ids["A3"], ids["A4"] });
+        Assert.Equal(HttpStatusCode.OK, seats.StatusCode);
+        var priceOf = (await seats.Content.ReadFromJsonAsync<JsonElement>()).EnumerateArray()
+            .ToDictionary(s => s.GetProperty("seatLabel").GetString()!, s => s.GetProperty("price").GetDecimal());
+        Assert.Equal(124_000m, priceOf["A1"]);
+        Assert.Equal(124_000m, priceOf["A2"]);
+        Assert.Equal(114_000m, priceOf["A3"]);
+        Assert.Equal(95_000m, priceOf["A4"]);
+    }
+
+    private async Task<JsonElement> CreateShowtimeAsync(long roomId, decimal price)
+    {
+        var start = _factory.NextFreeDay();
+        var showtime = await _staff.PostAsJsonAsync("/api/showtimes", new
+        {
+            movieId = _factory.MovieId,
+            roomId,
+            startTime = start,
+            endTime = start.AddHours(2),
+            price
+        });
+        Assert.Equal(HttpStatusCode.Created, showtime.StatusCode);
+        return await showtime.Content.ReadFromJsonAsync<JsonElement>();
     }
 
     private Task<HttpResponseMessage> SetTypeAsync(long seatId, string type) =>

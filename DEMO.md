@@ -51,7 +51,7 @@ Khách dùng app (web hoặc điện thoại). Nhân viên và admin dùng **tra
 
 1. Trang chủ: danh sách phim đang chiếu, ô tìm kiếm.
 2. Mở một phim: suất chiếu 7 ngày tới, kèm phòng và giá. Chọn suất → **Continue to Seats**. Nếu chưa đăng nhập, app mở màn đăng nhập rồi quay lại đúng bước này.
-3. Chọn ghế: màu theo loại (thường, VIP, sweetbox), hàng sweetbox nằm cuối phòng; ghế đã có người đặt không chọn được. Sweetbox là ghế đôi: chọn ghế lẻ thì app chọn luôn ghế chẵn bên phải, chọn ghế chẵn thì chọn luôn ghế lẻ bên trái (1-2, 3-4), bỏ chọn cũng bỏ cả đôi. → **Continue** → **Confirm Booking**. Vé chờ thanh toán và giữ ghế 10 phút.
+3. Chọn ghế: màu theo loại (thường, VIP, sweetbox), hàng sweetbox nằm cuối phòng; ghế đã có người đặt không chọn được. Sweetbox là ghế đôi: chọn ghế lẻ thì app chọn luôn ghế chẵn bên phải, chọn ghế chẵn thì chọn luôn ghế lẻ bên trái (1-2, 3-4), bỏ chọn cũng bỏ cả đôi. Giá theo loại ghế: giá suất chiếu là giá ghế thường, VIP +20%, sweetbox +30% mỗi ghế (chú thích hiện giá cả đôi), tổng tiền cộng theo từng ghế. Sơ đồ tự cập nhật mỗi 5 giây: mở cùng suất ở cửa sổ khác và đặt một ghế đang chọn ở cửa sổ này, vài giây sau ghế đó bị bỏ chọn kèm thông báo. → **Continue** → **Confirm Booking**. Vé chờ thanh toán và giữ ghế 10 phút.
 4. **Pay with PayOS** mở trang thanh toán PayOS thật. Không cần trả tiền: trong thư mục `Cinema\Cinema_BE`, giả lập PayOS báo đã nhận tiền:
 
    ```powershell

@@ -20,6 +20,7 @@ import '../../../data/models/booking_draft.dart';
 import '../../../data/models/movie.dart';
 import '../../../data/models/showtime.dart';
 import '../../../data/repositories/catalog_repository.dart';
+import '../../seat/widgets/seat_type_style.dart';
 import '../../showtime/widgets/showtime_section.dart';
 
 // Movie details with its upcoming showtimes, so customers pick a time here
@@ -475,7 +476,7 @@ class _SelectionBar extends StatelessWidget {
                         ),
                         const SizedBox(width: AppSpacing.md),
                         Text(
-                          '${formatVnd(selected.price)} / seat',
+                          seatPriceLabel(selected),
                           style: AppTextStyles.bodySmall,
                         ),
                       ],
@@ -529,7 +530,7 @@ class _SelectionBar extends StatelessWidget {
                       ),
                       const SizedBox(height: AppSpacing.xs),
                       Text(
-                        '${formatVnd(selected.price)} / seat',
+                        seatPriceLabel(selected),
                         style: AppTextStyles.bodySmall,
                       ),
                     ],

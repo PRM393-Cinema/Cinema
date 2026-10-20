@@ -9,6 +9,7 @@ class Showtime {
     required this.endTime,
     required this.price,
     required this.status,
+    this.seatPrices = const {},
   });
 
   factory Showtime.fromJson(Map<String, Object?> json) {
@@ -20,6 +21,11 @@ class Showtime {
       endTime: readRequiredDateTime(json['endTime']),
       price: readDouble(json['price']),
       status: readString(json['status'], fallback: 'OPEN'),
+      seatPrices: {
+        if (json['seatPrices'] case final Map prices)
+          for (final MapEntry(:key, :value) in prices.entries)
+            if (value is num) '$key'.toUpperCase(): value.toDouble(),
+      },
     );
   }
 
@@ -28,8 +34,16 @@ class Showtime {
   final int roomId;
   final DateTime startTime;
   final DateTime endTime;
+  // The price of a standard seat.
   final double price;
   final String status; // 'OPEN', 'CLOSED', 'CANCELLED'
+
+  // The price of one seat by type (NORMAL, VIP, SWEETBOX): VIP and sweetbox
+  // seats cost more than [price].
+  final Map<String, double> seatPrices;
+
+  double priceOf(String seatType) =>
+      seatPrices[seatType.toUpperCase()] ?? price;
 
   bool get isOpen => status == 'OPEN';
 
