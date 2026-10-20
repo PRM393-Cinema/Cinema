@@ -44,15 +44,17 @@ void main() {
     );
   });
 
-  testWidgets('A sweetbox sits together and no aisle splits it', (
+  testWidgets('A sweetbox row keeps the columns of the rows in front', (
     tester,
   ) async {
-    final row = [for (var n = 1; n <= 10; n++) _seat('C', n, 'SWEETBOX')];
     await tester.pumpWidget(
       MaterialApp(
         home: Center(
           child: SeatMapRows(
-            rows: [('C', row)],
+            rows: [
+              ('A', [for (var n = 1; n <= 10; n++) _seat('A', n)]),
+              ('C', [for (var n = 1; n <= 10; n++) _seat('C', n, 'SWEETBOX')]),
+            ],
             layout: const SeatMapLayout(seatSize: 30, gap: 12),
             seatBuilder: (seat, size) =>
                 SizedBox.square(key: Key(seat.label), dimension: size),
@@ -61,14 +63,26 @@ void main() {
       ),
     );
 
-    double gap(String left, String right) =>
-        tester.getTopLeft(find.byKey(Key(right))).dx -
-        tester.getTopRight(find.byKey(Key(left))).dx;
+    double left(String label) => tester.getTopLeft(find.byKey(Key(label))).dx;
+    for (var n = 1; n <= 10; n++) {
+      expect(left('C$n'), left('A$n'), reason: 'C$n under A$n');
+    }
 
-    expect(gap('C1', 'C2'), SeatMapRows.pairGap);
-    expect(gap('C5', 'C6'), SeatMapRows.pairGap);
-    // The middle aisle moves from C5|C6 to C4|C5.
-    expect(gap('C4', 'C5'), 12 + SeatMapLayout.aisleWidth);
-    expect(gap('C6', 'C7'), 12);
+    // Each sweetbox (1-2, 3-4, ...) shares one band, even across the aisle.
+    Finder band(String label) => find.ancestor(
+      of: find.byKey(Key(label)),
+      matching: find.byType(DecoratedBox),
+    );
+    for (final (a, b, next) in [('C1', 'C2', 'C3'), ('C5', 'C6', 'C7')]) {
+      expect(
+        find.descendant(of: band(a).first, matching: find.byKey(Key(b))),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: band(a).first, matching: find.byKey(Key(next))),
+        findsNothing,
+      );
+    }
+    expect(band('A1'), findsNothing);
   });
 }

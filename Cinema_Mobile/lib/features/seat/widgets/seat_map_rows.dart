@@ -3,9 +3,11 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../../app/theme/app_colors.dart';
+import '../../../app/theme/app_radius.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
 import '../../../data/models/seat.dart';
+import 'seat_type_style.dart';
 
 // The seats of a room grouped by row, rows in order (A..Z, then AA) and seats
 // by number: the order the API lists them in. On a seat map ([sweetboxLast])
@@ -94,8 +96,9 @@ class SeatMapLayout {
 }
 
 // The rows of a seat map, lettered on both sides, with aisles in long rows.
-// The two seats of a sweetbox sit close together and no aisle splits them.
-// [seatBuilder] draws one seat at the layout's size.
+// Every row uses the same columns, so seat 5 of a sweetbox row sits under
+// seat 5 of the row in front; the two seats of a sweetbox are joined by a
+// band. [seatBuilder] draws one seat at the layout's size.
 class SeatMapRows extends StatelessWidget {
   const SeatMapRows({
     required this.rows,
@@ -104,19 +107,38 @@ class SeatMapRows extends StatelessWidget {
     super.key,
   });
 
-  static const pairGap = 2.0;
-
   final List<(String, List<Seat>)> rows;
   final SeatMapLayout layout;
   final Widget Function(Seat seat, double size) seatBuilder;
 
-  double _gapBefore(List<Seat> seats, int index) {
-    if (_pairAt(seats, index)) return pairGap;
-    final aisles = {
-      for (final aisle in SeatMapLayout.aisleAfter(seats.length))
-        _pairAt(seats, aisle) ? aisle - 1 : aisle,
-    };
-    return layout.gap + (aisles.contains(index) ? SeatMapLayout.aisleWidth : 0);
+  double _gapBefore(List<Seat> seats, int index) =>
+      layout.gap +
+      (SeatMapLayout.aisleAfter(seats.length).contains(index)
+          ? SeatMapLayout.aisleWidth
+          : 0);
+
+  List<Widget> _seatsOf(List<Seat> seats) {
+    final children = <Widget>[];
+    for (var index = 0; index < seats.length; index++) {
+      if (index > 0) children.add(SizedBox(width: _gapBefore(seats, index)));
+      final seat = seatBuilder(seats[index], layout.seatSize);
+      if (!_pairAt(seats, index + 1)) {
+        children.add(seat);
+        continue;
+      }
+      index++;
+      children.add(
+        _Sweetbox(
+          size: layout.seatSize,
+          children: [
+            seat,
+            SizedBox(width: _gapBefore(seats, index)),
+            seatBuilder(seats[index], layout.seatSize),
+          ],
+        ),
+      );
+    }
+    return children;
   }
 
   @override
@@ -132,16 +154,32 @@ class SeatMapRows extends StatelessWidget {
               children: [
                 _RowLabel(label: rowKey),
                 const SizedBox(width: SeatMapLayout.labelGap),
-                for (final (index, seat) in rowSeats.indexed) ...[
-                  if (index > 0) SizedBox(width: _gapBefore(rowSeats, index)),
-                  seatBuilder(seat, layout.seatSize),
-                ],
+                ..._seatsOf(rowSeats),
                 const SizedBox(width: SeatMapLayout.labelGap),
                 _RowLabel(label: rowKey),
               ],
             ),
           ),
       ],
+    );
+  }
+}
+
+// The band behind the two seats of a sweetbox; it does not move the seats.
+class _Sweetbox extends StatelessWidget {
+  const _Sweetbox({required this.size, required this.children});
+
+  final double size;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: sweetboxColor.withValues(alpha: 0.28),
+        borderRadius: BorderRadius.circular(math.min(AppRadius.sm, size / 5)),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: children),
     );
   }
 }
