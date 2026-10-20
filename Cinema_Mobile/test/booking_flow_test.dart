@@ -100,6 +100,96 @@ void main() {
       expect(find.text('0 seat(s)'), findsOneWidget);
     });
 
+    testWidgets('A sweetbox is picked as a couple and shown in the back row', (
+      WidgetTester tester,
+    ) async {
+      // Row A is a sweetbox row; B4 is taken.
+      final catalog = FakeCatalogRepository(
+        seatMap: ShowtimeSeatsData.fromOccupied(
+          seats: [
+            for (final (index, (row, type)) in [
+              ('A', 'SWEETBOX'),
+              ('B', 'VIP'),
+            ].indexed)
+              for (var number = 1; number <= 4; number++)
+                Seat(
+                  id: index * 4 + number,
+                  roomId: 1,
+                  row: row,
+                  number: number,
+                  type: type,
+                ),
+          ],
+          occupiedSeatIds: const [8],
+        ),
+      );
+      await _openSeatSelection(tester, catalogRepository: catalog);
+
+      // Sweetbox row A sits behind row B, and every seat type has a key.
+      expect(
+        tester.getTopLeft(find.text('A').first).dy,
+        greaterThan(tester.getTopLeft(find.text('B').first).dy),
+      );
+      for (final label in ['VIP', 'Sweetbox (couple)', 'Selected']) {
+        expect(find.text(label), findsOneWidget);
+      }
+      expect(find.text('Standard'), findsNothing);
+
+      Finder seat(String number, {required bool sweetbox}) =>
+          (sweetbox ? find.text(number).last : find.text(number).first);
+
+      // An odd seat brings the even one on its right, and back.
+      await tester.tap(seat('1', sweetbox: true));
+      await tester.pump();
+      expect(find.text('2 seat(s)'), findsOneWidget);
+      await tester.tap(seat('2', sweetbox: true));
+      await tester.pump();
+      expect(find.text('0 seat(s)'), findsOneWidget);
+
+      // An even seat brings the odd one on its left.
+      await tester.tap(seat('4', sweetbox: true));
+      await tester.pump();
+      expect(find.text('2 seat(s)'), findsOneWidget);
+      expect(find.text(formatVnd(180000)), findsOneWidget);
+
+      // A single VIP seat is picked on its own.
+      await tester.tap(seat('1', sweetbox: false));
+      await tester.pump();
+      expect(find.text('3 seat(s)'), findsOneWidget);
+    });
+
+    testWidgets('A sweetbox whose pair is taken cannot be picked', (
+      WidgetTester tester,
+    ) async {
+      final catalog = FakeCatalogRepository(
+        seatMap: ShowtimeSeatsData.fromOccupied(
+          seats: [
+            for (var number = 1; number <= 4; number++)
+              Seat(
+                id: number,
+                roomId: 1,
+                row: 'A',
+                number: number,
+                type: 'SWEETBOX',
+              ),
+          ],
+          occupiedSeatIds: const [4],
+        ),
+      );
+      await _openSeatSelection(tester, catalogRepository: catalog);
+
+      await tester.tap(find.text('3').first);
+      await tester.pump();
+      expect(find.text('0 seat(s)'), findsOneWidget);
+      expect(
+        find.text(
+          'A3 is a sweetbox (couple seat) and A4 is taken, so it cannot be '
+          'booked.',
+        ),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('Confirm Booking creates the booking and opens payment', (
       WidgetTester tester,
     ) async {

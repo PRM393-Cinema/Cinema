@@ -276,6 +276,22 @@ class StaffService {
       ),
     ),
   );
+
+  // Admin: new seats fill the last row up to [seatsPerRow] (default: the
+  // widest row), then the next rows; fewer seats remove the last ones. The
+  // existing seats keep their labels. Returns the new seat map.
+  Future<List<Seat>> setRoomSeatCount(
+    int roomId,
+    int totalSeats, {
+    int? seatsPerRow,
+  }) async => readMapList(
+    await _client.put(
+      '/api/seats/room/$roomId/capacity',
+      authenticated: true,
+      body: {'totalSeats': totalSeats, 'seatsPerRow': ?seatsPerRow},
+    ),
+  ).map(Seat.fromJson).toList();
+
   Future<PagedResult<Movie>> movies({int page = 1}) async =>
       PagedResult.fromJson(
         await _client.get(

@@ -401,6 +401,95 @@ void main() {
       expect(find.text('Renamed Room 03 to IMAX 1.'), findsOneWidget);
       expect(find.text('IMAX 1'), findsOneWidget);
     });
+
+    testWidgets('The seat map grows row by row and follows other changes', (
+      tester,
+    ) async {
+      final api = _FakeApi()
+        ..rooms.add({'id': 3, 'name': 'Room 03', 'totalSeats': 6})
+        ..seats[3] = [
+          for (final (i, label) in ['A1', 'A2', 'A3', 'B1', 'B2', 'B3'].indexed)
+            _seat(i + 1, 3, label[0], int.parse(label.substring(1))),
+        ];
+      await _openAdmin(tester, api, AppRoutes.staffRecord('rooms', 3));
+
+      String summary() =>
+          tester.widget<Text>(find.byKey(const Key('roomSeatSummary'))).data!;
+      expect(summary(), '2 rows • 6 seats');
+      expect(find.byKey(const ValueKey('roomSeat-B3')), findsOneWidget);
+
+      // Adding 4 seats fills new rows of 3 seats.
+      await tester.tap(find.text('Change seat count'));
+      await pumpRoute(tester);
+      await _type(tester, 'seatCountField', '10');
+      expect(find.text('6 to 10 seats (+4): adds C1–C3, D1.'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('saveSeatCountButton')));
+      await pumpRoute(tester);
+
+      final (method, path, body) = api.writes.last;
+      expect('$method $path', 'PUT /api/seats/room/3/capacity');
+      expect(body, {'totalSeats': 10, 'seatsPerRow': 3});
+      expect(summary(), '4 rows • 10 seats');
+      expect(find.byKey(const ValueKey('roomSeat-D1')), findsOneWidget);
+      expect(find.text('Just added'), findsOneWidget);
+      expect(find.text('Room 03 now has 10 seats (+4).'), findsOneWidget);
+
+      // A seat's type is changed from the map.
+      await tester.tap(find.byKey(const ValueKey('roomSeat-A1')));
+      await pumpRoute(tester);
+      await tester.tap(
+        find.widgetWithText(CheckedPopupMenuItem<String>, 'VIP'),
+      );
+      await pumpRoute(tester);
+      expect(api.writes.last.$2, '/api/seats/1/type');
+      expect(api.writes.last.$3['seatType'], 'VIP');
+      expect(find.text('VIP (1)'), findsOneWidget);
+
+      // Seats added elsewhere show up on the next refresh.
+      api.seats[3]!.add(_seat(11, 3, 'D', 2));
+      await tester.pump(const Duration(seconds: 5));
+      await pumpRoute(tester);
+      expect(summary(), '4 rows • 11 seats');
+      expect(find.byKey(const ValueKey('roomSeat-D2')), findsOneWidget);
+
+      // A sweetbox takes its pair along (1 with 2); a seat without a pair
+      // cannot become one.
+      await tester.tap(find.byKey(const ValueKey('roomSeat-C3')));
+      await pumpRoute(tester);
+      final lonely = find.widgetWithText(
+        CheckedPopupMenuItem<String>,
+        'Sweetbox (no C4 to pair with)',
+      );
+      expect(
+        tester.widget<CheckedPopupMenuItem<String>>(lonely).enabled,
+        false,
+      );
+      await tester.tapAt(Offset.zero);
+      await pumpRoute(tester);
+
+      await tester.tap(find.byKey(const ValueKey('roomSeat-B1')));
+      await pumpRoute(tester);
+      await tester.tap(
+        find.widgetWithText(CheckedPopupMenuItem<String>, 'Sweetbox (with B2)'),
+      );
+      await pumpRoute(tester);
+      expect(find.text('B1 and B2 are now Sweetbox.'), findsOneWidget);
+      expect(find.text('Sweetbox (2)'), findsOneWidget);
+
+      // Removing B2 would leave B1 without its pair.
+      await tester.tap(find.text('Change seat count'));
+      await pumpRoute(tester);
+      await _type(tester, 'seatCountField', '4');
+      expect(
+        find.text(
+          '11 to 4 seats (-7): removes B2–B3, C1–C3, D1–D2. B1 becomes a '
+          'standard seat: its sweetbox pair is removed.',
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('Cancel'));
+      await pumpRoute(tester);
+    });
   });
 }
 
@@ -443,11 +532,21 @@ Map<String, Object?> _movie(int id, String title) => {
   'status': 'ACTIVE',
 };
 
+Map<String, Object?> _seat(int id, int roomId, String row, int number) => {
+  'id': id,
+  'roomId': roomId,
+  'seatRow': row,
+  'seatNumber': number,
+  'seatType': 'NORMAL',
+};
+
 // Movie and room endpoints of the API, kept in memory. A refuse message
 // fails the next writes with 400.
 class _FakeApi {
   final movies = <Map<String, Object?>>[];
   final rooms = <Map<String, Object?>>[];
+  // Seat maps by room id.
+  final seats = <int, List<Map<String, Object?>>>{};
   final reads = <Uri>[];
   final writes = <(String, String, Map<String, Object?>)>[];
   String? refuse;
@@ -461,6 +560,11 @@ class _FakeApi {
     final path = request.url.path;
     if (request.method == 'GET') {
       reads.add(request.url);
+      final id = int.tryParse(request.url.pathSegments.last);
+      if (path.startsWith('/api/seats/room/')) return _json(seats[id] ?? []);
+      if (path.startsWith('/api/rooms/') && id != null) {
+        return _json(rooms.firstWhere((room) => room['id'] == id));
+      }
       if (path.startsWith('/api/rooms')) return _page(rooms);
       if (path == '/api/v1/movies/status/INACTIVE') {
         return _page([
@@ -496,6 +600,53 @@ class _FakeApi {
         return failSeats
             ? _problem('Seats could not be generated.')
             : _page(const []);
+    }
+    if (path.endsWith('/capacity')) {
+      final roomId = int.parse(segments[3]);
+      final map = seats[roomId]!;
+      final perRow = body['seatsPerRow'] as int;
+      while (map.length < (body['totalSeats'] as int)) {
+        final last = map.last;
+        final full = map.where((s) => s['seatRow'] == last['seatRow']).length;
+        final next = full >= perRow;
+        map.add(
+          _seat(
+            map.length + 1,
+            roomId,
+            next
+                ? String.fromCharCode(
+                    (last['seatRow'] as String).codeUnitAt(0) + 1,
+                  )
+                : last['seatRow'] as String,
+            next ? 1 : (last['seatNumber'] as int) + 1,
+          ),
+        );
+      }
+      map.length = body['totalSeats'] as int;
+      return _json(map);
+    }
+    if (path.startsWith('/api/seats/')) {
+      // Like the API, a sweetbox changes type together with its pair.
+      final map = seats.values.firstWhere(
+        (map) => map.any((seat) => seat['id'] == int.parse(segments[2])),
+      );
+      final seat = map.firstWhere((s) => s['id'] == int.parse(segments[2]));
+      final number = seat['seatNumber'] as int;
+      final pair = map
+          .where(
+            (s) =>
+                s['seatRow'] == seat['seatRow'] &&
+                s['seatNumber'] == (number.isOdd ? number + 1 : number - 1),
+          )
+          .firstOrNull;
+      if (pair != null &&
+          (body['seatType'] == 'SWEETBOX' ||
+              (seat['seatType'] == 'SWEETBOX' &&
+                  pair['seatType'] == 'SWEETBOX'))) {
+        pair['seatType'] = body['seatType'];
+      }
+      seat['seatType'] = body['seatType'];
+      return _json(seat);
     }
     if (path.startsWith('/api/v1/movies/')) {
       final movie = movies.firstWhere((movie) => movie['id'] == id);
