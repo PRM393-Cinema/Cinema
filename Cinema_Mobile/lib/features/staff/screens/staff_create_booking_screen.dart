@@ -50,6 +50,12 @@ class _StaffCreateBookingScreenState extends State<StaffCreateBookingScreen> {
   String? _id(String? value) =>
       (int.tryParse(value?.trim() ?? '') ?? 0) > 0 ? null : 'Enter a valid ID.';
 
+  // The price of the picked seats, each by its type, as the server prices the
+  // booking.
+  double _totalOf(Showtime showtime, ShowtimeSeatsData map) => map.seats
+      .where((seat) => _selected.contains(seat.id))
+      .fold(0, (total, seat) => total + showtime.priceOf(seat.type));
+
   // A sweetbox is booked as a couple: its other half is picked with it.
   void _toggle(ShowtimeSeatsData map, Seat seat) {
     final partner = seat.sweetboxPartnerIn(map.seats);
@@ -236,7 +242,8 @@ class _StaffCreateBookingScreenState extends State<StaffCreateBookingScreen> {
               ),
               const SizedBox(height: AppSpacing.md),
               Text(
-                '${_selected.length} seat(s) selected. Final prices are calculated by the server.',
+                '${_selected.length} seat(s) selected · '
+                '${formatVnd(_totalOf(_showtime!, _map!))}',
                 style: AppTextStyles.bodySmall,
               ),
             ],

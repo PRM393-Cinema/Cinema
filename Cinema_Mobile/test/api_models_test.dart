@@ -75,6 +75,22 @@ void main() {
     expect(showtime.price, 90000);
     expect(showtime.isOpen, isTrue);
     expect(showtime.roomLabel, 'Room 2');
+    // Without prices by seat type every seat costs the showtime price.
+    expect(showtime.priceOf('VIP'), 90000);
+
+    final priced = Showtime.fromJson({
+      'id': 12,
+      'movieId': 7,
+      'roomId': 2,
+      'startTime': '2026-10-06T19:30:00',
+      'endTime': '2026-10-06T21:58:00',
+      'price': 90000.00,
+      'status': 'OPEN',
+      'seatPrices': {'NORMAL': 90000.00, 'VIP': 108000.00, 'SWEETBOX': 117000},
+    });
+    expect(priced.priceOf('vip'), 108000);
+    expect(priced.priceOf('SWEETBOX'), 117000);
+    expect(priced.priceOf('COUPLE'), 90000);
 
     final seat = Seat.fromJson({
       'id': 21,

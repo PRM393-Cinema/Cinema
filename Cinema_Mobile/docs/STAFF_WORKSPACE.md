@@ -12,7 +12,7 @@ Thanh điều hướng bên trái **Dashboard / Operations / Profile**; cửa s�
 |---|---|
 | Dashboard | Tổng vé tạo hôm nay, vé PENDING, yêu cầu hoàn tiền PENDING, suất chiếu hôm nay; mở chi tiết vé |
 | Bookings | Danh sách phân trang; lọc trạng thái hoặc ngày tạo; tra cứu bằng ID; đặt hộ bằng ID/email khách và chọn ghế thật; xem giao dịch liên quan; xác nhận tại quầy; hủy kèm lý do |
-| Showtimes | Danh sách/lọc khoảng ngày; tạo/sửa với phim và phòng từ API; chọn ngày/giờ, giá; mở/đóng bán; hủy suất |
+| Showtimes | Danh sách/lọc khoảng ngày; tạo/sửa với phim và phòng từ API; chọn ngày/giờ, giá ghế thường (VIP +20%, sweetbox +30% do backend tính); mở/đóng bán; hủy suất |
 | Rooms | Danh sách/tìm tên; xem phòng và ghế; đổi NORMAL/VIP; sinh ghế NORMAL cho phòng trống |
 | Payments | Danh sách/chi tiết; mở vé liên quan; xác minh giao dịch PayOS PENDING; tạo yêu cầu hoàn tiền cho SUCCESS |
 | Refunds | Danh sách phân trang/lọc trạng thái; xem số tiền và thông tin ngân hàng nếu backend có; ghi nhận hoàn tiền với mã giao dịch chuyển khoản |

@@ -230,7 +230,7 @@ class _StaffShowtimeEditorScreenState extends State<StaffShowtimeEditorScreen> {
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     AppTextField(
-                      label: 'Price (VND)',
+                      label: 'Standard seat price (VND)',
                       controller: _price,
                       enabled: !_saving,
                       keyboardType: const TextInputType.numberWithOptions(

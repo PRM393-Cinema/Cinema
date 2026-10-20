@@ -80,7 +80,11 @@ DateTime tomorrowEvening() {
   return DateTime(now.year, now.month, now.day + 1, 19, 30);
 }
 
-Showtime showtimeFixture({int id = 11, double price = 90000}) {
+Showtime showtimeFixture({
+  int id = 11,
+  double price = 90000,
+  Map<String, double> seatPrices = const {},
+}) {
   final start = tomorrowEvening();
   return Showtime(
     id: id,
@@ -90,6 +94,7 @@ Showtime showtimeFixture({int id = 11, double price = 90000}) {
     endTime: start.add(const Duration(minutes: 148)),
     price: price,
     status: 'OPEN',
+    seatPrices: seatPrices,
   );
 }
 

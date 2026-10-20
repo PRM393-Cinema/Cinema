@@ -18,7 +18,7 @@ Cập nhật: 12/10/2026. Đây là bảng kiểm tra kết nối API, không ph
 | Đặt mật khẩu mới | `/reset-password` | POST `/api/v1/auth/reset-password`; POST `/api/v1/auth/logout` | Đã nối; cần email từ bước gửi mã |
 | Tài khoản/đăng xuất | `/profile` | GET `/api/v1/auth/me`; POST `/api/v1/auth/logout` | Đã nối |
 | Chi tiết phim và suất chiếu | `/movies/{id}` | GET `/api/v1/movies/{id}`; GET `/api/showtimes/movie/{movieId}/open` | Đã nối |
-| Chọn ghế | `/showtimes/{id}/seats` | GET `/api/showtimes/{showtimeId}`; GET `/api/seats/room/{roomId}`; GET `/api/v1/bookings/showtime/{showtimeId}/occupied-seats` | Đã nối; màu theo loại ghế, hàng sweetbox ở cuối; sweetbox chọn / bỏ theo cặp (1-2, 3-4), server cũng từ chối đặt nửa cặp |
+| Chọn ghế | `/showtimes/{id}/seats` | GET `/api/showtimes/{showtimeId}`; GET `/api/seats/room/{roomId}`; GET `/api/v1/bookings/showtime/{showtimeId}/occupied-seats` | Đã nối; màu theo loại ghế, hàng sweetbox ở cuối; sweetbox chọn / bỏ theo cặp (1-2, 3-4), server cũng từ chối đặt nửa cặp; giá theo loại ghế lấy từ `seatPrices` của suất chiếu; tự làm mới mỗi 5 giây, ghế đang chọn bị người khác đặt thì bỏ chọn và báo |
 | Xác nhận đặt vé | `/showtimes/{id}/summary` | POST `/api/v1/bookings` | Đã nối; ghế được truyền từ màn chọn ghế |
 | Vé đã đặt | `/bookings` | GET `/api/v1/bookings/user/{userId}` | Đã nối; mới lấy trang đầu |
 | Chi tiết/hủy vé | `/bookings/{id}` | GET `/api/v1/bookings/{id}`; POST `/api/v1/bookings/{id}/cancel`; GET `/api/v1/payments/{id}/refund` | Đã nối |
@@ -100,8 +100,8 @@ Các route `/admin/*` và `/staff/*` thuộc **trang quản trị web** (`lib/ma
 | Chức năng | Method | Endpoint | UI hiện có | Nguồn backend |
 |---|---|---|---|---|
 | Danh sách suất chiếu | GET | `/api/showtimes` | Staff → Operations → Showtimes · đã nối API, phân trang | [ShowtimesController:23](../../Cinema_BE/MovieService/MovieService/Controllers/ShowtimesController.cs#L23) |
-| Chi tiết suất chiếu | GET | `/api/showtimes/{showtimeId}` | Chọn ghế/mở URL suất chiếu · đã nối API | [ShowtimesController:41](../../Cinema_BE/MovieService/MovieService/Controllers/ShowtimesController.cs#L41) |
-| Ghế phục vụ đặt vé | POST | `/api/showtimes/{showtimeId}/seats` | Có UI chọn ghế; lấy dữ liệu bằng hai API room/occupied-seats | [ShowtimesController:55](../../Cinema_BE/MovieService/MovieService/Controllers/ShowtimesController.cs#L55) |
+| Chi tiết suất chiếu | GET | `/api/showtimes/{showtimeId}` | Chọn ghế/mở URL suất chiếu; `price` là giá ghế thường, `seatPrices` là giá một ghế theo loại (NORMAL, VIP, SWEETBOX) · đã nối API | [ShowtimesController:41](../../Cinema_BE/MovieService/MovieService/Controllers/ShowtimesController.cs#L41) |
+| Ghế phục vụ đặt vé | POST | `/api/showtimes/{showtimeId}/seats` | BookingService gọi khi đặt vé, giá từng ghế theo loại ghế; app lấy sơ đồ bằng hai API room/occupied-seats | [ShowtimesController:55](../../Cinema_BE/MovieService/MovieService/Controllers/ShowtimesController.cs#L55) |
 | Tạo suất chiếu | POST | `/api/showtimes` | Staff → Create showtime · đã nối API | [ShowtimesController:68](../../Cinema_BE/MovieService/MovieService/Controllers/ShowtimesController.cs#L68) |
 | Sửa suất chiếu | PUT | `/api/showtimes/{showtimeId}` | Staff → Edit showtime · đã nối API | [ShowtimesController:83](../../Cinema_BE/MovieService/MovieService/Controllers/ShowtimesController.cs#L83) |
 | Huỷ suất chiếu | DELETE | `/api/showtimes/{showtimeId}` | Staff → Showtime details → Cancel · đã nối API | [ShowtimesController:97](../../Cinema_BE/MovieService/MovieService/Controllers/ShowtimesController.cs#L97) |

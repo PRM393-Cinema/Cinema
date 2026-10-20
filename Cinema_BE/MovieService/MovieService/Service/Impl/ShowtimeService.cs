@@ -86,14 +86,14 @@ namespace ShowtimeService.Service.Impl
                 }
             }
 
-            // Giá ghế = giá suất chiếu (khớp dữ liệu hiện có: booking_seats.price = showtimes.price).
+            // Giá ghế = giá suất chiếu cộng phụ thu theo loại ghế (VIP, sweetbox)
             return seats
                 .OrderBy(s => requestedIds.IndexOf(s.Id))
                 .Select(s => new ShowtimeSeatResponse
                 {
                     SeatId = s.Id,
                     SeatLabel = $"{s.SeatRow}{s.SeatNumber}",
-                    Price = showtime.Price
+                    Price = SeatPrices.For(showtime.Price, s.SeatType)
                 })
                 .ToList();
         }

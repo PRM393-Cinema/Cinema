@@ -190,6 +190,149 @@ void main() {
       );
     });
 
+    testWidgets('VIP and sweetbox seats cost more', (
+      WidgetTester tester,
+    ) async {
+      // Row A is a sweetbox row, row B a VIP row.
+      final catalog = FakeCatalogRepository(
+        showtimes: [
+          showtimeFixture(
+            seatPrices: const {
+              'NORMAL': 90000,
+              'VIP': 108000,
+              'SWEETBOX': 117000,
+            },
+          ),
+        ],
+        seatMap: ShowtimeSeatsData.fromOccupied(
+          seats: [
+            for (final (index, (row, type)) in [
+              ('A', 'SWEETBOX'),
+              ('B', 'VIP'),
+            ].indexed)
+              for (var number = 1; number <= 4; number++)
+                Seat(
+                  id: index * 4 + number,
+                  roomId: 1,
+                  row: row,
+                  number: number,
+                  type: type,
+                ),
+          ],
+          occupiedSeatIds: const [],
+        ),
+      );
+      await _openSeatSelection(tester, catalogRepository: catalog);
+
+      // The room has no standard seats: its cheapest seat is a VIP one.
+      expect(
+        find.text('Room 1 • from ${formatVnd(108000)} / seat'),
+        findsOneWidget,
+      );
+      expect(find.text(formatVnd(108000)), findsOneWidget);
+      expect(find.text('${formatVnd(234000)} / pair'), findsOneWidget);
+
+      // A sweetbox (A1 and A2) and a VIP seat (B1).
+      await tester.tap(find.text('1').last);
+      await tester.tap(find.text('1').first);
+      await tester.pump();
+      expect(find.text('3 seat(s)'), findsOneWidget);
+      expect(find.text(formatVnd(342000)), findsOneWidget);
+
+      await tester.tap(find.text('Continue'));
+      await pumpRoute(tester);
+      expect(find.text('1x VIP (${formatVnd(108000)})'), findsOneWidget);
+      expect(find.text('2x Sweetbox (${formatVnd(117000)})'), findsOneWidget);
+      expect(find.text(formatVnd(234000)), findsOneWidget);
+      expect(find.text(formatVnd(342000)), findsOneWidget);
+    });
+
+    testWidgets('The key of a map wider than the phone stays on screen', (
+      WidgetTester tester,
+    ) async {
+      tester.view.physicalSize = const Size(375, 812);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      // Rows of 14 seats are wider than the phone, so the map is panned.
+      final catalog = FakeCatalogRepository(
+        showtimes: [
+          showtimeFixture(
+            seatPrices: const {
+              'NORMAL': 90000,
+              'VIP': 108000,
+              'SWEETBOX': 117000,
+            },
+          ),
+        ],
+        seatMap: ShowtimeSeatsData.fromOccupied(
+          seats: [
+            for (final (index, (row, type)) in [
+              ('A', 'NORMAL'),
+              ('B', 'VIP'),
+              ('C', 'SWEETBOX'),
+            ].indexed)
+              for (var number = 1; number <= 14; number++)
+                Seat(
+                  id: index * 14 + number,
+                  roomId: 1,
+                  row: row,
+                  number: number,
+                  type: type,
+                ),
+          ],
+          occupiedSeatIds: const [],
+        ),
+      );
+      await _openSeatSelection(tester, catalogRepository: catalog);
+
+      for (final label in [
+        'Standard',
+        'VIP',
+        'Sweetbox (couple)',
+        '${formatVnd(234000)} / pair',
+        'Selected',
+        'Unavailable',
+      ]) {
+        final rect = tester.getRect(find.text(label));
+        expect(rect.left, greaterThanOrEqualTo(0), reason: label);
+        expect(rect.right, lessThanOrEqualTo(375), reason: label);
+      }
+    });
+
+    testWidgets('Seats taken by others while choosing are let go', (
+      WidgetTester tester,
+    ) async {
+      final catalog = FakeCatalogRepository();
+      await _openSeatSelection(tester, catalogRepository: catalog);
+
+      // B1 and B2 (ids 5 and 6).
+      await tester.tap(find.text('1').last);
+      await tester.tap(find.text('2').last);
+      await tester.pump();
+      expect(find.text('2 seat(s)'), findsOneWidget);
+
+      // Another customer takes B1; the open map shows it within seconds.
+      catalog.seatMap = ShowtimeSeatsData.fromOccupied(
+        seats: seatMapFixture.seats,
+        occupiedSeatIds: const [2, 5],
+      );
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pump();
+      expect(catalog.seatMapLoads, 2);
+      expect(find.text('1 seat(s)'), findsOneWidget);
+      expect(
+        find.text('B1 was just taken, so it was removed from your seats.'),
+        findsOneWidget,
+      );
+
+      // No refresh behind the booking summary.
+      await tester.tap(find.text('Continue'));
+      await pumpRoute(tester);
+      await tester.pump(const Duration(seconds: 20));
+      expect(catalog.seatMapLoads, 2);
+    });
+
     testWidgets('Confirm Booking creates the booking and opens payment', (
       WidgetTester tester,
     ) async {

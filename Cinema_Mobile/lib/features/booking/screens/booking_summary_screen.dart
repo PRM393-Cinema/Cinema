@@ -16,6 +16,7 @@ import '../../../core/widgets/cinema_background.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
 import '../../../data/models/booking_draft.dart';
 import '../../../data/repositories/booking_repository.dart';
+import '../../seat/widgets/seat_type_style.dart';
 
 class BookingSummaryScreen extends StatefulWidget {
   const BookingSummaryScreen({required this.bookingRepository, super.key});
@@ -122,6 +123,17 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
     final draft = args;
     final showtime = draft.showtime;
     final seatLabels = draft.seats.map((seat) => seat.label).join(', ');
+    // Tickets by seat type (Standard, VIP, Sweetbox), each at its price.
+    final ticketsByType = <String, int>{};
+    for (final seat in draft.seats) {
+      ticketsByType.update(
+        seat.type.toUpperCase(),
+        (count) => count + 1,
+        ifAbsent: () => 1,
+      );
+    }
+    final ticketTypes = ticketsByType.keys.toList()
+      ..sort((a, b) => seatTypes.indexOf(a).compareTo(seatTypes.indexOf(b)));
 
     final movieCard = _SummaryCard(
       title: 'Movie',
@@ -163,19 +175,27 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
       title: 'Price Details',
       child: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  '${draft.ticketCount}x Ticket (${formatVnd(showtime.price)})',
-                  style: AppTextStyles.body,
-                ),
+          for (final (index, type) in ticketTypes.indexed)
+            Padding(
+              padding: EdgeInsets.only(top: index == 0 ? 0 : AppSpacing.xs),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      '${ticketsByType[type]}x ${seatTypeLabel(type)} '
+                      '(${formatVnd(showtime.priceOf(type))})',
+                      style: AppTextStyles.body,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Text(
+                    formatVnd(ticketsByType[type]! * showtime.priceOf(type)),
+                    style: AppTextStyles.body,
+                  ),
+                ],
               ),
-              const SizedBox(width: AppSpacing.sm),
-              Text(formatVnd(draft.totalPrice), style: AppTextStyles.body),
-            ],
-          ),
+            ),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
             child: Divider(height: 1, color: AppColors.border),
