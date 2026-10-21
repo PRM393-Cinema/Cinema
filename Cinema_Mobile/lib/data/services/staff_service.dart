@@ -206,13 +206,14 @@ class StaffService {
     int page = 1,
     DateTime? start,
     DateTime? end,
+    int size = 10,
   }) async => PagedResult.fromJson(
     await _client.get(
       start == null ? '/api/showtimes' : '/api/showtimes/date-range',
       authenticated: true,
       query: {
         'pageNumber': page,
-        'pageSize': 10,
+        'pageSize': size,
         'sortBy': 'startTime',
         'sortDir': 'asc',
         if (start != null) 'start': start.toIso8601String(),
@@ -221,6 +222,39 @@ class StaffService {
     ),
     Showtime.fromJson,
   );
+  // Every showtime starting in [start, end), in start order (pages of 50).
+  Future<List<Showtime>> showtimesBetween(DateTime start, DateTime end) async {
+    final all = <Showtime>[];
+    for (var page = 1; ; page++) {
+      final result = await showtimes(
+        page: page,
+        start: start,
+        end: end,
+        size: 50,
+      );
+      all.addAll(result.items);
+      if (page >= result.totalPages) return all;
+    }
+  }
+
+  // Seats sold, held and checked in for each showtime that has tickets: the
+  // given showtimes, or those starting in [start, end).
+  Future<List<ShowtimeBookingStats>> showtimeStats({
+    List<int>? ids,
+    DateTime? start,
+    DateTime? end,
+  }) async => readMapList(
+    await _client.get(
+      '/api/v1/bookings/showtimes/stats',
+      authenticated: true,
+      query: {
+        'showtimeIds': ?ids,
+        if (start != null) 'start': start.toIso8601String(),
+        if (end != null) 'end': end.toIso8601String(),
+      },
+    ),
+  ).map(ShowtimeBookingStats.fromJson).toList();
+
   Future<Showtime> showtime(int id) async => Showtime.fromJson(
     readMap(await _client.get('/api/showtimes/$id', authenticated: true)),
   );
@@ -271,17 +305,18 @@ class StaffService {
   Future<Showtime> cancelShowtime(int id) async => Showtime.fromJson(
     readMap(await _client.delete('/api/showtimes/$id', authenticated: true)),
   );
-  Future<PagedResult<Room>> rooms({int page = 1, String? keyword}) async =>
-      PagedResult.fromJson(
-        await _client.get(
-          keyword == null || keyword.isEmpty
-              ? '/api/rooms'
-              : '/api/rooms/search',
-          authenticated: true,
-          query: {'pageNumber': page, 'pageSize': 10, 'keyword': keyword},
-        ),
-        Room.fromJson,
-      );
+  Future<PagedResult<Room>> rooms({
+    int page = 1,
+    String? keyword,
+    int size = 10,
+  }) async => PagedResult.fromJson(
+    await _client.get(
+      keyword == null || keyword.isEmpty ? '/api/rooms' : '/api/rooms/search',
+      authenticated: true,
+      query: {'pageNumber': page, 'pageSize': size, 'keyword': keyword},
+    ),
+    Room.fromJson,
+  );
   Future<Room> room(int id) async => Room.fromJson(
     readMap(await _client.get('/api/rooms/$id', authenticated: true)),
   );

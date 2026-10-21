@@ -12,6 +12,7 @@ import '../../../data/services/staff_service.dart';
 import '../../../core/widgets/responsive_columns.dart';
 import '../../admin/widgets/admin_layout.dart';
 import '../../admin/widgets/admin_page.dart';
+import '../widgets/today_at_cinema.dart';
 import '../widgets/staff_feedback.dart';
 
 class StaffDashboardScreen extends StatefulWidget {
@@ -25,6 +26,7 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
   List<(String, int, IconData)>? _counts;
   List<Booking> _pending = [];
   bool _loading = false;
+  int _refreshes = 0;
   String? _error;
   @override
   void initState() {
@@ -37,27 +39,16 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
     setState(() {
       _loading = true;
       _error = null;
+      _refreshes++;
     });
     try {
-      final today = DateUtils.dateOnly(DateTime.now());
-      final end = today
-          .add(const Duration(days: 1))
-          .subtract(const Duration(microseconds: 1));
       final pending = await widget.service.bookings(status: 'PENDING');
-      final bookings = await widget.service.bookings(start: today, end: end);
       final refunds = await widget.service.refunds(status: 'PENDING');
-      final shows = await widget.service.showtimes(start: today, end: end);
       if (!mounted) return;
       setState(() {
         _counts = [
-          (
-            'Bookings today',
-            bookings.totalCount,
-            Icons.confirmation_number_outlined,
-          ),
           ('Pending bookings', pending.totalCount, Icons.schedule),
           ('Pending refunds', refunds.totalCount, Icons.currency_exchange),
-          ('Showtimes today', shows.totalCount, Icons.movie_outlined),
         ];
         _pending = pending.items.take(5).toList();
       });
@@ -78,10 +69,12 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: pagePadding(context, AppSpacing.lg),
         children: [
-          const Text('Your cinema shift', style: AppTextStyles.title),
+          TodayAtCinema(service: widget.service, refresh: _refreshes),
+          const SizedBox(height: AppSpacing.xl),
+          const Text('Needs attention', style: AppTextStyles.title),
           const SizedBox(height: AppSpacing.sm),
           const Text(
-            'Bookings, showtimes and refund requests in one workspace.',
+            'Bookings waiting for payment and refund requests to review.',
             style: AppTextStyles.bodySmall,
           ),
           const SizedBox(height: AppSpacing.xl),

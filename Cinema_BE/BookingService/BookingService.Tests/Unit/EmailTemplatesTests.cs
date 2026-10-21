@@ -33,6 +33,20 @@ public class EmailTemplatesTests
     }
 
     [Fact]
+    public void BookingConfirmed_CarriesTheTicketQrCode()
+    {
+        var email = EmailTemplates.BookingConfirmed(Booking(), "khach@test.local");
+
+        var qr = Assert.Single(email.InlineImages);
+        Assert.Equal("image/png", qr.MediaType);
+        Assert.Equal(new byte[] { 0x89, 0x50, 0x4E, 0x47 }, qr.Content.Take(4));
+        Assert.Contains($"cid:{qr.ContentId}", email.Content);
+
+        // Other emails have no ticket to show
+        Assert.Empty(EmailTemplates.BookingExpired(Booking(), "khach@test.local").InlineImages);
+    }
+
+    [Fact]
     public void Templates_EncodeTextThatComesFromUsers()
     {
         var email = EmailTemplates.BookingConfirmed(Booking("<script>alert(1)</script>"), "khach@test.local");

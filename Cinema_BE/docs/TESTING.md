@@ -7,7 +7,7 @@ Mỗi service có một project test xUnit nằm cạnh project chính, và đã
 | AuthService | `AuthService/AuthService.Tests` | 10 |
 | ApiGateway | `ApiGateway/ApiGateway.Tests` | 21 |
 | MovieService | `MovieService/MovieService.Tests` | 20 |
-| BookingService | `BookingService/BookingService.Tests` | 51 |
+| BookingService | `BookingService/BookingService.Tests` | 53 |
 
 ## 1. Chạy test
 
@@ -30,7 +30,7 @@ Mỗi service chạy xong trong khoảng 15–30 giây.
 | Mức | Nội dung | Ở đâu |
 |---|---|---|
 | Unit | Chữ ký webhook PayOS: so với ví dụ trong tài liệu PayOS, chặn dữ liệu bị sửa, sai key, body hỏng | `BookingService.Tests/Unit/PayOsSignatureTests.cs` |
-| Unit | Email: đủ thông tin vé, encode dữ liệu người dùng nhập (chống chèn HTML) | `BookingService.Tests/Unit/EmailTemplatesTests.cs` |
+| Unit | Email: đủ thông tin vé, email xác nhận kèm ảnh QR (PNG nhúng `cid:`), encode dữ liệu người dùng nhập (chống chèn HTML) | `BookingService.Tests/Unit/EmailTemplatesTests.cs` |
 | Integration (EF Core + PostgreSQL) | Đặt vé, giữ ghế (409 khi ghế bận), giờ chiếu / tên phim lấy từ server, webhook xác nhận vé, hết hạn giữ ghế, trả tiền muộn tự tạo yêu cầu hoàn | `BookingService.Tests/Integration/BookingFlowTests.cs` |
 | Integration | Huỷ vé theo chính sách 2 giờ, hoàn tiền, Staff xác nhận đã hoàn, huỷ suất chiếu kéo theo huỷ booking. Consumer xử lý message trùng không gửi email / hoàn tiền lần hai | `BookingService.Tests/Integration/RefundTests.cs` |
 | Integration (RabbitMQ) | Event đi qua RabbitMQ thật: email vé, yêu cầu hoàn tiền được tạo bất đồng bộ | `BookingService.Tests/Integration/RabbitMqFlowTests.cs` |
@@ -40,7 +40,7 @@ Mỗi service chạy xong trong khoảng 15–30 giây.
 | Auth | Đăng ký, OTP (khoá sau 5 lần sai), đăng nhập, refresh token xoay vòng, đăng xuất, Admin tạo / khoá tài khoản | `AuthService.Tests/Integration/*` |
 | Khóa tài khoản | Token còn hạn bị từ chối ở gateway sau khi khóa; lỗi kết nối AuthService trả 503 và không chuyển tiếp request | `ApiGateway.Tests/*`, `AuthService.Tests/Integration/UserManagementTests.cs` |
 | Đổi role | Role cũ bị từ chối với `403 ROLE_CHANGED`; thu hồi refresh token khi quyền thay đổi, giữ phiên khi lưu cùng quyền | `ApiGateway.Tests/*`, `AuthService.Tests/Integration/UserManagementTests.cs` |
-| Check-in | Staff tra vé theo mã (QR), check-in một lần; vé chưa trả tiền, đã huỷ, chưa tới giờ hoặc đã check-in bị 409; khách không tra / check-in được; sơ đồ ghế đã đặt của suất | `BookingService.Tests/Integration/CheckInTests.cs` |
+| Check-in | Staff tra vé theo mã (QR), check-in một lần; vé chưa trả tiền, đã huỷ, chưa tới giờ hoặc đã check-in bị 409; khách không tra / check-in được; sơ đồ ghế đã đặt của suất (kèm email khách); thống kê vé theo suất (đã bán, đang giữ, đã check-in) theo id và theo giờ chiếu | `BookingService.Tests/Integration/CheckInTests.cs` |
 | Suất chiếu | Quyền, trùng lịch 409, suất còn đặt được theo phim, huỷ mềm và ghi event `showtime.cancelled` | `MovieService.Tests/Integration/ShowtimeTests.cs` |
 | Sơ đồ ghế | Sinh ghế một lần, đổi loại ghế; đổi số ghế lấp hàng cuối rồi sang hàng mới, bớt từ ghế cuối, chỉ Admin, không quá hàng Z, chặn khi phòng có suất chiếu. Sweetbox theo cặp (1-2, 3-4): đổi loại cả cặp (cả khi tô nhiều ghế một lần; hàng có ghế lẻ cặp bị từ chối), xoá / bớt ghế làm nửa cặp còn lại thành ghế thường, đặt vé phải đủ cặp. Giá ghế theo loại: VIP +20%, sweetbox +30% mỗi ghế, phụ thu làm tròn tới 1.000đ | `MovieService.Tests/Integration/SeatTests.cs` |
 | Doanh thu | Dashboard Admin: doanh thu tăng đúng số tiền vé vừa thanh toán; Staff / khách bị 403; khoảng thời gian ngược bị 400 | `BookingService.Tests/Integration/PaymentSummaryTests.cs` |

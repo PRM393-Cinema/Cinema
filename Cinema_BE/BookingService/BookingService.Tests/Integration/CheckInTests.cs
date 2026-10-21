@@ -45,6 +45,7 @@ public class CheckInTests
         Assert.Equal(seat, seatRow.GetProperty("seatId").GetInt64());
         Assert.Equal(code, seatRow.GetProperty("bookingCode").GetString());
         Assert.Equal("CONFIRMED", seatRow.GetProperty("status").GetString());
+        Assert.Equal(TestUsers.CustomerA.Email, seatRow.GetProperty("customerEmail").GetString());
         Assert.False(IsCheckedIn(seatRow));
 
         var checkIn = await _staff.PostAsync($"/api/v1/bookings/{id}/check-in", null);
@@ -74,6 +75,33 @@ public class CheckInTests
         var cancelled = await CreatePaidBookingAsync(_factory, _customer, soon.Id, NewSeat());
         Assert.Equal(HttpStatusCode.OK, (await _staff.PostAsync($"/api/v1/bookings/{cancelled}/cancel", null)).StatusCode);
         await AssertRejectedAsync(cancelled, "cancelled");
+    }
+
+    [Fact]
+    public async Task ShowtimeStats_CountSoldHeldAndCheckedInSeats()
+    {
+        var start = DateTime.Now.AddMinutes(50);
+        var showtime = _factory.Showtimes.AddShowtime(start);
+        var paid = await CreatePaidBookingAsync(_factory, _customer, showtime.Id, NewSeat(), NewSeat());
+        await CreateBookingAsync(_customer, showtime.Id, NewSeat());
+        Assert.Equal(HttpStatusCode.OK, (await _staff.PostAsync($"/api/v1/bookings/{paid}/check-in", null)).StatusCode);
+
+        var byId = Assert.Single((await _staff.GetFromJsonAsync<JsonElement>(
+            $"/api/v1/bookings/showtimes/stats?showtimeIds={showtime.Id}")).EnumerateArray());
+        Assert.Equal(showtime.Id, byId.GetProperty("showtimeId").GetInt64());
+        Assert.Equal(2, byId.GetProperty("bookings").GetInt32());
+        Assert.Equal(2, byId.GetProperty("soldSeats").GetInt32());
+        Assert.Equal(1, byId.GetProperty("heldSeats").GetInt32());
+        Assert.Equal(2, byId.GetProperty("checkedInSeats").GetInt32());
+
+        // By show time: the same showtime is in the range around its start
+        var range = $"start={start.AddMinutes(-1):yyyy-MM-ddTHH:mm:ss}&end={start.AddMinutes(1):yyyy-MM-ddTHH:mm:ss}";
+        var byRange = await _staff.GetFromJsonAsync<JsonElement>($"/api/v1/bookings/showtimes/stats?{range}");
+        Assert.Contains(byRange.EnumerateArray(), row => row.GetProperty("showtimeId").GetInt64() == showtime.Id);
+
+        Assert.Equal(HttpStatusCode.Forbidden,
+            (await _customer.GetAsync($"/api/v1/bookings/showtimes/stats?showtimeIds={showtime.Id}")).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await _staff.GetAsync("/api/v1/bookings/showtimes/stats")).StatusCode);
     }
 
     private async Task AssertRejectedAsync(long bookingId, string reason)

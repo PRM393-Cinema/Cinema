@@ -821,6 +821,17 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
           style: AppTextStyles.caption,
         ),
         const SizedBox(height: AppSpacing.xl),
+        CinemaPanel(
+          surfaceOpacity: 0.8,
+          child: ShowtimeCustomerList(
+            bookings: _seatBookings,
+            onOpenBooking: (id) => Navigator.pushNamed(
+              context,
+              AppRoutes.staffRecord('bookings', id),
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xl),
       ],
       if (s.status != 'CANCELLED')
         _button('Edit showtime', () async {

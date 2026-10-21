@@ -113,7 +113,7 @@ Khi đó chuyển sang màn hình OTP, gọi `resend-verification` để lấy m
 
 ### Email xác nhận đặt vé
 
-BookingService gửi email chi tiết vé ngay khi booking được xác nhận:
+BookingService gửi email chi tiết vé ngay khi booking được xác nhận. Email có **mã QR của vé** (ảnh PNG đính kèm dạng `cid:`, hiện ngay trong Gmail / Outlook) cùng mã đặt vé: khách đưa mã này ở quầy, nhân viên quét để check-in.
 
 - **Khách thanh toán PayOS:** sau khi trả tiền xong, app gọi `POST /api/v1/payments/payos/{orderCode}/verify`. PayOS báo đã nhận tiền thì booking tự chuyển sang CONFIRMED và email vé được gửi về **email trong token** của khách. Muốn gửi tới email khác thì thêm `?recipientEmail=...`. Khách không tự gọi `/bookings/{id}/confirm` được.
 - **Staff xác nhận tại quầy** (khách trả tiền mặt): `POST /api/v1/bookings/{id}/confirm?paymentMethod=CASH&recipientEmail=<email khách>`.

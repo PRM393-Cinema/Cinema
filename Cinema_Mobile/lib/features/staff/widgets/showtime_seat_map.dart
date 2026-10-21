@@ -6,6 +6,7 @@ import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_radius.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
+import '../../../core/utils/formatters.dart';
 import '../../../data/models/booking.dart';
 import '../../../data/models/seat.dart';
 import '../../seat/widgets/seat_map_rows.dart';
@@ -239,6 +240,96 @@ class _LegendEntry extends StatelessWidget {
         const SizedBox(width: AppSpacing.sm),
         Text(label, style: AppTextStyles.bodySmall),
       ],
+    );
+  }
+}
+
+// The customers of a showtime: each booking with its seats, and whether the
+// customer has come in. Tapping one opens the booking.
+class ShowtimeCustomerList extends StatelessWidget {
+  const ShowtimeCustomerList({
+    required this.bookings,
+    required this.onOpenBooking,
+    super.key,
+  });
+
+  final List<ShowtimeSeatBooking> bookings;
+  final ValueChanged<int> onOpenBooking;
+
+  // A2 before A10, rows in order.
+  static int _compareSeats(String a, String b) {
+    final pattern = RegExp(r'^([A-Z]+)(\d+)$');
+    final ma = pattern.firstMatch(a);
+    final mb = pattern.firstMatch(b);
+    if (ma == null || mb == null) return a.compareTo(b);
+    final byRow = ma[1]!.length != mb[1]!.length
+        ? ma[1]!.length - mb[1]!.length
+        : ma[1]!.compareTo(mb[1]!);
+    return byRow != 0 ? byRow : int.parse(ma[2]!) - int.parse(mb[2]!);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final byBooking = <int, List<ShowtimeSeatBooking>>{};
+    for (final seat in bookings) {
+      byBooking.putIfAbsent(seat.bookingId, () => []).add(seat);
+    }
+    final groups = byBooking.values.toList()
+      ..forEach(
+        (seats) =>
+            seats.sort((a, b) => _compareSeats(a.seatLabel, b.seatLabel)),
+      )
+      ..sort((a, b) => _compareSeats(a.first.seatLabel, b.first.seatLabel));
+
+    return Column(
+      key: const Key('showtimeCustomers'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text('Customers (${groups.length})', style: AppTextStyles.title),
+        const SizedBox(height: AppSpacing.sm),
+        if (groups.isEmpty)
+          const Text('No tickets yet.', style: AppTextStyles.bodySmall),
+        for (final seats in groups) _customer(seats),
+      ],
+    );
+  }
+
+  Widget _customer(List<ShowtimeSeatBooking> seats) {
+    final booking = seats.first;
+    final checkedInAt = booking.checkedInAt;
+    final (icon, color, status) = checkedInAt != null
+        ? (
+            Icons.how_to_reg,
+            AppColors.success,
+            'Checked in ${formatTime(checkedInAt)}',
+          )
+        : booking.status == BookingStatus.pending
+        ? (Icons.schedule, AppColors.warning, 'Awaiting payment')
+        : booking.status == BookingStatus.refundPending
+        ? (Icons.currency_exchange, AppColors.warning, 'Refund requested')
+        : (
+            Icons.local_activity_outlined,
+            AppColors.textSecondary,
+            'Paid, not in yet',
+          );
+    return ListTile(
+      key: ValueKey('showtimeCustomer-${booking.bookingId}'),
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(icon, color: color),
+      title: Text(
+        booking.customerEmail ??
+            (booking.userId == null
+                ? 'Customer'
+                : 'Customer #${booking.userId}'),
+        style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
+      ),
+      subtitle: Text(
+        '${seats.map((seat) => seat.seatLabel).join(', ')} • '
+        '${booking.bookingCode} • $status',
+        style: AppTextStyles.bodySmall,
+      ),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => onOpenBooking(booking.bookingId),
     );
   }
 }
