@@ -216,6 +216,52 @@ public class SeatTests
         return await showtime.Content.ReadFromJsonAsync<JsonElement>();
     }
 
+    [Fact]
+    public async Task SeatTypes_ChangeForManySeatsAtOnce_InSweetboxPairs()
+    {
+        var roomId = await CreateRoomWithSeatsAsync(rows: 2, seatsPerRow: 3);
+        var ids = (await SeatsAsync(roomId)).ToDictionary(s => s.Label, s => s.Id);
+        var route = $"/api/seats/room/{roomId}/types";
+
+        // A3 has no A4 to pair with, so row A cannot become sweetbox seats
+        var oddRow = await _staff.PutAsJsonAsync(route, new
+        {
+            seatIds = new[] { ids["A1"], ids["A2"], ids["A3"] },
+            seatType = "SWEETBOX"
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, oddRow.StatusCode);
+        Assert.Contains("A3", await oddRow.Content.ReadAsStringAsync());
+        Assert.Equal("NORMAL", (await TypesAsync(roomId))["A1"]);
+
+        // B1 as a sweetbox brings B2 along
+        var sweetbox = await _staff.PutAsJsonAsync(route, new { seatIds = new[] { ids["B1"] }, seatType = "sweetbox" });
+        Assert.Equal(HttpStatusCode.OK, sweetbox.StatusCode);
+        Assert.Equal(6, (await sweetbox.Content.ReadFromJsonAsync<JsonElement>()).GetArrayLength());
+        var types = await TypesAsync(roomId);
+        Assert.Equal(("SWEETBOX", "SWEETBOX", "NORMAL"), (types["B1"], types["B2"], types["B3"]));
+
+        // Painting B2 VIP takes its pair B1 too
+        Assert.Equal(HttpStatusCode.OK, (await _staff.PutAsJsonAsync(route, new
+        {
+            seatIds = new[] { ids["A1"], ids["A2"], ids["B2"] },
+            seatType = "VIP"
+        })).StatusCode);
+        types = await TypesAsync(roomId);
+        Assert.All(new[] { "A1", "A2", "B1", "B2" }, label => Assert.Equal("VIP", types[label]));
+        Assert.Equal("NORMAL", types["A3"]);
+
+        Assert.Equal(HttpStatusCode.BadRequest, (await _staff.PutAsJsonAsync(route, new
+        {
+            seatIds = new[] { ids["A1"] },
+            seatType = "BALCONY"
+        })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await _staff.PutAsJsonAsync(route, new
+        {
+            seatIds = new[] { _factory.OtherRoomSeatId },
+            seatType = "VIP"
+        })).StatusCode);
+    }
+
     private Task<HttpResponseMessage> SetTypeAsync(long seatId, string type) =>
         _staff.PutAsJsonAsync($"/api/seats/{seatId}/type", new { seatIds = new[] { seatId }, seatType = type });
 

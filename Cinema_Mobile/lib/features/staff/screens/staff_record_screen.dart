@@ -61,6 +61,10 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
   DateTime? _updatedAt;
   Set<int> _newSeatIds = {};
 
+  // The seat type a tap or drag on the room map gives (null: tapping a seat
+  // opens its menu).
+  String? _paintType;
+
   @override
   void initState() {
     super.initState();
@@ -288,6 +292,41 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
       _notice(
         '${labels.join(' and ')} ${labels.length > 1 ? 'are' : 'is'} now '
         '${seatTypeLabel(type)}.',
+      );
+    } on Object catch (error) {
+      if (mounted) _notice(staffError(error));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  // Seats painted on the room map get [_paintType] in one request.
+  Future<void> _paintSeats(List<Seat> seats) async {
+    final type = _paintType;
+    final targets = [
+      for (final seat in seats)
+        if (seat.type.toUpperCase() != type) seat.id,
+    ];
+    if (_busy || type == null || targets.isEmpty) return;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      final updated = await widget.service.setSeatTypes(
+        widget.id,
+        targets,
+        type,
+      );
+      if (!mounted) return;
+      final before = {for (final s in _seats) s.id: s.type};
+      final changed = updated
+          .where((s) => before[s.id] != null && before[s.id] != s.type)
+          .length;
+      _showSeats(updated);
+      _notice(
+        '${formatCount(changed, 'seat')} ${changed == 1 ? 'is' : 'are'} '
+        'now ${seatTypeLabel(type)}.',
       );
     } on Object catch (error) {
       if (mounted) _notice(staffError(error));
@@ -832,19 +871,31 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
       _LiveStatus(updatedAt: _updatedAt, failed: _liveFailed),
       const SizedBox(height: AppSpacing.md),
       if (_seats.isNotEmpty) ...[
+        _SeatEditMode(
+          type: _paintType,
+          onChanged: (type) => setState(() => _paintType = type),
+        ),
+        const SizedBox(height: AppSpacing.md),
         CinemaPanel(
           surfaceOpacity: 0.8,
           child: RoomSeatMap(
             seats: _seats,
             highlighted: _newSeatIds,
             onTypeSelected: _busy ? null : _setSeatType,
+            paintType: _paintType,
+            onPaint: _busy ? null : _paintSeats,
           ),
         ),
         const SizedBox(height: AppSpacing.md),
       ],
-      const Text(
-        'Tap a seat to change its type. Seat changes are blocked for rooms '
-        'with existing showtimes.',
+      Text(
+        _paintType == null
+            ? 'Tap a seat to change its type. Seat changes are blocked for '
+                  'rooms with existing showtimes.'
+            : 'Tap or drag across seats, or tap a row letter, to make them '
+                  '${seatTypeLabel(_paintType!)} seats. Sweetbox seats come '
+                  'in pairs. Seat changes are blocked for rooms with existing '
+                  'showtimes.',
         style: AppTextStyles.caption,
       ),
       const SizedBox(height: AppSpacing.md),
@@ -901,6 +952,43 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
     ],
     _ => [],
   };
+}
+
+// How taps on the room map change seats: one seat through its menu, or many
+// at once by painting them with a type.
+class _SeatEditMode extends StatelessWidget {
+  const _SeatEditMode({required this.type, required this.onChanged});
+
+  final String? type;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context) => Wrap(
+    spacing: AppSpacing.sm,
+    runSpacing: AppSpacing.sm,
+    crossAxisAlignment: WrapCrossAlignment.center,
+    children: [
+      const Text('Edit seats:', style: AppTextStyles.bodySmall),
+      ChoiceChip(
+        key: const Key('paintOff'),
+        label: const Text('One at a time'),
+        selected: type == null,
+        onSelected: (_) => onChanged(null),
+      ),
+      for (final seatType in seatTypes)
+        ChoiceChip(
+          key: Key('paint-$seatType'),
+          avatar: Icon(
+            Icons.format_paint_outlined,
+            size: 16,
+            color: seatTypeColors(seatType).$2,
+          ),
+          label: Text('Paint ${seatTypeLabel(seatType)}'),
+          selected: type == seatType,
+          onSelected: (_) => onChanged(seatType),
+        ),
+    ],
+  );
 }
 
 class _LiveStatus extends StatelessWidget {

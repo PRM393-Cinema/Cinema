@@ -4,6 +4,7 @@ import 'package:cinema_fe/core/session/session_state.dart';
 import 'package:cinema_fe/core/utils/formatters.dart';
 import 'package:cinema_fe/core/widgets/app_button.dart';
 import 'package:cinema_fe/data/models/booking.dart';
+import 'package:cinema_fe/data/models/movie.dart';
 import 'package:cinema_fe/data/models/payment.dart';
 import 'package:cinema_fe/data/models/seat.dart';
 import 'package:cinema_fe/features/payment/payment_args.dart';
@@ -22,6 +23,37 @@ void main() {
   setUp(() {
     urlLauncher = FakeUrlLauncher();
     UrlLauncherPlatform.instance = urlLauncher;
+  });
+
+  testWidgets('A movie trailer opens outside the app', (tester) async {
+    const trailer = 'https://www.youtube.com/watch?v=YoHD9XEInc0';
+    await tester.pumpWidget(
+      buildTestApp(
+        catalogRepository: FakeCatalogRepository(
+          movies: [
+            Movie(
+              id: inception.id,
+              title: inception.title,
+              description: inception.description,
+              durationMinutes: inception.durationMinutes,
+              genre: inception.genre,
+              language: inception.language,
+              releaseDate: null,
+              posterUrl: '',
+              trailerUrl: trailer,
+              status: 'ACTIVE',
+            ),
+          ],
+        ),
+        initialRoute: AppRoutes.movieDetail(inception.id),
+      ),
+    );
+    await pumpRoute(tester);
+
+    await tester.ensureVisible(find.byKey(const Key('watchTrailer')));
+    await tester.tap(find.byKey(const Key('watchTrailer')));
+    await tester.pump();
+    expect(urlLauncher.launchedUrls, [trailer]);
   });
 
   group('Seat selection and booking', () {

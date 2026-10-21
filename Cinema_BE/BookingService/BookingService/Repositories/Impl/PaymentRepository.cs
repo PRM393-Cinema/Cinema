@@ -15,6 +15,20 @@ namespace BookingService.Repositories.Impl
             _context = context;
         }
 
+        public async Task<List<(string Status, int Count, decimal Amount)>> SumByStatusAsync(
+            DateTime start,
+            DateTime end)
+        {
+            var rows = await _context.Payments
+                .AsNoTracking()
+                .Where(p => p.CreatedAt >= start && p.CreatedAt <= end)
+                .GroupBy(p => p.Status)
+                .Select(g => new { Status = g.Key, Count = g.Count(), Amount = g.Sum(p => p.Amount) })
+                .ToListAsync();
+
+            return rows.Select(r => (r.Status, r.Count, r.Amount)).ToList();
+        }
+
         public async Task<PagedList<Payment>> GetAllAsync(
             int pageNumber,
             int pageSize,

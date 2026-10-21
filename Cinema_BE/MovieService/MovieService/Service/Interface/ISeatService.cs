@@ -12,6 +12,7 @@ namespace ShowtimeService.Service.Interface
         Task<SeatResponse?> GetSeatByIdAsync(long seatId);
         Task<PagedResult<SeatResponse>> GenerateSeatAsync(GenerateSeatRequest request);
         Task<SeatResponse?> UpdateSeatTypeAsync(long seatId, UpdateSeatTypeRequest request);
+        Task<List<SeatResponse>> UpdateRoomSeatTypesAsync(long roomId, UpdateSeatTypeRequest request);
         Task<bool> DeleteSeatAsync(long seatId);
         Task<List<SeatResponse>> UpdateRoomSeatsAsync(long roomId, UpdateRoomSeatsRequest request);
     }

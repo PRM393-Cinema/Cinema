@@ -20,6 +20,26 @@ enum PaymentStatus {
   }
 }
 
+// Ticket sales over a period (admin dashboard).
+class PaymentSummary {
+  const PaymentSummary({
+    required this.paidCount,
+    required this.revenue,
+    required this.refundedAmount,
+  });
+
+  factory PaymentSummary.fromJson(Map<String, Object?> json) => PaymentSummary(
+    paidCount: readOptionalInt(json['paidCount']) ?? 0,
+    revenue: readDouble(json['revenue']),
+    refundedAmount: readDouble(json['refundedAmount']),
+  );
+
+  // Payments received (refunds not yet completed included).
+  final int paidCount;
+  final double revenue;
+  final double refundedAmount;
+}
+
 class PaymentInfo {
   const PaymentInfo({
     required this.id,

@@ -11,10 +11,10 @@ Thanh điều hướng bên trái **Dashboard / Operations / Check-in / Profile*
 | Nhóm | Thao tác |
 |---|---|
 | Dashboard | Tổng vé tạo hôm nay, vé PENDING, yêu cầu hoàn tiền PENDING, suất chiếu hôm nay; mở chi tiết vé |
-| Bookings | Danh sách phân trang (ghi CHECKED IN cho vé đã dùng); lọc trạng thái hoặc ngày tạo; tra cứu bằng ID; đặt hộ bằng ID/email khách và chọn ghế thật; xem giao dịch liên quan; xác nhận tại quầy; check-in tại quầy; hủy kèm lý do |
+| Bookings | Danh sách phân trang (ghi CHECKED IN cho vé đã dùng); lọc trạng thái hoặc ngày tạo; tra cứu bằng ID; đặt hộ bằng ID/email khách, chọn phim → suất trong 7 ngày tới → ghế trên sơ đồ; xem giao dịch liên quan; xác nhận tại quầy; check-in tại quầy; hủy kèm lý do |
 | Check-in | Quét QR trên vé (camera điện thoại / webcam) hoặc nhập mã vé (máy quét cầm tay gõ mã rồi Enter); xem phim, giờ, phòng, ghế, tổng tiền; check-in vé đã thanh toán. Vé đã dùng, chưa trả tiền, đã huỷ hoặc chưa tới giờ bị từ chối kèm lý do |
 | Showtimes | Danh sách/lọc khoảng ngày; tạo/sửa với phim và phòng từ API; chọn ngày/giờ, giá ghế thường (VIP +20%, sweetbox +30% do backend tính); mở/đóng bán; hủy suất; sơ đồ ghế của suất (trống / chờ thanh toán / đã bán / đã check-in), bấm ghế đã có người để mở vé, tự làm mới mỗi 5 giây |
-| Rooms | Danh sách/tìm tên; xem phòng và ghế; đổi NORMAL/VIP; sinh ghế NORMAL cho phòng trống |
+| Rooms | Danh sách/tìm tên; xem phòng và ghế; đổi loại từng ghế, hoặc tô hàng loạt (chọn Standard / VIP / Sweetbox rồi bấm, kéo qua ghế hay bấm chữ đầu hàng); sinh ghế NORMAL cho phòng trống |
 | Payments | Danh sách/chi tiết; mở vé liên quan; xác minh giao dịch PayOS PENDING; tạo yêu cầu hoàn tiền cho SUCCESS |
 | Refunds | Danh sách phân trang/lọc trạng thái; xem số tiền và thông tin ngân hàng nếu backend có; ghi nhận hoàn tiền với mã giao dịch chuyển khoản |
 | Notifications | Soạn email từ chi tiết vé; tạo và gửi; nếu gửi lỗi thì giữ ID đã tạo và retry cùng thông báo khi còn trên màn |

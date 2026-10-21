@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/routes/app_routes.dart';
 import '../../../app/theme/app_colors.dart';
@@ -347,8 +348,17 @@ class _MovieFacts extends StatelessWidget {
   final Movie movie;
   final bool isWide;
 
+  // The trailer (a YouTube link) opens in the YouTube app or a new tab.
+  Uri? get _trailer {
+    final uri = Uri.tryParse(movie.trailerUrl.trim());
+    return uri != null && (uri.scheme == 'https' || uri.scheme == 'http')
+        ? uri
+        : null;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final trailer = _trailer;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -370,6 +380,23 @@ class _MovieFacts extends StatelessWidget {
         if (movie.genre.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.md),
           Text(movie.genre, style: AppTextStyles.title),
+        ],
+        if (trailer != null) ...[
+          const SizedBox(height: AppSpacing.lg),
+          OutlinedButton.icon(
+            key: const Key('watchTrailer'),
+            onPressed: () => launchUrl(
+              trailer,
+              mode: LaunchMode.externalApplication,
+              webOnlyWindowName: '_blank',
+            ),
+            icon: const Icon(Icons.play_circle_outline),
+            label: const Text('Watch trailer'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.warning,
+              side: const BorderSide(color: AppColors.warning),
+            ),
+          ),
         ],
       ],
     );

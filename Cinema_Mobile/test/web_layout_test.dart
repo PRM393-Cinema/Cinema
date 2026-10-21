@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:cinema_fe/app/routes/app_routes.dart';
+import 'package:cinema_fe/core/utils/formatters.dart';
 import 'package:cinema_fe/core/network/api_client.dart';
 import 'package:cinema_fe/core/widgets/cinema_account_widgets.dart';
 import 'package:cinema_fe/data/models/auth_response.dart';
@@ -101,6 +102,8 @@ void main() {
       await tester.tap(find.text('3').first);
       await tester.pump();
       expect(find.text('A3'), findsOneWidget);
+      // Each chosen seat with its price, then the total.
+      expect(find.text(formatVnd(90000)), findsNWidgets(2));
 
       final summary = tester.getTopLeft(find.text('Your seats'));
       final screen = tester.getTopLeft(find.text('SCREEN'));

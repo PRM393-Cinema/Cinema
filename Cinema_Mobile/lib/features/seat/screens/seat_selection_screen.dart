@@ -349,14 +349,17 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                                         style: AppTextStyles.title,
                                       ),
                                       const SizedBox(height: AppSpacing.sm),
-                                      Text(
-                                        selectedLabels.isEmpty
-                                            ? 'Choose your seats on the map.'
-                                            : selectedLabels,
-                                        style: selectedLabels.isEmpty
-                                            ? AppTextStyles.bodySmall
-                                            : AppTextStyles.body,
-                                      ),
+                                      if (selectedSeats.isEmpty)
+                                        const Text(
+                                          'Choose your seats on the map.',
+                                          style: AppTextStyles.bodySmall,
+                                        )
+                                      else
+                                        for (final seat in selectedSeats)
+                                          _SelectedSeatRow(
+                                            seat: seat,
+                                            price: showtime.priceOf(seat.type),
+                                          ),
                                       const SizedBox(height: AppSpacing.lg),
                                       Row(
                                         children: [
@@ -529,6 +532,59 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
       showtime: showtime,
       selectedSeatIds: _selectedSeatIds,
       onSeatTap: _toggleSeat,
+    );
+  }
+}
+
+// A chosen seat in the website's order summary: label, type and price.
+class _SelectedSeatRow extends StatelessWidget {
+  const _SelectedSeatRow({required this.seat, required this.price});
+
+  final Seat seat;
+  final double price;
+
+  @override
+  Widget build(BuildContext context) {
+    final (_, border, text) = seatTypeColors(seat.type);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Row(
+        children: [
+          Container(
+            constraints: const BoxConstraints(minWidth: 44),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm,
+              vertical: AppSpacing.xs,
+            ),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.12),
+              borderRadius: AppRadius.borderRadiusSm,
+              border: Border.all(color: AppColors.primary),
+            ),
+            child: Text(
+              seat.label,
+              textAlign: TextAlign.center,
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Icon(Icons.event_seat, size: 16, color: border),
+          const SizedBox(width: AppSpacing.xs),
+          Expanded(
+            child: Text(
+              seatTypeLabel(seat.type),
+              style: AppTextStyles.bodySmall.copyWith(color: text),
+            ),
+          ),
+          Text(
+            formatVnd(price),
+            style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
+          ),
+        ],
+      ),
     );
   }
 }
