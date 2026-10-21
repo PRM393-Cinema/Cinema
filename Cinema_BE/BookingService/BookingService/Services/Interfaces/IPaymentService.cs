@@ -29,6 +29,8 @@ namespace BookingService.Services.Interfaces
 
         Task<PaymentResponse> GetPaymentByIdAsync(long id);
 
+        Task<PaymentSummaryResponse> GetPaymentSummaryAsync(DateTime start, DateTime end);
+
         Task<PaymentResponse> GetPaymentByOrderCodeAsync(long orderCode);
 
         Task<PaymentResponse> CreatePaymentAsync(PaymentRequest request);

@@ -113,6 +113,26 @@ namespace BookingService.Services.Implementations
             };
         }
 
+        public async Task<PaymentSummaryResponse> GetPaymentSummaryAsync(DateTime start, DateTime end)
+        {
+            if (end < start)
+            {
+                throw new BusinessException("End must not be before start.");
+            }
+
+            var rows = await _paymentRepository.SumByStatusAsync(start, end);
+            var paid = rows.Where(r => r.Status is "SUCCESS" or "REFUND_PENDING").ToList();
+
+            return new PaymentSummaryResponse
+            {
+                Start = start,
+                End = end,
+                PaidCount = paid.Sum(r => r.Count),
+                Revenue = paid.Sum(r => r.Amount),
+                RefundedAmount = rows.Where(r => r.Status == "REFUNDED").Sum(r => r.Amount)
+            };
+        }
+
         public async Task<PaymentResponse> GetPaymentByIdAsync(long id)
         {
             var payment = await GetPaymentAsync(id);

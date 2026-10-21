@@ -91,7 +91,10 @@ class AdminRouter {
     if (isAdminAccount(roles)) {
       return _RouteMatch(
         const RouteSettings(name: AppRoutes.adminDashboard),
-        (_) => AdminDashboardScreen(repository: authRepository),
+        (_) => AdminDashboardScreen(
+          repository: authRepository,
+          service: staffService,
+        ),
         _Access.admin,
       );
     }
@@ -179,7 +182,12 @@ class AdminRouter {
           (_) => ProfileScreen(authRepository: authRepository, staffMode: true),
         );
       case AppRoutes.adminDashboard:
-        return admin((_) => AdminDashboardScreen(repository: authRepository));
+        return admin(
+          (_) => AdminDashboardScreen(
+            repository: authRepository,
+            service: staffService,
+          ),
+        );
       case AppRoutes.adminProfile:
         return admin(
           (_) => ProfileScreen(authRepository: authRepository, adminMode: true),

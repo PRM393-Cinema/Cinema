@@ -5,19 +5,26 @@ import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../core/utils/formatters.dart';
 import '../../../core/utils/layout.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_state.dart';
 import '../../../data/models/auth_response.dart';
 import '../../../data/repositories/auth_repository.dart';
+import '../../../data/services/staff_service.dart';
 import '../../../core/widgets/responsive_columns.dart';
 import '../widgets/admin_layout.dart';
 import '../widgets/admin_page.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
-  const AdminDashboardScreen({required this.repository, super.key});
+  const AdminDashboardScreen({
+    required this.repository,
+    required this.service,
+    super.key,
+  });
   final AuthRepository repository;
+  final StaffService service;
 
   @override
   State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
@@ -25,6 +32,9 @@ class AdminDashboardScreen extends StatefulWidget {
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   List<(String, int, IconData)>? _counts;
+  // Bookings, ticket sales, movies and showtimes; null when they could not be
+  // loaded (the account figures still show).
+  List<(String, Object, IconData)>? _business;
   List<AuthUser> _users = [];
   String? _error;
   bool _loading = false;
@@ -41,6 +51,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       _loading = true;
       _error = null;
     });
+    // The two halves load on their own: one failing keeps the other.
+    final business = await _loadBusiness();
+    if (mounted) setState(() => _business = business);
     try {
       final pages = await Future.wait([
         widget.repository.users(),
@@ -71,6 +84,44 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     }
   }
 
+  // This month so far, and today's showtimes.
+  Future<List<(String, Object, IconData)>?> _loadBusiness() async {
+    final now = DateTime.now();
+    final month = DateTime(now.year, now.month);
+    final today = DateUtils.dateOnly(now);
+    final endOfToday = today
+        .add(const Duration(days: 1))
+        .subtract(const Duration(microseconds: 1));
+    try {
+      final bookings = await widget.service.bookings(start: month, end: now);
+      final sales = await widget.service.paymentSummary(month, now);
+      final movies = await widget.service.catalogMovies(
+        status: 'ACTIVE',
+        size: 1,
+      );
+      final shows = await widget.service.showtimes(
+        start: today,
+        end: endOfToday,
+      );
+      return [
+        (
+          'Bookings this month',
+          bookings.totalCount,
+          Icons.confirmation_number_outlined,
+        ),
+        (
+          'Revenue this month',
+          formatVnd(sales.revenue),
+          Icons.payments_outlined,
+        ),
+        ('Movies showing', movies.totalCount, Icons.movie_outlined),
+        ('Showtimes today', shows.totalCount, Icons.event_outlined),
+      ];
+    } on Object {
+      return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) => AdminPage(
     title: 'Dashboard',
@@ -84,6 +135,25 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           AppSpacing.lg,
         ).copyWith(bottom: 112 + MediaQuery.viewPaddingOf(context).bottom),
         children: [
+          if (!_loading) ...[
+            const Text('This month', style: AppTextStyles.title),
+            const SizedBox(height: AppSpacing.sm),
+            const Text(
+              'Bookings and ticket sales since the 1st, movies on show and '
+              'today’s showtimes.',
+              style: AppTextStyles.bodySmall,
+            ),
+            const SizedBox(height: AppSpacing.xl),
+            if (_business case final business?)
+              StatTiles(key: const Key('businessStats'), tiles: business)
+            else
+              const Text(
+                'Booking and sales figures could not be loaded. Pull to '
+                'refresh.',
+                style: AppTextStyles.bodySmall,
+              ),
+            const SizedBox(height: AppSpacing.xxl),
+          ],
           const Text('Account overview', style: AppTextStyles.title),
           const SizedBox(height: AppSpacing.sm),
           const Text(

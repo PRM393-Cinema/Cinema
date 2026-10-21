@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_radius.dart';
@@ -21,12 +22,16 @@ const maxSeatsPerRow = 30;
 
 // The seat map of a room for staff: seats coloured by type, in rows facing
 // the screen like the customer seat map. Tapping a seat offers its types;
-// [highlighted] seats (just added) glow.
-class RoomSeatMap extends StatelessWidget {
+// [highlighted] seats (just added) glow. With a [paintType], tapping or
+// dragging across seats, or tapping a row letter, gives them that type
+// instead ([onPaint] saves it).
+class RoomSeatMap extends StatefulWidget {
   const RoomSeatMap({
     required this.seats,
     this.highlighted = const {},
     this.onTypeSelected,
+    this.paintType,
+    this.onPaint,
     super.key,
   });
 
@@ -36,10 +41,59 @@ class RoomSeatMap extends StatelessWidget {
   // Null while a change is being saved: the seats cannot be tapped.
   final void Function(Seat seat, String type)? onTypeSelected;
 
+  final String? paintType;
+
+  // Null while a change is being saved: nothing can be painted.
+  final void Function(List<Seat> seats)? onPaint;
+
+  @override
+  State<RoomSeatMap> createState() => _RoomSeatMapState();
+}
+
+class _RoomSeatMapState extends State<RoomSeatMap> {
+  final _mapKey = GlobalKey();
+
+  // Seats under the pointer while painting, shown in the new type.
+  final _painting = <int>{};
+  Offset? _downAt;
+
+  bool get _paintMode => widget.paintType != null;
+
+  Seat? _seatAt(Offset global) {
+    final box = _mapKey.currentContext?.findRenderObject();
+    if (box is! RenderBox) return null;
+    final result = BoxHitTestResult();
+    box.hitTest(result, position: box.globalToLocal(global));
+    for (final entry in result.path) {
+      final target = entry.target;
+      if (target is RenderMetaData && target.metaData is Seat) {
+        return target.metaData as Seat;
+      }
+    }
+    return null;
+  }
+
+  void _add(Offset? global) {
+    final seat = global == null ? null : _seatAt(global);
+    if (seat != null && _painting.add(seat.id)) setState(() {});
+  }
+
+  void _finish() {
+    final seats = [
+      for (final seat in widget.seats)
+        if (_painting.contains(seat.id)) seat,
+    ];
+    setState(_painting.clear);
+    if (seats.isNotEmpty) widget.onPaint?.call(seats);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final seats = widget.seats;
     final rows = seatRowsOf(seats);
     final widest = widestRowOf(rows);
+    final onPaint = widget.onPaint;
+    final paintType = widget.paintType;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -47,7 +101,8 @@ class RoomSeatMap extends StatelessWidget {
           maxWidth: constraints.maxWidth,
           seatsPerRow: widest,
         );
-        final map = Padding(
+        Widget map = Padding(
+          key: _mapKey,
           padding: const EdgeInsets.all(SeatMapLayout.padding),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -57,6 +112,7 @@ class RoomSeatMap extends StatelessWidget {
               SeatMapRows(
                 rows: rows,
                 layout: layout,
+                onRowTap: _paintMode ? onPaint : null,
                 seatBuilder: (seat, size) => _RoomSeat(
                   key: ValueKey('roomSeat-${seat.label}'),
                   seat: seat,
@@ -66,13 +122,34 @@ class RoomSeatMap extends StatelessWidget {
                       )
                       .firstOrNull,
                   size: size,
-                  highlighted: highlighted.contains(seat.id),
-                  onTypeSelected: onTypeSelected,
+                  highlighted: widget.highlighted.contains(seat.id),
+                  onTypeSelected: widget.onTypeSelected,
+                  paintMode: _paintMode,
+                  preview: _painting.contains(seat.id) ? paintType : null,
                 ),
               ),
             ],
           ),
         );
+        if (_paintMode && onPaint != null) {
+          // A tap paints one seat; a drag paints every seat it crosses.
+          map = GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTapUp: (details) {
+              _add(details.globalPosition);
+              _finish();
+            },
+            onPanDown: (details) => _downAt = details.globalPosition,
+            onPanStart: (details) {
+              _add(_downAt);
+              _add(details.globalPosition);
+            },
+            onPanUpdate: (details) => _add(details.globalPosition),
+            onPanEnd: (_) => _finish(),
+            onPanCancel: () => setState(_painting.clear),
+            child: map,
+          );
+        }
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -84,15 +161,16 @@ class RoomSeatMap extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             // Very wide rooms scroll sideways instead of shrinking seats
-            // below a tappable size.
+            // below a tappable size (not while painting: a drag paints).
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
+              physics: _paintMode ? const NeverScrollableScrollPhysics() : null,
               child: ConstrainedBox(
                 constraints: BoxConstraints(minWidth: constraints.maxWidth),
                 child: Center(child: map),
               ),
             ),
-            _Legend(seats: seats, showNew: highlighted.isNotEmpty),
+            _Legend(seats: seats, showNew: widget.highlighted.isNotEmpty),
           ],
         );
       },
@@ -107,6 +185,8 @@ class _RoomSeat extends StatelessWidget {
     required this.size,
     required this.highlighted,
     required this.onTypeSelected,
+    this.paintMode = false,
+    this.preview,
     super.key,
   });
 
@@ -119,9 +199,15 @@ class _RoomSeat extends StatelessWidget {
   final bool highlighted;
   final void Function(Seat seat, String type)? onTypeSelected;
 
+  // Painting: the map handles taps and drags, so the seat has no menu.
+  final bool paintMode;
+
+  // The type the seat is being painted to.
+  final String? preview;
+
   @override
   Widget build(BuildContext context) {
-    final (fill, border, text) = seatTypeColors(seat.type);
+    final (fill, border, text) = seatTypeColors(preview ?? seat.type);
     final radius = BorderRadius.circular(math.min(AppRadius.sm, size / 5));
     final tile = AnimatedContainer(
       duration: const Duration(milliseconds: 400),
@@ -154,6 +240,17 @@ class _RoomSeat extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
       ),
     );
+
+    if (paintMode) {
+      return MetaData(
+        metaData: seat,
+        behavior: HitTestBehavior.opaque,
+        child: Tooltip(
+          message: '${seat.label} • ${seatTypeLabel(seat.type)}',
+          child: tile,
+        ),
+      );
+    }
 
     final select = onTypeSelected;
     final pair = this.pair;

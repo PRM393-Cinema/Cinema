@@ -129,6 +129,20 @@ class StaffService {
     ),
     PaymentInfo.fromJson,
   );
+  // Admin: money received for tickets between [start] and [end].
+  Future<PaymentSummary> paymentSummary(DateTime start, DateTime end) async =>
+      PaymentSummary.fromJson(
+        readMap(
+          await _client.get(
+            '/api/v1/payments/summary',
+            authenticated: true,
+            query: {
+              'start': start.toIso8601String(),
+              'end': end.toIso8601String(),
+            },
+          ),
+        ),
+      );
   Future<PaymentInfo> payment(int id) async => PaymentInfo.fromJson(
     readMap(await _client.get('/api/v1/payments/$id', authenticated: true)),
   );
@@ -302,6 +316,20 @@ class StaffService {
       ),
     ),
   );
+
+  // Gives many seats of a room one type at once (a sweetbox brings its pair);
+  // returns the new seat map.
+  Future<List<Seat>> setSeatTypes(
+    int roomId,
+    List<int> seatIds,
+    String type,
+  ) async => readMapList(
+    await _client.put(
+      '/api/seats/room/$roomId/types',
+      authenticated: true,
+      body: {'seatIds': seatIds, 'seatType': type},
+    ),
+  ).map(Seat.fromJson).toList();
 
   // Admin: new seats fill the last row up to [seatsPerRow] (default: the
   // widest row), then the next rows; fewer seats remove the last ones. The

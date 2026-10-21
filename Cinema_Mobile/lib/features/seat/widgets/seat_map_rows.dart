@@ -104,12 +104,16 @@ class SeatMapRows extends StatelessWidget {
     required this.rows,
     required this.layout,
     required this.seatBuilder,
+    this.onRowTap,
     super.key,
   });
 
   final List<(String, List<Seat>)> rows;
   final SeatMapLayout layout;
   final Widget Function(Seat seat, double size) seatBuilder;
+
+  // Makes the row letters tappable (the admin room map changes a whole row).
+  final void Function(List<Seat> seats)? onRowTap;
 
   double _gapBefore(List<Seat> seats, int index) =>
       layout.gap +
@@ -141,6 +145,11 @@ class SeatMapRows extends StatelessWidget {
     return children;
   }
 
+  VoidCallback? _rowTap(List<Seat> seats) {
+    final onRowTap = this.onRowTap;
+    return onRowTap == null ? null : () => onRowTap(seats);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -152,11 +161,11 @@ class SeatMapRows extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _RowLabel(label: rowKey),
+                _RowLabel(label: rowKey, onTap: _rowTap(rowSeats)),
                 const SizedBox(width: SeatMapLayout.labelGap),
                 ..._seatsOf(rowSeats),
                 const SizedBox(width: SeatMapLayout.labelGap),
-                _RowLabel(label: rowKey),
+                _RowLabel(label: rowKey, onTap: _rowTap(rowSeats)),
               ],
             ),
           ),
@@ -185,21 +194,33 @@ class _Sweetbox extends StatelessWidget {
 }
 
 class _RowLabel extends StatelessWidget {
-  const _RowLabel({required this.label});
+  const _RowLabel({required this.label, this.onTap});
 
   final String label;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    final onTap = this.onTap;
+    final text = SizedBox(
       width: SeatMapLayout.labelWidth,
       child: Text(
         label,
         style: AppTextStyles.bodySmall.copyWith(
-          color: AppColors.textPrimary,
+          color: onTap == null ? AppColors.textPrimary : AppColors.primary,
           fontWeight: FontWeight.w600,
         ),
         textAlign: TextAlign.center,
+      ),
+    );
+    if (onTap == null) return text;
+    return Tooltip(
+      message: 'Row $label',
+      child: InkWell(
+        key: ValueKey('rowLabel-$label'),
+        borderRadius: BorderRadius.circular(4),
+        onTap: onTap,
+        child: text,
       ),
     );
   }

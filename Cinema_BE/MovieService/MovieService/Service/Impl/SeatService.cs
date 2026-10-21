@@ -11,6 +11,8 @@ namespace ShowtimeService.Service.Impl
 {
     public class SeatService : ISeatService
     {
+        private static readonly string[] SeatTypes = [SeatPairs.Normal, "VIP", SeatPairs.Sweetbox];
+
         private readonly ISeatRepository _seatRepository;
         private readonly IRoomRepository _roomRepository;
         private readonly IShowtimeRepository _showtimeRepository;
@@ -191,6 +193,92 @@ namespace ShowtimeService.Service.Impl
             await _seatRepository.ChangeRoomSeatsAsync(seat.RoomId, [], [], newTypes);
 
             return (await _seatRepository.GetSeatByIdAsync(seatId))?.ToResponse();
+        }
+
+        // Đổi loại nhiều ghế của một phòng trong một lần (Admin tô ghế trên sơ đồ). Sweetbox theo cặp như
+        // khi đổi từng ghế: chọn sweetbox thì ghế cặp thành sweetbox, bỏ sweetbox thì ghế cặp đổi theo.
+        public async Task<List<SeatResponse>> UpdateRoomSeatTypesAsync(
+            long roomId,
+            UpdateSeatTypeRequest request)
+        {
+            if (roomId <= 0)
+            {
+                throw new BusinessException("Room ID must be greater than 0.");
+            }
+
+            var type = request?.SeatType?.Trim().ToUpperInvariant() ?? "";
+            if (!SeatTypes.Contains(type))
+            {
+                throw new BusinessException(
+                    $"Seat type must be one of {string.Join(", ", SeatTypes)}.");
+            }
+
+            if (request!.SeatIds.Count == 0)
+            {
+                throw new BusinessException("Choose at least one seat.");
+            }
+
+            if (await _roomRepository.GetRoomByIdAsync(roomId) == null)
+            {
+                throw new NotFoundException(
+                    $"Room with ID {roomId} was not found.");
+            }
+
+            if (await _showtimeRepository.ExistsByRoomIdAsync(roomId))
+            {
+                throw new BusinessException(
+                    "Cannot update seat types because the room has associated showtimes.");
+            }
+
+            var seats = await _seatRepository.GetAllSeatsByRoomAsync(roomId);
+            var ids = request.SeatIds.ToHashSet();
+            var selected = seats.Where(s => ids.Contains(s.Id)).ToList();
+            if (selected.Count != ids.Count)
+            {
+                throw new BusinessException(
+                    $"Seat(s) {string.Join(", ", ids.Except(selected.Select(s => s.Id)))} " +
+                    $"do not belong to room {roomId}.");
+            }
+
+            var newTypes = new Dictionary<long, string>();
+            if (SeatPairs.IsSweetbox(type))
+            {
+                var single = selected
+                    .Where(s => SeatPairs.PartnerOf(s, seats) == null)
+                    .Select(SeatPairs.Label)
+                    .ToList();
+                if (single.Count > 0)
+                {
+                    throw new BusinessException(
+                        $"Seat(s) {string.Join(", ", single)} have no seat to pair with: " +
+                        "sweetbox seats come in pairs.");
+                }
+
+                foreach (var seat in selected)
+                {
+                    newTypes[seat.Id] = type;
+                    newTypes[SeatPairs.PartnerOf(seat, seats)!.Id] = type;
+                }
+            }
+            else
+            {
+                foreach (var seat in selected)
+                {
+                    newTypes[seat.Id] = type;
+                    var partner = SeatPairs.PartnerOf(seat, seats);
+                    if (partner != null &&
+                        SeatPairs.IsSweetbox(seat.SeatType) &&
+                        SeatPairs.IsSweetbox(partner.SeatType))
+                    {
+                        newTypes.TryAdd(partner.Id, type);
+                    }
+                }
+            }
+
+            await _seatRepository.ChangeRoomSeatsAsync(roomId, [], [], newTypes);
+
+            var updated = await _seatRepository.GetAllSeatsByRoomAsync(roomId);
+            return updated.Select(s => s.ToResponse()).ToList();
         }
 
         public async Task<bool> DeleteSeatAsync(long seatId)

@@ -98,6 +98,39 @@ void main() {
       expect(find.byTooltip('Back'), findsNothing);
     });
 
+    testWidgets('The admin dashboard shows this month’s bookings and sales', (
+      tester,
+    ) async {
+      final api = _FakeApi()
+        ..movies.add(_movie(1, 'Old Movie'))
+        ..bookingsThisMonth = 12
+        ..revenue = 1530000;
+      await _openAdmin(tester, api, AppRoutes.adminDashboard);
+
+      expect(find.byKey(const Key('businessStats')), findsOneWidget);
+      for (final (label, value) in [
+        ('Bookings this month', '12'),
+        ('Revenue this month', formatVnd(1530000)),
+        ('Movies showing', '1'),
+        ('Showtimes today', '0'),
+      ]) {
+        final tile = find.ancestor(
+          of: find.text(label),
+          matching: find.byType(Column),
+        );
+        expect(
+          find.descendant(of: tile.first, matching: find.text(value)),
+          findsOneWidget,
+          reason: label,
+        );
+      }
+      final summary = api.reads.firstWhere(
+        (uri) => uri.path == '/api/v1/payments/summary',
+      );
+      final start = DateTime.parse(summary.queryParameters['start']!);
+      expect((start.day, start.hour), (1, 0));
+    });
+
     testWidgets('Narrow windows open the navigation from the menu', (
       tester,
     ) async {
@@ -402,6 +435,68 @@ void main() {
       expect(find.text('IMAX 1'), findsOneWidget);
     });
 
+    testWidgets('Seats are painted many at a time', (tester) async {
+      tester.view.physicalSize = const Size(1440, 1400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final api = _FakeApi()
+        ..rooms.add({'id': 3, 'name': 'Room 03', 'totalSeats': 8})
+        ..seats[3] = [
+          for (final (i, label) in [
+            'A1', 'A2', 'A3', 'A4', 'B1', 'B2', 'B3', 'B4', //
+          ].indexed)
+            _seat(i + 1, 3, label[0], int.parse(label.substring(1))),
+        ];
+      await _openAdmin(tester, api, AppRoutes.staffRecord('rooms', 3));
+      Offset seat(String label) =>
+          tester.getCenter(find.byKey(ValueKey('roomSeat-$label')));
+
+      // Dragging across row A makes its seats VIP in one request.
+      await tester.tap(find.byKey(const Key('paint-VIP')));
+      await pumpRoute(tester);
+      await tester.timedDragFrom(
+        seat('A1'),
+        seat('A3') - seat('A1'),
+        const Duration(milliseconds: 400),
+      );
+      await pumpRoute(tester);
+      var (method, path, body) = api.writes.last;
+      expect('$method $path', 'PUT /api/seats/room/3/types');
+      expect(body, {
+        'seatIds': [1, 2, 3],
+        'seatType': 'VIP',
+      });
+      expect(find.text('3 seats are now VIP.'), findsOneWidget);
+      expect(find.text('VIP (3)'), findsOneWidget);
+
+      // Tapping a row letter paints the whole row.
+      await tester.tap(find.byKey(const ValueKey('rowLabel-B')).first);
+      await pumpRoute(tester);
+      (method, path, body) = api.writes.last;
+      expect(body['seatIds'], [5, 6, 7, 8]);
+      expect(find.text('VIP (7)'), findsOneWidget);
+
+      // A sweetbox brings its pair; seats that already have the type are
+      // left out of the request.
+      await tester.tap(find.byKey(const Key('paint-SWEETBOX')));
+      await pumpRoute(tester);
+      await tester.tapAt(seat('A1'));
+      await pumpRoute(tester);
+      expect(api.writes.last.$3, {
+        'seatIds': [1],
+        'seatType': 'SWEETBOX',
+      });
+      expect(find.text('2 seats are now Sweetbox.'), findsOneWidget);
+      expect(find.text('Sweetbox (2)'), findsOneWidget);
+
+      // Back to one seat at a time: a tap opens the seat's menu.
+      await tester.tap(find.byKey(const Key('paintOff')));
+      await pumpRoute(tester);
+      await tester.tap(find.byKey(const ValueKey('roomSeat-B4')));
+      await pumpRoute(tester);
+      expect(find.byType(CheckedPopupMenuItem<String>), findsNWidgets(3));
+    });
+
     testWidgets('The seat map grows row by row and follows other changes', (
       tester,
     ) async {
@@ -551,6 +646,9 @@ class _FakeApi {
   final writes = <(String, String, Map<String, Object?>)>[];
   String? refuse;
   bool failSeats = false;
+  // Dashboard figures.
+  int bookingsThisMonth = 0;
+  double revenue = 0;
 
   late final service = StaffService(
     client: ApiClient(httpClient: MockClient(_handle)),
@@ -562,6 +660,19 @@ class _FakeApi {
       reads.add(request.url);
       final id = int.tryParse(request.url.pathSegments.last);
       if (path.startsWith('/api/seats/room/')) return _json(seats[id] ?? []);
+      if (path == '/api/v1/payments/summary') {
+        return _json({'paidCount': 1, 'revenue': revenue, 'refundedAmount': 0});
+      }
+      if (path.startsWith('/api/v1/bookings')) {
+        return _json({
+          'items': const [],
+          'pageNumber': 1,
+          'pageSize': 10,
+          'totalCount': bookingsThisMonth,
+          'totalPages': 0,
+        });
+      }
+      if (path.startsWith('/api/showtimes')) return _page(const []);
       if (path.startsWith('/api/rooms/') && id != null) {
         return _json(rooms.firstWhere((room) => room['id'] == id));
       }
@@ -600,6 +711,25 @@ class _FakeApi {
         return failSeats
             ? _problem('Seats could not be generated.')
             : _page(const []);
+    }
+    if (path.endsWith('/types')) {
+      // Like the API, painting a sweetbox brings its pair.
+      final map = seats[int.parse(segments[3])]!;
+      final type = body['seatType'] as String;
+      final ids = (body['seatIds'] as List).cast<int>().toSet();
+      for (final seat in map.where((s) => ids.contains(s['id']))) {
+        seat['seatType'] = type;
+        final number = seat['seatNumber'] as int;
+        final pair = map
+            .where(
+              (s) =>
+                  s['seatRow'] == seat['seatRow'] &&
+                  s['seatNumber'] == (number.isOdd ? number + 1 : number - 1),
+            )
+            .firstOrNull;
+        if (pair != null && type == 'SWEETBOX') pair['seatType'] = type;
+      }
+      return _json(map);
     }
     if (path.endsWith('/capacity')) {
       final roomId = int.parse(segments[3]);

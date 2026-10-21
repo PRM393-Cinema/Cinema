@@ -31,7 +31,8 @@ class AdminControls extends StatelessWidget {
 class StatTiles extends StatelessWidget {
   const StatTiles({required this.tiles, super.key});
 
-  final List<(String, int, IconData)> tiles;
+  // Label, value (a count or a formatted amount) and icon of each tile.
+  final List<(String, Object, IconData)> tiles;
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
@@ -43,7 +44,7 @@ class StatTiles extends StatelessWidget {
         spacing: AppSpacing.md,
         runSpacing: AppSpacing.md,
         children: [
-          for (final (label, count, icon) in tiles)
+          for (final (label, value, icon) in tiles)
             SizedBox(
               width: width,
               child: CinemaPanel(
@@ -53,7 +54,11 @@ class StatTiles extends StatelessWidget {
                   children: [
                     Icon(icon, color: AppColors.primary),
                     const SizedBox(height: AppSpacing.md),
-                    Text('$count', style: AppTextStyles.display),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text('$value', style: AppTextStyles.display),
+                    ),
                     const SizedBox(height: AppSpacing.xs),
                     Text(label, style: AppTextStyles.bodySmall),
                   ],

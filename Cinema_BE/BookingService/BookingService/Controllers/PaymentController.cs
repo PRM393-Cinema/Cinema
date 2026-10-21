@@ -42,6 +42,18 @@ namespace BookingService.Controllers
             return Ok(result);
         }
 
+        // Doanh thu trong khoảng thời gian (dashboard Admin)
+        [HttpGet("summary")]
+        [Authorize(Policy = AuthorizationPolicies.AdminOnly)]
+        public async Task<ActionResult<PaymentSummaryResponse>> GetSummary(
+            [FromQuery] DateTime start,
+            [FromQuery] DateTime end)
+        {
+            var result = await _paymentService.GetPaymentSummaryAsync(start, end);
+
+            return Ok(result);
+        }
+
         [HttpGet("{id:long}")]
         public async Task<ActionResult<PaymentResponse>> GetById(long id)
         {
