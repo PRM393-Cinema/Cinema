@@ -135,6 +135,8 @@ class ShowtimeSeatBooking {
     required this.bookingId,
     required this.bookingCode,
     required this.status,
+    this.userId,
+    this.customerEmail,
     this.checkedInAt,
   });
 
@@ -144,6 +146,8 @@ class ShowtimeSeatBooking {
       seatLabel: readString(json['seatLabel']),
       bookingId: readInt(json['bookingId']),
       bookingCode: readString(json['bookingCode']),
+      userId: readOptionalInt(json['userId']),
+      customerEmail: readOptionalString(json['customerEmail']),
       status: BookingStatus.parse(readString(json['status'])),
       checkedInAt: readDateTime(json['checkedInAt']),
     );
@@ -154,5 +158,34 @@ class ShowtimeSeatBooking {
   final int bookingId;
   final String bookingCode;
   final BookingStatus status;
+  final int? userId;
+  final String? customerEmail;
   final DateTime? checkedInAt;
+}
+
+// Tickets of one showtime (dashboard board): seats sold, held for payment and
+// checked in.
+class ShowtimeBookingStats {
+  const ShowtimeBookingStats({
+    required this.showtimeId,
+    this.bookings = 0,
+    this.soldSeats = 0,
+    this.heldSeats = 0,
+    this.checkedInSeats = 0,
+  });
+
+  factory ShowtimeBookingStats.fromJson(Map<String, Object?> json) =>
+      ShowtimeBookingStats(
+        showtimeId: readInt(json['showtimeId']),
+        bookings: readOptionalInt(json['bookings']) ?? 0,
+        soldSeats: readOptionalInt(json['soldSeats']) ?? 0,
+        heldSeats: readOptionalInt(json['heldSeats']) ?? 0,
+        checkedInSeats: readOptionalInt(json['checkedInSeats']) ?? 0,
+      );
+
+  final int showtimeId;
+  final int bookings;
+  final int soldSeats;
+  final int heldSeats;
+  final int checkedInSeats;
 }

@@ -11,6 +11,10 @@ namespace BookingService.DTOs.Responses
 
         public string BookingCode { get; set; } = null!;
 
+        public long UserId { get; set; }
+
+        public string? CustomerEmail { get; set; }
+
         public string Status { get; set; } = null!;
 
         public DateTime? CheckedInAt { get; set; }

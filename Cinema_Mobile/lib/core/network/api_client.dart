@@ -140,10 +140,14 @@ class ApiClient {
       return uri;
     }
 
+    // A list repeats its parameter (?showtimeIds=1&showtimeIds=2).
     return uri.replace(
       queryParameters: {
-        for (final entry in query.entries)
-          if (entry.value != null) entry.key: '${entry.value}',
+        for (final MapEntry(:key, :value) in query.entries)
+          if (value is Iterable)
+            key: [for (final item in value) '$item']
+          else if (value != null)
+            key: '$value',
       },
     );
   }

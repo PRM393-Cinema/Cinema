@@ -71,10 +71,10 @@ Khách dùng app (web hoặc điện thoại). Nhân viên và admin dùng **tra
 
 ### C. Check-in tại rạp (khoảng 2 phút)
 
-1. Khách mở vé đã thanh toán: thẻ **Your ticket** có mã QR và mã vé.
-2. Nhân viên mở **Check-in** trên trang quản trị (hoặc đăng nhập tài khoản nhân viên trên app điện thoại → **Check in tickets**). **Scan QR** bằng camera, hoặc gõ mã vé rồi Enter → thấy phim, giờ, phòng, ghế → **Check in**.
+1. Khách mở vé đã thanh toán: thẻ **Your ticket** có mã QR và mã vé. Email xác nhận cũng có mã QR này.
+2. Nhân viên mở **Check-in** trên trang quản trị (hoặc đăng nhập tài khoản nhân viên trên app điện thoại → **Check in tickets**). **Scan QR** bằng camera (webcam laptop trên trang quản trị, camera điện thoại trên app), hoặc gõ mã vé rồi Enter → thấy phim, giờ, phòng, ghế → **Check in**.
 3. Quét lại vé đó: báo vé đã dùng kèm giờ check-in. Vé của khách đổi sang **Checked in**.
-4. **Operations** → **Showtimes** → mở suất chiếu: sơ đồ ghế tô màu ghế chờ thanh toán / đã bán / đã check-in, bấm vào ghế để mở vé.
+4. **Dashboard** → khối **Today**: suất đang chiếu (số khách đang xem = đã check-in), suất tiếp theo, suất vừa xong. Bấm một suất: sơ đồ ghế tô màu ghế chờ thanh toán / đã bán / đã check-in và danh sách khách ngồi ở đâu, bấm vào để mở vé.
 
 Vé chỉ check-in được từ 3 giờ trước đến 2 giờ sau giờ chiếu: chọn suất gần giờ hiện tại để demo.
 

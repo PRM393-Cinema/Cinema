@@ -119,6 +119,20 @@ namespace BookingService.Controllers
             return Ok(result);
         }
 
+        // Vé của các suất chiếu cho dashboard: ?showtimeIds=1&showtimeIds=2, hoặc ?start=&end= (giờ chiếu)
+        [HttpGet("showtimes/stats")]
+        [Authorize(Policy = AuthorizationPolicies.StaffOrAdmin)]
+        public async Task<ActionResult<List<ShowtimeBookingStatsResponse>>> GetShowtimeStats(
+            [FromQuery] List<long>? showtimeIds,
+            [FromQuery] DateTime? start,
+            [FromQuery] DateTime? end)
+        {
+            var result = await _bookingService
+                .GetShowtimeStatsAsync(showtimeIds, start, end);
+
+            return Ok(result);
+        }
+
         // Tra vé theo mã: Staff quét QR trên vé của khách hoặc nhập mã vé
         [HttpGet("code/{bookingCode}")]
         [Authorize(Policy = AuthorizationPolicies.StaffOrAdmin)]

@@ -14,6 +14,7 @@ import '../../../data/models/auth_response.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/services/staff_service.dart';
 import '../../../core/widgets/responsive_columns.dart';
+import '../../staff/widgets/today_at_cinema.dart';
 import '../widgets/admin_layout.dart';
 import '../widgets/admin_page.dart';
 
@@ -35,6 +36,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   // Bookings, ticket sales, movies and showtimes; null when they could not be
   // loaded (the account figures still show).
   List<(String, Object, IconData)>? _business;
+  int _refreshes = 0;
   List<AuthUser> _users = [];
   String? _error;
   bool _loading = false;
@@ -50,6 +52,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     setState(() {
       _loading = true;
       _error = null;
+      _refreshes++;
     });
     // The two halves load on their own: one failing keeps the other.
     final business = await _loadBusiness();
@@ -135,6 +138,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           AppSpacing.lg,
         ).copyWith(bottom: 112 + MediaQuery.viewPaddingOf(context).bottom),
         children: [
+          TodayAtCinema(service: widget.service, refresh: _refreshes),
+          const SizedBox(height: AppSpacing.xl),
           if (!_loading) ...[
             const Text('This month', style: AppTextStyles.title),
             const SizedBox(height: AppSpacing.sm),

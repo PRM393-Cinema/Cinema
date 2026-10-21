@@ -89,6 +89,15 @@ namespace BookingService.Services.Interfaces
         Task<List<ShowtimeSeatBookingResponse>> GetSeatBookingsOfShowtimeAsync(long showtimeId);
 
         /// <summary>
+        /// Số ghế đã bán / đang giữ / đã check-in của từng suất chiếu có vé: theo danh sách id suất,
+        /// hoặc theo giờ chiếu trong [start, end). Suất không có vé nào thì không có trong kết quả.
+        /// </summary>
+        Task<List<ShowtimeBookingStatsResponse>> GetShowtimeStatsAsync(
+            List<long>? showtimeIds,
+            DateTime? start,
+            DateTime? end);
+
+        /// <summary>
         /// Tìm vé theo mã (nội dung QR trên vé của khách). Không có thì ném KeyNotFoundException.
         /// </summary>
         Task<BookingResponse> GetBookingByCodeAsync(string bookingCode);

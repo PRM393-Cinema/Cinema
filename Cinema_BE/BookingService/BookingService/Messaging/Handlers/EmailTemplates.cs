@@ -1,5 +1,6 @@
 using System.Text.Encodings.Web;
 using BookingService.DTOs;
+using BookingService.Helpers;
 
 namespace BookingService.Messaging.Handlers
 {
@@ -8,18 +9,32 @@ namespace BookingService.Messaging.Handlers
     {
         private static readonly HtmlEncoder Encoder = HtmlEncoder.Default;
 
+        // Vé đã thanh toán: kèm mã QR (ảnh nhúng) để Staff quét check-in tại rạp
         public static EmailMessage BookingConfirmed(BookingEventData data, string recipientEmail)
         {
             var body = $"""
                 <h2>Đặt vé thành công</h2>
                 <p>Đơn đặt vé <strong>{E(data.BookingCode)}</strong> của bạn đã được xác nhận.</p>
+                <div style="text-align:center;border:1px solid #e0e0e0;border-radius:8px;padding:16px;margin:16px 0">
+                  <p style="margin:0 0 8px">Mã QR vào rạp</p>
+                  <img src="cid:{TicketQr.EmailContentId}" alt="Mã QR vé {E(data.BookingCode)}" width="200" height="200"
+                       style="display:block;margin:0 auto;width:200px;height:200px">
+                  <p style="margin:8px 0 0;font-size:18px;font-weight:bold;letter-spacing:1px">{E(data.BookingCode)}</p>
+                </div>
                 {BookingDetails(data)}
                 <div style="background:#fff3cd;border:1px solid #ffecb5;padding:12px;margin:16px 0;color:#664d03">
-                  <strong>ĐẶC BIỆT LƯU Ý:</strong> Vui lòng có mặt trước giờ chiếu ít nhất 15 phút và xuất trình mã đặt vé khi đến rạp.
+                  <strong>ĐẶC BIỆT LƯU Ý:</strong> Vui lòng có mặt trước giờ chiếu ít nhất 15 phút và xuất trình mã QR
+                  (hoặc mã đặt vé) tại quầy để nhân viên check-in.
                 </div>
                 """;
 
-            return Build(recipientEmail, $"Xác nhận đặt vé {data.BookingCode}", body);
+            var email = Build(recipientEmail, $"Xác nhận đặt vé {data.BookingCode}", body);
+            email.InlineImages.Add(new EmailImage
+            {
+                ContentId = TicketQr.EmailContentId,
+                Content = TicketQr.Png(data.BookingCode)
+            });
+            return email;
         }
 
         public static EmailMessage BookingCancelled(BookingEventData data, string recipientEmail)

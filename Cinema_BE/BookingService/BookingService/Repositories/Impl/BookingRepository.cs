@@ -164,13 +164,38 @@ namespace BookingService.Repositories.Impl
         }
 
         // Như GetOccupiedSeatIdsAsync, kèm vé đang giữ từng ghế (sơ đồ ghế đã đặt cho Staff)
-        public async Task<List<BookingSeat>> GetOccupiedSeatsWithBookingAsync(long showtimeId, DateTime now)
+        public Task<List<BookingSeat>> GetOccupiedSeatsWithBookingAsync(long showtimeId, DateTime now) =>
+            GetOccupiedSeatsWithBookingAsync([showtimeId], null, null, now);
+
+        // Ghế đang bị giữ / đã bán của các suất chiếu (theo id, hoặc giờ chiếu lưu trên vé trong [from, to))
+        public async Task<List<BookingSeat>> GetOccupiedSeatsWithBookingAsync(
+            IReadOnlyCollection<long>? showtimeIds,
+            DateTime? showFrom,
+            DateTime? showTo,
+            DateTime now)
         {
-            return await _context.BookingSeats
+            var query = _context.BookingSeats
                 .AsNoTracking()
                 .Include(bs => bs.Booking)
+                .AsQueryable();
+
+            if (showtimeIds != null)
+            {
+                query = query.Where(bs => showtimeIds.Contains(bs.Booking.ShowtimeId));
+            }
+
+            if (showFrom.HasValue)
+            {
+                query = query.Where(bs => bs.Booking.ShowTime >= showFrom.Value);
+            }
+
+            if (showTo.HasValue)
+            {
+                query = query.Where(bs => bs.Booking.ShowTime < showTo.Value);
+            }
+
+            return await query
                 .Where(bs =>
-                    bs.Booking.ShowtimeId == showtimeId &&
                     (
                         bs.Booking.Status == "CONFIRMED" ||
                         bs.Booking.Status == "REFUND_PENDING" ||

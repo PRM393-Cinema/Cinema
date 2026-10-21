@@ -735,9 +735,49 @@ namespace BookingService.Services.Implementations
                     SeatLabel = seat.SeatLabel,
                     BookingId = seat.BookingId,
                     BookingCode = seat.Booking.BookingCode,
+                    UserId = seat.Booking.UserId,
+                    CustomerEmail = seat.Booking.CustomerEmail,
                     Status = NormalizeStatus(seat.Booking),
                     CheckedInAt = seat.Booking.CheckedInAt
                 })
+                .ToList();
+        }
+
+        public async Task<List<ShowtimeBookingStatsResponse>> GetShowtimeStatsAsync(
+            List<long>? showtimeIds,
+            DateTime? start,
+            DateTime? end)
+        {
+            var ids = showtimeIds is { Count: > 0 } ? showtimeIds.Distinct().ToList() : null;
+            if (ids == null && (start == null || end == null))
+            {
+                throw new BusinessException("Give showtime ids, or a start and an end.");
+            }
+
+            if (ids is { Count: > 200 })
+            {
+                throw new BusinessException("Ask for at most 200 showtimes at a time.");
+            }
+
+            if (start.HasValue && end.HasValue && (end < start || end - start > TimeSpan.FromDays(31)))
+            {
+                throw new BusinessException("The range must be from start to end, at most 31 days.");
+            }
+
+            var seats = await _bookingRepository
+                .GetOccupiedSeatsWithBookingAsync(ids, start, end, DateTime.Now);
+
+            return seats
+                .GroupBy(seat => seat.Booking.ShowtimeId)
+                .Select(showtime => new ShowtimeBookingStatsResponse
+                {
+                    ShowtimeId = showtime.Key,
+                    Bookings = showtime.Select(seat => seat.BookingId).Distinct().Count(),
+                    SoldSeats = showtime.Count(seat => NormalizeStatus(seat.Booking) != "PENDING"),
+                    HeldSeats = showtime.Count(seat => NormalizeStatus(seat.Booking) == "PENDING"),
+                    CheckedInSeats = showtime.Count(seat => seat.Booking.CheckedInAt != null)
+                })
+                .OrderBy(stats => stats.ShowtimeId)
                 .ToList();
         }
 
