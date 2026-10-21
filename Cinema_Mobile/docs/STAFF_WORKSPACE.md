@@ -1,18 +1,19 @@
 # Khu vực Staff
 
-Staff local/demo: `nhanvien1@cinema.com` / `123456` (tài khoản seed). Staff làm việc trên **trang quản trị web** (`flutter run -d chrome -t lib/main_admin.dart`, build vào `/admin/`). Đăng nhập với ROLE_STAFF vào `/staff/dashboard`; nếu có ROLE_ADMIN thì ưu tiên dashboard Admin. App khách không có màn Staff: tài khoản Staff đăng nhập ở đó thấy hướng dẫn mở trang quản trị.
+Staff local/demo: `nhanvien1@cinema.com` / `123456` (tài khoản seed). Staff làm việc trên **trang quản trị web** (`flutter run -d chrome -t lib/main_admin.dart`, build vào `/admin/`). Đăng nhập với ROLE_STAFF vào `/staff/dashboard`; nếu có ROLE_ADMIN thì ưu tiên dashboard Admin. Trong app khách, tài khoản Staff thấy hướng dẫn mở trang quản trị và nút **Check in tickets** để quét QR trên vé bằng camera điện thoại tại cửa rạp.
 
 ## Điều hướng và quyền
 
-Thanh điều hướng bên trái **Dashboard / Operations / Profile**; cửa sổ hẹp hơn 640 px thì mở bằng nút menu. Màn con giữ mục Operations và có nút Back; bấm Operations để về danh sách. Customer không được vào `/staff/*`; backend tiếp tục kiểm tra quyền từng endpoint. Staff không có quản lý người dùng, phân quyền, tạo/sửa/xóa phim hoặc phòng (Admin làm ở Movies, Rooms), xóa ghế.
+Thanh điều hướng bên trái **Dashboard / Operations / Check-in / Profile**; cửa sổ hẹp hơn 640 px thì mở bằng nút menu. Màn con giữ mục Operations và có nút Back; bấm Operations để về danh sách. Customer không được vào `/staff/*`; backend tiếp tục kiểm tra quyền từng endpoint. Staff không có quản lý người dùng, phân quyền, tạo/sửa/xóa phim hoặc phòng (Admin làm ở Movies, Rooms), xóa ghế.
 
 ## Nghiệp vụ đã nối API
 
 | Nhóm | Thao tác |
 |---|---|
 | Dashboard | Tổng vé tạo hôm nay, vé PENDING, yêu cầu hoàn tiền PENDING, suất chiếu hôm nay; mở chi tiết vé |
-| Bookings | Danh sách phân trang; lọc trạng thái hoặc ngày tạo; tra cứu bằng ID; đặt hộ bằng ID/email khách và chọn ghế thật; xem giao dịch liên quan; xác nhận tại quầy; hủy kèm lý do |
-| Showtimes | Danh sách/lọc khoảng ngày; tạo/sửa với phim và phòng từ API; chọn ngày/giờ, giá ghế thường (VIP +20%, sweetbox +30% do backend tính); mở/đóng bán; hủy suất |
+| Bookings | Danh sách phân trang (ghi CHECKED IN cho vé đã dùng); lọc trạng thái hoặc ngày tạo; tra cứu bằng ID; đặt hộ bằng ID/email khách và chọn ghế thật; xem giao dịch liên quan; xác nhận tại quầy; check-in tại quầy; hủy kèm lý do |
+| Check-in | Quét QR trên vé (camera điện thoại / webcam) hoặc nhập mã vé (máy quét cầm tay gõ mã rồi Enter); xem phim, giờ, phòng, ghế, tổng tiền; check-in vé đã thanh toán. Vé đã dùng, chưa trả tiền, đã huỷ hoặc chưa tới giờ bị từ chối kèm lý do |
+| Showtimes | Danh sách/lọc khoảng ngày; tạo/sửa với phim và phòng từ API; chọn ngày/giờ, giá ghế thường (VIP +20%, sweetbox +30% do backend tính); mở/đóng bán; hủy suất; sơ đồ ghế của suất (trống / chờ thanh toán / đã bán / đã check-in), bấm ghế đã có người để mở vé, tự làm mới mỗi 5 giây |
 | Rooms | Danh sách/tìm tên; xem phòng và ghế; đổi NORMAL/VIP; sinh ghế NORMAL cho phòng trống |
 | Payments | Danh sách/chi tiết; mở vé liên quan; xác minh giao dịch PayOS PENDING; tạo yêu cầu hoàn tiền cho SUCCESS |
 | Refunds | Danh sách phân trang/lọc trạng thái; xem số tiền và thông tin ngân hàng nếu backend có; ghi nhận hoàn tiền với mã giao dịch chuyển khoản |
@@ -29,7 +30,7 @@ Bảng [MOBILE_UI_ENDPOINTS.md](MOBILE_UI_ENDPOINTS.md) là nguồn đối chi�
 - Hủy vé đã thanh toán/tạo refund request **không tự chuyển tiền**. Staff kiểm tra người nhận, thực hiện chuyển khoản bên ngoài, rồi nhập mã giao dịch và xác nhận hoàn tất. Dữ liệu ngân hàng có thể thiếu; phải lấy thông tin khách trước khi chuyển.
 - Backend khóa việc sinh ghế/đổi loại ghế khi phòng có suất chiếu. UI chỉ cho sinh sơ đồ ở phòng trống, tránh thêm trùng ghế. Không có chức năng xóa ghế/phòng cho Staff.
 - Hủy suất chiếu chuyển trạng thái sang CANCELLED; endpoint hiện không điều phối hủy/hoàn tiền các vé đã tồn tại. Staff phải rà các booking liên quan riêng.
-- Chưa có API check-in/đánh dấu vé đã sử dụng hoặc xác thực QR tại cửa rạp, nên UI hiện chỉ tra cứu vé. Endpoint tạo payment chung, thông báo của bản thân và các bộ lọc API khác chưa có màn Staff riêng vẫn được ghi đúng trạng thái trong bảng endpoint.
+- Check-in: QR trên vé chứa mã vé (`bookingCode`). Chỉ vé CONFIRMED check-in được, mỗi vé một lần (hai quầy quét cùng lúc thì quầy sau nhận 409), từ 3 giờ trước đến 2 giờ sau giờ chiếu (`CheckIn` trong appsettings của BookingService). Vé chờ hoàn tiền không dùng được. Endpoint tạo payment chung, thông báo của bản thân và các bộ lọc API khác chưa có màn Staff riêng vẫn được ghi đúng trạng thái trong bảng endpoint.
 - Retry thông báo giữ ID trong phiên màn hình; nếu rời màn sau khi lưu nhưng gửi lỗi, không tự tạo/gửi lại thông báo cũ. Không có quyền xem thông báo của toàn bộ khách vì API đó chỉ dành Admin.
 
 ## Kiểm tra hiện tại

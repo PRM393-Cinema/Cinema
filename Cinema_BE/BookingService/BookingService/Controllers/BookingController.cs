@@ -107,6 +107,38 @@ namespace BookingService.Controllers
             return Ok(result);
         }
 
+        // Sơ đồ ghế đã đặt của một suất: mỗi ghế kèm vé đang giữ nó và trạng thái check-in
+        [HttpGet("showtime/{showtimeId:long}/seats")]
+        [Authorize(Policy = AuthorizationPolicies.StaffOrAdmin)]
+        public async Task<ActionResult<List<ShowtimeSeatBookingResponse>>> GetSeatBookings(
+            long showtimeId)
+        {
+            var result = await _bookingService
+                .GetSeatBookingsOfShowtimeAsync(showtimeId);
+
+            return Ok(result);
+        }
+
+        // Tra vé theo mã: Staff quét QR trên vé của khách hoặc nhập mã vé
+        [HttpGet("code/{bookingCode}")]
+        [Authorize(Policy = AuthorizationPolicies.StaffOrAdmin)]
+        public async Task<ActionResult<BookingResponse>> GetByCode(string bookingCode)
+        {
+            var result = await _bookingService.GetBookingByCodeAsync(bookingCode);
+
+            return Ok(result);
+        }
+
+        // Check-in tại rạp: vé đã thanh toán, mỗi vé một lần, trong khung giờ quanh giờ chiếu (CheckIn)
+        [HttpPost("{id:long}/check-in")]
+        [Authorize(Policy = AuthorizationPolicies.StaffOrAdmin)]
+        public async Task<ActionResult<BookingResponse>> CheckIn(long id)
+        {
+            var result = await _bookingService.CheckInAsync(id);
+
+            return Ok(result);
+        }
+
         [HttpPost]
         public async Task<ActionResult<BookingResponse>> Create(
             [FromBody] BookingRequest request)

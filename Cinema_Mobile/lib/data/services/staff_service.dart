@@ -44,6 +44,32 @@ class StaffService {
   Future<Booking> booking(int id) async => Booking.fromJson(
     readMap(await _client.get('/api/v1/bookings/$id', authenticated: true)),
   );
+  // The booking a ticket code (the QR code on the customer's ticket) belongs
+  // to.
+  Future<Booking> bookingByCode(String code) async => Booking.fromJson(
+    readMap(
+      await _client.get(
+        '/api/v1/bookings/code/${Uri.encodeComponent(code.trim())}',
+        authenticated: true,
+      ),
+    ),
+  );
+  // Checks a paid ticket in at the cinema; the server refuses a used ticket,
+  // an unpaid one and one for a show that is not close to starting.
+  Future<Booking> checkIn(int id) async => Booking.fromJson(
+    readMap(
+      await _client.post('/api/v1/bookings/$id/check-in', authenticated: true),
+    ),
+  );
+  // Seats of a showtime that bookings hold or have sold.
+  Future<List<ShowtimeSeatBooking>> showtimeSeatBookings(
+    int showtimeId,
+  ) async => readMapList(
+    await _client.get(
+      '/api/v1/bookings/showtime/$showtimeId/seats',
+      authenticated: true,
+    ),
+  ).map(ShowtimeSeatBooking.fromJson).toList();
   Future<Booking> createBooking({
     required int userId,
     required String email,

@@ -122,10 +122,14 @@ void main() {
       );
       await pumpRoute(tester);
 
-      final ticket = tester.getTopLeft(find.text('Your booking'));
+      // The QR ticket heads the side column, the payment comes under it.
+      final booking = tester.getTopLeft(find.text('Your booking'));
+      final qr = tester.getTopLeft(find.text('Your ticket'));
       final payment = tester.getTopLeft(find.text('Payment Summary'));
-      expect(payment.dx, greaterThan(ticket.dx + 400));
-      expect((payment.dy - ticket.dy).abs(), lessThan(40));
+      expect(qr.dx, greaterThan(booking.dx + 400));
+      expect((qr.dy - booking.dy).abs(), lessThan(40));
+      expect(payment.dx, closeTo(qr.dx, 1));
+      expect(payment.dy, greaterThan(qr.dy));
       expect(find.text('Request refund'), findsOneWidget);
     });
 

@@ -4,6 +4,7 @@ import '../core/session/session_state.dart';
 import '../data/repositories/auth_repository.dart';
 import '../data/repositories/booking_repository.dart';
 import '../data/repositories/catalog_repository.dart';
+import '../data/services/staff_service.dart';
 import '../features/payment/payment_args.dart';
 import 'customer_frame.dart';
 import 'routes/app_router.dart';
@@ -17,6 +18,7 @@ class CinemaApp extends StatefulWidget {
     required this.authRepository,
     required this.catalogRepository,
     required this.bookingRepository,
+    this.staffService,
     this.initialRoute,
     this.paymentReturn,
     super.key,
@@ -25,6 +27,9 @@ class CinemaApp extends StatefulWidget {
   final AuthRepository authRepository;
   final CatalogRepository catalogRepository;
   final BookingRepository bookingRepository;
+
+  // Lets staff accounts check tickets in from the app.
+  final StaffService? staffService;
   final String? initialRoute;
 
   // Set when PayOS redirected the browser back to the web app.
@@ -49,6 +54,7 @@ class _CinemaAppState extends State<CinemaApp> {
       authRepository: widget.authRepository,
       catalogRepository: widget.catalogRepository,
       bookingRepository: widget.bookingRepository,
+      staffService: widget.staffService,
       session: SessionProvider.of(context),
     );
     final payOsReturn = widget.paymentReturn;

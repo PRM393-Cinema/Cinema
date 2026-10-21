@@ -69,7 +69,16 @@ Khách dùng app (web hoặc điện thoại). Nhân viên và admin dùng **tra
    - Hoặc từ chối kèm lý do: vé trở lại hiệu lực. Chỉ từ chối được yêu cầu do khách gửi; vé do rạp huỷ thì bắt buộc hoàn tiền.
 3. Khách xem kết quả ở chi tiết vé và trong email.
 
-### C. Admin (khoảng 5 phút)
+### C. Check-in tại rạp (khoảng 2 phút)
+
+1. Khách mở vé đã thanh toán: thẻ **Your ticket** có mã QR và mã vé.
+2. Nhân viên mở **Check-in** trên trang quản trị (hoặc đăng nhập tài khoản nhân viên trên app điện thoại → **Check in tickets**). **Scan QR** bằng camera, hoặc gõ mã vé rồi Enter → thấy phim, giờ, phòng, ghế → **Check in**.
+3. Quét lại vé đó: báo vé đã dùng kèm giờ check-in. Vé của khách đổi sang **Checked in**.
+4. **Operations** → **Showtimes** → mở suất chiếu: sơ đồ ghế tô màu ghế chờ thanh toán / đã bán / đã check-in, bấm vào ghế để mở vé.
+
+Vé chỉ check-in được từ 3 giờ trước đến 2 giờ sau giờ chiếu: chọn suất gần giờ hiện tại để demo.
+
+### D. Admin (khoảng 5 phút)
 
 1. Đăng nhập Admin trên trang quản trị → **Dashboard** (thống kê tài khoản) → **Accounts**: tìm kiếm, lọc, xem chi tiết, tạo tài khoản, gán quyền.
 2. **Movies**: thêm phim (tên, thời lượng, ngày phát hành, link poster), sửa phim. **Stop showing** ẩn phim khỏi app khách (vé đã đặt vẫn giữ); **Show again** cho phim chiếu lại.
@@ -77,14 +86,14 @@ Khách dùng app (web hoặc điện thoại). Nhân viên và admin dùng **tra
 4. Khách đang đăng nhập trên một thiết bị khác. Admin chọn **Lock account** → ở thao tác tiếp theo, app của khách báo tài khoản bị khoá và quay về màn đăng nhập. Mở khoá để khách đăng nhập lại.
 5. Đổi quyền một tài khoản: phiên cũ bị đăng xuất, đăng nhập lại để nhận quyền mới.
 
-### D. Bản web (khoảng 2 phút)
+### E. Bản web (khoảng 2 phút)
 
 - Mở trên máy tính: giao diện kiểu website, với thanh điều hướng ở đầu trang (Movies, My tickets, Notifications, tài khoản) thay cho thanh tab dưới đáy. Chọn ghế, xác nhận, thanh toán và chi tiết vé chia hai cột (nội dung bên trái, tổng tiền và nút bấm bên phải); vé xếp hai cột; trang đăng nhập tràn toàn màn hình.
 - Thu nhỏ cửa sổ dưới 900 px (hoặc mở trên điện thoại): trở lại giao diện app với thanh tab dưới đáy.
 - Mỗi màn có địa chỉ riêng (`#/movies/7`, `#/bookings/<id>`). F5 hoặc mở link được gửi vẫn ra đúng màn; trang cần đăng nhập thì đăng nhập xong vào đúng trang đó.
 - Trang quản trị: thanh điều hướng bên trái; thu nhỏ cửa sổ dưới 640 px thì điều hướng gọn vào nút menu. Địa chỉ như `#/admin/movies` cũng mở lại đúng trang.
 
-### E. Hạ tầng (khi được hỏi)
+### F. Hạ tầng (khi được hỏi)
 
 | Công cụ | Địa chỉ |
 |---|---|

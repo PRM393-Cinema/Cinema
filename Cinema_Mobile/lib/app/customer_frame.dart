@@ -48,17 +48,15 @@ class RouteTracker extends NavigatorObserver {
     _publish();
   }
 
-  // The navigator reports changes while it builds: publish after the frame.
+  // The navigator reports changes while it builds, also in the first build,
+  // which runs outside a frame: publish after the next frame.
   void _publish() {
-    final name = _pages.isEmpty ? null : _pages.last.settings.name;
-    if (SchedulerBinding.instance.schedulerPhase == SchedulerPhase.idle) {
-      current.value = name;
-    } else {
-      SchedulerBinding.instance.addPostFrameCallback(
+    SchedulerBinding.instance
+      ..addPostFrameCallback(
         (_) =>
             current.value = _pages.isEmpty ? null : _pages.last.settings.name,
-      );
-    }
+      )
+      ..ensureVisualUpdate();
   }
 }
 

@@ -121,6 +121,7 @@ Booking bookingFixture({
   int? paymentId,
   DateTime? showTime,
   DateTime? expiresAt,
+  DateTime? checkedInAt,
   List<String> seatLabels = const ['B1', 'B2'],
 }) {
   return Booking(
@@ -139,6 +140,7 @@ Booking bookingFixture({
         (status == BookingStatus.pending
             ? DateTime.now().add(const Duration(minutes: 10))
             : null),
+    checkedInAt: checkedInAt,
     createdAt: DateTime.now().subtract(const Duration(minutes: 1)),
     seats: [
       for (final (index, label) in seatLabels.indexed)

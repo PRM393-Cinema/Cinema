@@ -18,6 +18,7 @@ import '../../../data/models/payment.dart';
 import '../../../data/repositories/booking_repository.dart';
 import 'my_bookings_screen.dart';
 import '../widgets/booking_cancellation_dialog.dart';
+import '../widgets/ticket_qr_card.dart';
 
 class BookingDetailScreen extends StatefulWidget {
   const BookingDetailScreen({
@@ -245,7 +246,10 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                     color: AppColors.textPrimary,
                   ),
                 ),
-                BookingStatusBadge(status: booking.status),
+                BookingStatusBadge(
+                  status: booking.status,
+                  checkedIn: booking.isCheckedIn,
+                ),
               ],
             ),
             const SizedBox(height: AppSpacing.sm),
@@ -396,6 +400,14 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             label: 'Created',
             value: formatDateTime(booking.createdAt),
           ),
+          if (booking.checkedInAt case final checkedInAt?)
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.sm),
+              child: _TimelineRow(
+                label: 'Checked in',
+                value: formatDateTime(checkedInAt),
+              ),
+            ),
           if (booking.expiresAt != null &&
               booking.status == BookingStatus.pending)
             Padding(
@@ -440,6 +452,8 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     );
     final hasActions = canPay || canCancel;
     final desktop = isDesktopLayout(context);
+    // Paid tickets carry the QR code staff scan at the cinema.
+    final hasTicket = booking.status == BookingStatus.confirmed;
 
     return CinemaPage(
       title: 'Booking Detail',
@@ -458,12 +472,20 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                 child: ResponsiveColumns(
                   main: [
                     headerCard,
+                    if (hasTicket && !desktop) ...[
+                      const SizedBox(height: AppSpacing.xl),
+                      TicketQrCard(booking: booking),
+                    ],
                     const SizedBox(height: AppSpacing.xl),
                     seatsCard,
                     const SizedBox(height: AppSpacing.xl),
                     if (desktop) timelineCard,
                   ],
                   side: [
+                    if (hasTicket && desktop) ...[
+                      TicketQrCard(booking: booking),
+                      const SizedBox(height: AppSpacing.xl),
+                    ],
                     paymentCard,
                     if (!desktop) ...[
                       const SizedBox(height: AppSpacing.xl),

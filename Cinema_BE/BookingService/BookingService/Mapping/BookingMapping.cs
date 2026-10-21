@@ -22,6 +22,7 @@ namespace BookingService.Mapping
                 MovieTitle = booking.MovieTitle,
                 ShowTime = booking.ShowTime,
                 ExpiresAt = booking.ExpiresAt,
+                CheckedInAt = booking.CheckedInAt,
                 CreatedAt = booking.CreatedAt,
                 Seats = seats ?? new List<BookingSeatResponse>()
             };

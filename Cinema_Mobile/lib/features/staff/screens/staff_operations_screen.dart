@@ -357,7 +357,8 @@ class _StaffOperationsScreenState extends State<StaffOperationsScreen> {
   };
   String _subtitle(Object item) => switch (item) {
     Booking b =>
-      '${b.movieTitle ?? 'Movie'}\n${b.status.name.toUpperCase()} · ${formatVnd(b.totalAmount)}',
+      '${b.movieTitle ?? 'Movie'}\n${b.status.name.toUpperCase()}'
+          '${b.isCheckedIn ? ' · CHECKED IN' : ''} · ${formatVnd(b.totalAmount)}',
     Showtime s =>
       '${s.roomLabel} · ${formatDateTime(s.startTime)}\n${s.status} · ${formatVnd(s.price)}',
     Room r => '${r.totalSeats} seats',

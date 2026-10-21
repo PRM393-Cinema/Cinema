@@ -116,6 +116,7 @@ Lệnh đọc danh sách phim từ `cinema_movie_db` rồi thêm lịch vào `ci
 | AuthService lỗi `42703: column u.email_verified does not exist` / BookingService lỗi `column b.customer_email does not exist` | DB trong volume được tạo từ file SQL cũ → `docker compose down -v` rồi chạy lại (hoặc chạy file mới trong `Project-Cinema-DB/migrations`) |
 | Đăng ký xong không nhận được email OTP | Chưa cấu hình SMTP trong `.env` → lấy mã trong `docker compose logs auth-service`, hoặc cấu hình Gmail ([EMAIL_SETUP.md](EMAIL_SETUP.md)) |
 | Thanh toán xong không có email vé / huỷ vé không thấy hoàn tiền | Xem `http://localhost:5063/health`: `rabbitmq` phải `Healthy`. Event chưa gửi được thì nằm chờ, RabbitMQ chạy lại sẽ gửi bù ([MESSAGING.md](MESSAGING.md)) |
+| BookingService lỗi `column b.checked_in_at does not exist` | DB tạo trước khi có check-in → chạy `docker compose exec -T postgres psql -X -U postgres -d cinema_booking_db -v ON_ERROR_STOP=1 -f /db-scripts/migrations/2026-10-21_cinema_booking_check_in.sql` (hoặc `docker compose down -v` rồi chạy lại) |
 | `relation "outbox_messages" does not exist` / `column ... payer_account_number does not exist` | DB tạo từ file SQL cũ → `docker compose down -v` rồi chạy lại (hoặc chạy các file `2026-10-02_*.sql` trong `Project-Cinema-DB/migrations`) |
 
 ### Trang quản trị web (Admin)

@@ -6,6 +6,7 @@ import '../../data/models/booking_draft.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/booking_repository.dart';
 import '../../data/repositories/catalog_repository.dart';
+import '../../data/services/staff_service.dart';
 import '../../features/auth/screens/forgot_password_screen.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/register_screen.dart';
@@ -25,25 +26,28 @@ import '../../features/payment/screens/payment_history_screen.dart';
 import '../../features/profile/screens/management_account_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
 import '../../features/seat/screens/seat_selection_screen.dart';
+import '../../features/staff/screens/staff_check_in_screen.dart';
 import 'app_routes.dart';
 
 // Builds the customer app's screens from route names such as /movies/7. On
 // web the name is the URL, so a refreshed page or a shared link opens the same
 // screen: screens use the object passed by the previous screen and otherwise
 // load it by id. Staff and admin screens live in the admin website
-// (lib/admin/admin_router.dart).
+// (lib/admin/admin_router.dart); in the app, staff can check tickets in.
 class AppRouter {
   AppRouter({
     required this.authRepository,
     required this.catalogRepository,
     required this.bookingRepository,
     required this.session,
+    this.staffService,
   });
 
   final AuthRepository authRepository;
   final CatalogRepository catalogRepository;
   final BookingRepository bookingRepository;
   final SessionState session;
+  final StaffService? staffService;
 
   Route<dynamic> onGenerateRoute(RouteSettings settings) {
     final match = _match(settings);
@@ -89,11 +93,15 @@ class AppRouter {
   Widget _home(BuildContext context) =>
       HomeScreen(catalogRepository: catalogRepository);
 
-  // Staff and admin accounts are pointed to the admin website.
+  // Staff and admin accounts are pointed to the admin website, and can check
+  // tickets in from the app.
   _RouteMatch _landing() => isManagementAccount(session.user?.roles)
       ? _RouteMatch(
           const RouteSettings(name: AppRoutes.home),
-          (_) => ManagementAccountScreen(authRepository: authRepository),
+          (_) => ManagementAccountScreen(
+            authRepository: authRepository,
+            canCheckIn: staffService != null,
+          ),
         )
       : _RouteMatch(const RouteSettings(name: AppRoutes.home), _home);
 
@@ -160,6 +168,18 @@ class AppRouter {
         return _RouteMatch(
           settings,
           (_) => ProfileScreen(authRepository: authRepository),
+          signInRequired: true,
+        );
+      case AppRoutes.staffCheckIn:
+        final service = staffService;
+        if (service == null ||
+            (session.isAuthenticated &&
+                !isManagementAccount(session.user?.roles))) {
+          return null;
+        }
+        return _RouteMatch(
+          settings,
+          (_) => MobileCheckInScreen(service: service),
           signInRequired: true,
         );
     }

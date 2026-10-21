@@ -163,6 +163,26 @@ namespace BookingService.Repositories.Impl
                 .ToListAsync();
         }
 
+        // Như GetOccupiedSeatIdsAsync, kèm vé đang giữ từng ghế (sơ đồ ghế đã đặt cho Staff)
+        public async Task<List<BookingSeat>> GetOccupiedSeatsWithBookingAsync(long showtimeId, DateTime now)
+        {
+            return await _context.BookingSeats
+                .AsNoTracking()
+                .Include(bs => bs.Booking)
+                .Where(bs =>
+                    bs.Booking.ShowtimeId == showtimeId &&
+                    (
+                        bs.Booking.Status == "CONFIRMED" ||
+                        bs.Booking.Status == "REFUND_PENDING" ||
+                        (
+                            bs.Booking.Status == "PENDING" &&
+                            (bs.Booking.ExpiresAt == null || bs.Booking.ExpiresAt > now)
+                        )
+                    ))
+                .OrderBy(bs => bs.SeatId)
+                .ToListAsync();
+        }
+
         public async Task<List<long>> GetActiveBookingIdsByShowtimeAsync(long showtimeId)
         {
             return await _context.Bookings

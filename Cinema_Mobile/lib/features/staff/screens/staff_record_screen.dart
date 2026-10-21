@@ -24,6 +24,7 @@ import '../../../data/services/staff_service.dart';
 import '../../admin/widgets/admin_page.dart';
 import '../../seat/widgets/seat_type_style.dart';
 import '../widgets/room_seat_map.dart';
+import '../widgets/showtime_seat_map.dart';
 import '../widgets/staff_feedback.dart';
 
 class StaffRecordScreen extends StatefulWidget {
@@ -47,6 +48,8 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
 
   Object? _item;
   List<Seat> _seats = [];
+  // Seats of a showtime that bookings hold or have sold.
+  List<ShowtimeSeatBooking> _seatBookings = [];
   List<PaymentInfo> _payments = [];
   bool _loading = true;
   bool _busy = false;
@@ -64,6 +67,8 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
     _load();
     if (widget.kind == 'rooms') {
       _liveTimer = Timer.periodic(_liveInterval, (_) => _refreshRoom());
+    } else if (widget.kind == 'showtimes') {
+      _liveTimer = Timer.periodic(_liveInterval, (_) => _refreshShowtime());
     }
   }
 
@@ -83,6 +88,26 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
       if (!mounted || _busy) return;
       _showSeats(seats, room: room);
       if (_liveFailed) setState(() => _liveFailed = false);
+    } on Object {
+      if (mounted && !_liveFailed) setState(() => _liveFailed = true);
+    } finally {
+      _refreshing = false;
+    }
+  }
+
+  // A showtime's seat map follows bookings, payments and check-ins.
+  Future<void> _refreshShowtime() async {
+    final showtime = _item;
+    if (_loading || _busy || _refreshing || showtime is! Showtime) return;
+    _refreshing = true;
+    try {
+      final bookings = await widget.service.showtimeSeatBookings(showtime.id);
+      if (!mounted || _busy) return;
+      setState(() {
+        _seatBookings = bookings;
+        _updatedAt = DateTime.now();
+        _liveFailed = false;
+      });
     } on Object {
       if (mounted && !_liveFailed) setState(() => _liveFailed = true);
     } finally {
@@ -128,9 +153,14 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
         'payments' => await widget.service.payment(widget.id),
         _ => await widget.service.refund(widget.id),
       };
-      final seats = item is Room
-          ? await widget.service.seats(item.id)
-          : <Seat>[];
+      final seats = switch (item) {
+        Room room => await widget.service.seats(room.id),
+        Showtime show => await widget.service.seats(show.roomId),
+        _ => <Seat>[],
+      };
+      final seatBookings = item is Showtime
+          ? await widget.service.showtimeSeatBookings(item.id)
+          : <ShowtimeSeatBooking>[];
       final payments = item is Booking
           ? (await widget.service.payments(bookingId: item.id)).items
           : <PaymentInfo>[];
@@ -138,6 +168,7 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
         setState(() {
           _item = item;
           _seats = seats;
+          _seatBookings = seatBookings;
           _payments = payments;
           _updatedAt = DateTime.now();
         });
@@ -549,6 +580,13 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
         'Customer #${booking.userId}',
         booking.customerEmail ?? 'No email',
       ),
+      _detailField(
+        Icons.how_to_reg_outlined,
+        'Check-in',
+        booking.checkedInAt == null
+            ? 'Not checked in'
+            : formatDateTime(booking.checkedInAt!),
+      ),
       const Divider(height: AppSpacing.lg, color: AppColors.border),
       const Text('Total amount', style: AppTextStyles.bodySmall),
       const SizedBox(height: AppSpacing.xs),
@@ -675,6 +713,21 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
   );
   List<Widget> _actions(Object item) => switch (item) {
     Booking b => [
+      if (b.canCheckIn)
+        _button('Check in', () async {
+          if (!await staffConfirm(
+                context,
+                'Check in this ticket?',
+                'Let the customer in for seats ${b.seatLabels}. A ticket can '
+                    'be checked in once.',
+              ) ||
+              !mounted) {
+            return;
+          }
+          _run(() async {
+            await widget.service.checkIn(b.id);
+          }, 'Ticket checked in.');
+        }),
       if (b.isAwaitingPayment() && b.paymentId == null)
         _button('Confirm at counter', () async {
           if (!await staffConfirm(
@@ -708,6 +761,28 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
         _button('Cancel booking', () => _cancelBooking(b), danger: true),
     ],
     Showtime s => [
+      _LiveStatus(updatedAt: _updatedAt, failed: _liveFailed),
+      const SizedBox(height: AppSpacing.md),
+      if (_seats.isNotEmpty) ...[
+        CinemaPanel(
+          surfaceOpacity: 0.8,
+          child: ShowtimeSeatMap(
+            seats: _seats,
+            bookings: _seatBookings,
+            onOpenBooking: (id) => Navigator.pushNamed(
+              context,
+              AppRoutes.staffRecord('bookings', id),
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        const Text(
+          'Free seats keep the colour of their type. Tap a taken seat to '
+          'open its booking.',
+          style: AppTextStyles.caption,
+        ),
+        const SizedBox(height: AppSpacing.xl),
+      ],
       if (s.status != 'CANCELLED')
         _button('Edit showtime', () async {
           await Navigator.pushNamed(context, AppRoutes.staffEditShowtime(s.id));

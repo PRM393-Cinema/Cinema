@@ -14,6 +14,7 @@ abstract final class AppRoutes {
   static const staffProfile = '/staff/profile';
   static const staffCreateBooking = '/staff/bookings/new';
   static const staffCreateShowtime = '/staff/showtimes/new';
+  static const staffCheckIn = '/staff/check-in';
   static String staffRecord(String kind, int id) => '/staff/$kind/$id';
   static String staffEditShowtime(int id) => '/staff/showtimes/$id/edit';
   static String staffNotify(int bookingId) =>

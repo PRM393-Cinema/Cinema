@@ -27,6 +27,8 @@ public partial class Booking
 
     public DateTime? ExpiresAt { get; set; }
 
+    public DateTime? CheckedInAt { get; set; } // lúc khách check-in tại rạp
+
     public DateTime CreatedAt { get; set; }
 
     public virtual ICollection<BookingSeat> BookingSeats { get; set; } = new List<BookingSeat>();

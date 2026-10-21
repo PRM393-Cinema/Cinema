@@ -17,6 +17,7 @@ import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/reset_password_screen.dart';
 import '../features/auth/screens/verify_email_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
+import '../features/staff/screens/staff_check_in_screen.dart';
 import '../features/staff/screens/staff_create_booking_screen.dart';
 import '../features/staff/screens/staff_dashboard_screen.dart';
 import '../features/staff/screens/staff_notification_screen.dart';
@@ -171,6 +172,8 @@ class AdminRouter {
         );
       case AppRoutes.staffCreateShowtime:
         return staff((_) => StaffShowtimeEditorScreen(service: staffService));
+      case AppRoutes.staffCheckIn:
+        return staff((_) => StaffCheckInScreen(service: staffService));
       case AppRoutes.staffProfile:
         return staff(
           (_) => ProfileScreen(authRepository: authRepository, staffMode: true),

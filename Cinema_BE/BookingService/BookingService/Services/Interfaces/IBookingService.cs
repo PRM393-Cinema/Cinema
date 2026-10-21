@@ -82,5 +82,21 @@ namespace BookingService.Services.Interfaces
 
         Task<List<long>> GetOccupiedSeatIdsAsync(
             long showtimeId);
+
+        /// <summary>
+        /// Ghế đã đặt / đang giữ của suất chiếu, kèm mã vé và trạng thái check-in (Staff xem sơ đồ phòng).
+        /// </summary>
+        Task<List<ShowtimeSeatBookingResponse>> GetSeatBookingsOfShowtimeAsync(long showtimeId);
+
+        /// <summary>
+        /// Tìm vé theo mã (nội dung QR trên vé của khách). Không có thì ném KeyNotFoundException.
+        /// </summary>
+        Task<BookingResponse> GetBookingByCodeAsync(string bookingCode);
+
+        /// <summary>
+        /// Check-in tại rạp: chỉ vé đã thanh toán, mỗi vé một lần, trong khung giờ quanh giờ chiếu (CheckIn).
+        /// Không check-in được thì ném ConflictException kèm lý do.
+        /// </summary>
+        Task<BookingResponse> CheckInAsync(long id);
     }
 }
