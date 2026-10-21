@@ -6,8 +6,8 @@ Mỗi service có một project test xUnit nằm cạnh project chính, và đã
 |---|---|---|
 | AuthService | `AuthService/AuthService.Tests` | 10 |
 | ApiGateway | `ApiGateway/ApiGateway.Tests` | 21 |
-| MovieService | `MovieService/MovieService.Tests` | 19 |
-| BookingService | `BookingService/BookingService.Tests` | 50 |
+| MovieService | `MovieService/MovieService.Tests` | 20 |
+| BookingService | `BookingService/BookingService.Tests` | 51 |
 
 ## 1. Chạy test
 
@@ -42,7 +42,8 @@ Mỗi service chạy xong trong khoảng 15–30 giây.
 | Đổi role | Role cũ bị từ chối với `403 ROLE_CHANGED`; thu hồi refresh token khi quyền thay đổi, giữ phiên khi lưu cùng quyền | `ApiGateway.Tests/*`, `AuthService.Tests/Integration/UserManagementTests.cs` |
 | Check-in | Staff tra vé theo mã (QR), check-in một lần; vé chưa trả tiền, đã huỷ, chưa tới giờ hoặc đã check-in bị 409; khách không tra / check-in được; sơ đồ ghế đã đặt của suất | `BookingService.Tests/Integration/CheckInTests.cs` |
 | Suất chiếu | Quyền, trùng lịch 409, suất còn đặt được theo phim, huỷ mềm và ghi event `showtime.cancelled` | `MovieService.Tests/Integration/ShowtimeTests.cs` |
-| Sơ đồ ghế | Sinh ghế một lần, đổi loại ghế; đổi số ghế lấp hàng cuối rồi sang hàng mới, bớt từ ghế cuối, chỉ Admin, không quá hàng Z, chặn khi phòng có suất chiếu. Sweetbox theo cặp (1-2, 3-4): đổi loại cả cặp, xoá / bớt ghế làm nửa cặp còn lại thành ghế thường, đặt vé phải đủ cặp. Giá ghế theo loại: VIP +20%, sweetbox +30% mỗi ghế, phụ thu làm tròn tới 1.000đ | `MovieService.Tests/Integration/SeatTests.cs` |
+| Sơ đồ ghế | Sinh ghế một lần, đổi loại ghế; đổi số ghế lấp hàng cuối rồi sang hàng mới, bớt từ ghế cuối, chỉ Admin, không quá hàng Z, chặn khi phòng có suất chiếu. Sweetbox theo cặp (1-2, 3-4): đổi loại cả cặp (cả khi tô nhiều ghế một lần; hàng có ghế lẻ cặp bị từ chối), xoá / bớt ghế làm nửa cặp còn lại thành ghế thường, đặt vé phải đủ cặp. Giá ghế theo loại: VIP +20%, sweetbox +30% mỗi ghế, phụ thu làm tròn tới 1.000đ | `MovieService.Tests/Integration/SeatTests.cs` |
+| Doanh thu | Dashboard Admin: doanh thu tăng đúng số tiền vé vừa thanh toán; Staff / khách bị 403; khoảng thời gian ngược bị 400 | `BookingService.Tests/Integration/PaymentSummaryTests.cs` |
 | Giám sát | `/metrics` mở cho Prometheus và đếm booking theo trạng thái; chỉ trả ở cổng nội bộ khi cấu hình `MetricsPort` | `BookingService.Tests/Integration/ObservabilityTests.cs` |
 
 Trong test, MovieService, PayOS và SMTP được thay bằng bản giả: không gọi PayOS thật, không gửi email thật. JWT trong test được ký bằng key riêng của test.

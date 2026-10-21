@@ -80,9 +80,9 @@ Vé chỉ check-in được từ 3 giờ trước đến 2 giờ sau giờ chi�
 
 ### D. Admin (khoảng 5 phút)
 
-1. Đăng nhập Admin trên trang quản trị → **Dashboard** (thống kê tài khoản) → **Accounts**: tìm kiếm, lọc, xem chi tiết, tạo tài khoản, gán quyền.
+1. Đăng nhập Admin trên trang quản trị → **Dashboard** (booking và doanh thu tháng này, phim đang chiếu, suất hôm nay, thống kê tài khoản) → **Accounts**: tìm kiếm, lọc, xem chi tiết, tạo tài khoản, gán quyền.
 2. **Movies**: thêm phim (tên, thời lượng, ngày phát hành, link poster), sửa phim. **Stop showing** ẩn phim khỏi app khách (vé đã đặt vẫn giữ); **Show again** cho phim chiếu lại.
-3. **Rooms**: thêm phòng với số hàng × số ghế mỗi hàng, ghế được tạo luôn. Mở sơ đồ ghế để đổi ghế thường/VIP, đổi tên phòng. Phòng đã có suất chiếu không xoá được.
+3. **Rooms**: thêm phòng với số hàng × số ghế mỗi hàng, ghế được tạo luôn. Mở sơ đồ ghế: bấm một ghế để đổi loại, hoặc chọn **Paint VIP** / **Paint Sweetbox** rồi kéo qua nhiều ghế, bấm chữ đầu hàng để đổi cả hàng. Đổi tên phòng. Phòng đã có suất chiếu không xoá được.
 4. Khách đang đăng nhập trên một thiết bị khác. Admin chọn **Lock account** → ở thao tác tiếp theo, app của khách báo tài khoản bị khoá và quay về màn đăng nhập. Mở khoá để khách đăng nhập lại.
 5. Đổi quyền một tài khoản: phiên cũ bị đăng xuất, đăng nhập lại để nhận quyền mới.
 
