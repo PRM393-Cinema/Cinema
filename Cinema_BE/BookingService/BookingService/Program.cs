@@ -54,6 +54,8 @@ builder.Services.Configure<BookingExpiryOptions>(
     builder.Configuration.GetSection("BookingExpiry"));
 builder.Services.Configure<RefundPolicyOptions>(
     builder.Configuration.GetSection("RefundPolicy"));
+builder.Services.Configure<CheckInOptions>(
+    builder.Configuration.GetSection("CheckIn"));
 
 var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()
     ?? throw new InvalidOperationException(

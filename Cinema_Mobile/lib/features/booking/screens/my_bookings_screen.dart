@@ -317,7 +317,10 @@ class _BookingCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  BookingStatusBadge(status: booking.status),
+                  BookingStatusBadge(
+                    status: booking.status,
+                    checkedIn: booking.isCheckedIn,
+                  ),
                 ],
               ),
               const SizedBox(height: AppSpacing.sm),
@@ -388,14 +391,25 @@ class _BookingCard extends StatelessWidget {
 }
 
 class BookingStatusBadge extends StatelessWidget {
-  const BookingStatusBadge({required this.status, super.key});
+  const BookingStatusBadge({
+    required this.status,
+    this.checkedIn = false,
+    super.key,
+  });
 
   final BookingStatus status;
+
+  // A paid ticket already used at the cinema.
+  final bool checkedIn;
 
   @override
   Widget build(BuildContext context) {
     final (label, variant) = switch (status) {
       BookingStatus.pending => ('Pending', StatusBadgeVariant.warning),
+      BookingStatus.confirmed when checkedIn => (
+        'Checked in',
+        StatusBadgeVariant.success,
+      ),
       BookingStatus.confirmed => ('Confirmed', StatusBadgeVariant.success),
       BookingStatus.refundPending => (
         'Refund pending',

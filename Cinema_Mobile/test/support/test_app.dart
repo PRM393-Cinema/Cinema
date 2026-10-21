@@ -28,6 +28,7 @@ Widget buildTestApp({
   AuthUser? user,
   String initialRoute = AppRoutes.home,
   PayOsReturn? paymentReturn,
+  StaffService? staffService,
 }) {
   final sessionState = session ?? SessionState();
   if (authenticated) {
@@ -42,6 +43,7 @@ Widget buildTestApp({
       authRepository: authRepository ?? FakeAuthRepository(),
       catalogRepository: catalogRepository ?? FakeCatalogRepository(),
       bookingRepository: bookingRepository ?? FakeBookingRepository(),
+      staffService: staffService,
       initialRoute: initialRoute,
       paymentReturn: paymentReturn,
     ),

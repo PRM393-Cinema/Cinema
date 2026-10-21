@@ -8,9 +8,17 @@ import '../../../core/session/roles.dart';
 import '../../../core/session/session_state.dart';
 import '../../../core/widgets/cinema_background.dart';
 
-// Sections of the admin website. Staff see Dashboard, Operations and Profile;
-// admins also manage movies, rooms and accounts.
-enum AdminSection { dashboard, operations, movies, rooms, accounts, profile }
+// Sections of the admin website. Staff see Dashboard, Operations, Check-in and
+// Profile; admins also manage movies, rooms and accounts.
+enum AdminSection {
+  dashboard,
+  operations,
+  checkIn,
+  movies,
+  rooms,
+  accounts,
+  profile,
+}
 
 class _Destination {
   const _Destination(this.section, this.label, this.icon, this.route);
@@ -33,6 +41,12 @@ List<_Destination> _destinationsFor({required bool admin}) => [
     'Operations',
     Icons.local_activity,
     AppRoutes.staffOperations,
+  ),
+  const _Destination(
+    AdminSection.checkIn,
+    'Check-in',
+    Icons.qr_code_scanner,
+    AppRoutes.staffCheckIn,
   ),
   if (admin) ...const [
     _Destination(
@@ -265,8 +279,19 @@ class _NavigationSide extends StatelessWidget {
   final int selected;
   final ValueChanged<int> onOpen;
 
+  // Short windows scroll the navigation instead of cutting off its last
+  // sections.
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) => SingleChildScrollView(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(minHeight: constraints.maxHeight),
+        child: IntrinsicHeight(child: _rail()),
+      ),
+    ),
+  );
+
+  Widget _rail() {
     return NavigationRail(
       extended: extended,
       minWidth: AdminPage._railWidth,

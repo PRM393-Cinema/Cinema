@@ -18,10 +18,14 @@ class ManagementAccountScreen extends StatefulWidget {
   const ManagementAccountScreen({
     required this.authRepository,
     this.adminUrl,
+    this.canCheckIn = false,
     super.key,
   });
 
   final AuthRepository authRepository;
+
+  // Staff at the cinema entrance scan tickets with the phone camera.
+  final bool canCheckIn;
 
   // Defaults to ApiConfig.adminUrl; tests pass their own.
   final String? adminUrl;
@@ -107,6 +111,21 @@ class _ManagementAccountScreenState extends State<ManagementAccountScreen> {
                       onPressed: _isSigningOut
                           ? null
                           : () => _openAdminSite(url),
+                    ),
+                  ],
+                  if (widget.canCheckIn) ...[
+                    const SizedBox(height: AppSpacing.md),
+                    AppButton(
+                      key: const Key('openCheckIn'),
+                      label: 'Check in tickets',
+                      leadingIcon: Icons.qr_code_scanner,
+                      useGradient: url == null,
+                      onPressed: _isSigningOut
+                          ? null
+                          : () => Navigator.pushNamed(
+                              context,
+                              AppRoutes.staffCheckIn,
+                            ),
                     ),
                   ],
                   const SizedBox(height: AppSpacing.md),

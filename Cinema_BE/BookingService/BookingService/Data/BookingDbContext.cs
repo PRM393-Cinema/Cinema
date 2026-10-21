@@ -52,6 +52,9 @@ public partial class BookingDbContext : DbContext
             entity.Property(e => e.ExpiresAt)
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("expires_at");
+            entity.Property(e => e.CheckedInAt)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("checked_in_at");
             entity.Property(e => e.MovieTitle)
                 .HasMaxLength(200)
                 .HasColumnName("movie_title");

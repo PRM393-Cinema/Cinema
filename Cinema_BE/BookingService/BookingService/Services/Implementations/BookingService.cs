@@ -31,6 +31,7 @@ namespace BookingService.Services.Implementations
         private readonly IShowtimeClient _showtimeClient;
         private readonly OutboxWriter<BookingDbContext> _outbox;
         private readonly RefundPolicyOptions _refundPolicy;
+        private readonly CheckInOptions _checkIn;
         private readonly BookingMetrics _metrics;
         private readonly ILogger<BookingService> _logger;
 
@@ -43,6 +44,7 @@ namespace BookingService.Services.Implementations
             IShowtimeClient showtimeClient,
             OutboxWriter<BookingDbContext> outbox,
             IOptions<RefundPolicyOptions> refundPolicy,
+            IOptions<CheckInOptions> checkIn,
             BookingMetrics metrics,
             ILogger<BookingService> logger)
         {
@@ -54,6 +56,7 @@ namespace BookingService.Services.Implementations
             _showtimeClient = showtimeClient;
             _outbox = outbox;
             _refundPolicy = refundPolicy.Value;
+            _checkIn = checkIn.Value;
             _metrics = metrics;
             _logger = logger;
         }
@@ -717,6 +720,107 @@ namespace BookingService.Services.Implementations
         {
             return await _bookingRepository
                 .GetOccupiedSeatIdsAsync(showtimeId, DateTime.Now);
+        }
+
+        public async Task<List<ShowtimeSeatBookingResponse>> GetSeatBookingsOfShowtimeAsync(
+            long showtimeId)
+        {
+            var seats = await _bookingRepository
+                .GetOccupiedSeatsWithBookingAsync(showtimeId, DateTime.Now);
+
+            return seats
+                .Select(seat => new ShowtimeSeatBookingResponse
+                {
+                    SeatId = seat.SeatId,
+                    SeatLabel = seat.SeatLabel,
+                    BookingId = seat.BookingId,
+                    BookingCode = seat.Booking.BookingCode,
+                    Status = NormalizeStatus(seat.Booking),
+                    CheckedInAt = seat.Booking.CheckedInAt
+                })
+                .ToList();
+        }
+
+        public async Task<BookingResponse> GetBookingByCodeAsync(string bookingCode)
+        {
+            var code = bookingCode.Trim().ToUpperInvariant();
+            var booking = code.Length == 0
+                ? null
+                : await _bookingRepository.GetBookingByCodeAsync(code);
+
+            if (booking == null)
+            {
+                throw new KeyNotFoundException(
+                    $"No booking has the code {code}.");
+            }
+
+            return await MapBookingAsync(booking);
+        }
+
+        // Check-in tại rạp (Staff quét QR / nhập mã vé). Khoá dòng booking để hai quầy không check-in trùng.
+        public async Task<BookingResponse> CheckInAsync(long id)
+        {
+            await using var transaction =
+                await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                var booking = await GetBookingForUpdateAsync(id);
+                var code = booking.BookingCode;
+
+                if (booking.CheckedInAt is { } checkedInAt)
+                {
+                    throw new ConflictException(
+                        $"Booking {code} was already checked in at {checkedInAt:HH:mm dd/MM/yyyy}.");
+                }
+
+                var status = NormalizeStatus(booking);
+                if (status != "CONFIRMED")
+                {
+                    throw new ConflictException(status switch
+                    {
+                        "PENDING" => $"Booking {code} has not been paid yet.",
+                        "REFUND_PENDING" => $"Booking {code} is waiting for a refund and cannot be used.",
+                        _ => $"Booking {code} is {status.ToLowerInvariant()} and cannot be used."
+                    });
+                }
+
+                var now = DateTime.Now;
+                if (booking.ShowTime is { } showTime)
+                {
+                    var opens = showTime.AddMinutes(-_checkIn.OpensBeforeMinutes);
+                    var closes = showTime.AddMinutes(_checkIn.ClosesAfterMinutes);
+
+                    if (now < opens)
+                    {
+                        throw new ConflictException(
+                            $"Check-in for this showtime opens at {opens:HH:mm dd/MM/yyyy}.");
+                    }
+
+                    if (now > closes)
+                    {
+                        throw new ConflictException(
+                            $"Check-in for this showtime closed at {closes:HH:mm dd/MM/yyyy}.");
+                    }
+                }
+
+                booking.CheckedInAt = now;
+                await _bookingRepository.UpdateBookingAsync(booking.Id, booking);
+
+                await transaction.CommitAsync();
+                _metrics.Booking("checked_in");
+
+                return await MapBookingAsync(booking);
+            }
+            catch
+            {
+                if (_context.Database.CurrentTransaction is not null)
+                {
+                    await transaction.RollbackAsync();
+                }
+
+                throw;
+            }
         }
 
         private void EnsureCustomerCanCancelPaidBooking(Booking booking)
