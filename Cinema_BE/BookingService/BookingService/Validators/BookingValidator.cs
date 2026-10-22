@@ -11,9 +11,16 @@ namespace BookingService.Validators
                 throw new ArgumentNullException(nameof(request));
             }
 
-            if (request.UserId == null || request.UserId <= 0)
+            // Không có user id: vé khách vãng lai (chỉ Staff/Admin, controller điền user id cho khách)
+            if (request.UserId is <= 0)
             {
-                throw new ArgumentException("User id is required.");
+                throw new ArgumentException("User id must be greater than 0.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.CustomerPhone) &&
+                !System.Text.RegularExpressions.Regex.IsMatch(request.CustomerPhone.Trim(), @"^\+?[0-9 .-]{8,19}$"))
+            {
+                throw new ArgumentException("Customer phone must be 8 to 15 digits.");
             }
 
             if (request.ShowtimeId == null || request.ShowtimeId <= 0)

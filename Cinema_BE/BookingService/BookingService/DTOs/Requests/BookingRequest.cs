@@ -4,7 +4,8 @@ namespace BookingService.DTOs.Requests
 {
     public class BookingRequest
     {
-        // Khách: server lấy từ token (không cần gửi). Staff/Admin tạo hộ khách thì bắt buộc gửi
+        // Khách: server lấy từ token (không cần gửi). Staff/Admin đặt hộ khách có tài khoản thì gửi id của khách;
+        // bỏ trống là vé khách vãng lai bán tại quầy
         public long? UserId { get; set; }
 
         [Required(ErrorMessage = "Showtime id is required")]
@@ -16,6 +17,10 @@ namespace BookingService.DTOs.Requests
         [EmailAddress(ErrorMessage = "Customer email is invalid")]
         [MaxLength(150, ErrorMessage = "Customer email must not exceed 150 characters")]
         public string? CustomerEmail { get; set; }
+
+        // Số điện thoại khách vãng lai (không bắt buộc)
+        [MaxLength(20, ErrorMessage = "Customer phone must not exceed 20 characters")]
+        public string? CustomerPhone { get; set; }
 
         public DateTime? ShowTime { get; set; }
 

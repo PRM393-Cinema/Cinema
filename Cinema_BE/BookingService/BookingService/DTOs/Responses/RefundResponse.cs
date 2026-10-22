@@ -10,7 +10,7 @@ namespace BookingService.DTOs.Responses
 
         public long BookingId { get; set; }
 
-        public long UserId { get; set; }
+        public long? UserId { get; set; }
 
         public decimal Amount { get; set; }
 

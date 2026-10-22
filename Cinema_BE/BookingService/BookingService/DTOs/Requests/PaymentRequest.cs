@@ -7,7 +7,7 @@ namespace BookingService.DTOs.Requests
         [Required(ErrorMessage = "Booking id is required")]
         public long? BookingId { get; set; }
 
-        // Khách: server lấy từ token (không cần gửi). Staff/Admin tạo hộ khách thì bắt buộc gửi
+        // Khách: server lấy từ token (không cần gửi). Staff/Admin thu tiền tại quầy thì không cần gửi
         public long? UserId { get; set; }
 
         [Required(ErrorMessage = "Recipient email is required")]

@@ -20,8 +20,10 @@ import '../../seat/widgets/seat_map_rows.dart';
 import '../../seat/widgets/seat_type_style.dart';
 import '../widgets/staff_feedback.dart';
 
-// Booking at the counter: the customer's account, then a movie, one of its
-// showtimes in the coming week and seats on the room's seat map.
+// Selling tickets at the counter: a walk-in guest (no account; email and phone
+// if they want) or a member's account, then a movie, one of its showtimes in
+// the coming week and seats on the room's seat map. The seats are then held
+// while the counter takes the money.
 class StaffCreateBookingScreen extends StatefulWidget {
   const StaffCreateBookingScreen({
     required this.service,
@@ -36,9 +38,14 @@ class StaffCreateBookingScreen extends StatefulWidget {
 }
 
 class _StaffCreateBookingScreenState extends State<StaffCreateBookingScreen> {
+  static final _emailPattern = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
+  static final _phonePattern = RegExp(r'^\+?[0-9 .-]{8,19}$');
+
   final _form = GlobalKey<FormState>();
   final _user = TextEditingController();
   final _email = TextEditingController();
+  final _phone = TextEditingController();
+  bool _walkIn = true;
   List<Movie>? _movies;
   Movie? _movie;
   List<Showtime>? _showtimes;
@@ -58,11 +65,33 @@ class _StaffCreateBookingScreenState extends State<StaffCreateBookingScreen> {
   void dispose() {
     _user.dispose();
     _email.dispose();
+    _phone.dispose();
     super.dispose();
   }
 
   String? _id(String? value) =>
       (int.tryParse(value?.trim() ?? '') ?? 0) > 0 ? null : 'Enter a valid ID.';
+
+  // A member needs an email for the ticket; a walk-in guest may leave it out.
+  String? _validEmail(String? value) {
+    final email = value?.trim() ?? '';
+    if (email.isEmpty && _walkIn) return null;
+    return _emailPattern.hasMatch(email) && email.length <= 150
+        ? null
+        : 'Enter a valid email.';
+  }
+
+  String? _validPhone(String? value) {
+    final phone = value?.trim() ?? '';
+    return phone.isEmpty || _phonePattern.hasMatch(phone)
+        ? null
+        : 'Enter 8 to 15 digits.';
+  }
+
+  String? _text(TextEditingController controller) {
+    final text = controller.text.trim();
+    return text.isEmpty ? null : text;
+  }
 
   // The price of the picked seats, each by its type, as the server prices the
   // booking.
@@ -156,30 +185,29 @@ class _StaffCreateBookingScreenState extends State<StaffCreateBookingScreen> {
       _error = null;
     });
     try {
+      final email = _text(_email);
       if (!await staffConfirm(
             context,
-            'Hold seats for customer?',
-            'Create a booking for customer #${_user.text.trim()} with tickets sent to ${_email.text.trim()}. Seats are held for 10 minutes; payment is still required.',
+            'Hold the seats?',
+            '${_walkIn ? 'Walk-in guest' : 'Customer #${_user.text.trim()}'}'
+                '${email == null ? '' : ', ticket emailed to $email'}. The '
+                'seats are held for 10 minutes while you take the payment.',
           ) ||
           !mounted) {
         return;
       }
 
       final booking = await widget.service.createBooking(
-        userId: int.parse(_user.text.trim()),
-        email: _email.text.trim(),
+        userId: _walkIn ? null : int.parse(_user.text.trim()),
+        email: email,
+        phone: _walkIn ? _text(_phone) : null,
         showtimeId: _showtime!.id,
         seats: _selected.toList(),
-      );
-      if (!mounted) return;
-      await staffSuccess(
-        context,
-        'Booking created. Complete payment before the hold expires.',
       );
       if (mounted) {
         Navigator.pushReplacementNamed(
           context,
-          AppRoutes.staffRecord('bookings', booking.id),
+          AppRoutes.staffCheckout(booking.id),
         );
       }
     } on Object catch (error) {
@@ -201,7 +229,7 @@ class _StaffCreateBookingScreenState extends State<StaffCreateBookingScreen> {
     final map = _map;
 
     return AdminPage(
-      title: 'Book for customer',
+      title: 'Sell tickets',
       section: AdminSection.operations,
       child: SingleChildScrollView(
         padding: staffPadding(context),
@@ -216,33 +244,65 @@ class _StaffCreateBookingScreenState extends State<StaffCreateBookingScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const Text('Customer', style: AppTextStyles.title),
+                    const SizedBox(height: AppSpacing.md),
+                    SegmentedButton<bool>(
+                      segments: const [
+                        ButtonSegment(
+                          value: true,
+                          label: Text('Walk-in guest'),
+                          icon: Icon(Icons.directions_walk_rounded),
+                        ),
+                        ButtonSegment(
+                          value: false,
+                          label: Text('Member account'),
+                          icon: Icon(Icons.badge_outlined),
+                        ),
+                      ],
+                      selected: {_walkIn},
+                      onSelectionChanged: _busy
+                          ? null
+                          : (selection) =>
+                                setState(() => _walkIn = selection.single),
+                    ),
                     const SizedBox(height: AppSpacing.sm),
-                    const Text(
-                      'Use the customer’s account ID and email, not the staff '
-                      'account.',
+                    Text(
+                      _walkIn
+                          ? 'No account needed. With an email the ticket and '
+                                'its QR code are emailed; otherwise print it or '
+                                'show the QR code on screen.'
+                          : 'Use the customer’s account ID and email, not the '
+                                'staff account.',
                       style: AppTextStyles.bodySmall,
                     ),
                     const SizedBox(height: AppSpacing.lg),
+                    if (!_walkIn) ...[
+                      AppTextField(
+                        label: 'Customer account ID',
+                        controller: _user,
+                        enabled: !_busy,
+                        keyboardType: TextInputType.number,
+                        validator: _id,
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                    ],
                     AppTextField(
-                      label: 'Customer account ID',
-                      controller: _user,
-                      enabled: !_busy,
-                      keyboardType: TextInputType.number,
-                      validator: _id,
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    AppTextField(
-                      label: 'Customer email',
+                      key: ValueKey('customerEmail-$_walkIn'),
+                      label: _walkIn ? 'Email (optional)' : 'Customer email',
                       controller: _email,
                       enabled: !_busy,
                       keyboardType: TextInputType.emailAddress,
-                      validator: (value) =>
-                          RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
-                                  .hasMatch(value?.trim() ?? '') &&
-                              (value?.trim().length ?? 0) <= 150
-                          ? null
-                          : 'Enter a valid email.',
+                      validator: _validEmail,
                     ),
+                    if (_walkIn) ...[
+                      const SizedBox(height: AppSpacing.lg),
+                      AppTextField(
+                        label: 'Phone (optional)',
+                        controller: _phone,
+                        enabled: !_busy,
+                        keyboardType: TextInputType.phone,
+                        validator: _validPhone,
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -343,7 +403,7 @@ class _StaffCreateBookingScreenState extends State<StaffCreateBookingScreen> {
                 ),
               const SizedBox(height: AppSpacing.lg),
               AppButton(
-                label: 'Create booking',
+                label: 'Hold seats and take payment',
                 useGradient: true,
                 isLoading: _busy,
                 onPressed: _busy || _selected.isEmpty ? null : _create,

@@ -102,7 +102,8 @@ public sealed class FakePayOsClient : IPayOsClient
         {
             OrderCode = orderCode,
             CheckoutUrl = $"https://pay.example/{orderCode}",
-            PaymentLinkId = $"link-{orderCode}"
+            PaymentLinkId = $"link-{orderCode}",
+            QrCode = $"00020101021238570010A000000727{orderCode}"
         });
     }
 
@@ -126,6 +127,12 @@ public sealed class FakePayOsClient : IPayOsClient
         CancellationToken cancellationToken = default)
     {
         ThrowIfUnavailable();
+
+        // Như PayOS thật: đơn đã trả tiền thì không huỷ được
+        if (Statuses.GetValueOrDefault(orderCode) == "PAID")
+        {
+            throw new ExternalServiceException("PayOS refused to cancel a paid order.");
+        }
 
         CancelledLinks.Add(orderCode);
         Statuses[orderCode] = "CANCELLED";

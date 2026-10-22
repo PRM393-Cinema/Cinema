@@ -11,7 +11,7 @@ namespace BookingService.DTOs.Responses
 
         public string BookingCode { get; set; } = null!;
 
-        public long UserId { get; set; }
+        public long? UserId { get; set; }
 
         public string? CustomerEmail { get; set; }
 

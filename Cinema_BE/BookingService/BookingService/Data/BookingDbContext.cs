@@ -49,6 +49,9 @@ public partial class BookingDbContext : DbContext
             entity.Property(e => e.CustomerEmail)
                 .HasMaxLength(150)
                 .HasColumnName("customer_email");
+            entity.Property(e => e.CustomerPhone)
+                .HasMaxLength(20)
+                .HasColumnName("customer_phone");
             entity.Property(e => e.ExpiresAt)
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("expires_at");

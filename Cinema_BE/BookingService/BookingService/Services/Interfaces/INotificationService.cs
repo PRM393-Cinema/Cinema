@@ -33,7 +33,7 @@ namespace BookingService.Services.Interfaces
 
         Task SendNotificationFromEventAsync(
             string eventId,
-            long userId,
+            long? userId,
             long? bookingId,
             string type,
             EmailMessage email);

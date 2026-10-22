@@ -158,7 +158,7 @@ namespace BookingService.Services.Implementations
             BookingValidator.ValidateCreateBooking(request);
 
             var showtimeId = request.ShowtimeId!.Value;
-            var userId = request.UserId!.Value;
+            var userId = request.UserId;
 
             var seatIds = request.Seats
                 .Select(x => x.SeatId)
@@ -249,6 +249,9 @@ namespace BookingService.Services.Implementations
                     CustomerEmail = string.IsNullOrWhiteSpace(request.CustomerEmail)
                         ? null
                         : request.CustomerEmail.Trim(),
+                    CustomerPhone = string.IsNullOrWhiteSpace(request.CustomerPhone)
+                        ? null
+                        : request.CustomerPhone.Trim(),
                     ShowtimeId = showtimeId,
                     Status = "PENDING",
                     TotalAmount = totalAmount,
@@ -975,6 +978,12 @@ namespace BookingService.Services.Implementations
 
             booking.Status = "CONFIRMED";
             booking.ExpiresAt = null;
+
+            // Khách vãng lai cho email lúc trả tiền tại quầy: lưu vào vé để email huỷ / hoàn tiền sau này cũng tới
+            if (string.IsNullOrWhiteSpace(booking.CustomerEmail) && !string.IsNullOrWhiteSpace(recipientEmail))
+            {
+                booking.CustomerEmail = recipientEmail.Trim();
+            }
 
             _outbox.Add(
                 EventTypes.BookingConfirmed,

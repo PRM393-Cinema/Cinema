@@ -154,7 +154,8 @@ namespace BookingService.Services.Implementations
         }
 
         public async Task<PaymentResponse> CreatePaymentAsync(
-            PaymentRequest request)
+            PaymentRequest request,
+            bool manager = false)
         {
             PaymentValidator.ValidatePayment(request);
 
@@ -166,7 +167,7 @@ namespace BookingService.Services.Implementations
                 var booking = await GetBookingForUpdateAsync(
                     request.BookingId!.Value);
 
-                if (booking.UserId != request.UserId!.Value)
+                if (!manager && booking.UserId != request.UserId)
                 {
                     throw new BusinessException(
                         "Payment user does not match the booking user.");
@@ -211,7 +212,8 @@ namespace BookingService.Services.Implementations
         }
 
         public async Task<PayOsCheckoutResponse> CreatePayOsPaymentAsync(
-            PayOsCreateRequest request)
+            PayOsCreateRequest request,
+            bool manager = false)
         {
             PaymentValidator.ValidatePayOsCreate(request);
 
@@ -223,7 +225,7 @@ namespace BookingService.Services.Implementations
                 var booking = await GetBookingForUpdateAsync(
                     request.BookingId!.Value);
 
-                if (booking.UserId != request.UserId!.Value)
+                if (!manager && booking.UserId != request.UserId)
                 {
                     throw new BusinessException(
                         "Payment user does not match the booking user.");
@@ -317,7 +319,8 @@ namespace BookingService.Services.Implementations
                 {
                     paymentId = payment.Id,
                     orderCode = orderCode,
-                    checkoutUrl = link.CheckoutUrl
+                    checkoutUrl = link.CheckoutUrl,
+                    qrCode = link.QrCode
                 };
             }
             catch
@@ -325,6 +328,105 @@ namespace BookingService.Services.Implementations
                 await transaction.RollbackAsync();
                 throw;
             }
+        }
+
+        public async Task<PaymentResponse> PayCashAsync(CashPaymentRequest request)
+        {
+            PaymentValidator.ValidateCash(request);
+
+            Payment payment;
+            await using (var transaction = await _transactionManager.BeginTransactionAsync())
+            {
+                try
+                {
+                    var booking = await GetBookingForUpdateAsync(request.BookingId!.Value);
+                    EnsurePayableBooking(booking);
+
+                    if (request.AmountReceived!.Value < booking.TotalAmount)
+                    {
+                        throw new BusinessException(
+                            $"The customer gave {request.AmountReceived.Value:N0} VND but the tickets cost " +
+                            $"{booking.TotalAmount:N0} VND.");
+                    }
+
+                    if (booking.PaymentId.HasValue)
+                    {
+                        await CloseOtherPaymentAsync(await GetPaymentAsync(booking.PaymentId.Value));
+                    }
+
+                    payment = await AddPaymentAsync(new Payment
+                    {
+                        PaymentCode = await GeneratePaymentCodeAsync(),
+                        BookingId = booking.Id,
+                        UserId = booking.UserId,
+                        Amount = booking.TotalAmount,
+                        Method = "CASH",
+                        Status = "PENDING",
+                        TransactionRef = $"CASH-{booking.BookingCode}",
+                        CreatedAt = DateTime.Now
+                    }, booking);
+                    await MarkPaymentSucceededAsync(payment);
+
+                    booking.PaymentId = payment.Id;
+                    await _bookingRepository.UpdateBookingAsync(booking.Id, booking);
+
+                    await transaction.CommitAsync();
+                }
+                catch
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
+            }
+
+            // Như thanh toán online: xác nhận vé (event booking.confirmed gửi email vé kèm QR)
+            await ConfirmBookingOrRefundAsync(payment, request.RecipientEmail);
+
+            return (await GetPaymentAsync(payment.Id)).ToResponse();
+        }
+
+        // Booking đang có payment khác khi thu tiền mặt: đã trả rồi thì từ chối; QR chuyển khoản PayOS chưa trả
+        // thì huỷ link trước (không huỷ được thì dừng lại, tránh khách trả hai lần)
+        private async Task CloseOtherPaymentAsync(Payment other)
+        {
+            if (other.Status is "SUCCESS" or "REFUND_PENDING" or "REFUNDED")
+            {
+                throw new ConflictException("This booking is already paid.");
+            }
+
+            if (other.Status != "PENDING")
+            {
+                return;
+            }
+
+            if (string.Equals(other.Method, "PAYOS", StringComparison.OrdinalIgnoreCase) &&
+                long.TryParse(other.TransactionRef, out var orderCode))
+            {
+                try
+                {
+                    await _payOsClient.CancelPaymentLinkAsync(orderCode, "Paid in cash at the counter");
+                }
+                catch (ExternalServiceException ex)
+                {
+                    // PayOS từ chối huỷ: link đã huỷ / hết hạn thì thu tiền mặt được, còn lại (đã chuyển khoản...) thì dừng
+                    var status = (await _payOsClient.GetPaymentStatusAsync(orderCode)).Status.Trim().ToUpperInvariant();
+
+                    if (status == "PAID")
+                    {
+                        throw new ConflictException(
+                            "The customer already paid this booking by bank transfer. Check the transfer instead.");
+                    }
+
+                    if (status is not ("CANCELLED" or "EXPIRED"))
+                    {
+                        throw new ConflictException(
+                            "The bank transfer QR of this booking could not be cancelled, so the customer could " +
+                            $"still pay it. Try again in a moment. ({ex.Message})");
+                    }
+                }
+            }
+
+            await MarkPaymentFailedAsync(other, "Paid in cash at the counter.");
         }
 
         public async Task<PaymentResponse> ProcessPaymentAsync(

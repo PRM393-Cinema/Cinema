@@ -17,9 +17,10 @@ namespace BookingService.Validators
                 throw new BusinessException("Booking id is required.");
             }
 
-            if (!request.UserId.HasValue || request.UserId <= 0)
+            // Khách: controller điền user id từ token. Staff thu tiền tại quầy thì không cần (vé vãng lai)
+            if (request.UserId is <= 0)
             {
-                throw new BusinessException("User id is required.");
+                throw new BusinessException("User id must be greater than 0.");
             }
 
             if (!request.Amount.HasValue || request.Amount <= 0)
@@ -35,6 +36,24 @@ namespace BookingService.Validators
             }
         }
 
+        public static void ValidateCash(CashPaymentRequest request)
+        {
+            if (request == null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+
+            if (!request.BookingId.HasValue || request.BookingId <= 0)
+            {
+                throw new BusinessException("Booking id is required.");
+            }
+
+            if (!request.AmountReceived.HasValue || request.AmountReceived <= 0)
+            {
+                throw new BusinessException("Enter the cash the customer gave.");
+            }
+        }
+
         public static void ValidatePayment(PaymentRequest request)
         {
             if (request == null)
@@ -43,10 +62,10 @@ namespace BookingService.Validators
             }
 
             if (!request.BookingId.HasValue || request.BookingId <= 0 ||
-                !request.UserId.HasValue || request.UserId <= 0)
+                request.UserId is <= 0)
             {
                 throw new BusinessException(
-                    "Booking id and user id are required.");
+                    "Booking id is required and user id must be greater than 0.");
             }
 
             if (!request.Amount.HasValue || request.Amount <= 0)

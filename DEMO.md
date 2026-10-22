@@ -78,6 +78,15 @@ Khách dùng app (web hoặc điện thoại). Nhân viên và admin dùng **tra
 
 Vé chỉ check-in được từ 3 giờ trước đến 2 giờ sau giờ chiếu: chọn suất gần giờ hiện tại để demo.
 
+### C2. Bán vé tại quầy (khoảng 3 phút)
+
+1. Nhân viên: **Dashboard** → nút **Sell tickets** ở góc trên (hoặc **Operations** → **Bookings** → **Sell tickets**). Để **Walk-in guest**: khách không cần tài khoản, email và số điện thoại tuỳ chọn. Chọn phim, suất sắp chiếu, ghế → **Hold seats and take payment**.
+2. Màn **Take payment**: thông tin vé, đồng hồ giữ ghế 10 phút.
+   - **Cash**: bấm số tiền khách đưa (ví dụ 200.000 ₫ cho vé 190.000 ₫) → màn hình báo tiền thối → **Confirm cash payment**.
+   - **Bank transfer**: **Show transfer QR** hiện VietQR của PayOS, khách quét bằng app ngân hàng; tiền về thì màn hình tự chuyển sang đã thanh toán. Khách đổi ý trả tiền mặt thì chuyển sang tab Cash: link chuyển khoản bị huỷ trước.
+3. Vé đã trả: mã QR vé, **Print ticket** (mở trang vé để in), **Check in now** khi suất bắt đầu trong 3 giờ. Có email thì khách nhận email vé kèm QR.
+4. **Operations** → **Payments**: thanh toán CASH nằm cùng các thanh toán PayOS; Admin thấy tiền này trong doanh thu.
+
 ### D. Admin (khoảng 5 phút)
 
 1. Đăng nhập Admin trên trang quản trị → **Dashboard** (booking và doanh thu tháng này, phim đang chiếu, suất hôm nay, thống kê tài khoản) → **Accounts**: tìm kiếm, lọc, xem chi tiết, tạo tài khoản, gán quyền.

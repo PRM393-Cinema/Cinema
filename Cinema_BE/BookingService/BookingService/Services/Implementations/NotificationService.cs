@@ -67,7 +67,7 @@ namespace BookingService.Services.Implementations
             var notification = await _notificationRepository.AddAsync(
                 new Notification
                 {
-                    UserId = request.UserId!.Value,
+                    UserId = request.UserId,
                     BookingId = request.BookingId,
                     RecipientEmail = request.RecipientEmail!.Trim(),
                     Subject = request.Subject!.Trim(),
@@ -98,7 +98,7 @@ namespace BookingService.Services.Implementations
             await _notificationRepository.AddAsync(
                 new Notification
                 {
-                    UserId = request.UserId!.Value,
+                    UserId = request.UserId,
                     BookingId = request.BookingId,
                     RecipientEmail = request.RecipientEmail!.Trim(),
                     Subject = request.Subject!.Trim(),
@@ -112,7 +112,7 @@ namespace BookingService.Services.Implementations
 
         public async Task SendNotificationFromEventAsync(
             string eventId,
-            long userId,
+            long? userId,
             long? bookingId,
             string type,
             EmailMessage email)

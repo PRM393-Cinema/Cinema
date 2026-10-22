@@ -15,6 +15,7 @@ namespace BookingService.Mapping
                 BookingCode = booking.BookingCode,
                 UserId = booking.UserId,
                 CustomerEmail = booking.CustomerEmail,
+                CustomerPhone = booking.CustomerPhone,
                 ShowtimeId = booking.ShowtimeId,
                 Status = booking.Status,
                 TotalAmount = booking.TotalAmount,

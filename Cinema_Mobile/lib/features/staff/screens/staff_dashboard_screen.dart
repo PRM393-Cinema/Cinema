@@ -63,6 +63,20 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
   Widget build(BuildContext context) => AdminPage(
     title: 'Staff dashboard',
     section: AdminSection.dashboard,
+    // The counter's two everyday jobs, one tap away.
+    actions: [
+      IconButton(
+        tooltip: 'Sell tickets',
+        icon: const Icon(Icons.point_of_sale_outlined),
+        onPressed: () =>
+            Navigator.pushNamed(context, AppRoutes.staffCreateBooking),
+      ),
+      IconButton(
+        tooltip: 'Check in',
+        icon: const Icon(Icons.qr_code_scanner_rounded),
+        onPressed: () => Navigator.pushNamed(context, AppRoutes.staffCheckIn),
+      ),
+    ],
     child: RefreshIndicator(
       onRefresh: _load,
       child: ListView(

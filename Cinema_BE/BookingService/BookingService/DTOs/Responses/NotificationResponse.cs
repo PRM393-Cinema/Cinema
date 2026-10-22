@@ -4,7 +4,7 @@
     {
         public long Id { get; set; }
 
-        public long UserId { get; set; }
+        public long? UserId { get; set; }
 
         public long? BookingId { get; set; }
 

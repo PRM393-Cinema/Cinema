@@ -45,8 +45,9 @@ class Booking {
   const Booking({
     required this.id,
     required this.bookingCode,
-    required this.userId,
+    this.userId,
     this.customerEmail,
+    this.customerPhone,
     required this.showtimeId,
     required this.status,
     required this.totalAmount,
@@ -63,8 +64,9 @@ class Booking {
     return Booking(
       id: readInt(json['id']),
       bookingCode: readString(json['bookingCode']),
-      userId: readInt(json['userId']),
+      userId: readOptionalInt(json['userId']),
       customerEmail: readOptionalString(json['customerEmail']),
+      customerPhone: readOptionalString(json['customerPhone']),
       showtimeId: readInt(json['showtimeId']),
       status: BookingStatus.parse(readString(json['status'])),
       totalAmount: readDouble(json['totalAmount']),
@@ -82,10 +84,17 @@ class Booking {
   // before the show (backend RefundPolicy:CustomerCancelBeforeHours).
   static const cancelBeforeShowtime = Duration(hours: 2);
 
+  // Staff can check a ticket in from this long before its show (backend
+  // CheckIn:OpensBeforeMinutes).
+  static const checkInOpensBefore = Duration(hours: 3);
+
   final int id;
   final String bookingCode;
-  final int userId;
+
+  // No account: a walk-in guest the counter sold the ticket to.
+  final int? userId;
   final String? customerEmail;
+  final String? customerPhone;
   final int showtimeId;
   final BookingStatus status;
   final double totalAmount;
@@ -100,6 +109,8 @@ class Booking {
   final List<BookingSeat> seats;
 
   bool get isCheckedIn => checkedInAt != null;
+
+  bool get isWalkIn => userId == null;
 
   // A paid ticket that has not been used yet: its QR code gets the customer
   // in. The server also checks the time of the show.

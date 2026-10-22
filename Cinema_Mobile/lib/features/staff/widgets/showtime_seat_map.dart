@@ -319,7 +319,7 @@ class ShowtimeCustomerList extends StatelessWidget {
       title: Text(
         booking.customerEmail ??
             (booking.userId == null
-                ? 'Customer'
+                ? 'Walk-in guest'
                 : 'Customer #${booking.userId}'),
         style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
       ),
