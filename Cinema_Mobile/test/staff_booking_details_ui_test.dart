@@ -117,6 +117,7 @@ void main() {
         expect(find.text(text), findsOneWidget);
       }
       for (final (label, variant) in [
+        ('Show ticket', AppButtonVariant.secondary),
         ('Send customer notification', AppButtonVariant.secondary),
         ('View payment', AppButtonVariant.secondary),
         ('Cancel booking', AppButtonVariant.danger),

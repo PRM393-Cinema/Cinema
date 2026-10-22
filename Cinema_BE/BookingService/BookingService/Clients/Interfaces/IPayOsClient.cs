@@ -32,6 +32,9 @@ namespace BookingService.Clients.Interfaces
         public string? CheckoutUrl { get; init; }
 
         public string? PaymentLinkId { get; init; }
+
+        // Chuỗi VietQR để khách quét bằng app ngân hàng
+        public string? QrCode { get; init; }
     }
 
     public sealed class PayOsPaymentStatus

@@ -107,7 +107,8 @@ namespace BookingService.Clients.Implementations
             {
                 OrderCode = result.Data.OrderCode,
                 CheckoutUrl = result.Data.CheckoutUrl,
-                PaymentLinkId = result.Data.PaymentLinkId
+                PaymentLinkId = result.Data.PaymentLinkId,
+                QrCode = result.Data.QrCode
             };
         }
 
@@ -307,6 +308,9 @@ namespace BookingService.Clients.Implementations
 
             [JsonPropertyName("paymentLinkId")]
             public string? PaymentLinkId { get; set; }
+
+            [JsonPropertyName("qrCode")]
+            public string? QrCode { get; set; }
         }
 
         private sealed class PayOsStatusData

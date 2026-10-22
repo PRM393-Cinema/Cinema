@@ -116,7 +116,7 @@ namespace BookingService.Controllers
                 request.UserId = User.GetCurrentUserId();
             }
 
-            return Ok(await _paymentService.CreatePaymentAsync(request));
+            return Ok(await _paymentService.CreatePaymentAsync(request, User.IsStaffOrAdmin()));
         }
 
         [HttpPost("payos/checkout")]
@@ -128,8 +128,17 @@ namespace BookingService.Controllers
                 request.UserId = User.GetCurrentUserId();
             }
 
-            var result = await _paymentService.CreatePayOsPaymentAsync(request);
+            var result = await _paymentService.CreatePayOsPaymentAsync(request, User.IsStaffOrAdmin());
             return Ok(result);
+        }
+
+        // Thu tiền mặt tại quầy: payment CASH đã thành công, vé được xác nhận và gửi email kèm QR (nếu có email)
+        [HttpPost("cash")]
+        [Authorize(Policy = AuthorizationPolicies.StaffOrAdmin)]
+        public async Task<ActionResult<PaymentResponse>> PayCash(
+            [FromBody] CashPaymentRequest request)
+        {
+            return Ok(await _paymentService.PayCashAsync(request));
         }
 
         // Khách gọi sau khi thanh toán xong trên trang PayOS. PayOS báo đã nhận tiền

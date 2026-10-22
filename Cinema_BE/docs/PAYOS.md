@@ -12,6 +12,8 @@ Key PayOS đặt ở đâu: [SETUP_SECRETS.md mục 6](SETUP_SECRETS.md#6-payos-
 
 `orderCode` của PayOS chính là id của booking.
 
+**Tại quầy** (Staff/Admin): cùng endpoint checkout, Staff không gửi `userId` (vé khách vãng lai không có tài khoản). Link vừa tạo có thêm `qrCode` (chuỗi VietQR), màn **Take payment** hiện mã này để khách quét bằng app ngân hàng; link tạo từ trước thì PayOS không trả lại chuỗi này, màn hình hiện QR của `checkoutUrl`. Khách đổi sang trả tiền mặt (`POST /api/v1/payments/cash`): server huỷ link PayOS rồi mới ghi tiền mặt; PayOS báo đơn đã được trả thì từ chối (409).
+
 Nếu PayOS đã tạo link nhưng lần lưu DB trước thất bại, lần checkout sau khôi phục đơn theo cùng `orderCode` và kiểm tra số tiền trước khi lưu payment. Không đổi mã đơn hoặc tạo link khác để né lỗi đơn tồn tại.
 
 Trang Payment không có nút “I have paid”: khi đã tạo giao dịch, app tự kiểm tra booking mỗi 5 giây và hỏi PayOS mỗi 30 giây trong lúc trang đang mở, đồng thời kiểm tra khi quay lại từ PayOS. Server xác nhận thanh toán xong thì app chuyển sang kết quả; thao tác ở UI không tự đánh dấu đã thanh toán.

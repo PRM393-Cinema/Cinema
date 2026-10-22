@@ -73,7 +73,7 @@ namespace BookingService.Messaging.Handlers
 
         private async Task SendAsync(
             IntegrationEvent integrationEvent,
-            long userId,
+            long? userId,
             long? bookingId,
             string type,
             string? recipientEmail,

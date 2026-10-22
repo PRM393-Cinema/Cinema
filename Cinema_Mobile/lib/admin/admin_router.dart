@@ -18,6 +18,7 @@ import '../features/auth/screens/reset_password_screen.dart';
 import '../features/auth/screens/verify_email_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
 import '../features/staff/screens/staff_check_in_screen.dart';
+import '../features/staff/screens/staff_counter_checkout_screen.dart';
 import '../features/staff/screens/staff_create_booking_screen.dart';
 import '../features/staff/screens/staff_dashboard_screen.dart';
 import '../features/staff/screens/staff_notification_screen.dart';
@@ -219,6 +220,14 @@ class AdminRouter {
           segments[3] == 'notify') {
         return staff(
           (_) => StaffNotificationScreen(service: staffService, bookingId: id),
+        );
+      }
+      if (segments.length == 4 &&
+          segments[1] == 'bookings' &&
+          segments[3] == 'checkout') {
+        return staff(
+          (_) =>
+              StaffCounterCheckoutScreen(service: staffService, bookingId: id),
         );
       }
       if (segments.length == 3 &&

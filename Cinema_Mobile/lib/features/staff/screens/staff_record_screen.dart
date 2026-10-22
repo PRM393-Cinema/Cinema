@@ -616,8 +616,11 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
       ),
       _detailField(
         Icons.person_outline,
-        'Customer #${booking.userId}',
-        booking.customerEmail ?? 'No email',
+        booking.isWalkIn ? 'Walk-in guest' : 'Customer #${booking.userId}',
+        [
+          booking.customerEmail ?? 'No email',
+          ?booking.customerPhone,
+        ].join(' • '),
       ),
       _detailField(
         Icons.how_to_reg_outlined,
@@ -767,28 +770,33 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
             await widget.service.checkIn(b.id);
           }, 'Ticket checked in.');
         }),
-      if (b.isAwaitingPayment() && b.paymentId == null)
-        _button('Confirm at counter', () async {
-          if (!await staffConfirm(
-                context,
-                'Confirm booking?',
-                'Confirm only after collecting payment at the counter. This confirms the ticket; it does not charge the customer automatically.',
-              ) ||
-              !mounted) {
-            return;
-          }
-          _run(() async {
-            await widget.service.confirmBooking(b.id);
-          }, 'Booking confirmed.');
+      if (b.isAwaitingPayment())
+        _button('Take payment', () async {
+          await Navigator.pushNamed(context, AppRoutes.staffCheckout(b.id));
+          if (mounted) await _load();
         }),
+      // The ticket's QR code, to print it again or check the customer in.
+      if (b.status == BookingStatus.confirmed)
+        _button('Show ticket', () async {
+          await Navigator.pushNamed(context, AppRoutes.staffCheckout(b.id));
+          if (mounted) await _load();
+        }, secondary: true),
       _button(
         'Send customer notification',
         () => Navigator.pushNamed(context, AppRoutes.staffNotify(b.id)),
         secondary: true,
       ),
+      // A booking may have a cancelled transfer and the cash that paid it.
       for (final payment in _payments)
         _button(
-          'View payment',
+          [
+            switch (payment.method?.toUpperCase()) {
+              'CASH' => 'View cash payment',
+              'PAYOS' => 'View bank transfer',
+              _ => 'View payment',
+            },
+            if (payment.status == PaymentStatus.failed) '(failed)',
+          ].join(' '),
           () => Navigator.pushNamed(
             context,
             AppRoutes.staffRecord('payments', payment.id),

@@ -50,7 +50,7 @@ namespace BookingService.Messaging
 
         public string BookingCode { get; set; } = string.Empty;
 
-        public long UserId { get; set; }
+        public long? UserId { get; set; } // null: khách vãng lai
 
         public string? CustomerEmail { get; set; }
 
@@ -91,7 +91,7 @@ namespace BookingService.Messaging
 
         public string? BookingCode { get; set; }
 
-        public long UserId { get; set; }
+        public long? UserId { get; set; } // null: khách vãng lai
 
         public string? CustomerEmail { get; set; }
 

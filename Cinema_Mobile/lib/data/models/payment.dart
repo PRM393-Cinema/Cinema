@@ -80,6 +80,7 @@ class PayOsCheckout {
     required this.paymentId,
     required this.orderCode,
     this.checkoutUrl,
+    this.qrCode,
   });
 
   factory PayOsCheckout.fromJson(Map<String, Object?> json) {
@@ -87,6 +88,7 @@ class PayOsCheckout {
       paymentId: readInt(json['paymentId']),
       orderCode: readInt(json['orderCode']),
       checkoutUrl: readOptionalString(json['checkoutUrl']),
+      qrCode: readOptionalString(json['qrCode']),
     );
   }
 
@@ -95,6 +97,10 @@ class PayOsCheckout {
   // The PayOS order code is the booking id.
   final int orderCode;
   final String? checkoutUrl;
+
+  // The VietQR a banking app pays. PayOS only returns it when the link is
+  // created, so a link made earlier has just its checkout page.
+  final String? qrCode;
 }
 
 class Refund {

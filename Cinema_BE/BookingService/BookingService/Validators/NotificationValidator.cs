@@ -14,9 +14,9 @@ namespace BookingService.Validators
                 throw new ArgumentNullException(nameof(request));
             }
 
-            if (!request.UserId.HasValue || request.UserId <= 0)
+            if (request.UserId is <= 0)
             {
-                throw new BusinessException("User id is required.");
+                throw new BusinessException("User id must be greater than 0.");
             }
 
             if (string.IsNullOrWhiteSpace(request.RecipientEmail) ||

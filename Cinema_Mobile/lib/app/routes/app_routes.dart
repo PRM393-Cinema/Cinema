@@ -19,6 +19,9 @@ abstract final class AppRoutes {
   static String staffEditShowtime(int id) => '/staff/showtimes/$id/edit';
   static String staffNotify(int bookingId) =>
       '/staff/bookings/$bookingId/notify';
+  // Taking the money for a booking at the counter.
+  static String staffCheckout(int bookingId) =>
+      '/staff/bookings/$bookingId/checkout';
   static const adminMovies = '/admin/movies';
   static const adminRooms = '/admin/rooms';
   static const adminUsers = '/admin/users';

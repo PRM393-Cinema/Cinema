@@ -1,4 +1,5 @@
 import '../../core/network/api_client.dart';
+import '../../core/network/api_config.dart';
 import '../models/app_notification.dart';
 import '../models/booking.dart';
 import '../models/json_readers.dart';
@@ -70,9 +71,12 @@ class StaffService {
       authenticated: true,
     ),
   ).map(ShowtimeSeatBooking.fromJson).toList();
+  // Holds seats at the counter for a customer account, or for a walk-in guest
+  // without one ([userId] null) who may leave an email and a phone number.
   Future<Booking> createBooking({
-    required int userId,
-    required String email,
+    int? userId,
+    String? email,
+    String? phone,
     required int showtimeId,
     required List<int> seats,
   }) async => Booking.fromJson(
@@ -81,8 +85,9 @@ class StaffService {
         '/api/v1/bookings',
         authenticated: true,
         body: {
-          'userId': userId,
-          'customerEmail': email,
+          'userId': ?userId,
+          'customerEmail': ?email,
+          'customerPhone': ?phone,
           'showtimeId': showtimeId,
           'seats': [
             for (final id in seats) {'seatId': id},
@@ -91,15 +96,59 @@ class StaffService {
       ),
     ),
   );
-  Future<Booking> confirmBooking(int id) async => Booking.fromJson(
+  // Cash taken at the counter: the server records a paid CASH payment and
+  // confirms the ticket, emailing it (with its QR code) when there is an
+  // email.
+  Future<PaymentInfo> payCash(
+    int bookingId,
+    double amountReceived, {
+    String? email,
+  }) async => PaymentInfo.fromJson(
     readMap(
       await _client.post(
-        '/api/v1/bookings/$id/confirm',
+        '/api/v1/payments/cash',
         authenticated: true,
-        query: {'paymentMethod': 'CASH'},
+        body: {
+          'bookingId': bookingId,
+          'amountReceived': amountReceived,
+          'recipientEmail': ?email,
+        },
       ),
     ),
   );
+  // A PayOS bank transfer the customer pays at the counter by scanning its
+  // QR code. Asking again returns the link already made.
+  Future<PayOsCheckout> counterTransfer(Booking booking) async =>
+      PayOsCheckout.fromJson(
+        readMap(
+          await _client.post(
+            '/api/v1/payments/payos/checkout',
+            authenticated: true,
+            body: {
+              'bookingId': booking.id,
+              'amount': booking.totalAmount,
+              'description': booking.bookingCode.length > 25
+                  ? booking.bookingCode.substring(
+                      booking.bookingCode.length - 25,
+                    )
+                  : booking.bookingCode,
+              'returnUrl': ApiConfig.paymentReturnUrl,
+              'cancelUrl': ApiConfig.paymentReturnUrl,
+            },
+          ),
+        ),
+      );
+  // Asks PayOS whether the transfer arrived; a paid one confirms the ticket.
+  Future<PaymentInfo> verifyTransfer(int orderCode, {String? email}) async =>
+      PaymentInfo.fromJson(
+        readMap(
+          await _client.post(
+            '/api/v1/payments/payos/$orderCode/verify',
+            authenticated: true,
+            query: {'recipientEmail': ?email},
+          ),
+        ),
+      );
   Future<Booking> cancelBooking(int id, String reason) async =>
       Booking.fromJson(
         readMap(

@@ -250,7 +250,7 @@ class _StaffOperationsScreenState extends State<StaffOperationsScreen> {
                   padding: const EdgeInsets.only(top: AppSpacing.md),
                   child: AppButton(
                     label: _section == 'Bookings'
-                        ? 'Book for a customer'
+                        ? 'Sell tickets'
                         : 'Create showtime',
                     useGradient: true,
                     leadingIcon: Icons.add,

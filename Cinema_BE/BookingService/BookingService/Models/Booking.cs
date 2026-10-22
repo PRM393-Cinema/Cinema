@@ -9,9 +9,11 @@ public partial class Booking
 
     public string BookingCode { get; set; } = null!;
 
-    public long UserId { get; set; }
+    public long? UserId { get; set; } // null: khách vãng lai mua tại quầy, không có tài khoản
 
     public string? CustomerEmail { get; set; } // email nhận vé / thông báo
+
+    public string? CustomerPhone { get; set; } // số điện thoại khách vãng lai (nếu khách cho)
 
     public long ShowtimeId { get; set; }
 

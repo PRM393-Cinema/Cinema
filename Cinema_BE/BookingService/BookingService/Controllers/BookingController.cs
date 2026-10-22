@@ -157,7 +157,8 @@ namespace BookingService.Controllers
         public async Task<ActionResult<BookingResponse>> Create(
             [FromBody] BookingRequest request)
         {
-            // Khách tự đặt: user và email nhận vé lấy từ token. Staff đặt hộ thì gửi userId + email của khách
+            // Khách tự đặt: user và email nhận vé lấy từ token. Staff đặt hộ thì gửi userId + email của khách,
+            // hoặc bỏ trống userId cho khách vãng lai (email / số điện thoại nếu khách cho)
             if (!User.IsStaffOrAdmin())
             {
                 request.UserId = User.GetCurrentUserId();
