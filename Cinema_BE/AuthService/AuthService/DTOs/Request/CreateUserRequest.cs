@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using AuthService.Helpers;
 
 namespace AuthService.DTOs.Request
 {
@@ -6,19 +7,18 @@ namespace AuthService.DTOs.Request
     public class CreateUserRequest
     {
         [Required(ErrorMessage = "Email is required")]
-        [EmailAddress(ErrorMessage = "Email is not valid")]
+        [AccountEmail]
         public string Email { get; set; } = null!;
 
         [Required(ErrorMessage = "Password is required")]
-        [MinLength(6, ErrorMessage = "Password must be at least 6 characters")]
+        [AccountPassword]
         public string Password { get; set; } = null!;
 
         [Required(ErrorMessage = "Full name is required")]
-        [MaxLength(150)]
+        [MaxLength(AccountRules.FullNameMaxLength, ErrorMessage = "Full name must be at most 150 characters")]
         public string FullName { get; set; } = null!;
 
-        [Phone(ErrorMessage = "Phone number is not valid")]
-        [MaxLength(20)]
+        [AccountPhone]
         public string? Phone { get; set; }
 
         // Vd: ["ROLE_STAFF"]; viết "STAFF" hay "staff" cũng được

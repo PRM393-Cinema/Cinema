@@ -6,6 +6,7 @@ import '../../../app/theme/app_radius.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../core/utils/account_validators.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../data/repositories/auth_repository.dart';
@@ -28,8 +29,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
 
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -39,6 +42,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _emailController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -124,7 +128,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 controller: _fullNameController,
                 enabled: !_isLoading,
                 keyboardType: TextInputType.name,
-                validator: _validateFullName,
+                validator: validateFullName,
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
@@ -138,7 +142,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 controller: _emailController,
                 enabled: !_isLoading,
                 keyboardType: TextInputType.emailAddress,
-                validator: _validateEmail,
+                validator: validateEmail,
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
@@ -152,7 +156,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 controller: _phoneController,
                 enabled: !_isLoading,
                 keyboardType: TextInputType.phone,
-                validator: _validatePhone,
+                validator: validatePhone,
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
@@ -165,7 +169,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 prefixIcon: const Icon(Icons.lock_outline),
                 controller: _passwordController,
                 enabled: !_isLoading,
-                validator: _validatePassword,
+                validator: validateNewPassword,
                 obscureText: _obscurePassword,
                 suffixIcon: IconButton(
                   tooltip: _obscurePassword ? 'Show password' : 'Hide password',
@@ -176,6 +180,39 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         },
                   icon: Icon(
                     _obscurePassword
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            AuthFieldSurface(
+              child: AppTextField(
+                key: const Key('registerConfirmPasswordField'),
+                label: 'Confirm password',
+                hint: 'Enter your password again',
+                isRequired: true,
+                prefixIcon: const Icon(Icons.lock_outline),
+                controller: _confirmPasswordController,
+                enabled: !_isLoading,
+                validator: (value) => validatePasswordConfirmation(
+                  value,
+                  _passwordController.text,
+                ),
+                obscureText: _obscureConfirmPassword,
+                suffixIcon: IconButton(
+                  tooltip: _obscureConfirmPassword
+                      ? 'Show confirm password'
+                      : 'Hide confirm password',
+                  onPressed: _isLoading
+                      ? null
+                      : () => setState(
+                          () => _obscureConfirmPassword =
+                              !_obscureConfirmPassword,
+                        ),
+                  icon: Icon(
+                    _obscureConfirmPassword
                         ? Icons.visibility_outlined
                         : Icons.visibility_off_outlined,
                   ),
@@ -221,46 +258,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
     );
   }
-}
-
-String? _validateFullName(String? value) {
-  if ((value?.trim() ?? '').isEmpty) {
-    return 'Full name is required.';
-  }
-  return null;
-}
-
-String? _validateEmail(String? value) {
-  final email = value?.trim() ?? '';
-  if (email.isEmpty) {
-    return 'Email is required.';
-  }
-  if (!email.contains('@')) {
-    return 'Please enter a valid email address.';
-  }
-  return null;
-}
-
-String? _validatePhone(String? value) {
-  final phone = value?.trim() ?? '';
-  if (phone.isEmpty) {
-    return null;
-  }
-  if (phone.length > 20 || !RegExp(r'^[0-9+(). -]+$').hasMatch(phone)) {
-    return 'Please enter a valid phone number.';
-  }
-  return null;
-}
-
-String? _validatePassword(String? value) {
-  final password = value ?? '';
-  if (password.isEmpty) {
-    return 'Password is required.';
-  }
-  if (password.length < 6) {
-    return 'Password must be at least 6 characters.';
-  }
-  return null;
 }
 
 class _AuthError extends StatelessWidget {

@@ -7,6 +7,7 @@ import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
 import '../../../core/session/session_state.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../core/utils/account_validators.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/top_notice.dart';
@@ -192,7 +193,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 enabled: !_isLoading,
-                validator: _validateEmail,
+                validator: validateEmail,
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
@@ -206,7 +207,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 controller: _passwordController,
                 obscureText: _obscurePassword,
                 enabled: !_isLoading,
-                validator: _validatePassword,
+                validator: validateSignInPassword,
                 suffixIcon: IconButton(
                   tooltip: _obscurePassword ? 'Show password' : 'Hide password',
                   onPressed: _isLoading
@@ -272,24 +273,6 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-}
-
-String? _validateEmail(String? value) {
-  final email = value?.trim() ?? '';
-  if (email.isEmpty) {
-    return 'Email is required.';
-  }
-  if (!email.contains('@')) {
-    return 'Please enter a valid email address.';
-  }
-  return null;
-}
-
-String? _validatePassword(String? value) {
-  if (value == null || value.isEmpty) {
-    return 'Password is required.';
-  }
-  return null;
 }
 
 class _LoginError extends StatelessWidget {

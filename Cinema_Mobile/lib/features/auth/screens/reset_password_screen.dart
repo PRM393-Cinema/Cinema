@@ -8,6 +8,7 @@ import '../../../core/session/session_state.dart';
 import '../widgets/auth_scaffold.dart';
 import '../widgets/auth_success_dialog.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../core/utils/account_validators.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/cinema_page.dart';
 import '../../../core/widgets/app_text_field.dart';
@@ -162,12 +163,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 obscureText: _obscurePassword,
                 enabled: !_isLoading,
                 prefixIcon: const Icon(Icons.lock_outline),
-                validator: (value) {
-                  if ((value ?? '').length < 6) {
-                    return 'Password must be at least 6 characters.';
-                  }
-                  return null;
-                },
+                validator: validateNewPassword,
                 suffixIcon: IconButton(
                   tooltip: _obscurePassword ? 'Show password' : 'Hide password',
                   onPressed: _isLoading
@@ -210,10 +206,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                         : Icons.visibility_off_outlined,
                   ),
                 ),
-                validator: (value) =>
-                    value != _passwordController.text || (value ?? '').isEmpty
-                    ? 'Passwords do not match.'
-                    : null,
+                validator: (value) => validatePasswordConfirmation(
+                  value,
+                  _passwordController.text,
+                ),
               ),
             ),
             if (_errorMessage != null) ...[

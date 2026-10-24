@@ -4,7 +4,7 @@ Mỗi service có một project test xUnit nằm cạnh project chính, và đã
 
 | Service | Project test | Số test |
 |---|---|---|
-| AuthService | `AuthService/AuthService.Tests` | 10 |
+| AuthService | `AuthService/AuthService.Tests` | 27 |
 | ApiGateway | `ApiGateway/ApiGateway.Tests` | 21 |
 | MovieService | `MovieService/MovieService.Tests` | 20 |
 | BookingService | `BookingService/BookingService.Tests` | 58 |
@@ -38,6 +38,7 @@ Mỗi service chạy xong trong khoảng 15–30 giây.
 | Security | Thiếu token, token giả chữ ký, token hết hạn: 401. Khách gọi API của Staff / Admin, xem dữ liệu của người khác: 403 | `BookingService.Tests/Integration/AuthorizationTests.cs`, `AuthService.Tests/Integration/*` |
 | Failure | MovieService chết: đặt vé trả 503. PayOS chết: thanh toán trả 503 và booking vẫn thanh toán lại được | `BookingFlowTests.cs` |
 | Auth | Đăng ký, OTP (khoá sau 5 lần sai), đăng nhập, refresh token xoay vòng, đăng xuất, Admin tạo / khoá tài khoản | `AuthService.Tests/Integration/*` |
+| Validate tài khoản | Đăng ký, đăng nhập, quên / đặt lại mật khẩu, Admin tạo tài khoản: email sai định dạng (`a b@test.local`, `abc@def`) hoặc dài hơn 150 ký tự, mật khẩu ngoài 6–72 ký tự (tính cả byte của chữ có dấu), họ tên trống hoặc dài hơn 150, số điện thoại không đủ 8–15 chữ số đều bị 400 kèm lỗi theo trường, không tạo tài khoản, không gửi email | `AuthService.Tests/Integration/AccountValidationTests.cs` |
 | Khóa tài khoản | Token còn hạn bị từ chối ở gateway sau khi khóa; lỗi kết nối AuthService trả 503 và không chuyển tiếp request | `ApiGateway.Tests/*`, `AuthService.Tests/Integration/UserManagementTests.cs` |
 | Đổi role | Role cũ bị từ chối với `403 ROLE_CHANGED`; thu hồi refresh token khi quyền thay đổi, giữ phiên khi lưu cùng quyền | `ApiGateway.Tests/*`, `AuthService.Tests/Integration/UserManagementTests.cs` |
 | Check-in | Staff tra vé theo mã (QR), check-in một lần; vé chưa trả tiền, đã huỷ, chưa tới giờ hoặc đã check-in bị 409; khách không tra / check-in được; sơ đồ ghế đã đặt của suất (kèm email khách); thống kê vé theo suất (đã bán, đang giữ, đã check-in) theo id và theo giờ chiếu | `BookingService.Tests/Integration/CheckInTests.cs` |
