@@ -1,11 +1,12 @@
 using System.ComponentModel.DataAnnotations;
+using AuthService.Helpers;
 
 namespace AuthService.DTOs.Request
 {
     public class VerifyEmailRequest
     {
         [Required(ErrorMessage = "Email is required")]
-        [EmailAddress(ErrorMessage = "Email is not valid")]
+        [AccountEmail]
         public string Email { get; set; } = null!;
 
         [Required(ErrorMessage = "OTP is required")]

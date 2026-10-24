@@ -6,6 +6,7 @@ import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
 import '../widgets/auth_scaffold.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../core/utils/account_validators.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../data/repositories/auth_repository.dart';
@@ -106,14 +107,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 keyboardType: TextInputType.emailAddress,
                 enabled: !_isLoading,
                 prefixIcon: const Icon(Icons.email_outlined),
-                validator: (value) {
-                  final email = value?.trim() ?? '';
-                  if (email.isEmpty) return 'Email is required.';
-                  if (!email.contains('@')) {
-                    return 'Please enter a valid email address.';
-                  }
-                  return null;
-                },
+                validator: validateEmail,
               ),
             ),
             if (_errorMessage != null) ...[

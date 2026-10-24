@@ -6,6 +6,7 @@ import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/session/session_state.dart';
+import '../../../core/utils/account_validators.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/utils/layout.dart';
 import '../../../core/widgets/app_button.dart';
@@ -635,11 +636,7 @@ class _AdminCreateUserScreenState extends State<AdminCreateUserScreen> {
                       label: 'Full name',
                       controller: _name,
                       enabled: !_saving,
-                      validator: (v) => (v?.trim().isEmpty ?? true)
-                          ? 'Enter a name.'
-                          : v!.trim().length > 150
-                          ? 'Maximum 150 characters.'
-                          : null,
+                      validator: validateFullName,
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     AppTextField(
@@ -647,11 +644,7 @@ class _AdminCreateUserScreenState extends State<AdminCreateUserScreen> {
                       controller: _email,
                       enabled: !_saving,
                       keyboardType: TextInputType.emailAddress,
-                      validator: (v) =>
-                          RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
-                              .hasMatch(v?.trim() ?? '')
-                          ? null
-                          : 'Enter a valid email.',
+                      validator: validateEmail,
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     AppTextField(
@@ -670,9 +663,7 @@ class _AdminCreateUserScreenState extends State<AdminCreateUserScreen> {
                               : Icons.visibility_off_outlined,
                         ),
                       ),
-                      validator: (v) => (v?.length ?? 0) < 6
-                          ? 'Use at least 6 characters.'
-                          : null,
+                      validator: validateNewPassword,
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     AppTextField(
@@ -680,9 +671,7 @@ class _AdminCreateUserScreenState extends State<AdminCreateUserScreen> {
                       controller: _phone,
                       enabled: !_saving,
                       keyboardType: TextInputType.phone,
-                      validator: (v) => (v?.trim().length ?? 0) > 20
-                          ? 'Maximum 20 characters.'
-                          : null,
+                      validator: validatePhone,
                     ),
                     const SizedBox(height: AppSpacing.xl),
                     const Text('Roles', style: AppTextStyles.title),

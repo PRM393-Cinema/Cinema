@@ -64,6 +64,7 @@ class FakeAuthRepository implements AuthRepository {
   final AuthUser user;
 
   int logoutCalls = 0;
+  int registerCalls = 0;
   String? forgotPasswordEmail;
   String? resetOtp;
 
@@ -98,6 +99,7 @@ class FakeAuthRepository implements AuthRepository {
     required String password,
     String? phone,
   }) async {
+    registerCalls++;
     await _wait();
     if (registerErrorMessage != null) {
       throw ApiException(statusCode: 400, message: registerErrorMessage!);

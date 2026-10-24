@@ -95,6 +95,19 @@ Sau đó chạy lại AuthService và BookingService.
 
 Đăng ký lại một email **chưa xác thực** vẫn được: thông tin mới thay thông tin cũ và hệ thống gửi mã mới.
 
+### Quy tắc dữ liệu tài khoản
+
+App và API kiểm tra giống nhau (`Helpers/AccountValidation.cs` bên AuthService, `lib/core/utils/account_validators.dart` bên Flutter). Áp dụng cho đăng ký, đăng nhập, quên / đặt lại mật khẩu và Admin tạo tài khoản. Sai thì **400** kèm `errors` theo từng trường, không tạo tài khoản và không gửi email.
+
+| Trường | Quy tắc |
+|---|---|
+| `email` | Bắt buộc, tối đa 150 ký tự, có tên miền với đuôi ít nhất 2 chữ cái, không dấu cách (`a b@c.com`, `abc@def` bị từ chối) |
+| `password` (mật khẩu mới) | 6 đến 72 ký tự. BCrypt chỉ dùng 72 byte đầu, mà chữ có dấu chiếm 2–3 byte, nên mật khẩu tiếng Việt dài có thể bị từ chối dù chưa tới 72 ký tự. Đăng nhập chỉ cần không để trống |
+| `fullName` | Bắt buộc, tối đa 150 ký tự |
+| `phone` | Không bắt buộc; 8 đến 15 chữ số, có thể bắt đầu bằng `+` và ngăn cách bằng dấu cách `.` `-` `( )`, tối đa 20 ký tự |
+
+Form đăng ký trên app có thêm ô **Confirm password**.
+
 ### Đăng nhập khi chưa xác thực email
 
 `POST /api/v1/auth/login` trả **403**:

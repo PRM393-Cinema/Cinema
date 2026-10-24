@@ -447,6 +447,13 @@ Future<void> _enterRegisterDetails(
     ),
     'Secret123',
   );
+  await tester.enterText(
+    find.descendant(
+      of: find.byKey(const Key('registerConfirmPasswordField')),
+      matching: find.byType(TextFormField),
+    ),
+    'Secret123',
+  );
   FocusManager.instance.primaryFocus?.unfocus();
   await tester.pumpAndSettle();
 }
