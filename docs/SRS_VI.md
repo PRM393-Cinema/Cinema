@@ -139,7 +139,7 @@ Một tài khoản có thể có nhiều vai trò. Tài khoản Staff/Admin đă
 
 - PayOS và SMTP (Gmail App Password) là dịch vụ ngoài. Thiếu khoá PayOS thì chỉ thanh toán PayOS lỗi; thiếu SMTP thì email không gửi thật (OTP in ra log ở môi trường Development).
 - Webhook PayOS cần địa chỉ public (tunnel khi chạy local). Không có webhook, app vẫn xác nhận thanh toán bằng cách hỏi PayOS (verify).
-- PayOS dùng chung tài khoản cho nhiều môi trường: mã đơn PayOS là id booking nên DB local có thể trùng mã đơn đã tồn tại (xem mục 14).
+- Tài khoản PayOS dùng chung cho nhiều môi trường (máy từng người, Docker) mà PayOS không cho trùng mã đơn, nên mã đơn được sinh để không trùng giữa các môi trường (FR-PAY-01).
 
 ### 2.7 Ngoài phạm vi
 
@@ -288,8 +288,8 @@ Mức ưu tiên: **H** (bắt buộc), **M** (quan trọng), **L** (bổ trợ).
 
 | Mã | Yêu cầu | Ưu tiên |
 |---|---|---|
-| FR-PAY-01 | Tạo link thanh toán PayOS cho booking `PENDING`. Mỗi booking một payment; gọi lại thì trả link cũ, không tạo thêm. Mã đơn PayOS là id booking; link hết hạn cùng lúc với thời gian giữ ghế. | H |
-| FR-PAY-02 | Xác minh thanh toán theo mã đơn: PayOS báo đã trả thì payment `SUCCESS` và booking `CONFIRMED`; khách huỷ trên trang PayOS thì payment `FAILED`, booking `CANCELLED` và nhả ghế ngay. Gọi lại nhiều lần vẫn an toàn. | H |
+| FR-PAY-01 | Tạo link thanh toán PayOS cho booking `PENDING`. Mỗi booking một payment; gọi lại thì trả link cũ, không tạo thêm. Mã đơn PayOS = id booking × 1.000.000 + 6 số ngẫu nhiên cuối mã vé: cố định cho mỗi booking và không trùng với đơn của môi trường khác trên tài khoản PayOS dùng chung. Link hết hạn cùng lúc với thời gian giữ ghế. | H |
+| FR-PAY-02 | Xác minh thanh toán theo mã đơn (hoặc id booking): PayOS báo đã trả thì payment `SUCCESS` và booking `CONFIRMED`; khách huỷ trên trang PayOS thì payment `FAILED`, booking `CANCELLED` và nhả ghế ngay. Gọi lại nhiều lần vẫn an toàn. | H |
 | FR-PAY-03 | Xem chi tiết payment: chủ vé hoặc Staff/Admin. | H |
 | FR-PAY-04 | Khách xem lịch sử thanh toán của mình. | M |
 | FR-PAY-05 | Xem các payment của một booking. | M |
@@ -613,8 +613,8 @@ Check-in là thuộc tính `checkedInAt` của vé `CONFIRMED`, không phải m�
 | AuthService | 27 | Đăng ký, OTP và khoá OTP, đăng nhập, refresh xoay vòng, đăng xuất, khoá tài khoản, đổi vai trò, validate dữ liệu |
 | ApiGateway | 21 | Chặn token của tài khoản bị khoá hoặc đã đổi vai trò trước khi chuyển tiếp, không chuyển tiếp khi kiểm tra tài khoản lỗi, 503 khi AuthService không phản hồi |
 | MovieService | 20 | Suất chiếu, trùng lịch, huỷ suất và event, ghế, sweetbox, đổi số ghế, giá theo loại ghế |
-| BookingService | 58 | Đặt vé, giữ ghế, webhook, hết hạn, trả muộn, hoàn tiền, RabbitMQ thật, phân quyền, check-in, thống kê, doanh thu, bán vé tại quầy |
-| Flutter | 168 | Widget test các màn khách và quản trị, validator, luồng thanh toán, check-in, quầy |
+| BookingService | 60 | Đặt vé, giữ ghế, webhook, hết hạn, trả muộn, hoàn tiền, RabbitMQ thật, phân quyền, check-in, thống kê, doanh thu, bán vé tại quầy |
+| Flutter | 169 | Widget test các màn khách và quản trị, validator, luồng thanh toán, check-in, quầy |
 
 Test tích hợp backend chạy với PostgreSQL và RabbitMQ thật (Testcontainers); PayOS, MovieService, SMTP được thay bằng bản giả.
 
@@ -640,7 +640,6 @@ Test tích hợp backend chạy với PostgreSQL và RabbitMQ thật (Testcontai
 
 | Giới hạn | Ảnh hưởng | Hướng xử lý |
 |---|---|---|
-| Mã đơn PayOS = id booking, tài khoản PayOS dùng chung | DB local có thể trùng mã đơn đã tồn tại → không tạo được link cho booking đó | Dùng mã đơn duy nhất toàn cục khi triển khai thật |
 | PayOS không có API hoàn tiền | Hoàn tiền phải chuyển khoản tay | Tích hợp cổng có API hoàn tiền nếu cần |
 | Chưa có đổi mật khẩu bằng mật khẩu cũ, chưa sửa hồ sơ | Đổi mật khẩu dùng luồng OTP | Bổ sung endpoint |
 | Tìm phim ở trang chủ lọc trên danh sách đã tải | Không tìm được phim chưa tải | Gọi `GET /api/v1/movies/search` |

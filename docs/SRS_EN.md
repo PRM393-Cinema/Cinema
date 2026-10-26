@@ -139,7 +139,7 @@ An account can have several roles. A Staff or Admin account signed in to the cus
 
 - PayOS and SMTP (Gmail App Password) are external services. Without PayOS keys only PayOS payments fail; without SMTP no real email is sent (OTP codes are written to the log in Development).
 - The PayOS webhook needs a public address (a tunnel when running locally). Without the webhook the app still confirms payments by asking PayOS (verify).
-- The PayOS account is shared across environments. The PayOS order code is the booking id, so a local database can reuse an order code that already exists (see section 14).
+- The PayOS account is shared by several environments (each developer's machine, Docker) and PayOS refuses repeated order codes, so order codes are generated not to repeat across environments (FR-PAY-01).
 
 ### 2.7 Out of scope
 
@@ -288,8 +288,8 @@ Priority: **H** (must have), **M** (important), **L** (nice to have).
 
 | ID | Requirement | Priority |
 |---|---|---|
-| FR-PAY-01 | Create a PayOS payment link for a `PENDING` booking. One payment per booking; asking again returns the existing link. The PayOS order code is the booking id; the link expires with the seat hold. | H |
-| FR-PAY-02 | Verify a payment by order code: paid at PayOS means payment `SUCCESS` and booking `CONFIRMED`; cancelled on the PayOS page means payment `FAILED`, booking `CANCELLED` and seats released at once. Calling it again is safe. | H |
+| FR-PAY-01 | Create a PayOS payment link for a `PENDING` booking. One payment per booking; asking again returns the existing link. The PayOS order code is the booking id × 1,000,000 plus the six random digits that end the booking code: stable per booking and never repeating an order of another environment on the shared PayOS account. The link expires with the seat hold. | H |
+| FR-PAY-02 | Verify a payment by order code (or booking id): paid at PayOS means payment `SUCCESS` and booking `CONFIRMED`; cancelled on the PayOS page means payment `FAILED`, booking `CANCELLED` and seats released at once. Calling it again is safe. | H |
 | FR-PAY-03 | Show a payment: to the ticket owner or to Staff/Admin. | H |
 | FR-PAY-04 | Customers see their payment history. | M |
 | FR-PAY-05 | Show the payments of a booking. | M |
@@ -613,8 +613,8 @@ Check-in is the `checkedInAt` attribute of a `CONFIRMED` ticket, not a separate 
 | AuthService | 27 | Registration, OTP and OTP lockout, sign-in, refresh rotation, sign-out, account locking, role changes, field validation |
 | ApiGateway | 21 | Blocks tokens of locked accounts and changed roles before forwarding, never forwards when the account check fails, 503 when AuthService does not answer |
 | MovieService | 20 | Showtimes, overlaps, cancellation and its event, seats, sweetbox pairs, seat counts, prices per seat type |
-| BookingService | 58 | Bookings, seat holds, webhook, expiry, late payment, refunds, real RabbitMQ, authorization, check-in, statistics, revenue, counter sales |
-| Flutter | 168 | Widget tests of customer and admin screens, validators, payment flow, check-in, counter |
+| BookingService | 60 | Bookings, seat holds, webhook, expiry, late payment, refunds, real RabbitMQ, authorization, check-in, statistics, revenue, counter sales |
+| Flutter | 169 | Widget tests of customer and admin screens, validators, payment flow, check-in, counter |
 
 Backend integration tests run against real PostgreSQL and RabbitMQ (Testcontainers); PayOS, MovieService and SMTP are replaced by fakes.
 
@@ -640,7 +640,6 @@ Backend integration tests run against real PostgreSQL and RabbitMQ (Testcontaine
 
 | Limitation | Impact | Way forward |
 |---|---|---|
-| PayOS order code = booking id on a shared PayOS account | A local database can reuse an existing order code, so no link can be created for that booking | Use globally unique order codes in production |
 | PayOS has no refund API | Refunds are manual bank transfers | Integrate a gateway with a refund API if needed |
 | No password change with the current password, no profile editing | Password changes use the OTP flow | Add the endpoints |
 | Home search filters the loaded list | Movies not loaded cannot be found | Call `GET /api/v1/movies/search` |
