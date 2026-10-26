@@ -32,6 +32,8 @@ Lệnh trong `Cinema_BE/docs` chạy trong thư mục `Cinema_BE`; lệnh Flutte
 
 Chuẩn bị máy và kịch bản demo: [DEMO.md](DEMO.md).
 
+Đặc tả yêu cầu phần mềm (SRS) 2.0 của toàn hệ thống: [tiếng Việt](docs/SRS_VI.md) · [English](docs/SRS_EN.md).
+
 ## CI
 
 Chạy cho pull request vào `dev` / `main`:
