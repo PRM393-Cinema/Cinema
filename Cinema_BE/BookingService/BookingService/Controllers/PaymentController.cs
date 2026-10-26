@@ -143,6 +143,7 @@ namespace BookingService.Controllers
 
         // Khách gọi sau khi thanh toán xong trên trang PayOS. PayOS báo đã nhận tiền
         // thì booking được xác nhận tự động và email vé được gửi đi.
+        // {orderCode}: mã đơn PayOS (trả về khi tạo link); gửi id booking cũng được.
         [HttpPost("payos/{orderCode:long}/verify")]
         public async Task<ActionResult<PaymentResponse>> VerifyPayOs(
             long orderCode,

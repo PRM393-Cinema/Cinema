@@ -141,16 +141,19 @@ namespace BookingService.Services.Implementations
 
         public async Task<PaymentResponse> GetPaymentByOrderCodeAsync(long orderCode)
         {
+            return (await FindPayOsPaymentAsync(orderCode)).ToResponse();
+        }
+
+        // Theo mã đơn PayOS. Trang thanh toán của app (và bản app cũ) gửi id booking: khi đó lấy payment
+        // PayOS mới nhất của booking. Mã đơn mới luôn lớn hơn id booking nên hai cách không lẫn nhau.
+        private async Task<Payment> FindPayOsPaymentAsync(long orderCodeOrBookingId)
+        {
             var payment = await _paymentRepository.GetByTransactionRefAsync(
-                orderCode.ToString());
+                              orderCodeOrBookingId.ToString())
+                          ?? await _paymentRepository.GetLatestPayOsByBookingIdAsync(orderCodeOrBookingId);
 
-            if (payment == null)
-            {
-                throw new KeyNotFoundException(
-                    $"Payment for PayOS order {orderCode} was not found.");
-            }
-
-            return payment.ToResponse();
+            return payment ?? throw new KeyNotFoundException(
+                $"Payment for PayOS order {orderCodeOrBookingId} was not found.");
         }
 
         public async Task<PaymentResponse> CreatePaymentAsync(
@@ -238,20 +241,28 @@ namespace BookingService.Services.Implementations
 
                 // A booking always maps to one stable PayOS order code. Retrying
                 // the same request therefore reuses the same remote payment.
-                var orderCode = GenerateOrderCode(booking.Id);
+                var orderCode = GenerateOrderCode(booking);
 
                 if (booking.PaymentId.HasValue)
                 {
+                    // Link tạo trước đây: dùng đúng mã đơn đã lưu (payment cũ có mã đơn = id booking)
                     var existingPayment = await GetPaymentAsync(booking.PaymentId.Value);
+
+                    if (!string.Equals(existingPayment.Method, "PAYOS", StringComparison.OrdinalIgnoreCase) ||
+                        !long.TryParse(existingPayment.TransactionRef, out var existingOrderCode))
+                    {
+                        throw new ConflictException("This booking already has a payment.");
+                    }
+
                     var existingLink = await _payOsClient.GetPaymentStatusAsync(
-                        orderCode);
+                        existingOrderCode);
 
                     await transaction.CommitAsync();
 
                     return new PayOsCheckoutResponse
                     {
                         paymentId = existingPayment.Id,
-                        orderCode = orderCode,
+                        orderCode = existingOrderCode,
                         checkoutUrl = existingLink.CheckoutUrl
                     };
                 }
@@ -478,14 +489,8 @@ namespace BookingService.Services.Implementations
             long orderCode,
             string? recipientEmail)
         {
-            var payment = await _paymentRepository.GetByTransactionRefAsync(
-                orderCode.ToString());
-
-            if (payment == null)
-            {
-                throw new KeyNotFoundException(
-                    $"Payment for PayOS order {orderCode} was not found.");
-            }
+            var payment = await FindPayOsPaymentAsync(orderCode);
+            orderCode = long.Parse(payment.TransactionRef!);
 
             // FAILED cũng hỏi lại PayOS: job hết hạn có thể đã đánh FAILED đúng lúc khách vừa trả tiền
             if (payment.Status is "PENDING" or "FAILED")
@@ -818,14 +823,26 @@ namespace BookingService.Services.Implementations
                 "Could not generate a unique payment code.");
         }
 
-        private static long GenerateOrderCode(long bookingId)
+        // Mã đơn PayOS = id booking × 1.000.000 + 6 số ngẫu nhiên cuối mã vé
+        // (booking 17, BK-20261026105156-195614 -> 17195614). Cố định cho mỗi booking nên gọi lại vẫn ra
+        // đúng đơn cũ. Tài khoản PayOS dùng chung cho nhiều môi trường, mà mã đơn không được trùng:
+        // chỉ dùng id booking thì id nhỏ đã có đơn ở DB khác và PayOS từ chối tạo link.
+        private static long GenerateOrderCode(Booking booking)
         {
-            if (bookingId <= 0)
+            const long suffixRange = 1_000_000;
+            const long maxOrderCode = 9_007_199_254_740_991; // giới hạn số nguyên của PayOS (2^53 - 1)
+
+            if (booking.Id <= 0 || booking.Id > (maxOrderCode - suffixRange) / suffixRange)
             {
-                throw new BusinessException("Booking id must be positive.");
+                throw new BusinessException("Booking id is out of range for a PayOS order code.");
             }
 
-            return bookingId;
+            var code = booking.BookingCode;
+            var suffix = code.Length >= 6 && int.TryParse(code[^6..], out var digits)
+                ? digits
+                : booking.CreatedAt.Ticks % suffixRange;
+
+            return booking.Id * suffixRange + suffix;
         }
     }
 }

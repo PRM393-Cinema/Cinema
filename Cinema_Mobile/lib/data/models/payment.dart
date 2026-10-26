@@ -94,7 +94,9 @@ class PayOsCheckout {
 
   final int paymentId;
 
-  // The PayOS order code is the booking id.
+  // The PayOS order code: the booking id × 1,000,000 plus the last six digits
+  // of its booking code, so it never repeats an order that another
+  // environment made on the shared PayOS account.
   final int orderCode;
   final String? checkoutUrl;
 

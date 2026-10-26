@@ -113,18 +113,19 @@ public class CounterSaleTests
         var checkout = await CounterCheckoutAsync(id, total);
         Assert.Equal(HttpStatusCode.OK, checkout.StatusCode);
         var link = await checkout.Content.ReadFromJsonAsync<JsonElement>();
-        Assert.Equal(id, link.GetProperty("orderCode").GetInt64());
+        var orderCode = link.GetProperty("orderCode").GetInt64();
         Assert.False(string.IsNullOrEmpty(link.GetProperty("qrCode").GetString()));
         var transferPaymentId = link.GetProperty("paymentId").GetInt64();
 
         var cash = await PayCashAsync(id, total);
         Assert.Equal(HttpStatusCode.OK, cash.StatusCode);
-        Assert.Contains(id, _factory.PayOs.CancelledLinks);
+        Assert.Contains(orderCode, _factory.PayOs.CancelledLinks);
         Assert.Equal("FAILED", (await _staff.GetFromJsonAsync<JsonElement>($"/api/v1/payments/{transferPaymentId}"))
             .GetProperty("status").GetString());
 
         // Kiểm tra lại đơn chuyển khoản đã huỷ không làm mất vé đã trả tiền mặt
-        Assert.Equal(HttpStatusCode.OK, (await _staff.PostAsync($"/api/v1/payments/payos/{id}/verify", null)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK,
+            (await _staff.PostAsync($"/api/v1/payments/payos/{orderCode}/verify", null)).StatusCode);
         Assert.Equal("CONFIRMED", (await _staff.GetFromJsonAsync<JsonElement>($"/api/v1/bookings/{id}"))
             .GetProperty("status").GetString());
     }
@@ -136,15 +137,17 @@ public class CounterSaleTests
         var booking = await CreateWalkInAsync(showtime.Id, phone: null, NewSeat());
         var id = booking.GetProperty("id").GetInt64();
         var total = booking.GetProperty("totalAmount").GetDecimal();
-        Assert.Equal(HttpStatusCode.OK, (await CounterCheckoutAsync(id, total)).StatusCode);
+        var orderCode = (await (await CounterCheckoutAsync(id, total)).Content.ReadFromJsonAsync<JsonElement>())
+            .GetProperty("orderCode").GetInt64();
 
-        _factory.PayOs.Statuses[id] = "PAID";
+        _factory.PayOs.Statuses[orderCode] = "PAID";
         var cash = await PayCashAsync(id, total);
         Assert.Equal(HttpStatusCode.Conflict, cash.StatusCode);
         Assert.Contains("already paid this booking by bank transfer", await cash.Content.ReadAsStringAsync());
 
         // Email khách cho ở quầy được lưu vào vé
-        var verified = await _staff.PostAsync($"/api/v1/payments/payos/{id}/verify?recipientEmail=chuyenkhoan@test.local", null);
+        var verified = await _staff.PostAsync(
+            $"/api/v1/payments/payos/{orderCode}/verify?recipientEmail=chuyenkhoan@test.local", null);
         Assert.Equal("SUCCESS", (await verified.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("status").GetString());
         var confirmed = await _staff.GetFromJsonAsync<JsonElement>($"/api/v1/bookings/{id}");
         Assert.Equal("CONFIRMED", confirmed.GetProperty("status").GetString());

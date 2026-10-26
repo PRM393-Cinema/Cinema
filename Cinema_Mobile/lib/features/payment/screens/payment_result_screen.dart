@@ -70,8 +70,21 @@ class _PaymentResultScreenState extends State<PaymentResultScreen> {
         }
       }
 
-      final booking = await widget.bookingRepository.getBooking(args.bookingId);
+      // Back from PayOS on the web, the route carries the PayOS order code,
+      // not the booking id: the verified payment says which booking it is.
+      final booking = await widget.bookingRepository.getBooking(
+        payment?.bookingId ?? args.bookingId,
+      );
       if (!mounted) return;
+
+      if (booking.id != args.bookingId) {
+        Navigator.pushReplacementNamed(
+          context,
+          AppRoutes.paymentResult(booking.id),
+          arguments: PaymentResultArgs(bookingId: booking.id, payment: payment),
+        );
+        return;
+      }
 
       setState(() {
         _payment = payment;
