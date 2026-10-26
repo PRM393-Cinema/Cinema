@@ -55,10 +55,10 @@ Khách dùng app (web hoặc điện thoại). Nhân viên và admin dùng **tra
 4. **Pay with PayOS** mở trang thanh toán PayOS thật. Không cần trả tiền: trong thư mục `Cinema\Cinema_BE`, giả lập PayOS báo đã nhận tiền:
 
    ```powershell
-   .\scripts\payos-webhook.ps1 -OrderCode <id vé> -Amount <tổng tiền>
+   .\scripts\payos-webhook.ps1 -BookingId <id vé>
    ```
 
-   Id vé là số trong địa chỉ trang thanh toán trên bản web (`#/bookings/<id>/payment`). Vài giây sau app tự chuyển sang **Payment successful** và email vé được gửi.
+   Id vé là số trong địa chỉ trang thanh toán trên bản web (`#/bookings/<id>/payment`); script tự lấy mã đơn PayOS và số tiền. Vài giây sau app tự chuyển sang **Payment successful** và email vé được gửi.
 5. Tab **Tickets**: vé nằm trong **Active**, mở xem chi tiết.
 
 ### B. Hoàn tiền (khoảng 3 phút)

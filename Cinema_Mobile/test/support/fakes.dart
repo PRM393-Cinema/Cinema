@@ -256,6 +256,9 @@ class FakeBookingRepository implements BookingRepository {
   final verifiedIds = <int>[];
   final checkoutBookingIds = <int>[];
 
+  // PayOS order codes and their bookings; verify takes either, like the API.
+  final orderCodes = <int, int>{};
+
   void _store(Booking booking) {
     bookings = [
       for (final existing in bookings)
@@ -325,16 +328,19 @@ class FakeBookingRepository implements BookingRepository {
   @override
   Future<PayOsCheckout> startPayOsCheckout(Booking booking) async {
     checkoutBookingIds.add(booking.id);
+    final orderCode = booking.id * 1000000 + 195614;
+    orderCodes[orderCode] = booking.id;
     return PayOsCheckout(
       paymentId: 501,
-      orderCode: booking.id,
+      orderCode: orderCode,
       checkoutUrl: checkoutUrl,
     );
   }
 
   @override
-  Future<PaymentInfo> verifyPayOsPayment(int bookingId) async {
-    verifiedIds.add(bookingId);
+  Future<PaymentInfo> verifyPayOsPayment(int orderCodeOrBookingId) async {
+    verifiedIds.add(orderCodeOrBookingId);
+    final bookingId = orderCodes[orderCodeOrBookingId] ?? orderCodeOrBookingId;
     // Mirror the backend: a successful payment confirms the booking.
     if (verifyResult.status == PaymentStatus.success) {
       final booking = await getBooking(bookingId);
@@ -355,7 +361,16 @@ class FakeBookingRepository implements BookingRepository {
         ),
       );
     }
-    return verifyResult;
+    return PaymentInfo(
+      id: verifyResult.id,
+      paymentCode: verifyResult.paymentCode,
+      bookingId: bookingId,
+      amount: verifyResult.amount,
+      status: verifyResult.status,
+      method: verifyResult.method,
+      transactionRef: verifyResult.transactionRef,
+      createdAt: verifyResult.createdAt,
+    );
   }
 
   @override

@@ -7,10 +7,13 @@ Key PayOS đặt ở đâu: [SETUP_SECRETS.md mục 6](SETUP_SECRETS.md#6-payos-
 1. `POST /api/v1/bookings`: booking `PENDING`, giữ ghế **10 phút** (`expiresAt`). Giờ chiếu và tên phim do server lấy từ MovieService, email nhận vé lấy từ token của khách.
 2. `POST /api/v1/payments/payos/checkout`: chưa có payment thì tạo mới; đã có thì trả link PayOS cũ theo cùng `orderCode`, không tạo thêm payment. API tra cứu PayOS trả ID link, server khôi phục URL `https://pay.payos.vn/web/{id}` khi link còn `PENDING`. App hiển thị **Continue with PayOS** để mở lại. Link PayOS **hết hạn cùng lúc** với thời gian giữ ghế.
 3. Khách trả tiền, PayOS gọi **webhook** về BookingService. Chữ ký hợp lệ thì payment `SUCCESS`, booking `CONFIRMED` và email vé được gửi (qua RabbitMQ).
-4. PayOS chuyển khách về `returnUrl`. App gọi `POST /api/v1/payments/payos/{orderCode}/verify` để lấy kết quả. Webhook xử lý trước rồi thì verify chỉ trả kết quả, không xác nhận lần hai. Payment `REFUND_PENDING` nghĩa là tiền đã nhận nhưng không giữ được ghế (mục 4).
+4. PayOS chuyển khách về `returnUrl` kèm `orderCode`. App gọi `POST /api/v1/payments/payos/{orderCode}/verify` để lấy kết quả (truyền id booking cũng được: server lấy payment PayOS mới nhất của booking). Webhook xử lý trước rồi thì verify chỉ trả kết quả, không xác nhận lần hai. Payment `REFUND_PENDING` nghĩa là tiền đã nhận nhưng không giữ được ghế (mục 4).
    - Khách bấm **Huỷ** trên trang PayOS (về `cancelUrl`): verify chuyển payment `FAILED`, booking `CANCELLED` và nhả ghế ngay.
 
-`orderCode` của PayOS chính là id của booking.
+**Mã đơn (`orderCode`)** = id booking × 1.000.000 + 6 số ngẫu nhiên cuối mã vé. Ví dụ booking 17, mã vé `BK-20261026105156-195614` → `17195614`. Mã được lưu ở `payments.transaction_ref`.
+- Mã cố định cho mỗi booking: gọi checkout lại vẫn ra đúng đơn cũ.
+- Tài khoản PayOS dùng chung cho nhiều môi trường (máy của từng người, Docker), mà PayOS không cho trùng mã đơn. Trước đây mã đơn chính là id booking, nên id nhỏ đã có đơn ở DB khác và PayOS từ chối tạo link ("The existing PayOS order does not match this booking"). Mã mới gần như không trùng giữa các môi trường: phải cùng id booking và cùng 6 số ngẫu nhiên.
+- Payment tạo trước khi đổi vẫn giữ mã cũ (= id booking) và vẫn dùng được.
 
 **Tại quầy** (Staff/Admin): cùng endpoint checkout, Staff không gửi `userId` (vé khách vãng lai không có tài khoản). Link vừa tạo có thêm `qrCode` (chuỗi VietQR), màn **Take payment** hiện mã này để khách quét bằng app ngân hàng; link tạo từ trước thì PayOS không trả lại chuỗi này, màn hình hiện QR của `checkoutUrl`. Khách đổi sang trả tiền mặt (`POST /api/v1/payments/cash`): server huỷ link PayOS rồi mới ghi tiền mặt; PayOS báo đơn đã được trả thì từ chối (409).
 
@@ -74,7 +77,7 @@ Email và yêu cầu hoàn tiền khi huỷ vé được xử lý qua RabbitMQ (
 Tạo booking và link PayOS như bình thường, rồi giả lập PayOS báo đã thanh toán:
 
 ```powershell
-.\scripts\payos-webhook.ps1 -OrderCode <bookingId> -Amount <totalAmount>
+.\scripts\payos-webhook.ps1 -BookingId <id booking>
 ```
 
-Script ký request bằng `PAYOS_CHECKSUM_KEY` trong `.env`, giống cách PayOS ký, rồi gọi webhook qua gateway (`http://localhost:5000`). Chạy BookingService bằng Visual Studio thì thêm `-BaseUrl http://localhost:5063 -ChecksumKey <key trong User Secrets>`.
+Script lấy mã đơn và số tiền của booking trong database Docker, ký request bằng `PAYOS_CHECKSUM_KEY` trong `.env` (giống cách PayOS ký), rồi gọi webhook qua gateway (`http://localhost:5000`). Chạy BookingService bằng Visual Studio thì truyền mã đơn và số tiền: `-OrderCode <transaction_ref của payment PAYOS> -Amount <totalAmount> -BaseUrl http://localhost:5063 -ChecksumKey <key trong User Secrets>`.

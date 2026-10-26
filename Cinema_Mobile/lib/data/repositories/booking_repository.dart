@@ -96,7 +96,8 @@ class RemoteBookingRepository implements BookingRepository {
 
   @override
   Future<PaymentInfo> verifyPayOsPayment(int bookingId) {
-    // The PayOS order code is the booking id.
+    // The server takes the PayOS order code or the booking id and checks the
+    // booking's PayOS payment.
     return _bookingService.verifyPayOsPayment(bookingId);
   }
 

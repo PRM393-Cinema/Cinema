@@ -134,6 +134,14 @@ namespace BookingService.Repositories.Impl
                     p.TransactionRef == transactionRef);
         }
 
+        public async Task<Payment?> GetLatestPayOsByBookingIdAsync(long bookingId)
+        {
+            return await _context.Payments
+                .Where(p => p.BookingId == bookingId && p.Method == "PAYOS")
+                .OrderByDescending(p => p.Id)
+                .FirstOrDefaultAsync();
+        }
+
         public async Task<PagedList<Payment>> GetByStatusAsync(
             string status,
             int pageNumber,

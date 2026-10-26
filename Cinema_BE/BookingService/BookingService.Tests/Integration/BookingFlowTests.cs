@@ -77,13 +77,13 @@ public class BookingFlowTests
         var id = booking.GetProperty("id").GetInt64();
         var amount = booking.GetProperty("totalAmount").GetDecimal();
 
-        Assert.Equal(HttpStatusCode.OK, (await CheckoutAsync(_customerA, id, amount)).StatusCode);
+        var orderCode = await CheckoutOrderCodeAsync(_customerA, id, amount);
 
         // Link PayOS hết hạn đúng lúc hết thời gian giữ ghế (PostgreSQL lưu tới micro giây)
-        var linkExpiresAt = _factory.PayOs.LinkExpiresAt[id]!.Value;
+        var linkExpiresAt = _factory.PayOs.LinkExpiresAt[orderCode]!.Value;
         Assert.True(Math.Abs((booking.GetProperty("expiresAt").GetDateTime() - linkExpiresAt).TotalMilliseconds) < 1);
 
-        var webhook = await SendWebhookAsync(_factory.CreateClient(), id, amount);
+        var webhook = await SendWebhookAsync(_factory.CreateClient(), orderCode, amount);
         Assert.Equal(HttpStatusCode.OK, webhook.StatusCode);
 
         var confirmed = await _customerA.GetFromJsonAsync<JsonElement>($"/api/v1/bookings/{id}");
@@ -95,7 +95,7 @@ public class BookingFlowTests
         Assert.Equal("0011223344", payment.PayerAccountNumber);
 
         // PayOS gửi lại webhook: không xác nhận / phát event lần hai
-        Assert.Equal(HttpStatusCode.OK, (await SendWebhookAsync(_factory.CreateClient(), id, amount)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await SendWebhookAsync(_factory.CreateClient(), orderCode, amount)).StatusCode);
         Assert.Single(await _factory.OutboxEventsAsync<BookingDbContext>(EventTypes.BookingConfirmed, id));
     }
 
@@ -106,9 +106,9 @@ public class BookingFlowTests
         var booking = await CreateBookingAsync(_customerA, showtime.Id, NewSeat());
         var id = booking.GetProperty("id").GetInt64();
         var amount = booking.GetProperty("totalAmount").GetDecimal();
-        await CheckoutAsync(_customerA, id, amount);
+        var orderCode = await CheckoutOrderCodeAsync(_customerA, id, amount);
 
-        var response = await SendWebhookAsync(_factory.CreateClient(), id, amount, checksumKey: "forged-key");
+        var response = await SendWebhookAsync(_factory.CreateClient(), orderCode, amount, checksumKey: "forged-key");
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Equal("PENDING", await PaymentStatusAsync(id));
@@ -122,7 +122,7 @@ public class BookingFlowTests
         var booking = await CreateBookingAsync(_customerA, showtime.Id, seat);
         var id = booking.GetProperty("id").GetInt64();
         var amount = booking.GetProperty("totalAmount").GetDecimal();
-        await CheckoutAsync(_customerA, id, amount);
+        var orderCode = await CheckoutOrderCodeAsync(_customerA, id, amount);
 
         await ExpireHoldAsync(id);
         await _factory.ExecuteAsync<IBookingService>(service => service.ExpireOverdueBookingsAsync(100));
@@ -134,7 +134,7 @@ public class BookingFlowTests
         await CreateBookingAsync(_customerB, showtime.Id, seat);
 
         // Khách A trả tiền muộn: không giữ được ghế -> tự tạo yêu cầu hoàn tiền
-        Assert.Equal(HttpStatusCode.OK, (await SendWebhookAsync(_factory.CreateClient(), id, amount)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await SendWebhookAsync(_factory.CreateClient(), orderCode, amount)).StatusCode);
 
         Assert.Equal("EXPIRED", await BookingStatusAsync(id));
         Assert.Equal("REFUND_PENDING", await PaymentStatusAsync(id));
@@ -149,9 +149,10 @@ public class BookingFlowTests
         var seat = NewSeat();
         var booking = await CreateBookingAsync(_customerA, showtime.Id, seat);
         var id = booking.GetProperty("id").GetInt64();
-        await CheckoutAsync(_customerA, id, booking.GetProperty("totalAmount").GetDecimal());
+        var orderCode = await CheckoutOrderCodeAsync(_customerA, id, booking.GetProperty("totalAmount").GetDecimal());
 
-        _factory.PayOs.Statuses[id] = "CANCELLED";
+        // App gửi id booking khi xác minh: server tìm payment PayOS của booking
+        _factory.PayOs.Statuses[orderCode] = "CANCELLED";
         var verify = await _customerA.PostAsync($"/api/v1/payments/payos/{id}/verify", null);
 
         Assert.Equal(HttpStatusCode.OK, verify.StatusCode);

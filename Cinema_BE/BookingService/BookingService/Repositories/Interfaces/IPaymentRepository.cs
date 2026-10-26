@@ -33,6 +33,8 @@ namespace BookingService.Repositories.Interfaces
 
         Task<Payment?> GetByTransactionRefAsync(string transactionRef);
 
+        Task<Payment?> GetLatestPayOsByBookingIdAsync(long bookingId);
+
         Task<PagedList<Payment>> GetByStatusAsync(string status, int pageNumber, int pageSize, string sortBy, string sortDir);
 
         Task<bool> ExistsByPaymentCodeAsync(string paymentCode);

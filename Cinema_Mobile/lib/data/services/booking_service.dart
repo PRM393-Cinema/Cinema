@@ -106,7 +106,8 @@ class BookingService {
   }
 
   // Asks PayOS for the payment result. A paid order confirms the booking and
-  // a cancelled one releases its seats; calling it again is safe.
+  // a cancelled one releases its seats; calling it again is safe. Takes the
+  // PayOS order code or the booking id.
   Future<PaymentInfo> verifyPayOsPayment(int orderCode) async {
     final response = await _apiClient.post(
       '/api/v1/payments/payos/$orderCode/verify',

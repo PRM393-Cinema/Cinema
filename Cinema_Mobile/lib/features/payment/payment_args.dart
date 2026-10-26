@@ -26,6 +26,8 @@ class PayOsReturn {
 class PaymentResultArgs {
   const PaymentResultArgs({required this.bookingId, this.payment});
 
+  // The booking, or the PayOS order code when PayOS sent the browser back:
+  // the result page then finds the booking from the verified payment.
   final int bookingId;
 
   // Result of a verify call made before opening the screen. When null the

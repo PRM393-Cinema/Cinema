@@ -550,6 +550,29 @@ void main() {
       expect(find.text('Step Into CosmoQ Cinema'), findsOneWidget);
     });
 
+    testWidgets('PayOS sends back its order code, not the booking id', (
+      WidgetTester tester,
+    ) async {
+      final bookings = FakeBookingRepository(
+        bookings: [bookingFixture(id: 101)],
+      )..orderCodes[101195614] = 101;
+      await tester.pumpWidget(
+        buildTestApp(
+          authenticated: true,
+          bookingRepository: bookings,
+          paymentReturn: PayOsReturn.fromUri(
+            Uri.parse(
+              'http://localhost:8090/?code=00&id=abc&cancel=false&status=PAID&orderCode=101195614',
+            ),
+          ),
+        ),
+      );
+      await pumpRoute(tester);
+
+      expect(bookings.verifiedIds.first, 101195614);
+      expect(find.text('Payment successful'), findsOneWidget);
+    });
+
     testWidgets('Cancelled PayOS payment shows payment not completed', (
       WidgetTester tester,
     ) async {
