@@ -268,6 +268,7 @@ Mức ưu tiên: **H** (bắt buộc), **M** (quan trọng), **L** (bổ trợ).
 | FR-SHOW-10 | Mở / đóng bán suất chiếu (`OPEN` ↔ `CLOSED`). | M |
 | FR-SHOW-11 | Trùng lịch trong cùng phòng trả 409. | H |
 | FR-SHOW-12 | Sơ đồ ghế của suất chiếu cho Staff: ghế trống / chờ thanh toán / đã bán / đã check-in, bấm ghế mở vé, kèm danh sách khách (email, ghế, mã vé, giờ check-in); tự làm mới mỗi 5 giây. | M |
+| FR-SHOW-13 | Mỗi suất chiếu có **định dạng 2D / 3D / IMAX** (mặc định 2D, bỏ trống khi sửa thì giữ nguyên, định dạng khác bị 400). Giá suất lưu là giá ghế thường ở 2D; 3D cộng 20.000đ, IMAX cộng 40.000đ vào giá ghế thường rồi mới tính phụ thu VIP / sweetbox. Giá ghế khách thấy và giá BookingService tính tiền đều gồm phụ thu. App ghi định dạng cạnh số phòng (ví dụ "Room 1 · IMAX"). | M |
 
 ### 4.6 Đặt vé
 
@@ -525,7 +526,7 @@ Check-in là thuộc tính `checkedInAt` của vé `CONFIRMED`, không phải m�
 |---|---|---|
 | `cinema_auth_db` | `users`, `roles`, `users_roles`, `refresh_tokens`, `otp_codes` | Mật khẩu và OTP chỉ lưu hash BCrypt; email duy nhất |
 | `cinema_movie_db` | `movies` | Trạng thái `ACTIVE` / `INACTIVE`; phân loại `age_rating` P / K / T13 / T16 / T18 |
-| `cinema_showtime_db` | `rooms`, `seats`, `showtimes`, `outbox_messages` | Ghế duy nhất theo (phòng, hàng, số); loại ghế NORMAL / VIP / SWEETBOX |
+| `cinema_showtime_db` | `rooms`, `seats`, `showtimes`, `outbox_messages` | Ghế duy nhất theo (phòng, hàng, số); loại ghế NORMAL / VIP / SWEETBOX; định dạng suất 2D / 3D / IMAX |
 | `cinema_booking_db` | `bookings`, `booking_seats`, `seat_reservations`, `concession_items`, `booking_concessions`, `promotions`, `loyalty_accounts`, `loyalty_transactions`, `outbox_messages` | `user_id` NULL cho khách vãng lai; `customer_email`, `customer_phone`, `checked_in_at`, `expires_at` |
 | `cinema_payment_db` | `payments`, `refunds`, `outbox_messages` | Phương thức `PAYOS` / `CASH`; thông tin tài khoản người trả để hoàn tiền |
 | `cinema_notification_db` | `notifications` | Duy nhất theo `event_id` để không gửi trùng |
@@ -626,9 +627,9 @@ Check-in là thuộc tính `checkedInAt` của vé `CONFIRMED`, không phải m�
 |---|---|---|
 | AuthService | 28 | Đăng ký, OTP và khoá OTP, đăng nhập, refresh xoay vòng, đăng xuất, khoá tài khoản, đổi vai trò, validate dữ liệu |
 | ApiGateway | 21 | Chặn token của tài khoản bị khoá hoặc đã đổi vai trò trước khi chuyển tiếp, không chuyển tiếp khi kiểm tra tài khoản lỗi, 503 khi AuthService không phản hồi |
-| MovieService | 22 | Suất chiếu, trùng lịch, huỷ suất và event, ghế, sweetbox, đổi số ghế, giá theo loại ghế |
+| MovieService | 23 | Suất chiếu, trùng lịch, huỷ suất và event, ghế, sweetbox, đổi số ghế, giá theo loại ghế |
 | BookingService | 69 | Đặt vé, giữ ghế, webhook, hết hạn, trả muộn, hoàn tiền, RabbitMQ thật, phân quyền, check-in, thống kê, doanh thu, bán vé tại quầy |
-| Flutter | 188 | Widget test các màn khách và quản trị, validator, luồng thanh toán, check-in, quầy |
+| Flutter | 191 | Widget test các màn khách và quản trị, validator, luồng thanh toán, check-in, quầy |
 
 Test tích hợp backend chạy với PostgreSQL và RabbitMQ thật (Testcontainers); PayOS, MovieService, SMTP được thay bằng bản giả.
 

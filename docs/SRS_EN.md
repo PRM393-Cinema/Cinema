@@ -268,6 +268,7 @@ Priority: **H** (must have), **M** (important), **L** (nice to have).
 | FR-SHOW-10 | Open / close sales of a showtime (`OPEN` ↔ `CLOSED`). | M |
 | FR-SHOW-11 | Overlapping showtimes in one room return 409. | H |
 | FR-SHOW-12 | Staff see a showtime's seat map (free / awaiting payment / sold / checked in), open a ticket by clicking its seat, and see the customer list (email, seats, booking code, check-in time); refreshed every 5 seconds. | M |
+| FR-SHOW-13 | Every showtime has a **format: 2D, 3D or IMAX** (2D by default, kept when left out on edit, anything else refused with 400). The stored price is the standard seat at 2D; 3D adds 20,000 VND and IMAX 40,000 VND to the standard seat before the VIP / sweetbox surcharges. Seat prices shown to customers and charged by BookingService include it. The app names the format next to the room (e.g. "Room 1 · IMAX"). | M |
 
 ### 4.6 Bookings
 
@@ -525,7 +526,7 @@ Check-in is the `checkedInAt` attribute of a `CONFIRMED` ticket, not a separate 
 |---|---|---|
 | `cinema_auth_db` | `users`, `roles`, `users_roles`, `refresh_tokens`, `otp_codes` | Passwords and OTP codes stored only as BCrypt hashes; unique email |
 | `cinema_movie_db` | `movies` | Status `ACTIVE` / `INACTIVE`; rating `age_rating` P / K / T13 / T16 / T18 |
-| `cinema_showtime_db` | `rooms`, `seats`, `showtimes`, `outbox_messages` | Seat unique by (room, row, number); seat type NORMAL / VIP / SWEETBOX |
+| `cinema_showtime_db` | `rooms`, `seats`, `showtimes`, `outbox_messages` | Seat unique by (room, row, number); seat type NORMAL / VIP / SWEETBOX; showtime format 2D / 3D / IMAX |
 | `cinema_booking_db` | `bookings`, `booking_seats`, `seat_reservations`, `concession_items`, `booking_concessions`, `promotions`, `loyalty_accounts`, `loyalty_transactions`, `outbox_messages` | `user_id` NULL for walk-in guests; `customer_email`, `customer_phone`, `checked_in_at`, `expires_at` |
 | `cinema_payment_db` | `payments`, `refunds`, `outbox_messages` | Method `PAYOS` / `CASH`; payer account kept for refunds |
 | `cinema_notification_db` | `notifications` | Unique by `event_id` so nothing is sent twice |
@@ -626,9 +627,9 @@ Check-in is the `checkedInAt` attribute of a `CONFIRMED` ticket, not a separate 
 |---|---|---|
 | AuthService | 28 | Registration, OTP and OTP lockout, sign-in, refresh rotation, sign-out, account locking, role changes, field validation |
 | ApiGateway | 21 | Blocks tokens of locked accounts and changed roles before forwarding, never forwards when the account check fails, 503 when AuthService does not answer |
-| MovieService | 22 | Showtimes, overlaps, cancellation and its event, seats, sweetbox pairs, seat counts, prices per seat type |
+| MovieService | 23 | Showtimes, overlaps, cancellation and its event, seats, sweetbox pairs, seat counts, prices per seat type |
 | BookingService | 69 | Bookings, seat holds, webhook, expiry, late payment, refunds, real RabbitMQ, authorization, check-in, statistics, revenue, counter sales |
-| Flutter | 188 | Widget tests of customer and admin screens, validators, payment flow, check-in, counter |
+| Flutter | 191 | Widget tests of customer and admin screens, validators, payment flow, check-in, counter |
 
 Backend integration tests run against real PostgreSQL and RabbitMQ (Testcontainers); PayOS, MovieService and SMTP are replaced by fakes.
 

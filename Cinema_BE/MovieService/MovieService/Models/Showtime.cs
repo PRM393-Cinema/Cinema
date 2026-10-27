@@ -19,5 +19,7 @@ public partial class Showtime
 
     public string Status { get; set; } = null!;
 
+    public string Format { get; set; } = "2D"; // 2D / 3D / IMAX
+
     public virtual Room Room { get; set; } = null!;
 }

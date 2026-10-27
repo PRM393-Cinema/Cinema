@@ -93,7 +93,7 @@ namespace ShowtimeService.Service.Impl
                 {
                     SeatId = s.Id,
                     SeatLabel = $"{s.SeatRow}{s.SeatNumber}",
-                    Price = SeatPrices.For(showtime.Price, s.SeatType)
+                    Price = SeatPrices.For(showtime.Price, s.SeatType, showtime.Format)
                 })
                 .ToList();
         }
@@ -152,6 +152,7 @@ namespace ShowtimeService.Service.Impl
             }
 
             request.Status = NormalizeEditableStatus(request.Status) ?? Open;
+            request.Format = NormalizeFormat(request.Format) ?? ShowtimeFormats.TwoD;
 
             var hasConflict = await _showtimeRepository
                 .HasScheduleConflictAsync(
@@ -202,6 +203,7 @@ namespace ShowtimeService.Service.Impl
 
             // Không gửi status thì giữ nguyên trạng thái hiện tại
             request.Status = NormalizeEditableStatus(request.Status) ?? existingShowtime.Status;
+            request.Format = NormalizeFormat(request.Format) ?? existingShowtime.Format;
 
             var hasConflict = await _showtimeRepository
                 .HasScheduleConflictAsync(
@@ -428,6 +430,18 @@ namespace ShowtimeService.Service.Impl
                 _ => throw new BusinessException(
                     "Status must be OPEN or CLOSED.")
             };
+        }
+
+        // null khi bỏ trống; định dạng lạ thì 400
+        private static string? NormalizeFormat(string? format)
+        {
+            var normalized = ShowtimeFormats.Normalize(format);
+            if (normalized != null && !ShowtimeFormats.IsValid(normalized))
+            {
+                throw new BusinessException("Format must be 2D, 3D or IMAX.");
+            }
+
+            return normalized;
         }
 
         private static void ValidateShowtimeRequest(

@@ -6,7 +6,7 @@ Mỗi service có một project test xUnit nằm cạnh project chính, và đã
 |---|---|---|
 | AuthService | `AuthService/AuthService.Tests` | 28 |
 | ApiGateway | `ApiGateway/ApiGateway.Tests` | 21 |
-| MovieService | `MovieService/MovieService.Tests` | 22 |
+| MovieService | `MovieService/MovieService.Tests` | 23 |
 | BookingService | `BookingService/BookingService.Tests` | 69 |
 
 ## 1. Chạy test
@@ -44,6 +44,7 @@ Mỗi service chạy xong trong khoảng 15–30 giây.
 | Check-in | Staff tra vé theo mã (QR), check-in một lần; vé chưa trả tiền, đã huỷ, chưa tới giờ hoặc đã check-in bị 409; khách không tra / check-in được; sơ đồ ghế đã đặt của suất (kèm email khách); thống kê vé theo suất (đã bán, đang giữ, đã check-in) theo id và theo giờ chiếu | `BookingService.Tests/Integration/CheckInTests.cs` |
 | Trang chủ | Tab đang chiếu / sắp chiếu tách theo ngày khởi chiếu (phim khởi chiếu hôm nay là đang chiếu), sắp chiếu xếp khởi chiếu sớm nhất trước, phim đã ngừng không hiện; lọc thể loại và tìm tên không phân biệt hoa thường, `%` không phải ký tự đại diện; danh sách thể loại không trùng; `when` sai bị 400 | `MovieService.Tests/Integration/BrowseMoviesTests.cs` |
 | Phim | Ngừng / chiếu lại phim chỉ Admin; phân loại phim mặc định P, bỏ trống khi sửa thì giữ nguyên, mức không có (vd `C18`) bị 400 | `MovieService.Tests/Integration/AdminCatalogTests.cs` |
+| Định dạng suất chiếu | IMAX cộng 40.000đ, 3D cộng 20.000đ vào ghế thường rồi mới tính VIP / sweetbox; giá ghế gửi BookingService gồm phụ thu; bỏ trống khi sửa thì giữ nguyên; mặc định 2D; định dạng lạ bị 400 | `MovieService.Tests/Integration/ShowtimeFormatTests.cs` |
 | Suất chiếu | Quyền, trùng lịch 409, suất còn đặt được theo phim, huỷ mềm và ghi event `showtime.cancelled` | `MovieService.Tests/Integration/ShowtimeTests.cs` |
 | Sơ đồ ghế | Sinh ghế một lần, đổi loại ghế; đổi số ghế lấp hàng cuối rồi sang hàng mới, bớt từ ghế cuối, chỉ Admin, không quá hàng Z, chặn khi phòng có suất chiếu. Sweetbox theo cặp (1-2, 3-4): đổi loại cả cặp (cả khi tô nhiều ghế một lần; hàng có ghế lẻ cặp bị từ chối), xoá / bớt ghế làm nửa cặp còn lại thành ghế thường, đặt vé phải đủ cặp. Giá ghế theo loại: VIP +20%, sweetbox +30% mỗi ghế, phụ thu làm tròn tới 1.000đ | `MovieService.Tests/Integration/SeatTests.cs` |
 | Bán vé tại quầy | Vé khách vãng lai (không tài khoản, số điện thoại sai bị 400); thu tiền mặt: thiếu tiền 400, khách gọi 403, trả lần hai 409, payment CASH tính vào doanh thu, email vé tới email khách cho ở quầy, check-in ngay; vé vãng lai không email thì không gửi email nhưng vẫn hoàn tiền được; Staff tạo QR chuyển khoản (có `qrCode`) rồi khách trả tiền mặt thì link PayOS bị huỷ; khách đã chuyển khoản thì tiền mặt bị 409 | `BookingService.Tests/Integration/CounterSaleTests.cs` |

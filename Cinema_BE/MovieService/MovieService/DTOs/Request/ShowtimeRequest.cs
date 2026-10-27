@@ -22,5 +22,8 @@ namespace ShowtimeService.DTOs.Request
         public decimal Price { get; set; }
         // OPEN (mặc định) / CLOSED. Không gửi khi sửa thì giữ nguyên trạng thái hiện tại
         public string? Status { get; set; }
+
+        // 2D (mặc định) / 3D / IMAX. Không gửi khi sửa thì giữ nguyên
+        public string? Format { get; set; }
     }
 }

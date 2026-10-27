@@ -11,16 +11,18 @@ namespace MovieService.Helpers
             [SeatPairs.Sweetbox] = 0.30m
         };
 
-        public static decimal For(decimal showtimePrice, string? seatType)
+        // format: định dạng chiếu (3D / IMAX cộng phụ thu vào giá ghế thường trước)
+        public static decimal For(decimal showtimePrice, string? seatType, string? format = null)
         {
             var type = seatType?.Trim().ToUpperInvariant() ?? SeatPairs.Normal;
             var surcharge = Surcharges.GetValueOrDefault(type);
-            return showtimePrice +
-                Math.Round(showtimePrice * surcharge / 1000m, MidpointRounding.AwayFromZero) * 1000m;
+            var basePrice = showtimePrice + ShowtimeFormats.Surcharge(format);
+            return basePrice +
+                Math.Round(basePrice * surcharge / 1000m, MidpointRounding.AwayFromZero) * 1000m;
         }
 
         // Giá từng loại ghế của suất chiếu, gửi kèm suất chiếu để app hiện đúng giá ghế khách chọn
-        public static Dictionary<string, decimal> Of(decimal showtimePrice) =>
-            Surcharges.Keys.ToDictionary(type => type, type => For(showtimePrice, type));
+        public static Dictionary<string, decimal> Of(decimal showtimePrice, string? format = null) =>
+            Surcharges.Keys.ToDictionary(type => type, type => For(showtimePrice, type, format));
     }
 }

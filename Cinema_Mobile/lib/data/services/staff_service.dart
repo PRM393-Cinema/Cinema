@@ -487,6 +487,7 @@ class StaffService {
     required DateTime end,
     required double price,
     required String status,
+    String format = '2D',
   }) async {
     final body = {
       'movieId': movieId,
@@ -495,6 +496,7 @@ class StaffService {
       'endTime': end.toIso8601String(),
       'price': price,
       'status': status,
+      'format': format,
     };
     return Showtime.fromJson(
       readMap(
