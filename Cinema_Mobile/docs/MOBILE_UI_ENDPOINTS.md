@@ -1,6 +1,6 @@
 # Chức năng, endpoint và giao diện mobile
 
-Nhánh: `feat/Ngữ/UI_Update`. Đối chiếu từ controller backend, service Flutter và router hiện tại. Có **104 endpoint nghiệp vụ** trong các controller; mỗi dòng dưới đây tương ứng một method + đường dẫn. Không tính Swagger, metrics và health check.
+Nhánh: `feat/Ngữ/UI_Update`. Đối chiếu từ controller backend, service Flutter và router hiện tại. Có **106 endpoint nghiệp vụ** trong các controller; mỗi dòng dưới đây tương ứng một method + đường dẫn. Không tính Swagger, metrics và health check.
 
 “Đã nối API” nghĩa là có lời gọi thật trong code; không khẳng định đã thử end-to-end với server, SMTP hay PayOS thật.
 
@@ -16,7 +16,7 @@ Cập nhật: 12/10/2026. Đây là bảng kiểm tra kết nối API, không ph
 | Xác thực email/gửi lại OTP | `/verify-email` | POST `/api/v1/auth/verify-email`; POST `/api/v1/auth/resend-verification` | Đã nối |
 | Quên/đổi mật khẩu: gửi mã | `/forgot-password` | POST `/api/v1/auth/forgot-password` | Đã nối; Login và Account dùng cùng màn |
 | Đặt mật khẩu mới | `/reset-password` | POST `/api/v1/auth/reset-password`; POST `/api/v1/auth/logout` | Đã nối; cần email từ bước gửi mã |
-| Tài khoản/đăng xuất | `/profile` | GET `/api/v1/auth/me`; GET `/api/v1/loyalty/me`; POST `/api/v1/auth/logout` | Đã nối; thẻ thành viên: điểm, hạng, mức còn thiếu để lên hạng, lịch sử điểm |
+| Tài khoản/đăng xuất | `/profile` | GET `/api/v1/auth/me`; PUT `/api/v1/auth/me`; POST `/api/v1/auth/change-password`; GET `/api/v1/loyalty/me`; POST `/api/v1/auth/logout` | **Edit profile** (họ tên, số điện thoại), **Change password** (mật khẩu hiện tại + mới, quên thì sang luồng OTP); Đã nối; thẻ thành viên: điểm, hạng, mức còn thiếu để lên hạng, lịch sử điểm |
 | Chi tiết phim và suất chiếu | `/movies/{id}` | GET `/api/v1/movies/{id}`; GET `/api/showtimes/movie/{movieId}/open`; GET `/api/v1/reviews/movie/{movieId}` | Đã nối; nút **Watch trailer** mở `trailerUrl` của phim; đạo diễn, diễn viên; điểm trung bình, số đánh giá theo sao và đánh giá mới nhất |
 | Chọn ghế | `/showtimes/{id}/seats` | GET `/api/showtimes/{showtimeId}`; GET `/api/seats/room/{roomId}`; GET `/api/v1/bookings/showtime/{showtimeId}/occupied-seats` | Đã nối; màu theo loại ghế, hàng sweetbox ở cuối; sweetbox chọn / bỏ theo cặp (1-2, 3-4), server cũng từ chối đặt nửa cặp; giá theo loại ghế lấy từ `seatPrices` của suất chiếu; tự làm mới mỗi 5 giây, ghế đang chọn bị người khác đặt thì bỏ chọn và báo |
 | Xác nhận đặt vé | `/showtimes/{id}/summary` | GET `/api/v1/concessions`; POST `/api/v1/promotions/quote`; POST `/api/v1/bookings` | Đã nối; ghế được truyền từ màn chọn ghế; chọn bắp nước (− / +), tổng tiền gồm bắp nước; khối Promotion hiện khuyến mãi tự áp dụng và ô nhập mã (Apply), tổng tiền trừ phần giảm; phim khác P phải xác nhận độ tuổi |
@@ -70,6 +70,8 @@ Các route `/admin/*` và `/staff/*` thuộc **trang quản trị web** (`lib/ma
 | Đặt mật khẩu mới bằng OTP | POST | `/api/v1/auth/reset-password` | Mật khẩu mới + xác nhận · đã nối API | [AuthController:62](../../Cinema_BE/AuthService/AuthService/Controllers/AuthController.cs#L62) |
 | Làm mới token | POST | `/api/v1/auth/refresh` | Tự làm mới token, không có màn riêng | [AuthController:70](../../Cinema_BE/AuthService/AuthService/Controllers/AuthController.cs#L70) |
 | Thu hồi refresh token | POST | `/api/v1/auth/logout` | Tài khoản → Đăng xuất · đã nối API | [AuthController:79](../../Cinema_BE/AuthService/AuthService/Controllers/AuthController.cs#L79) |
+| Sửa hồ sơ | PUT | `/api/v1/auth/me` | Account → Edit profile: `{ fullName, phone }`, email không đổi · đã nối API | [AuthController:97](../../Cinema_BE/AuthService/AuthService/Controllers/AuthController.cs#L97) |
+| Đổi mật khẩu | POST | `/api/v1/auth/change-password` | Account → Change password: `{ currentPassword, newPassword }` → token mới, thiết bị khác bị đăng xuất; giới hạn 10 lần / phút · đã nối API | [AuthController:105](../../Cinema_BE/AuthService/AuthService/Controllers/AuthController.cs#L105) |
 | Lấy hồ sơ hiện tại | GET | `/api/v1/auth/me` | Hồ sơ tài khoản · đã nối API | [AuthController:88](../../Cinema_BE/AuthService/AuthService/Controllers/AuthController.cs#L88) |
 
 ## Phim
@@ -212,8 +214,8 @@ Các route `/admin/*` và `/staff/*` thuộc **trang quản trị web** (`lib/ma
 
 ## Kết quả đối chiếu và giới hạn
 
-1. **Đổi mật khẩu bằng mật khẩu hiện tại:** backend chưa có endpoint cho luồng ba ô trong ảnh mẫu. UI hiện dùng OTP email, có xác nhận mật khẩu mới; sau khi thành công xoá phiên local và yêu cầu đăng nhập lại.
-2. **Sửa hồ sơ:** chưa có API cập nhật hồ sơ cá nhân. Màn tài khoản đang hiển thị dữ liệu thật; không có nút lưu giả.
+1. **Đổi mật khẩu:** Account → Change password dùng mật khẩu hiện tại (`POST /api/v1/auth/change-password`) và giữ phiên đăng nhập; quên mật khẩu hiện tại thì dùng luồng OTP email.
+2. **Sửa hồ sơ:** Account → Edit profile sửa họ tên và số điện thoại (`PUT /api/v1/auth/me`); email không đổi được.
 3. **Tìm phim:** ô tìm kiếm trên Home gọi `GET /api/v1/movies/browse` (chỉ phim ACTIVE của tab đang mở); Admin → Movies dùng `GET /api/v1/movies/search` (cả phim đã ngừng).
 4. **Phân trang:** vé đã đặt hiện chỉ lấy trang đầu tối đa 50 bản ghi; thông báo và lịch sử thanh toán đã đọc đủ các trang. Hai danh sách này tải toàn bộ khi mở/làm mới, chưa tải thêm theo cuộn.
 5. **Quản trị:** quản lý user, role, phim, phòng, ghế, suất chiếu, xử lý hoàn tiền và gửi thông báo nằm trong trang quản trị web (`lib/main_admin.dart`), không có trong app khách.

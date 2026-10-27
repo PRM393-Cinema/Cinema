@@ -22,5 +22,10 @@ namespace AuthService.Service
         Task LogoutAsync(string refreshToken);
 
         Task<UserResponse> GetCurrentUserAsync(long userId);
+
+        Task<UserResponse> UpdateProfileAsync(long userId, UpdateProfileRequest request);
+
+        // Đổi mật khẩu: đăng xuất mọi thiết bị khác, trả token mới cho thiết bị đang dùng
+        Task<AuthResponse> ChangePasswordAsync(long userId, ChangePasswordRequest request);
     }
 }

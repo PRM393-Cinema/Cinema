@@ -57,6 +57,15 @@ abstract interface class AuthRepository {
   // Loads the signed-in user from the backend and updates the saved copy.
   Future<AuthUser> currentUser();
 
+  // The signed-in user changes their name and phone.
+  Future<AuthUser> updateProfile({required String fullName, String phone = ''});
+
+  // Needs the current password; keeps this device signed in.
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  });
+
   Future<void> logout();
 }
 
@@ -179,6 +188,28 @@ class RemoteAuthRepository implements AuthRepository {
 
     // An expired access token is renewed on the first request that needs it.
     return user;
+  }
+
+  @override
+  Future<AuthUser> updateProfile({
+    required String fullName,
+    String phone = '',
+  }) async {
+    final user = await _authService.updateMe(fullName: fullName, phone: phone);
+    await _tokenStorage.saveUser(user);
+    return user;
+  }
+
+  @override
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final response = await _authService.changePassword(
+      currentPassword: currentPassword,
+      newPassword: newPassword,
+    );
+    await _tokenStorage.save(response);
   }
 
   @override

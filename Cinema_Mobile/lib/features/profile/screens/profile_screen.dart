@@ -20,6 +20,8 @@ import '../../admin/widgets/admin_page.dart';
 import '../../../data/models/loyalty.dart';
 import '../../../data/repositories/booking_repository.dart';
 import '../widgets/membership_card.dart';
+import '../widgets/account_dialogs.dart';
+import '../../../core/widgets/top_notice.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({
@@ -92,6 +94,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (mounted) setState(() => _card = card);
     } on Object {
       // The profile still shows without the card.
+    }
+  }
+
+  Future<void> _editProfile(AuthUser user) async {
+    final saved = await showDialog<AuthUser>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) =>
+          EditProfileDialog(repository: widget.authRepository, user: user),
+    );
+    if (saved == null || !mounted) return;
+    SessionProvider.of(context).setAuthenticated(saved);
+    setState(() => _user = saved);
+    showTopNotice(Overlay.of(context, rootOverlay: true), 'Profile saved.');
+  }
+
+  Future<void> _changePassword(AuthUser user) async {
+    final changed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => ChangePasswordDialog(
+        repository: widget.authRepository,
+        onForgotPassword: () {
+          Navigator.pop(dialogContext);
+          Navigator.pushNamed(
+            context,
+            AppRoutes.forgotPassword,
+            arguments: user.email,
+          );
+        },
+      ),
+    );
+    if (changed == true && mounted) {
+      showTopNotice(
+        Overlay.of(context, rootOverlay: true),
+        'Password changed. Other devices were signed out.',
+      );
     }
   }
 
@@ -263,13 +302,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     ];
     final buttons = <Widget>[
       AppButton.secondary(
+        key: const Key('editProfile'),
+        label: 'Edit profile',
+        leadingIcon: Icons.edit_outlined,
+        onPressed: () => _editProfile(user),
+      ),
+      const SizedBox(height: AppSpacing.md),
+      AppButton.secondary(
+        key: const Key('changePassword'),
         label: 'Change password',
         leadingIcon: Icons.lock_outline,
-        onPressed: () => Navigator.pushNamed(
-          context,
-          AppRoutes.forgotPassword,
-          arguments: user.email,
-        ),
+        onPressed: () => _changePassword(user),
       ),
       const SizedBox(height: AppSpacing.md),
       if (!widget.adminMode && !widget.staffMode) ...[

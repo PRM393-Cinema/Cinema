@@ -4,7 +4,7 @@ Mỗi service có một project test xUnit nằm cạnh project chính, và đã
 
 | Service | Project test | Số test |
 |---|---|---|
-| AuthService | `AuthService/AuthService.Tests` | 28 |
+| AuthService | `AuthService/AuthService.Tests` | 30 |
 | ApiGateway | `ApiGateway/ApiGateway.Tests` | 21 |
 | MovieService | `MovieService/MovieService.Tests` | 24 |
 | BookingService | `BookingService/BookingService.Tests` | 73 |
@@ -38,6 +38,7 @@ Mỗi service chạy xong trong khoảng 15–30 giây.
 | Security | Thiếu token, token giả chữ ký, token hết hạn: 401. Khách gọi API của Staff / Admin, xem dữ liệu của người khác: 403 | `BookingService.Tests/Integration/AuthorizationTests.cs`, `AuthService.Tests/Integration/*` |
 | Failure | MovieService chết: đặt vé trả 503. PayOS chết: thanh toán trả 503 và booking vẫn thanh toán lại được | `BookingFlowTests.cs` |
 | Auth | Đăng ký, OTP (khoá sau 5 lần sai), đăng nhập, refresh token xoay vòng, đăng xuất, Admin tạo / khoá tài khoản | `AuthService.Tests/Integration/*` |
+| Hồ sơ, đổi mật khẩu | Sửa họ tên / số điện thoại (bỏ trống số là xoá), tên trống hoặc số sai bị 400, chưa đăng nhập 401; đổi mật khẩu: sai mật khẩu hiện tại, trùng mật khẩu cũ, mật khẩu mới quá ngắn đều 400; đổi xong refresh token mới dùng được, refresh token cũ 401, đăng nhập bằng mật khẩu cũ thất bại, mật khẩu mới được | `AuthService.Tests/Integration/ProfileTests.cs` |
 | Validate tài khoản | Đăng ký, đăng nhập, quên / đặt lại mật khẩu, Admin tạo tài khoản: email sai định dạng (`a b@test.local`, `abc@def`) hoặc dài hơn 150 ký tự, mật khẩu ngoài 6–72 ký tự (tính cả byte của chữ có dấu), họ tên trống hoặc dài hơn 150, số điện thoại không đủ 8–15 chữ số đều bị 400 kèm lỗi theo trường, không tạo tài khoản, không gửi email | `AuthService.Tests/Integration/AccountValidationTests.cs` |
 | Khóa tài khoản | Token còn hạn bị từ chối ở gateway sau khi khóa; lỗi kết nối AuthService trả 503 và không chuyển tiếp request | `ApiGateway.Tests/*`, `AuthService.Tests/Integration/UserManagementTests.cs` |
 | Đổi role | Role cũ bị từ chối với `403 ROLE_CHANGED`; thu hồi refresh token khi quyền thay đổi, giữ phiên khi lưu cùng quyền | `ApiGateway.Tests/*`, `AuthService.Tests/Integration/UserManagementTests.cs` |
