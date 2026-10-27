@@ -19,6 +19,7 @@ import 'fixtures.dart';
 
 import 'package:cinema_fe/data/models/concession.dart';
 import 'package:cinema_fe/data/models/promotion.dart';
+import 'package:cinema_fe/data/models/loyalty.dart';
 
 class FakeAuthRepository implements AuthRepository {
   @override
@@ -235,12 +236,14 @@ class CreateBookingCall {
     this.seatIds, [
     this.concessions = const {},
     this.promotionCode,
+    this.usePoints = 0,
   ]);
 
   final int showtimeId;
   final List<int> seatIds;
   final Map<int, int> concessions;
   final String? promotionCode;
+  final int usePoints;
 }
 
 class FakeBookingRepository implements BookingRepository {
@@ -278,6 +281,14 @@ class FakeBookingRepository implements BookingRepository {
   PromotionQuote automaticDeal = PromotionQuote.none;
   final quoteCodes = <String?>[];
 
+  // The member's card; null makes loading it fail (no points used then).
+  LoyaltyCard? loyalty;
+
+  @override
+  Future<LoyaltyCard> getMyLoyalty() async =>
+      loyalty ??
+      (throw const ApiException(statusCode: 503, message: 'No points.'));
+
   @override
   Future<PromotionQuote> quotePromotion({
     required int showtimeId,
@@ -311,9 +322,16 @@ class FakeBookingRepository implements BookingRepository {
     required List<int> seatIds,
     Map<int, int> concessions = const {},
     String? promotionCode,
+    int usePoints = 0,
   }) async {
     createCalls.add(
-      CreateBookingCall(showtimeId, seatIds, concessions, promotionCode),
+      CreateBookingCall(
+        showtimeId,
+        seatIds,
+        concessions,
+        promotionCode,
+        usePoints,
+      ),
     );
     if (createError != null) {
       throw createError!;

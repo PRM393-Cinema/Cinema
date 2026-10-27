@@ -12,6 +12,7 @@ import '../models/seat.dart';
 import '../models/showtime.dart';
 import '../models/concession.dart';
 import '../models/promotion.dart';
+import '../models/loyalty.dart';
 
 class StaffService {
   StaffService({required this._client});
@@ -83,6 +84,7 @@ class StaffService {
     required List<int> seats,
     Map<int, int> concessions = const {},
     String? promotionCode,
+    int usePoints = 0,
   }) async => Booking.fromJson(
     readMap(
       await _client.post(
@@ -97,6 +99,7 @@ class StaffService {
             for (final id in seats) {'seatId': id},
           ],
           'promotionCode': ?promotionCode,
+          if (usePoints > 0) 'usePoints': usePoints,
           'concessions': [
             for (final MapEntry(key: itemId, value: quantity)
                 in concessions.entries)
@@ -124,6 +127,43 @@ class StaffService {
           'tickets': tickets,
           'code': ?code,
         },
+      ),
+    ),
+  );
+  // Customer accounts with this phone number (separators are ignored).
+  Future<List<MemberLookup>> findMembers(String phone) async => readMapList(
+    await _client.get(
+      '/api/v1/auth/members',
+      authenticated: true,
+      query: {'phone': phone.trim()},
+    ),
+  ).map(MemberLookup.fromJson).toList();
+  // A member's points, tier and history.
+  Future<LoyaltyCard> loyalty(int userId) async => LoyaltyCard.fromJson(
+    readMap(
+      await _client.get('/api/v1/loyalty/users/$userId', authenticated: true),
+    ),
+  );
+  // Points and tiers of several members (no history).
+  Future<List<LoyaltyCard>> loyaltyAccounts(List<int> userIds) async =>
+      readMapList(
+        await _client.get(
+          '/api/v1/loyalty/accounts',
+          authenticated: true,
+          query: {'userIds': userIds.join(',')},
+        ),
+      ).map(LoyaltyCard.fromJson).toList();
+  // Admin: adds (positive) or takes away (negative) points, with a reason.
+  Future<LoyaltyCard> adjustPoints(
+    int userId, {
+    required int points,
+    required String note,
+  }) async => LoyaltyCard.fromJson(
+    readMap(
+      await _client.post(
+        '/api/v1/loyalty/users/$userId/adjust',
+        authenticated: true,
+        body: {'points': points, 'note': note.trim()},
       ),
     ),
   );

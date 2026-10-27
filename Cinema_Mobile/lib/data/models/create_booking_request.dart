@@ -4,6 +4,7 @@ class CreateBookingRequest {
     required this.seatIds,
     this.concessions = const {},
     this.promotionCode,
+    this.usePoints = 0,
   });
 
   final int showtimeId;
@@ -15,6 +16,9 @@ class CreateBookingRequest {
   // A promo code typed in; without one the best automatic deal applies.
   final String? promotionCode;
 
+  // Member points paying part of the price (1 point = 1,000 ₫).
+  final int usePoints;
+
   // The backend reads the customer, movie title, show time and seat prices
   // itself, so only the showtime and seat ids are sent.
   Map<String, Object?> toJson() {
@@ -24,6 +28,7 @@ class CreateBookingRequest {
         for (final seatId in seatIds) {'seatId': seatId},
       ],
       'promotionCode': ?promotionCode,
+      if (usePoints > 0) 'usePoints': usePoints,
       if (concessions.isNotEmpty)
         'concessions': [
           for (final MapEntry(key: itemId, value: quantity)

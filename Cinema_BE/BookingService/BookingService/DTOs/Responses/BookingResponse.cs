@@ -43,6 +43,14 @@
 
         public string? PromotionName { get; set; }
 
+        // Điểm thành viên đã dùng và số tiền được giảm (đã trừ trong TotalAmount)
+        public int PointsUsed { get; set; }
+
+        public decimal PointsDiscount { get; set; }
+
+        // Điểm được cộng khi vé đã thanh toán
+        public int PointsEarned { get; set; }
+
         public List<BookingConcessionResponse> Concessions { get; set; } = new();
     }
 }

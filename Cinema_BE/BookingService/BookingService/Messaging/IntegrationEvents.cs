@@ -72,6 +72,12 @@ namespace BookingService.Messaging
 
         public string? PromotionName { get; set; }
 
+        public int PointsUsed { get; set; }
+
+        public decimal PointsDiscount { get; set; }
+
+        public int PointsEarned { get; set; }
+
         public decimal TotalAmount { get; set; }
 
         public string Status { get; set; } = string.Empty;

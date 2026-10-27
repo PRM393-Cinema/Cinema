@@ -8,6 +8,7 @@ import '../models/payment.dart';
 import '../models/payos_checkout_request.dart';
 import '../models/concession.dart';
 import '../models/promotion.dart';
+import '../models/loyalty.dart';
 
 // Bookings, PayOS payments, refunds and notifications (BookingService behind
 // the gateway). Every call needs a signed-in user.
@@ -35,6 +36,11 @@ class BookingService {
     final response = await _apiClient.get('/api/v1/concessions');
     return readMapList(response).map(ConcessionItem.fromJson).toList();
   }
+
+  // The signed-in member's points, tier and history.
+  Future<LoyaltyCard> getMyLoyalty() async => LoyaltyCard.fromJson(
+    readMap(await _apiClient.get('/api/v1/loyalty/me', authenticated: true)),
+  );
 
   // The discount the tickets would get: [code] or the best automatic deal.
   Future<PromotionQuote> quotePromotion({

@@ -22,6 +22,8 @@ import '../../../data/models/concession.dart';
 import '../widgets/concession_picker.dart';
 import '../../../data/models/promotion.dart';
 import '../widgets/promotion_box.dart';
+import '../../../data/models/loyalty.dart';
+import '../../profile/widgets/membership_card.dart';
 
 class BookingSummaryScreen extends StatefulWidget {
   const BookingSummaryScreen({required this.bookingRepository, super.key});
@@ -44,11 +46,29 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
   PromotionQuote _promotion = PromotionQuote.none;
   String? _promoCode;
 
+  // The member's points; null when they cannot load (no points used then).
+  LoyaltyCard? _card;
+  bool _usePoints = false;
+
   @override
   void initState() {
     super.initState();
     _loadSnacks();
+    _loadPoints();
   }
+
+  Future<void> _loadPoints() async {
+    try {
+      final card = await widget.bookingRepository.getMyLoyalty();
+      if (mounted) setState(() => _card = card);
+    } on Object {
+      // Tickets can be booked without points.
+    }
+  }
+
+  // The points used on an order of [orderAmount] (seats − discount + snacks).
+  int _pointsFor(double orderAmount) =>
+      _usePoints ? _card?.usableOn(orderAmount) ?? 0 : 0;
 
   Future<void> _loadSnacks() async {
     try {
@@ -99,7 +119,7 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
     return agreed ?? false;
   }
 
-  Future<void> _confirmBooking(BookingDraft draft) async {
+  Future<void> _confirmBooking(BookingDraft draft, int usePoints) async {
     if (!await _confirmAgeRating(draft.movie.ageRating) || !mounted) return;
     setState(() {
       _isSubmitting = true;
@@ -116,6 +136,7 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
             if (quantity > 0) id: quantity,
         },
         promotionCode: _promoCode,
+        usePoints: usePoints,
       );
 
       if (!mounted) return;
@@ -284,6 +305,21 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
       ),
     );
     final discount = _promotion.discount;
+    final orderAmount = draft.totalPrice - discount + snacksTotalPrice;
+    final usePoints = _pointsFor(orderAmount);
+    final card = _card;
+    final pointsCard = card == null
+        ? null
+        : _SummaryCard(
+            title: 'Member points',
+            child: UsePointsTile(
+              card: card,
+              orderAmount: orderAmount,
+              value: _usePoints,
+              enabled: !_isSubmitting,
+              onChanged: (value) => setState(() => _usePoints = value),
+            ),
+          );
     final priceCard = _SummaryCard(
       title: 'Price Details',
       child: Column(
@@ -330,6 +366,27 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                 ],
               ),
             ),
+          if (usePoints > 0)
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.xs),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '$usePoints member points',
+                      style: AppTextStyles.body,
+                    ),
+                  ),
+                  Text(
+                    '−${formatVnd(usePoints * pointValue)}',
+                    key: const Key('summaryPoints'),
+                    style: AppTextStyles.body.copyWith(
+                      color: AppColors.success,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           for (final snack in pickedSnacks)
             Padding(
               padding: const EdgeInsets.only(top: AppSpacing.xs),
@@ -357,7 +414,7 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
             children: [
               const Text('Total', style: AppTextStyles.heading2),
               Text(
-                formatVnd(draft.totalPrice - discount + snacksTotalPrice),
+                formatVnd(orderAmount - usePoints * pointValue),
                 style: AppTextStyles.heading2.copyWith(
                   color: AppColors.primary,
                 ),
@@ -377,7 +434,7 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
       useGradient: true,
       trailingIcon: Icons.arrow_forward_rounded,
       isLoading: _isSubmitting,
-      onPressed: _isSubmitting ? null : () => _confirmBooking(draft),
+      onPressed: _isSubmitting ? null : () => _confirmBooking(draft, usePoints),
     );
     final desktop = isDesktopLayout(context);
 
@@ -408,6 +465,10 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                       ],
                       const SizedBox(height: AppSpacing.xl),
                       promotionCard,
+                      if (pointsCard != null) ...[
+                        const SizedBox(height: AppSpacing.xl),
+                        pointsCard,
+                      ],
                       if (!desktop) const SizedBox(height: AppSpacing.xl),
                     ],
                     side: [

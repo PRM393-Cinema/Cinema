@@ -603,6 +603,12 @@ class _BookingCard extends StatelessWidget {
               key: const Key('paymentDiscount'),
               style: AppTextStyles.bodySmall,
             ),
+          if (booking.pointsUsed > 0)
+            Text(
+              'Points: ${booking.pointsUsedText}',
+              key: const Key('paymentPoints'),
+              style: AppTextStyles.bodySmall,
+            ),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
             child: Divider(height: 1, color: AppColors.border),

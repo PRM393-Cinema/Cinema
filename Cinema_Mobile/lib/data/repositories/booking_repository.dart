@@ -8,6 +8,7 @@ import '../models/payos_checkout_request.dart';
 import '../services/booking_service.dart';
 import '../models/concession.dart';
 import '../models/promotion.dart';
+import '../models/loyalty.dart';
 
 abstract interface class BookingRepository {
   // Holds the seats for 10 minutes; the booking stays PENDING until paid.
@@ -18,7 +19,11 @@ abstract interface class BookingRepository {
     required List<int> seatIds,
     Map<int, int> concessions = const {},
     String? promotionCode,
+    int usePoints = 0,
   });
+
+  // The signed-in member's points, tier and history.
+  Future<LoyaltyCard> getMyLoyalty();
 
   // The discount the tickets would get, before they are held.
   Future<PromotionQuote> quotePromotion({
@@ -63,6 +68,7 @@ class RemoteBookingRepository implements BookingRepository {
     required List<int> seatIds,
     Map<int, int> concessions = const {},
     String? promotionCode,
+    int usePoints = 0,
   }) {
     return _bookingService.createBooking(
       CreateBookingRequest(
@@ -70,9 +76,13 @@ class RemoteBookingRepository implements BookingRepository {
         seatIds: seatIds,
         concessions: concessions,
         promotionCode: promotionCode,
+        usePoints: usePoints,
       ),
     );
   }
+
+  @override
+  Future<LoyaltyCard> getMyLoyalty() => _bookingService.getMyLoyalty();
 
   @override
   Future<PromotionQuote> quotePromotion({

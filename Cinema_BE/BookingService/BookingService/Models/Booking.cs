@@ -31,6 +31,12 @@ public partial class Booking
 
     public string? PromotionName { get; set; }
 
+    public int PointsUsed { get; set; } // điểm thành viên khách dùng cho đơn này
+
+    public decimal PointsDiscount { get; set; } // số tiền giảm nhờ điểm (đã trừ trong tổng tiền)
+
+    public int PointsEarned { get; set; } // điểm được cộng khi vé đã thanh toán
+
     public long? PaymentId { get; set; }
 
     public string? MovieTitle { get; set; }

@@ -70,6 +70,7 @@ ${booking.showTime == null ? '' : row('Showtime', formatDateTime(booking.showTim
 ${row('Seats', booking.seatLabels)}
 ${booking.concessions.isEmpty ? '' : row('Snacks', booking.snacksText)}
 ${booking.hasDiscount ? row('Discount', booking.discountText) : ''}
+${booking.pointsUsed > 0 ? row('Points', booking.pointsUsedText) : ''}
 ${row('Total', formatVnd(booking.totalAmount))}
 ${row('Status', booking.isCheckedIn ? 'Checked in' : 'Paid')}
 <hr>

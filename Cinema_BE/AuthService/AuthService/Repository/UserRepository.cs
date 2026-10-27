@@ -53,6 +53,21 @@ namespace AuthService.Repository
         }
 
         // Tìm theo email / họ tên / số điện thoại (không phân biệt hoa thường), lọc theo role và trạng thái
+        public async Task<List<User>> FindCustomersByPhoneDigitsAsync(string digits)
+        {
+            return await _context.Users
+                .AsNoTracking()
+                .Where(u => u.Enabled &&
+                            u.Phone != null &&
+                            u.Roles.Any(r => r.Name == "ROLE_CUSTOMER") &&
+                            // Số điện thoại chỉ có chữ số và + . ( ) - dấu cách (AccountRules.PhonePattern)
+                            u.Phone.Replace(" ", "").Replace(".", "").Replace("-", "")
+                                .Replace("(", "").Replace(")", "").Replace("+", "") == digits)
+                .OrderBy(u => u.UserId)
+                .Take(10)
+                .ToListAsync();
+        }
+
         public async Task<(List<User> Items, int TotalCount)> SearchAsync(
             string? keyword, string? role, bool? enabled, int page, int size)
         {

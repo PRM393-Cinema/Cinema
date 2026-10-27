@@ -65,6 +65,9 @@ class Booking {
     this.discountAmount = 0,
     this.promotionCode,
     this.promotionName,
+    this.pointsUsed = 0,
+    this.pointsDiscount = 0,
+    this.pointsEarned = 0,
   });
 
   factory Booking.fromJson(Map<String, Object?> json) {
@@ -91,6 +94,9 @@ class Booking {
       discountAmount: readDouble(json['discountAmount']),
       promotionCode: readOptionalString(json['promotionCode']),
       promotionName: readOptionalString(json['promotionName']),
+      pointsUsed: readOptionalInt(json['pointsUsed']) ?? 0,
+      pointsDiscount: readDouble(json['pointsDiscount']),
+      pointsEarned: readOptionalInt(json['pointsEarned']) ?? 0,
     );
   }
 
@@ -136,6 +142,17 @@ class Booking {
   final String? promotionName;
 
   bool get hasDiscount => discountAmount > 0;
+
+  // Member points used on this booking and what they took off [totalAmount].
+  final int pointsUsed;
+  final double pointsDiscount;
+
+  // Points added once the booking was paid.
+  final int pointsEarned;
+
+  // e.g. "50 points (−50.000 ₫)".
+  String get pointsUsedText =>
+      '$pointsUsed points (−${formatVnd(pointsDiscount)})';
 
   // e.g. "−30.000 ₫ (Thứ Ba vui vẻ)".
   String get discountText =>
