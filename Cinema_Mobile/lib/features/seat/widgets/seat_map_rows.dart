@@ -60,7 +60,6 @@ class SeatMapLayout {
         maxWidth -
         padding * 2 -
         (labelWidth + labelGap) * 2 -
-        aisleAfter(seats).length * aisleWidth -
         gap * (seats - 1);
 
     return SeatMapLayout(
@@ -74,31 +73,20 @@ class SeatMapLayout {
   static const labelGap = 6.0;
   static const minSeat = 20.0;
   static const maxSeat = 44.0;
-  static const aisleWidth = 12.0;
-
-  static List<int> aisleAfter(int seats) => seats >= 14
-      ? [4, seats - 4]
-      : seats >= 8
-      ? [seats ~/ 2]
-      : const [];
 
   final double seatSize;
   final double gap;
 
-  double seatsWidth(int seats) =>
-      seats * seatSize +
-      (seats - 1) * gap +
-      aisleAfter(seats).length * aisleWidth;
+  double seatsWidth(int seats) => seats * seatSize + (seats - 1) * gap;
 
   double mapWidth(int seats) {
     return seatsWidth(seats) + (labelWidth + labelGap) * 2 + padding * 2;
   }
 }
 
-// The rows of a seat map, lettered on both sides, with aisles in long rows.
-// Every row uses the same columns, so seat 5 of a sweetbox row sits under
-// seat 5 of the row in front; the two seats of a sweetbox are joined by a
-// band. [seatBuilder] draws one seat at the layout's size.
+// The rows of a seat map, lettered on both sides. Seats sit side by side
+// with no aisle gaps, so the two seats of a sweetbox are never split; they
+// are joined by a band. [seatBuilder] draws one seat at the layout's size.
 class SeatMapRows extends StatelessWidget {
   const SeatMapRows({
     required this.rows,
@@ -115,16 +103,10 @@ class SeatMapRows extends StatelessWidget {
   // Makes the row letters tappable (the admin room map changes a whole row).
   final void Function(List<Seat> seats)? onRowTap;
 
-  double _gapBefore(List<Seat> seats, int index) =>
-      layout.gap +
-      (SeatMapLayout.aisleAfter(seats.length).contains(index)
-          ? SeatMapLayout.aisleWidth
-          : 0);
-
   List<Widget> _seatsOf(List<Seat> seats) {
     final children = <Widget>[];
     for (var index = 0; index < seats.length; index++) {
-      if (index > 0) children.add(SizedBox(width: _gapBefore(seats, index)));
+      if (index > 0) children.add(SizedBox(width: layout.gap));
       final seat = seatBuilder(seats[index], layout.seatSize);
       if (!_pairAt(seats, index + 1)) {
         children.add(seat);
@@ -136,7 +118,7 @@ class SeatMapRows extends StatelessWidget {
           size: layout.seatSize,
           children: [
             seat,
-            SizedBox(width: _gapBefore(seats, index)),
+            SizedBox(width: layout.gap),
             seatBuilder(seats[index], layout.seatSize),
           ],
         ),

@@ -68,7 +68,13 @@ void main() {
       expect(left('C$n'), left('A$n'), reason: 'C$n under A$n');
     }
 
-    // Each sweetbox (1-2, 3-4, ...) shares one band, even across the aisle.
+    // No aisle gaps: seats are evenly spaced, so sweetbox 5-6 stays together.
+    final step = left('A2') - left('A1');
+    for (var n = 2; n <= 10; n++) {
+      expect(left('A$n') - left('A${n - 1}'), step, reason: 'A${n - 1}-A$n');
+    }
+
+    // Each sweetbox (1-2, 3-4, ...) shares one band.
     Finder band(String label) => find.ancestor(
       of: find.byKey(Key(label)),
       matching: find.byType(DecoratedBox),

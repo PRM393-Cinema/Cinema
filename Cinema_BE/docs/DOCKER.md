@@ -88,7 +88,7 @@ Mỗi phòng demo có sơ đồ ghế riêng; Flutter đọc hàng và số gh�
 | 03 Standard | 12 / 12 / 12 | 36 |
 | 04 IMAX | 10 / 10 / 10 / 14 / 14 / 14 | 72 |
 
-UI chừa một lối đi giữa hàng 8–12 ghế, hai lối đi cho hàng 14 ghế. Sơ đồ rộng hỗ trợ kéo và phóng to. Migration chỉ bổ sung ghế, giữ nguyên ID và loại ghế cũ để bảo toàn tham chiếu của vé đã đặt.
+UI xếp ghế liền nhau, không chừa lối đi, để cặp sweetbox không bị tách. Sơ đồ rộng hỗ trợ kéo và phóng to. Migration chỉ bổ sung ghế, giữ nguyên ID và loại ghế cũ để bảo toàn tham chiếu của vé đã đặt.
 
 Với DB đang chạy hoặc khi lịch demo đã hết, bổ sung bằng lệnh sau. Script giữ nguyên dữ liệu cũ và bỏ qua các khung giờ đã có lịch:
 
