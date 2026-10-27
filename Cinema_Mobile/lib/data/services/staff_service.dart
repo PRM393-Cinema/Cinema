@@ -10,6 +10,7 @@ import '../models/payment.dart';
 import '../models/room.dart';
 import '../models/seat.dart';
 import '../models/showtime.dart';
+import '../models/concession.dart';
 
 class StaffService {
   StaffService({required this._client});
@@ -79,6 +80,7 @@ class StaffService {
     String? phone,
     required int showtimeId,
     required List<int> seats,
+    Map<int, int> concessions = const {},
   }) async => Booking.fromJson(
     readMap(
       await _client.post(
@@ -92,10 +94,60 @@ class StaffService {
           'seats': [
             for (final id in seats) {'seatId': id},
           ],
+          'concessions': [
+            for (final MapEntry(key: itemId, value: quantity)
+                in concessions.entries)
+              if (quantity > 0) {'itemId': itemId, 'quantity': quantity},
+          ],
         },
       ),
     ),
   );
+  // The snacks menu; [includeInactive] adds stopped items (staff/admin).
+  Future<List<ConcessionItem>> concessions({
+    bool includeInactive = false,
+  }) async => readMapList(
+    await _client.get(
+      '/api/v1/concessions',
+      authenticated: true,
+      query: {'includeInactive': includeInactive},
+    ),
+  ).map(ConcessionItem.fromJson).toList();
+  // Admin: adds a menu item ([id] null) or changes one.
+  Future<ConcessionItem> saveConcession({
+    int? id,
+    required String name,
+    required double price,
+    String description = '',
+    String imageUrl = '',
+    int sortOrder = 0,
+    bool active = true,
+  }) async {
+    final body = {
+      'name': name.trim(),
+      'price': price,
+      'description': description.trim(),
+      'imageUrl': imageUrl.trim(),
+      'sortOrder': sortOrder,
+      'active': active,
+    };
+    return ConcessionItem.fromJson(
+      readMap(
+        id == null
+            ? await _client.post(
+                '/api/v1/concessions',
+                authenticated: true,
+                body: body,
+              )
+            : await _client.put(
+                '/api/v1/concessions/$id',
+                authenticated: true,
+                body: body,
+              ),
+      ),
+    );
+  }
+
   // Cash taken at the counter: the server records a paid CASH payment and
   // confirms the ticket, emailing it (with its QR code) when there is an
   // email.

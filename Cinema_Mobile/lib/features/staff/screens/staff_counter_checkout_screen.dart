@@ -638,6 +638,12 @@ class _BookingSummary extends StatelessWidget {
             'Seats ${booking.seatLabels} • ${booking.bookingCode}',
             style: AppTextStyles.bodySmall,
           ),
+          if (booking.concessions.isNotEmpty)
+            Text(
+              'Snacks: ${booking.snacksText}',
+              key: const Key('checkoutSnacks'),
+              style: AppTextStyles.bodySmall,
+            ),
           Text(
             [
               booking.isWalkIn

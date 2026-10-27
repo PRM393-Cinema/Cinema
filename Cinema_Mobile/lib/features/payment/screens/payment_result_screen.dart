@@ -333,6 +333,11 @@ class _TicketCard extends StatelessWidget {
               'Seats: ${booking.seatLabels}',
               style: AppTextStyles.bodySmall,
             ),
+            if (booking.concessions.isNotEmpty)
+              Text(
+                'Snacks: ${booking.snacksText}',
+                style: AppTextStyles.bodySmall,
+              ),
             const SizedBox(height: AppSpacing.md),
             Text(
               formatVnd(booking.totalAmount),

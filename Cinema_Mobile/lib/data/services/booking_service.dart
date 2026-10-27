@@ -6,6 +6,7 @@ import '../models/json_readers.dart';
 import '../models/paged_result.dart';
 import '../models/payment.dart';
 import '../models/payos_checkout_request.dart';
+import '../models/concession.dart';
 
 // Bookings, PayOS payments, refunds and notifications (BookingService behind
 // the gateway). Every call needs a signed-in user.
@@ -26,6 +27,12 @@ class BookingService {
       throw const FormatException('Expected a list of seat ids.');
     }
     return response.map(readInt).toList();
+  }
+
+  // The snacks and drinks on sale.
+  Future<List<ConcessionItem>> getConcessions() async {
+    final response = await _apiClient.get('/api/v1/concessions');
+    return readMapList(response).map(ConcessionItem.fromJson).toList();
   }
 
   Future<Booking> createBooking(CreateBookingRequest request) async {

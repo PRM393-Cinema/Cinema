@@ -6,13 +6,19 @@ import '../models/create_booking_request.dart';
 import '../models/payment.dart';
 import '../models/payos_checkout_request.dart';
 import '../services/booking_service.dart';
+import '../models/concession.dart';
 
 abstract interface class BookingRepository {
   // Holds the seats for 10 minutes; the booking stays PENDING until paid.
+  // [concessions] maps snack item ids to quantities.
   Future<Booking> createBooking({
     required int showtimeId,
     required List<int> seatIds,
+    Map<int, int> concessions = const {},
   });
+
+  // The snacks and drinks menu.
+  Future<List<ConcessionItem>> getConcessions();
 
   Future<Booking> getBooking(int bookingId);
 
@@ -44,11 +50,20 @@ class RemoteBookingRepository implements BookingRepository {
   Future<Booking> createBooking({
     required int showtimeId,
     required List<int> seatIds,
+    Map<int, int> concessions = const {},
   }) {
     return _bookingService.createBooking(
-      CreateBookingRequest(showtimeId: showtimeId, seatIds: seatIds),
+      CreateBookingRequest(
+        showtimeId: showtimeId,
+        seatIds: seatIds,
+        concessions: concessions,
+      ),
     );
   }
+
+  @override
+  Future<List<ConcessionItem>> getConcessions() =>
+      _bookingService.getConcessions();
 
   @override
   Future<Booking> getBooking(int bookingId) {

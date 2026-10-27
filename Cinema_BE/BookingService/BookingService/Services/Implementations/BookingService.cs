@@ -26,6 +26,7 @@ namespace BookingService.Services.Implementations
         private readonly BookingDbContext _context;
         private readonly IBookingRepository _bookingRepository;
         private readonly IBookingSeatRepository _bookingSeatRepository;
+        private readonly IConcessionRepository _concessionRepository;
         private readonly ISeatReservationRepository _seatReservationRepository;
         private readonly IRefundRepository _refundRepository;
         private readonly IShowtimeClient _showtimeClient;
@@ -39,6 +40,7 @@ namespace BookingService.Services.Implementations
             BookingDbContext context,
             IBookingRepository bookingRepository,
             IBookingSeatRepository bookingSeatRepository,
+            IConcessionRepository concessionRepository,
             ISeatReservationRepository seatReservationRepository,
             IRefundRepository refundRepository,
             IShowtimeClient showtimeClient,
@@ -51,6 +53,7 @@ namespace BookingService.Services.Implementations
             _context = context;
             _bookingRepository = bookingRepository;
             _bookingSeatRepository = bookingSeatRepository;
+            _concessionRepository = concessionRepository;
             _seatReservationRepository = seatReservationRepository;
             _refundRepository = refundRepository;
             _showtimeClient = showtimeClient;
@@ -194,8 +197,13 @@ namespace BookingService.Services.Implementations
             var seatMap = seatInfos.ToDictionary(
                 x => x.SeatId);
 
-            var totalAmount = seatIds.Sum(
+            var seatsAmount = seatIds.Sum(
                 seatId => seatMap[seatId].Price);
+
+            // Bắp nước: giá lấy từ menu đang bán, không tin giá app gửi lên
+            var concessions = await PriceConcessionsAsync(request.Concessions);
+            var concessionsAmount = concessions.Sum(item => item.UnitPrice * item.Quantity);
+            var totalAmount = seatsAmount + concessionsAmount;
 
             var expiresAt =
                 DateTime.Now.Add(HoldDuration);
@@ -255,6 +263,8 @@ namespace BookingService.Services.Implementations
                     ShowtimeId = showtimeId,
                     Status = "PENDING",
                     TotalAmount = totalAmount,
+                    ConcessionsAmount = concessionsAmount,
+                    Concessions = concessions,
                     BookingCode = GenerateBookingCode(),
                     MovieTitle = movieTitle,
                     ShowTime = showtime.StartTime,
@@ -403,8 +413,7 @@ namespace BookingService.Services.Implementations
                 await transaction.CommitAsync();
                 _metrics.Booking("confirmed");
 
-                return booking.ToResponse(
-                    seats.Select(x => x.ToResponse()).ToList());
+                return await MapBookingAsync(booking);
             }
             catch
             {
@@ -442,8 +451,7 @@ namespace BookingService.Services.Implementations
                 {
                     await transaction.CommitAsync();
 
-                    return booking.ToResponse(
-                        seats.Select(x => x.ToResponse()).ToList());
+                    return await MapBookingAsync(booking);
                 }
 
                 if (status is not ("PENDING" or "EXPIRED"))
@@ -495,8 +503,7 @@ namespace BookingService.Services.Implementations
                 await transaction.CommitAsync();
                 _metrics.Booking("confirmed");
 
-                return booking.ToResponse(
-                    seats.Select(x => x.ToResponse()).ToList());
+                return await MapBookingAsync(booking);
             }
             catch (DbUpdateException ex) when (IsUniqueViolation(ex))
             {
@@ -557,7 +564,7 @@ namespace BookingService.Services.Implementations
                             string.IsNullOrWhiteSpace(reason) ? "Refund requested by customer" : reason.Trim(), "CUSTOMER"));
                     await _bookingRepository.UpdateBookingAsync(booking.Id, booking);
                     await transaction.CommitAsync();
-                    return booking.ToResponse(heldSeats.Select(x => x.ToResponse()).ToList());
+                    return await MapBookingAsync(booking);
                 }
                 else if (!manager && status != "PENDING")
                 {
@@ -573,8 +580,7 @@ namespace BookingService.Services.Implementations
                 await transaction.CommitAsync();
                 _metrics.Booking("cancelled");
 
-                return booking.ToResponse(
-                    seats.Select(x => x.ToResponse()).ToList());
+                return await MapBookingAsync(booking);
             }
             catch
             {
@@ -711,8 +717,7 @@ namespace BookingService.Services.Implementations
                 await transaction.CommitAsync();
                 _metrics.Booking("expired");
 
-                expired.Add(booking.ToResponse(
-                    seats.Select(x => x.ToResponse()).ToList()));
+                expired.Add(await MapBookingAsync(booking));
             }
 
             return expired;
@@ -979,6 +984,9 @@ namespace BookingService.Services.Implementations
             booking.Status = "CONFIRMED";
             booking.ExpiresAt = null;
 
+            // Email vé liệt kê cả bắp nước
+            await _context.Entry(booking).Collection(b => b.Concessions).LoadAsync();
+
             // Khách vãng lai cho email lúc trả tiền tại quầy: lưu vào vé để email huỷ / hoàn tiền sau này cũng tới
             if (string.IsNullOrWhiteSpace(booking.CustomerEmail) && !string.IsNullOrWhiteSpace(recipientEmail))
             {
@@ -1066,14 +1074,47 @@ namespace BookingService.Services.Implementations
             };
         }
 
+        private async Task<List<BookingConcession>> PriceConcessionsAsync(
+            List<BookingConcessionRequest> requested)
+        {
+            if (requested.Count == 0)
+            {
+                return new List<BookingConcession>();
+            }
+
+            var items = (await _concessionRepository.GetByIdsAsync(requested.Select(item => item.ItemId)))
+                .ToDictionary(item => item.Id);
+
+            return requested.Select(line =>
+            {
+                if (!items.TryGetValue(line.ItemId, out var item) || !item.Active)
+                {
+                    throw new BusinessException("A snack item you picked is no longer sold. Please choose again.");
+                }
+
+                return new BookingConcession
+                {
+                    ItemId = item.Id,
+                    ItemName = item.Name,
+                    UnitPrice = item.Price,
+                    Quantity = line.Quantity
+                };
+            }).ToList();
+        }
+
         private async Task<BookingResponse> MapBookingAsync(
             Booking booking)
         {
             var seats = await _bookingSeatRepository
                 .GetByBookingIdAsync(booking.Id);
 
+            var concessions = booking.Concessions.Count > 0
+                ? booking.Concessions.ToList()
+                : await _concessionRepository.GetByBookingIdAsync(booking.Id);
+
             return booking.ToResponse(
-                seats.Select(x => x.ToResponse()).ToList());
+                seats.Select(x => x.ToResponse()).ToList(),
+                concessions);
         }
 
         private async Task<PagedResult<BookingResponse>> ToPagedResultAsync(

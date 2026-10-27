@@ -65,6 +65,9 @@ namespace BookingService.Messaging
 
         public List<string> Seats { get; set; } = new();
 
+        // Bắp nước mua kèm, vd "2 × Combo đôi"
+        public List<string> Concessions { get; set; } = new();
+
         public decimal TotalAmount { get; set; }
 
         public string Status { get; set; } = string.Empty;

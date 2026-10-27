@@ -20,6 +20,8 @@ import '../../seat/widgets/seat_map_rows.dart';
 import '../../seat/widgets/seat_type_style.dart';
 import '../widgets/staff_feedback.dart';
 import '../../../core/widgets/age_rating_badge.dart';
+import '../../../data/models/concession.dart';
+import '../../booking/widgets/concession_picker.dart';
 
 // Selling tickets at the counter: a walk-in guest (no account; email and phone
 // if they want) or a member's account, then a movie, one of its showtimes in
@@ -53,6 +55,8 @@ class _StaffCreateBookingScreenState extends State<StaffCreateBookingScreen> {
   Showtime? _showtime;
   ShowtimeSeatsData? _map;
   final _selected = <int>{};
+  List<ConcessionItem> _snacks = const [];
+  final _snackQuantities = <int, int>{};
   bool _busy = false;
   String? _error;
 
@@ -136,6 +140,12 @@ class _StaffCreateBookingScreenState extends State<StaffCreateBookingScreen> {
   Future<void> _loadMovies() => _run(() async {
     final movies = await widget.catalog.getNowShowingMovies();
     if (mounted) setState(() => _movies = movies);
+    try {
+      final snacks = await widget.service.concessions();
+      if (mounted) setState(() => _snacks = snacks);
+    } on Object {
+      // Tickets still sell without the snacks menu.
+    }
   });
 
   Future<void> _pickMovie(Movie? movie) async {
@@ -204,6 +214,7 @@ class _StaffCreateBookingScreenState extends State<StaffCreateBookingScreen> {
         phone: _walkIn ? _text(_phone) : null,
         showtimeId: _showtime!.id,
         seats: _selected.toList(),
+        concessions: Map.of(_snackQuantities),
       );
       if (mounted) {
         Navigator.pushReplacementNamed(
@@ -408,10 +419,33 @@ class _StaffCreateBookingScreenState extends State<StaffCreateBookingScreen> {
                     onTap: _busy ? null : (seat) => _toggle(map, seat),
                   ),
                 ),
+                if (_snacks.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.lg),
+                  CinemaPanel(
+                    surfaceOpacity: 0.8,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Text(
+                          'Snacks & drinks',
+                          style: AppTextStyles.title,
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        ConcessionPicker(
+                          items: _snacks,
+                          quantities: _snackQuantities,
+                          enabled: !_busy,
+                          onChanged: (id, quantity) =>
+                              setState(() => _snackQuantities[id] = quantity),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 const SizedBox(height: AppSpacing.md),
                 Text(
                   '${_selected.length} seat(s) selected · '
-                  '${formatVnd(_totalOf(showtime, map))}',
+                  '${formatVnd(_totalOf(showtime, map) + snacksTotal(_snacks, _snackQuantities))}',
                   key: const Key('counterTotal'),
                   style: AppTextStyles.title,
                 ),

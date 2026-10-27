@@ -592,6 +592,11 @@ class _BookingCard extends StatelessWidget {
           ],
           const SizedBox(height: AppSpacing.xs),
           Text('Seats: ${booking.seatLabels}', style: AppTextStyles.bodySmall),
+          if (booking.concessions.isNotEmpty)
+            Text(
+              'Snacks: ${booking.snacksText}',
+              style: AppTextStyles.bodySmall,
+            ),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
             child: Divider(height: 1, color: AppColors.border),

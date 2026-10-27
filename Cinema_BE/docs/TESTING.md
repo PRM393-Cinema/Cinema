@@ -7,7 +7,7 @@ Mỗi service có một project test xUnit nằm cạnh project chính, và đã
 | AuthService | `AuthService/AuthService.Tests` | 27 |
 | ApiGateway | `ApiGateway/ApiGateway.Tests` | 21 |
 | MovieService | `MovieService/MovieService.Tests` | 21 |
-| BookingService | `BookingService/BookingService.Tests` | 58 |
+| BookingService | `BookingService/BookingService.Tests` | 63 |
 
 ## 1. Chạy test
 
@@ -46,6 +46,8 @@ Mỗi service chạy xong trong khoảng 15–30 giây.
 | Suất chiếu | Quyền, trùng lịch 409, suất còn đặt được theo phim, huỷ mềm và ghi event `showtime.cancelled` | `MovieService.Tests/Integration/ShowtimeTests.cs` |
 | Sơ đồ ghế | Sinh ghế một lần, đổi loại ghế; đổi số ghế lấp hàng cuối rồi sang hàng mới, bớt từ ghế cuối, chỉ Admin, không quá hàng Z, chặn khi phòng có suất chiếu. Sweetbox theo cặp (1-2, 3-4): đổi loại cả cặp (cả khi tô nhiều ghế một lần; hàng có ghế lẻ cặp bị từ chối), xoá / bớt ghế làm nửa cặp còn lại thành ghế thường, đặt vé phải đủ cặp. Giá ghế theo loại: VIP +20%, sweetbox +30% mỗi ghế, phụ thu làm tròn tới 1.000đ | `MovieService.Tests/Integration/SeatTests.cs` |
 | Bán vé tại quầy | Vé khách vãng lai (không tài khoản, số điện thoại sai bị 400); thu tiền mặt: thiếu tiền 400, khách gọi 403, trả lần hai 409, payment CASH tính vào doanh thu, email vé tới email khách cho ở quầy, check-in ngay; vé vãng lai không email thì không gửi email nhưng vẫn hoàn tiền được; Staff tạo QR chuyển khoản (có `qrCode`) rồi khách trả tiền mặt thì link PayOS bị huỷ; khách đã chuyển khoản thì tiền mặt bị 409 | `BookingService.Tests/Integration/CounterSaleTests.cs` |
+| Mã đơn PayOS | Mã đơn = id booking × 1.000.000 + 6 số cuối mã vé, gọi lại không đổi; webhook của đơn môi trường khác bị bỏ qua; xác minh bằng mã đơn hoặc id booking; payment cũ (mã = id booking) vẫn dùng được | `BookingService.Tests/Integration/PayOsOrderCodeTests.cs` |
+| Bắp nước | Chỉ Admin sửa menu, khách chỉ thấy món đang bán; tiền bắp nước cộng vào tổng tiền theo giá menu, đổi giá menu không đổi đơn cũ, email vé liệt kê bắp nước; món ngừng bán / không có / quá số lượng / trùng món bị 400 | `BookingService.Tests/Integration/ConcessionTests.cs` |
 | Doanh thu | Dashboard Admin: doanh thu tăng đúng số tiền vé vừa thanh toán; Staff / khách bị 403; khoảng thời gian ngược bị 400 | `BookingService.Tests/Integration/PaymentSummaryTests.cs` |
 | Giám sát | `/metrics` mở cho Prometheus và đếm booking theo trạng thái; chỉ trả ở cổng nội bộ khi cấu hình `MetricsPort` | `BookingService.Tests/Integration/ObservabilityTests.cs` |
 

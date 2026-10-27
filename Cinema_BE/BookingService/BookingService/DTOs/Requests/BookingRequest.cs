@@ -27,5 +27,8 @@ namespace BookingService.DTOs.Requests
         [Required(ErrorMessage = "At least one seat must be selected")]
         [MinLength(1, ErrorMessage = "At least one seat must be selected")]
         public List<SeatRequest> Seats { get; set; } = new();
+
+        // Bắp nước mua kèm (không bắt buộc)
+        public List<BookingConcessionRequest> Concessions { get; set; } = new();
     }
 }

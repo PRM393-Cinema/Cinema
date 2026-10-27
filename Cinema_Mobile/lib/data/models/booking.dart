@@ -1,3 +1,4 @@
+import 'concession.dart';
 import 'json_readers.dart';
 
 class BookingSeat {
@@ -58,6 +59,8 @@ class Booking {
     this.checkedInAt,
     required this.createdAt,
     required this.seats,
+    this.concessions = const [],
+    this.concessionsAmount = 0,
   });
 
   factory Booking.fromJson(Map<String, Object?> json) {
@@ -77,6 +80,10 @@ class Booking {
       checkedInAt: readDateTime(json['checkedInAt']),
       createdAt: readRequiredDateTime(json['createdAt']),
       seats: readMapList(json['seats']).map(BookingSeat.fromJson).toList(),
+      concessions: readMapList(json['concessions'])
+          .map(BookingConcession.fromJson)
+          .toList(),
+      concessionsAmount: readDouble(json['concessionsAmount']),
     );
   }
 
@@ -107,6 +114,12 @@ class Booking {
   final DateTime? checkedInAt;
   final DateTime createdAt;
   final List<BookingSeat> seats;
+
+  // Snacks bought with the tickets; their price is in [totalAmount].
+  final List<BookingConcession> concessions;
+  final double concessionsAmount;
+
+  String get snacksText => concessions.map((snack) => snack.label).join(', ');
 
   bool get isCheckedIn => checkedInAt != null;
 

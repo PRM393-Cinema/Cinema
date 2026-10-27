@@ -24,6 +24,7 @@ abstract final class AppRoutes {
       '/staff/bookings/$bookingId/checkout';
   static const adminMovies = '/admin/movies';
   static const adminRooms = '/admin/rooms';
+  static const adminSnacks = '/admin/snacks';
   static const adminUsers = '/admin/users';
   static const adminCreateUser = '/admin/users/new';
   static String adminUser(int id) => '/admin/users/$id';
