@@ -452,9 +452,10 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
         ('Room', s.roomLabel),
         ('Start', formatDateTime(s.startTime)),
         ('End', formatDateTime(s.endTime)),
+        ('Format', s.format),
         // VIP and sweetbox seats cost more than standard ones.
         if (s.seatPrices.isEmpty)
-          ('Price', formatVnd(s.price))
+          ('Standard seat', formatVnd(s.priceOf('NORMAL')))
         else
           for (final type in seatTypes)
             if (s.seatPrices[type] case final price?)

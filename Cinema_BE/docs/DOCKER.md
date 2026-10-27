@@ -97,6 +97,8 @@ docker compose exec -T postgres psql -X -U postgres -d cinema_showtime_db -v ON_
 docker compose exec -T postgres psql -X -U postgres -d cinema_showtime_db -v ON_ERROR_STOP=1 -f /db-scripts/migrations/2026-10-10_cinema_distinct_room_layouts.sql
 ```
 
+Thêm lịch bằng hai lệnh trên thì chạy lại `2026-10-28_cinema_showtime_format.sql` để các suất mới ở phòng IMAX được gắn định dạng IMAX (giá lưu trừ 40.000đ phụ thu, giá khách trả không đổi).
+
 Phim **sắp chiếu** cho tab Coming soon (khởi chiếu sau ngày chạy lệnh 10 / 17 / 24 ngày, chưa có suất):
 
 ```powershell
@@ -126,6 +128,7 @@ Lệnh đọc danh sách phim từ `cinema_movie_db` rồi thêm lịch vào `ci
 | BookingService lỗi `column b.points_used does not exist` / `relation "loyalty_accounts" does not exist` | DB tạo trước khi có điểm thành viên → `docker compose exec -T postgres psql -X -U postgres -d cinema_booking_db -v ON_ERROR_STOP=1 -f /db-scripts/migrations/2026-10-27_cinema_booking_loyalty.sql` (hoặc `docker compose down -v` rồi chạy lại) |
 | BookingService lỗi `column b.discount_amount does not exist` / `relation "promotions" does not exist` | DB tạo trước khi có khuyến mãi → `docker compose exec -T postgres psql -X -U postgres -d cinema_booking_db -v ON_ERROR_STOP=1 -f /db-scripts/migrations/2026-10-27_cinema_booking_promotions.sql` (hoặc `docker compose down -v` rồi chạy lại) |
 | BookingService lỗi `column b.concessions_amount does not exist` / `relation "concession_items" does not exist` | DB tạo trước khi có bắp nước → `docker compose exec -T postgres psql -X -U postgres -d cinema_booking_db -v ON_ERROR_STOP=1 -f /db-scripts/migrations/2026-10-27_cinema_booking_concessions.sql` (hoặc `docker compose down -v` rồi chạy lại) |
+| MovieService lỗi `column s.format does not exist` | DB tạo trước khi có định dạng suất chiếu → `docker compose exec -T postgres psql -X -U postgres -d cinema_showtime_db -v ON_ERROR_STOP=1 -f /db-scripts/migrations/2026-10-28_cinema_showtime_format.sql` (hoặc `docker compose down -v` rồi chạy lại) |
 | MovieService lỗi `column m.age_rating does not exist` | DB tạo trước khi có phân loại phim → `docker compose exec -T postgres psql -X -U postgres -d cinema_movie_db -v ON_ERROR_STOP=1 -f /db-scripts/migrations/2026-10-27_cinema_movie_age_rating.sql` (hoặc `docker compose down -v` rồi chạy lại) |
 | BookingService lỗi `column b.customer_phone does not exist`, hoặc bán vé khách vãng lai bị lỗi `null value in column "user_id"` | DB tạo trước khi có vé vãng lai → chạy 3 file `2026-10-22_*.sql` trong `Project-Cinema-DB/migrations`, ví dụ `docker compose exec -T postgres psql -X -U postgres -d cinema_booking_db -v ON_ERROR_STOP=1 -f /db-scripts/migrations/2026-10-22_cinema_booking_db.sql` (tương tự cho `cinema_payment_db`, `cinema_notification_db`), hoặc `docker compose down -v` rồi chạy lại |
 | `relation "outbox_messages" does not exist` / `column ... payer_account_number does not exist` | DB tạo từ file SQL cũ → `docker compose down -v` rồi chạy lại (hoặc chạy các file `2026-10-02_*.sql` trong `Project-Cinema-DB/migrations`) |

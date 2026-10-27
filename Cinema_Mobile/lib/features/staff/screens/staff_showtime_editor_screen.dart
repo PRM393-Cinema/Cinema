@@ -36,6 +36,7 @@ class _StaffShowtimeEditorScreenState extends State<StaffShowtimeEditorScreen> {
   DateTime? _start;
   DateTime? _end;
   String _status = 'OPEN';
+  String _format = '2D';
   bool _loading = true;
   bool _saving = false;
   String? _error;
@@ -81,6 +82,7 @@ class _StaffShowtimeEditorScreenState extends State<StaffShowtimeEditorScreen> {
         _start = show?.startTime;
         _end = show?.endTime;
         _status = show?.status ?? 'OPEN';
+        _format = show?.format ?? '2D';
         _price.text = show?.price.toStringAsFixed(0) ?? '';
       });
     } on Object catch (error) {
@@ -141,6 +143,7 @@ class _StaffShowtimeEditorScreenState extends State<StaffShowtimeEditorScreen> {
         end: _end!,
         price: double.parse(_price.text.trim()),
         status: _status,
+        format: _format,
       );
       if (!mounted) return;
       await staffSuccess(context, 'Showtime saved.');
@@ -229,8 +232,25 @@ class _StaffShowtimeEditorScreenState extends State<StaffShowtimeEditorScreen> {
                       onPressed: _saving ? null : () => _pick(false),
                     ),
                     const SizedBox(height: AppSpacing.lg),
+                    DropdownButtonFormField<String>(
+                      key: const Key('showtimeFormat'),
+                      initialValue: _format,
+                      decoration: const InputDecoration(
+                        labelText: 'Format',
+                        helperText:
+                            '3D adds 20.000 ₫ and IMAX 40.000 ₫ to every seat.',
+                      ),
+                      items: [
+                        for (final format in Showtime.formats)
+                          DropdownMenuItem(value: format, child: Text(format)),
+                      ],
+                      onChanged: _saving
+                          ? null
+                          : (value) => setState(() => _format = value ?? '2D'),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
                     AppTextField(
-                      label: 'Standard seat price (VND)',
+                      label: 'Standard seat price at 2D (VND)',
                       controller: _price,
                       enabled: !_saving,
                       keyboardType: const TextInputType.numberWithOptions(

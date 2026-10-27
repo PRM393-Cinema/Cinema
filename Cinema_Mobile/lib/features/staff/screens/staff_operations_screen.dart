@@ -360,7 +360,7 @@ class _StaffOperationsScreenState extends State<StaffOperationsScreen> {
       '${b.movieTitle ?? 'Movie'}\n${b.status.name.toUpperCase()}'
           '${b.isCheckedIn ? ' · CHECKED IN' : ''} · ${formatVnd(b.totalAmount)}',
     Showtime s =>
-      '${s.roomLabel} · ${formatDateTime(s.startTime)}\n${s.status} · ${formatVnd(s.price)}',
+      '${s.roomLabel} · ${formatDateTime(s.startTime)}\n${s.status} · ${formatVnd(s.priceOf('NORMAL'))}',
     Room r => '${r.totalSeats} seats',
     PaymentInfo p =>
       'Booking #${p.bookingId}\n${p.status.name} · ${formatVnd(p.amount)}',

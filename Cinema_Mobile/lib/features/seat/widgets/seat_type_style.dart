@@ -26,7 +26,9 @@ Set<double> seatPricesOf(Showtime showtime, {Iterable<String>? types}) => {
 // different prices (VIP and sweetbox seats cost more).
 String seatPriceLabel(Showtime showtime, {Iterable<String>? types}) {
   final prices = seatPricesOf(showtime, types: types);
-  final lowest = prices.isEmpty ? showtime.price : prices.reduce(math.min);
+  final lowest = prices.isEmpty
+      ? showtime.priceOf('NORMAL')
+      : prices.reduce(math.min);
   return '${prices.length > 1 ? 'from ' : ''}${formatVnd(lowest)} / seat';
 }
 

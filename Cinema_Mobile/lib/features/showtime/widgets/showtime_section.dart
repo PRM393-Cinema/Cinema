@@ -55,7 +55,7 @@ class ShowtimeSection extends StatelessWidget {
                     child: ShowtimeChip(
                       time: formatTime(showtime.startTime),
                       room: showtime.roomLabel,
-                      price: formatVnd(showtime.price),
+                      price: formatVnd(showtime.priceOf('NORMAL')),
                       isSelected: showtime.id == selectedShowtimeId,
                       isAvailable: showtime.isOpen,
                       onTap: () => onSelected(showtime),

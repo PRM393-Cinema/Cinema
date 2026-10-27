@@ -16,7 +16,9 @@ namespace ShowtimeService.Extensions
                 StartTime = showtime.StartTime,
                 EndTime = showtime.EndTime,
                 Price = showtime.Price,
-                SeatPrices = SeatPrices.Of(showtime.Price),
+                Format = showtime.Format,
+                FormatSurcharge = ShowtimeFormats.Surcharge(showtime.Format),
+                SeatPrices = SeatPrices.Of(showtime.Price, showtime.Format),
                 Status = showtime.Status
             };
         }
