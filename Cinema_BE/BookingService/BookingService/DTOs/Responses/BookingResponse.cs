@@ -32,5 +32,10 @@
         public DateTime CreatedAt { get; set; }
 
         public List<BookingSeatResponse> Seats { get; set; } = new();
+
+        // Tiền bắp nước, đã tính trong TotalAmount
+        public decimal ConcessionsAmount { get; set; }
+
+        public List<BookingConcessionResponse> Concessions { get; set; } = new();
     }
 }

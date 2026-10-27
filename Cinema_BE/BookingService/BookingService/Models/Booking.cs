@@ -19,7 +19,9 @@ public partial class Booking
 
     public string Status { get; set; } = null!; // PENDING / CONFIRMED / REFUND_PENDING / CANCELLED / EXPIRED
 
-    public decimal TotalAmount { get; set; }
+    public decimal TotalAmount { get; set; } // số tiền phải trả: tiền vé + bắp nước
+
+    public decimal ConcessionsAmount { get; set; } // tiền bắp nước trong tổng tiền
 
     public long? PaymentId { get; set; }
 
@@ -34,4 +36,6 @@ public partial class Booking
     public DateTime CreatedAt { get; set; }
 
     public virtual ICollection<BookingSeat> BookingSeats { get; set; } = new List<BookingSeat>();
+
+    public virtual ICollection<BookingConcession> Concessions { get; set; } = new List<BookingConcession>();
 }

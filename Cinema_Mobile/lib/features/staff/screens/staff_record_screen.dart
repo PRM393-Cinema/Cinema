@@ -614,6 +614,12 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
         'Seats (${booking.seats.length})',
         booking.seatLabels.isEmpty ? 'Not provided' : booking.seatLabels,
       ),
+      if (booking.concessions.isNotEmpty)
+        _detailField(
+          Icons.fastfood_outlined,
+          'Snacks (${formatVnd(booking.concessionsAmount)})',
+          booking.snacksText,
+        ),
       _detailField(
         Icons.person_outline,
         booking.isWalkIn ? 'Walk-in guest' : 'Customer #${booking.userId}',

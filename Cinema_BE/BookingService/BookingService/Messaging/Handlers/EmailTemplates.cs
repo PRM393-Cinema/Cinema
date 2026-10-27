@@ -113,9 +113,16 @@ namespace BookingService.Messaging.Handlers
             return $"""
                 <p><strong>Phim:</strong> {E(data.MovieTitle ?? "Mobile Cinema")}<br/>
                    <strong>Suất chiếu:</strong> {E(showTime)}<br/>
-                   <strong>Ghế:</strong> {E(string.Join(", ", data.Seats))}<br/>
+                   <strong>Ghế:</strong> {E(string.Join(", ", data.Seats))}<br/>{Snacks(data)}
                    <strong>Tổng tiền:</strong> {data.TotalAmount:N0} VND</p>
                 """;
+        }
+
+        private static string Snacks(BookingEventData data)
+        {
+            return data.Concessions.Count == 0
+                ? string.Empty
+                : $"\n   <strong>Bắp nước:</strong> {E(string.Join(", ", data.Concessions))}<br/>";
         }
 
         private static string? Reason(string? reason)

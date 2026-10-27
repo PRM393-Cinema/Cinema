@@ -62,7 +62,7 @@ CosmoQ Cinema has three parts:
 | [Cinema_BE/docs/MESSAGING.md](../Cinema_BE/docs/MESSAGING.md) | RabbitMQ events, outbox, idempotency |
 | [Cinema_BE/docs/MONITORING.md](../Cinema_BE/docs/MONITORING.md) | Metrics, traces, logs |
 | [Cinema_BE/docs/TESTING.md](../Cinema_BE/docs/TESTING.md) | Automated tests and CI |
-| [Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md) | All 82 endpoints and the screens that use them |
+| [Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md) | All 85 endpoints and the screens that use them |
 | [Cinema_Mobile/docs/STAFF_WORKSPACE.md](../Cinema_Mobile/docs/STAFF_WORKSPACE.md) | Admin website operations |
 | `Resource/PRM393.docx` | Course requirements: permission matrix, required technical components |
 
@@ -284,6 +284,8 @@ Priority: **H** (must have), **M** (important), **L** (nice to have).
 | FR-BOOK-10 | A background job runs every 30 seconds, marks bookings past their hold `EXPIRED` and releases their seats. | H |
 | FR-BOOK-11 | The seat picker refreshes every 5 seconds; a selected seat taken by someone else is unselected and the customer is told. | M |
 | FR-BOOK-12 | Ticket statistics per showtime for Staff/Admin: bookings, seats sold, seats held, checked in (by a list of ids or by a start-time range of at most 31 days). | M |
+| FR-BOOK-13 | **Snacks with tickets**: customers (booking summary) and the counter (sale screen) pick items from the menu, 1–20 of each, at most 10 different items. Prices come from the menu on sale; the snacks are part of the total, so payment, revenue and refunds include them. The order keeps the name and price at the time of purchase. Snacks show on the ticket, the payment page, the ticket email and the printed ticket. Stopped items are refused (400). | M |
+| FR-BOOK-14 | Admins manage the snacks menu (Admin → Snacks): add, edit name / price / description / image / order, stop or resume selling (items are never deleted). Customers only see items on sale. | M |
 
 ### 4.7 Payments (PayOS)
 
@@ -392,6 +394,7 @@ Navigation on the left; on windows narrower than 640 px it opens from a menu but
 | Room seat map | Staff, Admin | Change one seat or paint many; Admin changes the seat count |
 | Movies | Admin | Add, edit, stop / show again, filter, search |
 | Rooms | Admin | Add a room as rows × seats, rename, delete, open the seat map |
+| Snacks | Admin | Snacks menu: add, edit, stop / resume selling |
 | Accounts | Admin | Search, filter, paging, details, create, change roles, lock / unlock |
 | Profile | Staff, Admin | Profile, change password through OTP, sign out |
 
@@ -516,7 +519,7 @@ Check-in is the `checkedInAt` attribute of a `CONFIRMED` ticket, not a separate 
 | `cinema_auth_db` | `users`, `roles`, `users_roles`, `refresh_tokens`, `otp_codes` | Passwords and OTP codes stored only as BCrypt hashes; unique email |
 | `cinema_movie_db` | `movies` | Status `ACTIVE` / `INACTIVE`; rating `age_rating` P / K / T13 / T16 / T18 |
 | `cinema_showtime_db` | `rooms`, `seats`, `showtimes`, `outbox_messages` | Seat unique by (room, row, number); seat type NORMAL / VIP / SWEETBOX |
-| `cinema_booking_db` | `bookings`, `booking_seats`, `seat_reservations`, `outbox_messages` | `user_id` NULL for walk-in guests; `customer_email`, `customer_phone`, `checked_in_at`, `expires_at` |
+| `cinema_booking_db` | `bookings`, `booking_seats`, `seat_reservations`, `concession_items`, `booking_concessions`, `outbox_messages` | `user_id` NULL for walk-in guests; `customer_email`, `customer_phone`, `checked_in_at`, `expires_at` |
 | `cinema_payment_db` | `payments`, `refunds`, `outbox_messages` | Method `PAYOS` / `CASH`; payer account kept for refunds |
 | `cinema_notification_db` | `notifications` | Unique by `event_id` so nothing is sent twice |
 
@@ -529,7 +532,7 @@ Check-in is the `checkedInAt` attribute of a `CONFIRMED` ticket, not a separate 
 
 ### 10.1 API
 
-- 82 business endpoints, REST/JSON, through the gateway at `http://<host>:5000`. Full list: [MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md).
+- 85 business endpoints, REST/JSON, through the gateway at `http://<host>:5000`. Full list: [MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md).
 
 | Group | Prefix | Endpoints |
 |---|---|---|
@@ -540,6 +543,7 @@ Check-in is the `checkedInAt` attribute of a `CONFIRMED` ticket, not a separate 
 | Bookings, check-in | `/api/v1/bookings` | 13 |
 | Payments, refunds | `/api/v1/payments` | 17 |
 | Notifications | `/api/v1/notifications` | 6 |
+| Snacks | `/api/v1/concessions` | 3 |
 
 - Lists are paged (`page` / `size` or `pageNumber` / `pageSize`), at most 50 records per page, sorted with `sortBy` / `sortDir`.
 - Errors follow ProblemDetails: `title`, `status`, `detail`, `errors` (per field), `errorCode` (business code).
@@ -614,8 +618,8 @@ Check-in is the `checkedInAt` attribute of a `CONFIRMED` ticket, not a separate 
 | AuthService | 27 | Registration, OTP and OTP lockout, sign-in, refresh rotation, sign-out, account locking, role changes, field validation |
 | ApiGateway | 21 | Blocks tokens of locked accounts and changed roles before forwarding, never forwards when the account check fails, 503 when AuthService does not answer |
 | MovieService | 21 | Showtimes, overlaps, cancellation and its event, seats, sweetbox pairs, seat counts, prices per seat type |
-| BookingService | 60 | Bookings, seat holds, webhook, expiry, late payment, refunds, real RabbitMQ, authorization, check-in, statistics, revenue, counter sales |
-| Flutter | 172 | Widget tests of customer and admin screens, validators, payment flow, check-in, counter |
+| BookingService | 63 | Bookings, seat holds, webhook, expiry, late payment, refunds, real RabbitMQ, authorization, check-in, statistics, revenue, counter sales |
+| Flutter | 175 | Widget tests of customer and admin screens, validators, payment flow, check-in, counter |
 
 Backend integration tests run against real PostgreSQL and RabbitMQ (Testcontainers); PayOS, MovieService and SMTP are replaced by fakes.
 

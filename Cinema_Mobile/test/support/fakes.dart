@@ -17,6 +17,8 @@ import 'package:url_launcher_platform_interface/url_launcher_platform_interface.
 
 import 'fixtures.dart';
 
+import 'package:cinema_fe/data/models/concession.dart';
+
 class FakeAuthRepository implements AuthRepository {
   @override
   Future<PagedResult<AuthUser>> users({
@@ -227,10 +229,15 @@ class FakeCatalogRepository implements CatalogRepository {
 }
 
 class CreateBookingCall {
-  const CreateBookingCall(this.showtimeId, this.seatIds);
+  const CreateBookingCall(
+    this.showtimeId,
+    this.seatIds, [
+    this.concessions = const {},
+  ]);
 
   final int showtimeId;
   final List<int> seatIds;
+  final Map<int, int> concessions;
 }
 
 class FakeBookingRepository implements BookingRepository {
@@ -256,6 +263,12 @@ class FakeBookingRepository implements BookingRepository {
   final verifiedIds = <int>[];
   final checkoutBookingIds = <int>[];
 
+  // The snacks menu the summary offers.
+  List<ConcessionItem> snacks = const [];
+
+  @override
+  Future<List<ConcessionItem>> getConcessions() async => snacks;
+
   // PayOS order codes and their bookings; verify takes either, like the API.
   final orderCodes = <int, int>{};
 
@@ -271,8 +284,9 @@ class FakeBookingRepository implements BookingRepository {
   Future<Booking> createBooking({
     required int showtimeId,
     required List<int> seatIds,
+    Map<int, int> concessions = const {},
   }) async {
-    createCalls.add(CreateBookingCall(showtimeId, seatIds));
+    createCalls.add(CreateBookingCall(showtimeId, seatIds, concessions));
     if (createError != null) {
       throw createError!;
     }

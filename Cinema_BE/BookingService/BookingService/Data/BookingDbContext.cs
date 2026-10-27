@@ -20,6 +20,10 @@ public partial class BookingDbContext : DbContext
 
     public virtual DbSet<BookingSeat> BookingSeats { get; set; }
 
+    public virtual DbSet<ConcessionItem> ConcessionItems { get; set; }
+
+    public virtual DbSet<BookingConcession> BookingConcessions { get; set; }
+
     public virtual DbSet<SeatReservation> SeatReservations { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -73,6 +77,10 @@ public partial class BookingDbContext : DbContext
             entity.Property(e => e.TotalAmount)
                 .HasPrecision(10, 2)
                 .HasColumnName("total_amount");
+            entity.Property(e => e.ConcessionsAmount)
+                .HasPrecision(10, 2)
+                .HasDefaultValue(0m)
+                .HasColumnName("concessions_amount");
             entity.Property(e => e.UserId).HasColumnName("user_id");
         });
 
@@ -98,6 +106,45 @@ public partial class BookingDbContext : DbContext
                 .HasForeignKey(d => d.BookingId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("booking_seats_booking_id_fkey");
+        });
+
+        modelBuilder.Entity<ConcessionItem>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("concession_items_pkey");
+            entity.ToTable("concession_items");
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Name).HasMaxLength(100).HasColumnName("name");
+            entity.Property(e => e.Description).HasMaxLength(255).HasColumnName("description");
+            entity.Property(e => e.Price).HasPrecision(10, 2).HasColumnName("price");
+            entity.Property(e => e.ImageUrl).HasMaxLength(500).HasColumnName("image_url");
+            entity.Property(e => e.Active).HasDefaultValue(true).HasColumnName("active");
+            entity.Property(e => e.SortOrder).HasDefaultValue(0).HasColumnName("sort_order");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("created_at");
+        });
+
+        modelBuilder.Entity<BookingConcession>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("booking_concessions_pkey");
+            entity.ToTable("booking_concessions");
+            entity.HasIndex(e => e.BookingId, "idx_booking_concessions_booking");
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.BookingId).HasColumnName("booking_id");
+            entity.Property(e => e.ItemId).HasColumnName("item_id");
+            entity.Property(e => e.ItemName).HasMaxLength(100).HasColumnName("item_name");
+            entity.Property(e => e.UnitPrice).HasPrecision(10, 2).HasColumnName("unit_price");
+            entity.Property(e => e.Quantity).HasColumnName("quantity");
+
+            entity.HasOne(d => d.Booking).WithMany(p => p.Concessions)
+                .HasForeignKey(d => d.BookingId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("booking_concessions_booking_id_fkey");
+            entity.HasOne<ConcessionItem>().WithMany()
+                .HasForeignKey(d => d.ItemId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("booking_concessions_item_id_fkey");
         });
 
         modelBuilder.Entity<SeatReservation>(entity =>

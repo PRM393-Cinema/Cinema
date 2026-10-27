@@ -18,6 +18,8 @@ import '../../../data/models/booking_draft.dart';
 import '../../../data/repositories/booking_repository.dart';
 import '../../seat/widgets/seat_type_style.dart';
 import '../../../core/widgets/age_rating_badge.dart';
+import '../../../data/models/concession.dart';
+import '../widgets/concession_picker.dart';
 
 class BookingSummaryScreen extends StatefulWidget {
   const BookingSummaryScreen({required this.bookingRepository, super.key});
@@ -31,6 +33,25 @@ class BookingSummaryScreen extends StatefulWidget {
 class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
   bool _isSubmitting = false;
   String? _errorMessage;
+
+  // The snacks menu; empty when it cannot load (tickets still sell).
+  List<ConcessionItem> _snacks = const [];
+  final _snackQuantities = <int, int>{};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSnacks();
+  }
+
+  Future<void> _loadSnacks() async {
+    try {
+      final snacks = await widget.bookingRepository.getConcessions();
+      if (mounted) setState(() => _snacks = snacks);
+    } on Object {
+      // Tickets can be booked without snacks.
+    }
+  }
 
   // A restricted movie needs the viewer to confirm the age rule first; staff
   // may check ID at the entrance.
@@ -83,6 +104,11 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
       final booking = await widget.bookingRepository.createBooking(
         showtimeId: draft.showtime.id,
         seatIds: draft.seats.map((seat) => seat.id).toList(),
+        concessions: {
+          for (final MapEntry(key: id, value: quantity)
+              in _snackQuantities.entries)
+            if (quantity > 0) id: quantity,
+        },
       );
 
       if (!mounted) return;
@@ -221,6 +247,21 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
         ],
       ),
     );
+    final snacksTotalPrice = snacksTotal(_snacks, _snackQuantities);
+    final pickedSnacks = [
+      for (final snack in _snacks)
+        if ((_snackQuantities[snack.id] ?? 0) > 0) snack,
+    ];
+    final snacksCard = _SummaryCard(
+      title: 'Snacks & drinks',
+      child: ConcessionPicker(
+        items: _snacks,
+        quantities: _snackQuantities,
+        enabled: !_isSubmitting,
+        onChanged: (id, quantity) =>
+            setState(() => _snackQuantities[id] = quantity),
+      ),
+    );
     final priceCard = _SummaryCard(
       title: 'Price Details',
       child: Column(
@@ -246,6 +287,24 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                 ],
               ),
             ),
+          for (final snack in pickedSnacks)
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.xs),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '${_snackQuantities[snack.id]}x ${snack.name}',
+                      style: AppTextStyles.body,
+                    ),
+                  ),
+                  Text(
+                    formatVnd(snack.price * _snackQuantities[snack.id]!),
+                    style: AppTextStyles.body,
+                  ),
+                ],
+              ),
+            ),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
             child: Divider(height: 1, color: AppColors.border),
@@ -255,7 +314,7 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
             children: [
               const Text('Total', style: AppTextStyles.heading2),
               Text(
-                formatVnd(draft.totalPrice),
+                formatVnd(draft.totalPrice + snacksTotalPrice),
                 style: AppTextStyles.heading2.copyWith(
                   color: AppColors.primary,
                 ),
@@ -300,6 +359,10 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                       movieCard,
                       const SizedBox(height: AppSpacing.xl),
                       seatsCard,
+                      if (_snacks.isNotEmpty) ...[
+                        const SizedBox(height: AppSpacing.xl),
+                        snacksCard,
+                      ],
                       if (!desktop) const SizedBox(height: AppSpacing.xl),
                     ],
                     side: [

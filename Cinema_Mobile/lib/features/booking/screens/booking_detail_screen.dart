@@ -347,6 +347,16 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (booking.concessions.isNotEmpty) ...[
+                  Text(
+                    'Snacks: ${booking.snacksText}',
+                    key: const Key('bookingSnacks'),
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                ],
                 Text(
                   'Total Amount',
                   style: AppTextStyles.bodySmall.copyWith(

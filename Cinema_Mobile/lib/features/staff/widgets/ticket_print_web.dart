@@ -68,6 +68,7 @@ small { font-size: 10px; }
 <h2>${escape.convert(booking.movieTitle ?? 'Movie')}</h2>
 ${booking.showTime == null ? '' : row('Showtime', formatDateTime(booking.showTime!))}
 ${row('Seats', booking.seatLabels)}
+${booking.concessions.isEmpty ? '' : row('Snacks', booking.snacksText)}
 ${row('Total', formatVnd(booking.totalAmount))}
 ${row('Status', booking.isCheckedIn ? 'Checked in' : 'Paid')}
 <hr>
