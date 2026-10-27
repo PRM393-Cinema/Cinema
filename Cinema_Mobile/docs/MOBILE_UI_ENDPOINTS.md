@@ -1,6 +1,6 @@
 # Chức năng, endpoint và giao diện mobile
 
-Nhánh: `feat/Ngữ/UI_Update`. Đối chiếu từ controller backend, service Flutter và router hiện tại. Có **94 endpoint nghiệp vụ** trong các controller; mỗi dòng dưới đây tương ứng một method + đường dẫn. Không tính Swagger, metrics và health check.
+Nhánh: `feat/Ngữ/UI_Update`. Đối chiếu từ controller backend, service Flutter và router hiện tại. Có **96 endpoint nghiệp vụ** trong các controller; mỗi dòng dưới đây tương ứng một method + đường dẫn. Không tính Swagger, metrics và health check.
 
 “Đã nối API” nghĩa là có lời gọi thật trong code; không khẳng định đã thử end-to-end với server, SMTP hay PayOS thật.
 
@@ -10,7 +10,7 @@ Cập nhật: 12/10/2026. Đây là bảng kiểm tra kết nối API, không ph
 
 | Màn/chức năng | Route mobile | Endpoint gọi thật | Trạng thái |
 |---|---|---|---|
-| Home | `/home` | GET `/api/v1/movies/status/ACTIVE` | Đã nối; tìm kiếm hiện lọc local |
+| Home | `/home` | GET `/api/v1/movies/browse?when=now\|soon&genre=&keyword=`; GET `/api/v1/movies/genres` | Đã nối; tab Now showing / Coming soon, chip thể loại, ô tìm gọi API sau khi ngừng gõ 350 ms; phim sắp chiếu ghi ngày khởi chiếu trên poster |
 | Đăng nhập | `/login` | POST `/api/v1/auth/login` | Đã nối |
 | Đăng ký | `/register` | POST `/api/v1/auth/register` | Đã nối |
 | Xác thực email/gửi lại OTP | `/verify-email` | POST `/api/v1/auth/verify-email`; POST `/api/v1/auth/resend-verification` | Đã nối |
@@ -78,11 +78,13 @@ Các route `/admin/*` và `/staff/*` thuộc **trang quản trị web** (`lib/ma
 |---|---|---|---|---|
 | Danh sách phim | GET | `/api/v1/movies` | Admin → Movies; Staff → chọn phim khi tạo/sửa suất chiếu · đã nối API | [MoviesController:22](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L22) |
 | Chi tiết phim | GET | `/api/v1/movies/{id}` | Chi tiết phim · đã nối API | [MoviesController:34](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L34) |
-| Lọc trạng thái phim | GET | `/api/v1/movies/status/{status}` | Home/phim đang chiếu; Admin → Movies → lọc Showing/Stopped · đã nối API | [MoviesController:42](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L42) |
-| Tìm kiếm phim | GET | `/api/v1/movies/search` | Admin → Movies → tìm tên · đã nối API; ô tìm trên Home vẫn lọc local | [MoviesController:55](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L55) |
-| Tạo phim | POST | `/api/v1/movies` | Admin → Movies → Add movie; `ageRating` P / K / T13 / T16 / T18 (bỏ trống là P) · đã nối API | [MoviesController:68](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L68) |
-| Sửa phim | PUT | `/api/v1/movies/{id}` | Admin → Movies → Edit; Show again gửi `status: ACTIVE`; bỏ trống `ageRating` thì giữ nguyên · đã nối API | [MoviesController:77](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L77) |
-| Xoá phim | DELETE | `/api/v1/movies/{id}` | Admin → Movies → Stop showing (chuyển `INACTIVE`, không xoá dữ liệu) · đã nối API | [MoviesController:85](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L85) |
+| Trang chủ: đang chiếu / sắp chiếu | GET | `/api/v1/movies/browse` | Home: `when=now` (đã khởi chiếu) hoặc `soon` (khởi chiếu sau hôm nay), `genre`, `keyword`; chỉ phim ACTIVE; `when` sai bị 400 · đã nối API | [MoviesController:57](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L57) |
+| Thể loại phim | GET | `/api/v1/movies/genres` | Home → chip thể loại; thể loại của các phim ACTIVE, không trùng · đã nối API | [MoviesController:70](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L70) |
+| Lọc trạng thái phim | GET | `/api/v1/movies/status/{status}` | Staff → Sell tickets (phim ACTIVE); Admin → Movies → lọc Showing/Stopped · đã nối API | [MoviesController:42](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L42) |
+| Tìm kiếm phim | GET | `/api/v1/movies/search` | Admin → Movies → tìm tên (cả phim đã ngừng) · đã nối API | [MoviesController:77](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L77) |
+| Tạo phim | POST | `/api/v1/movies` | Admin → Movies → Add movie; `ageRating` P / K / T13 / T16 / T18 (bỏ trống là P) · đã nối API | [MoviesController:90](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L90) |
+| Sửa phim | PUT | `/api/v1/movies/{id}` | Admin → Movies → Edit; Show again gửi `status: ACTIVE`; bỏ trống `ageRating` thì giữ nguyên · đã nối API | [MoviesController:99](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L99) |
+| Xoá phim | DELETE | `/api/v1/movies/{id}` | Admin → Movies → Stop showing (chuyển `INACTIVE`, không xoá dữ liệu) · đã nối API | [MoviesController:107](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L107) |
 
 ## Phòng và ghế
 
@@ -199,7 +201,7 @@ Các route `/admin/*` và `/staff/*` thuộc **trang quản trị web** (`lib/ma
 
 1. **Đổi mật khẩu bằng mật khẩu hiện tại:** backend chưa có endpoint cho luồng ba ô trong ảnh mẫu. UI hiện dùng OTP email, có xác nhận mật khẩu mới; sau khi thành công xoá phiên local và yêu cầu đăng nhập lại.
 2. **Sửa hồ sơ:** chưa có API cập nhật hồ sơ cá nhân. Màn tài khoản đang hiển thị dữ liệu thật; không có nút lưu giả.
-3. **Tìm phim:** ô tìm kiếm trên Home lọc danh sách đã tải. `GET /api/v1/movies/search` tồn tại nhưng chưa được gọi từ ô này.
+3. **Tìm phim:** ô tìm kiếm trên Home gọi `GET /api/v1/movies/browse` (chỉ phim ACTIVE của tab đang mở); Admin → Movies dùng `GET /api/v1/movies/search` (cả phim đã ngừng).
 4. **Phân trang:** vé đã đặt hiện chỉ lấy trang đầu tối đa 50 bản ghi; thông báo và lịch sử thanh toán đã đọc đủ các trang. Hai danh sách này tải toàn bộ khi mở/làm mới, chưa tải thêm theo cuộn.
 5. **Quản trị:** quản lý user, role, phim, phòng, ghế, suất chiếu, xử lý hoàn tiền và gửi thông báo nằm trong trang quản trị web (`lib/main_admin.dart`), không có trong app khách.
 6. **Thông báo còn thiếu:** DELETE `/api/v1/notifications/{id}` có ở backend nhưng chưa có thao tác xóa trên mobile. Backend chưa có endpoint đánh dấu đã đọc/chưa đọc hoặc số thông báo chưa đọc. `status` hiện là trạng thái gửi email, không phải trạng thái đọc.

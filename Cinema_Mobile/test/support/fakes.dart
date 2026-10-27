@@ -198,6 +198,39 @@ class FakeCatalogRepository implements CatalogRepository {
     return movies;
   }
 
+  // The filters the home screen asked for, newest last.
+  final browseCalls = <({bool comingSoon, String? genre, String? keyword})>[];
+
+  // Like the API: active movies, released or not yet, by genre and title.
+  @override
+  Future<List<Movie>> browseMovies({
+    bool comingSoon = false,
+    String? genre,
+    String? keyword,
+  }) async {
+    browseCalls.add((comingSoon: comingSoon, genre: genre, keyword: keyword));
+    if (moviesErrorMessage != null) {
+      throw ApiException(message: moviesErrorMessage!);
+    }
+    return [
+      for (final movie in movies)
+        if (movie.status == 'ACTIVE' &&
+            movie.isComingSoon() == comingSoon &&
+            (genre == null ||
+                movie.genre.toLowerCase().contains(genre.toLowerCase())) &&
+            (keyword == null ||
+                movie.title.toLowerCase().contains(keyword.toLowerCase())))
+          movie,
+    ];
+  }
+
+  @override
+  Future<List<String>> getGenres() async => {
+    for (final movie in movies)
+      for (final genre in movie.genre.split(','))
+        if (genre.trim().isNotEmpty) genre.trim(),
+  }.toList();
+
   @override
   Future<Movie> getMovie(int movieId) async {
     return movies.firstWhere(

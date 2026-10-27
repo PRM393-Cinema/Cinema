@@ -19,5 +19,10 @@ namespace MovieService.Service.Interface
         Task DeleteMovieAsync(long id);
 
         Task<PagedResult<MovieResponse>> SearchMoviesAsync(string keyword, int page, int size, string sortBy, string sortDir);
+
+        // when = now (đang chiếu) / soon (sắp chiếu)
+        Task<PagedResult<MovieResponse>> BrowseAsync(string? when, string? genre, string? keyword, int page, int size);
+
+        Task<List<string>> GetGenresAsync();
     }
 }

@@ -1,6 +1,8 @@
 import '../../core/widgets/age_rating_badge.dart';
 import 'json_readers.dart';
 
+import 'package:flutter/material.dart';
+
 class Movie {
   const Movie({
     required this.id,
@@ -51,4 +53,12 @@ class Movie {
 
   String get durationText => '$durationMinutes min';
   String get releaseYear => releaseDate?.year.toString() ?? '';
+
+  // Not released yet: shown under "Coming soon", usually without showtimes.
+  bool isComingSoon([DateTime? now]) {
+    final release = releaseDate;
+    if (release == null) return false;
+    final today = DateUtils.dateOnly(now ?? DateTime.now());
+    return DateUtils.dateOnly(release).isAfter(today);
+  }
 }

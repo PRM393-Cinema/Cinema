@@ -93,6 +93,40 @@ namespace MovieService.Service.Impl
             return movies.ToPagedResult();
         }
 
+        public async Task<PagedResult<MovieResponse>> BrowseAsync(
+            string? when,
+            string? genre,
+            string? keyword,
+            int page,
+            int size)
+        {
+            var comingSoon = (when ?? "now").Trim().ToLowerInvariant() switch
+            {
+                "now" => false,
+                "soon" => true,
+                _ => throw new BusinessException("When must be now or soon.")
+            };
+
+            var p = PaginationUtils.Normalize(page, size, "createdAt", "desc");
+            var movies = await _movieRepository.BrowseAsync(
+                comingSoon,
+                genre,
+                keyword,
+                DateOnly.FromDateTime(DateTime.Now),
+                p.PageNumber,
+                p.PageSize);
+            return movies.ToPagedResult();
+        }
+
+        public async Task<List<string>> GetGenresAsync()
+        {
+            return (await _movieRepository.GetActiveGenresAsync())
+                .SelectMany(genres => genres.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Order(StringComparer.Create(new System.Globalization.CultureInfo("vi-VN"), true))
+                .ToList();
+        }
+
         private static readonly string[] AgeRatings = ["P", "K", "T13", "T16", "T18"];
 
         // null khi bỏ trống; sai mức thì 400

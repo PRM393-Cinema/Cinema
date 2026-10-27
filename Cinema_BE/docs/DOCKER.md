@@ -97,6 +97,12 @@ docker compose exec -T postgres psql -X -U postgres -d cinema_showtime_db -v ON_
 docker compose exec -T postgres psql -X -U postgres -d cinema_showtime_db -v ON_ERROR_STOP=1 -f /db-scripts/migrations/2026-10-10_cinema_distinct_room_layouts.sql
 ```
 
+Phim **sắp chiếu** cho tab Coming soon (khởi chiếu sau ngày chạy lệnh 10 / 17 / 24 ngày, chưa có suất):
+
+```powershell
+docker compose exec -T postgres psql -X -U postgres -d cinema_movie_db -v ON_ERROR_STOP=1 -f /db-scripts/migrations/2026-10-27_cinema_movie_coming_soon.sql
+```
+
 Lệnh đọc danh sách phim từ `cinema_movie_db` rồi thêm lịch vào `cinema_showtime_db`; không cần extension PostgreSQL. File nằm trong repo `Project-Cinema-DB`, cần pull cả repo này khi cập nhật.
 
 - **Database trong Docker tách biệt** với PostgreSQL cài trên máy: dữ liệu hai bên khác nhau. Với DB đang dùng, áp dụng các file migration tương ứng trong `Project-Cinema-DB/migrations`; lịch demo dùng lệnh ở trên. `docker compose down -v` xoá dữ liệu, chỉ dùng khi chủ động muốn tạo lại toàn bộ DB.

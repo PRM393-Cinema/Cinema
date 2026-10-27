@@ -45,6 +45,13 @@ class MovieDetailScreen extends StatefulWidget {
 
 class _MovieDetailScreenState extends State<MovieDetailScreen> {
   Movie? _movie;
+
+  // The release date of a movie that is not out yet.
+  DateTime? get _comingSoonDate {
+    final movie = _movie;
+    return movie != null && movie.isComingSoon() ? movie.releaseDate : null;
+  }
+
   List<Showtime> _showtimes = const [];
   bool _isLoading = true;
   String? _errorMessage;
@@ -274,10 +281,16 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     }
 
     if (_showtimes.isEmpty) {
-      return const EmptyState(
+      final release = _comingSoonDate;
+      return EmptyState(
         icon: Icons.event_busy_outlined,
-        title: 'No showtimes available',
-        message: 'There are no upcoming showtimes for this movie yet.',
+        title: release == null
+            ? 'No showtimes available'
+            : 'Opens ${formatDate(release)}',
+        message: release == null
+            ? 'There are no upcoming showtimes for this movie yet.'
+            : 'This movie is coming soon. Showtimes will be added closer '
+                  'to the release.',
       );
     }
 
@@ -374,7 +387,12 @@ class _MovieFacts extends StatelessWidget {
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             AgeRatingBadge(rating: movie.ageRating, large: true),
-            if (movie.releaseYear.isNotEmpty)
+            if (movie.isComingSoon())
+              _InfoPill(
+                key: const Key('comingSoonPill'),
+                label: 'Coming ${formatDate(movie.releaseDate!)}',
+              )
+            else if (movie.releaseYear.isNotEmpty)
               _InfoPill(label: movie.releaseYear),
             _InfoPill(label: movie.durationText),
             if (movie.language.isNotEmpty) _InfoPill(label: movie.language),
@@ -434,7 +452,7 @@ class _Synopsis extends StatelessWidget {
 }
 
 class _InfoPill extends StatelessWidget {
-  const _InfoPill({required this.label});
+  const _InfoPill({required this.label, super.key});
 
   final String label;
 

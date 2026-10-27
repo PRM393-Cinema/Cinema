@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../app/routes/app_routes.dart';
@@ -8,6 +10,7 @@ import '../../../app/theme/app_text_styles.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/cinema_background.dart';
+import '../../../core/utils/formatters.dart';
 import '../../../core/utils/layout.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
 import '../../../core/widgets/app_network_image.dart';
@@ -31,66 +34,111 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  // Searching waits until the customer stops typing.
+  static const searchDelay = Duration(milliseconds: 350);
+
   final _glassBackgroundKey = GlobalKey();
   String _query = '';
+  bool _comingSoon = false;
+  String? _genre;
+  List<String> _genres = const [];
   List<Movie> _movies = const [];
   bool _isLoading = true;
+  bool _hasLoaded = false;
   String? _errorMessage;
+  Timer? _searchTimer;
+
+  // Only the newest answer counts when filters change quickly.
+  int _request = 0;
 
   @override
   void initState() {
     super.initState();
     _loadMovies();
+    _loadGenres();
+  }
+
+  @override
+  void dispose() {
+    _searchTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _loadGenres() async {
+    try {
+      final genres = await widget.catalogRepository.getGenres();
+      if (mounted) setState(() => _genres = genres);
+    } on Object {
+      // The movies still show without the genre filter.
+    }
   }
 
   Future<void> _loadMovies() async {
+    final request = ++_request;
     setState(() {
-      _isLoading = _movies.isEmpty;
+      _isLoading = !_hasLoaded;
       _errorMessage = null;
     });
 
     try {
-      final movies = await widget.catalogRepository.getNowShowingMovies();
-      if (!mounted) return;
+      final query = _query.trim();
+      final movies = await widget.catalogRepository.browseMovies(
+        comingSoon: _comingSoon,
+        genre: _genre,
+        keyword: query.isEmpty ? null : query,
+      );
+      if (!mounted || request != _request) return;
       setState(() {
         _movies = movies;
         _isLoading = false;
+        _hasLoaded = true;
       });
     } on ApiException catch (error) {
-      _showError(error.message);
+      _showError(request, error.message);
     } on FormatException {
-      _showError('The server returned an invalid response.');
+      _showError(request, 'The server returned an invalid response.');
     } on Object {
-      _showError('Something went wrong. Please try again.');
+      _showError(request, 'Something went wrong. Please try again.');
     }
   }
 
-  void _showError(String message) {
-    if (!mounted) return;
+  void _showError(int request, String message) {
+    if (!mounted || request != _request) return;
     setState(() {
       _isLoading = false;
       _errorMessage = message;
     });
   }
 
-  List<Movie> get _filteredMovies {
-    final activeMovies = _movies.where((m) => m.status == 'ACTIVE').toList();
-    final normalizedQuery = _query.trim().toLowerCase();
-    if (normalizedQuery.isEmpty) {
-      return activeMovies;
-    }
+  void _search(String value) {
+    _query = value;
+    _searchTimer?.cancel();
+    _searchTimer = Timer(searchDelay, _loadMovies);
+  }
 
-    return activeMovies
-        .where((movie) => movie.title.toLowerCase().contains(normalizedQuery))
-        .toList();
+  void _showTab(bool comingSoon) {
+    if (comingSoon == _comingSoon) return;
+    setState(() => _comingSoon = comingSoon);
+    _loadMovies();
+  }
+
+  void _filterGenre(String? genre) {
+    if (genre == _genre) return;
+    setState(() => _genre = genre);
+    _loadMovies();
   }
 
   @override
   Widget build(BuildContext context) {
-    final visibleMovies = _filteredMovies;
-    final featuredMovie = visibleMovies.isNotEmpty
+    final visibleMovies = _movies;
+    // The big banner shows the newest movie when nothing is filtered.
+    final featuredMovie =
+        !_comingSoon &&
+            _genre == null &&
+            _query.trim().isEmpty &&
+            visibleMovies.isNotEmpty
         ? visibleMovies.first
-        : (_movies.isNotEmpty ? _movies.first : null);
+        : null;
     final session = SessionProvider.of(context);
 
     final desktop = isDesktopLayout(context);
@@ -194,7 +242,7 @@ class _HomeScreenState extends State<HomeScreen> {
       return const LoadingState(message: 'Loading movies...');
     }
 
-    if (_errorMessage != null && _movies.isEmpty) {
+    if (_errorMessage != null && !_hasLoaded) {
       return ErrorState(
         title: 'Unable to load movies',
         message: _errorMessage!,
@@ -207,6 +255,15 @@ class _HomeScreenState extends State<HomeScreen> {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final isWide = constraints.maxWidth >= 900;
+          final genreChips = [
+            for (final genre in [null, ..._genres])
+              ChoiceChip(
+                key: ValueKey('genre-${genre ?? 'all'}'),
+                label: Text(genre ?? 'All genres'),
+                selected: _genre == genre,
+                onSelected: (_) => _filterGenre(genre),
+              ),
+          ];
 
           return Center(
             child: ConstrainedBox(
@@ -226,14 +283,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: AppSpacing.xl),
                   AppTextField(
                     key: const Key('movieSearchField'),
-                    label: 'Search active movies',
+                    label: 'Search movies',
                     hint: 'Search by title',
                     prefixIcon: const Icon(Icons.search),
-                    onChanged: (value) {
-                      setState(() {
-                        _query = value;
-                      });
-                    },
+                    onChanged: _search,
                   ),
                   const SizedBox(height: AppSpacing.xxl),
                   if (featuredMovie != null && isWide) ...[
@@ -244,12 +297,55 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(height: AppSpacing.xxl),
                   ],
+                  Wrap(
+                    spacing: AppSpacing.sm,
+                    children: [
+                      ChoiceChip(
+                        key: const Key('tabNowShowing'),
+                        label: const Text('Now showing'),
+                        selected: !_comingSoon,
+                        onSelected: (_) => _showTab(false),
+                      ),
+                      ChoiceChip(
+                        key: const Key('tabComingSoon'),
+                        label: const Text('Coming soon'),
+                        selected: _comingSoon,
+                        onSelected: (_) => _showTab(true),
+                      ),
+                    ],
+                  ),
+                  if (_genres.isNotEmpty) ...[
+                    const SizedBox(height: AppSpacing.md),
+                    // Website: every genre on view; phone: swipe along a row.
+                    if (isWide)
+                      Wrap(
+                        spacing: AppSpacing.sm,
+                        runSpacing: AppSpacing.sm,
+                        children: genreChips,
+                      )
+                    else
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            for (final chip in genreChips)
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                  right: AppSpacing.sm,
+                                ),
+                                child: chip,
+                              ),
+                          ],
+                        ),
+                      ),
+                  ],
+                  const SizedBox(height: AppSpacing.xl),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      const Expanded(
+                      Expanded(
                         child: Text(
-                          'Now Showing',
+                          _comingSoon ? 'Coming Soon' : 'Now Showing',
                           style: AppTextStyles.heading2,
                         ),
                       ),
@@ -263,18 +359,26 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  if (_movies.isEmpty)
-                    const EmptyState(
-                      icon: Icons.movie_outlined,
-                      title: 'No movies showing',
-                      message: 'Please check back later.',
+                  if (_errorMessage != null)
+                    ErrorState(
+                      title: 'Unable to load movies',
+                      message: _errorMessage!,
+                      onRetry: _loadMovies,
                     )
                   else if (visibleMovies.isEmpty)
-                    const EmptyState(
-                      icon: Icons.search_off_outlined,
-                      title: 'No movies found',
-                      message: 'Try another movie title.',
-                    )
+                    _genre == null && _query.trim().isEmpty
+                        ? EmptyState(
+                            icon: Icons.movie_outlined,
+                            title: _comingSoon
+                                ? 'Nothing announced yet'
+                                : 'No movies showing',
+                            message: 'Please check back later.',
+                          )
+                        : const EmptyState(
+                            icon: Icons.search_off_outlined,
+                            title: 'No movies found',
+                            message: 'Try another title or genre.',
+                          )
                   else
                     _MovieGrid(movies: visibleMovies, onMovieTap: _openMovie),
                 ],
@@ -533,6 +637,9 @@ class _MovieGrid extends StatelessWidget {
           genre: movie.genre,
           duration: movie.durationText,
           ageRating: movie.ageRating,
+          badge: movie.isComingSoon()
+              ? formatShortDate(movie.releaseDate!)
+              : null,
           onTap: () => onMovieTap(movie),
         );
       },

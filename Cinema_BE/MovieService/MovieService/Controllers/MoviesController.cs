@@ -52,6 +52,28 @@ namespace MovieService.Controllers
             return Ok(result);
         }
 
+        // Trang chủ của khách: phim đang chiếu (when=now) hoặc sắp chiếu (when=soon), chỉ phim ACTIVE,
+        // lọc theo thể loại và tên (không phân biệt hoa thường)
+        [HttpGet("browse")]
+        [AllowAnonymous]
+        public async Task<ActionResult<PagedResult<MovieResponse>>> Browse(
+            [FromQuery] string? when = "now",
+            [FromQuery] string? genre = null,
+            [FromQuery] string? keyword = null,
+            [FromQuery] int page = 1,
+            [FromQuery] int size = 20)
+        {
+            return Ok(await _movieService.BrowseAsync(when, genre, keyword, page, size));
+        }
+
+        // Các thể loại của phim ACTIVE, để lọc ở trang chủ
+        [HttpGet("genres")]
+        [AllowAnonymous]
+        public async Task<ActionResult<List<string>>> GetGenres()
+        {
+            return Ok(await _movieService.GetGenresAsync());
+        }
+
         [HttpGet("search")]
         [AllowAnonymous]
         public async Task<ActionResult<PagedResult<MovieResponse>>> SearchMovies(
