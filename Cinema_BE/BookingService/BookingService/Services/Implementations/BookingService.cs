@@ -29,6 +29,7 @@ namespace BookingService.Services.Implementations
         private readonly IConcessionRepository _concessionRepository;
         private readonly IPromotionRepository _promotionRepository;
         private readonly IPromotionService _promotionService;
+        private readonly ILoyaltyService _loyaltyService;
         private readonly ISeatReservationRepository _seatReservationRepository;
         private readonly IRefundRepository _refundRepository;
         private readonly IShowtimeClient _showtimeClient;
@@ -45,6 +46,7 @@ namespace BookingService.Services.Implementations
             IConcessionRepository concessionRepository,
             IPromotionRepository promotionRepository,
             IPromotionService promotionService,
+            ILoyaltyService loyaltyService,
             ISeatReservationRepository seatReservationRepository,
             IRefundRepository refundRepository,
             IShowtimeClient showtimeClient,
@@ -60,6 +62,7 @@ namespace BookingService.Services.Implementations
             _concessionRepository = concessionRepository;
             _promotionRepository = promotionRepository;
             _promotionService = promotionService;
+            _loyaltyService = loyaltyService;
             _seatReservationRepository = seatReservationRepository;
             _refundRepository = refundRepository;
             _showtimeClient = showtimeClient;
@@ -293,6 +296,9 @@ namespace BookingService.Services.Implementations
                     await _bookingRepository
                         .CreateBookingAsync(booking);
 
+                // Điểm thành viên: trừ điểm, giảm tổng tiền (tối đa 50%)
+                await _loyaltyService.RedeemAsync(booking, request.UsePoints ?? 0);
+
                 var bookingSeats = new List<BookingSeat>();
 
                 foreach (var seatId in seatIds)
@@ -393,6 +399,7 @@ namespace BookingService.Services.Implementations
                 {
                     var releasedSeats = await ReleaseSeatsAsync(booking, "EXPIRED", includeBooked: false);
                     booking.Status = "EXPIRED";
+                    await _loyaltyService.OnReleasedAsync(booking);
 
                     _outbox.Add(
                         EventTypes.BookingExpired,
@@ -493,6 +500,7 @@ namespace BookingService.Services.Implementations
                     {
                         await ReleaseSeatsAsync(booking, "EXPIRED", includeBooked: false);
                         booking.Status = "EXPIRED";
+                        await _loyaltyService.OnReleasedAsync(booking);
 
                         _outbox.Add(
                             EventTypes.BookingExpired,
@@ -722,6 +730,7 @@ namespace BookingService.Services.Implementations
                 var seats = await ReleaseSeatsAsync(booking, "EXPIRED", includeBooked: false);
 
                 booking.Status = "EXPIRED";
+                await _loyaltyService.OnReleasedAsync(booking);
 
                 _outbox.Add(
                     EventTypes.BookingExpired,
@@ -913,6 +922,9 @@ namespace BookingService.Services.Implementations
             booking.Status = "CANCELLED";
             booking.ExpiresAt = null;
 
+            // Trả điểm đã dùng; vé đã thanh toán thì thu hồi điểm đã cộng
+            await _loyaltyService.OnReleasedAsync(booking);
+
             _outbox.Add(
                 EventTypes.BookingCancelled,
                 EventFactory.Booking(
@@ -1009,6 +1021,9 @@ namespace BookingService.Services.Implementations
             {
                 await _promotionRepository.IncrementUsageAsync(booking.PromotionId.Value);
             }
+
+            // Cộng điểm thành viên theo số tiền thực trả
+            await _loyaltyService.OnPaidAsync(booking);
 
             // Khách vãng lai cho email lúc trả tiền tại quầy: lưu vào vé để email huỷ / hoàn tiền sau này cũng tới
             if (string.IsNullOrWhiteSpace(booking.CustomerEmail) && !string.IsNullOrWhiteSpace(recipientEmail))

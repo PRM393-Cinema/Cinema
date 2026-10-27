@@ -626,6 +626,15 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
           'Discount',
           booking.discountText,
         ),
+      if (booking.pointsUsed > 0 || booking.pointsEarned > 0)
+        _detailField(
+          Icons.card_membership_outlined,
+          'Member points',
+          [
+            if (booking.pointsUsed > 0) 'Used ${booking.pointsUsedText}',
+            if (booking.pointsEarned > 0) 'Earned ${booking.pointsEarned}',
+          ].join(' • '),
+        ),
       _detailField(
         Icons.person_outline,
         booking.isWalkIn ? 'Walk-in guest' : 'Customer #${booking.userId}',

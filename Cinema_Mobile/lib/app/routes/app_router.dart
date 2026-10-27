@@ -167,7 +167,10 @@ class AppRouter {
       case AppRoutes.profile:
         return _RouteMatch(
           settings,
-          (_) => ProfileScreen(authRepository: authRepository),
+          (_) => ProfileScreen(
+            authRepository: authRepository,
+            bookingRepository: bookingRepository,
+          ),
           signInRequired: true,
         );
       case AppRoutes.staffCheckIn:

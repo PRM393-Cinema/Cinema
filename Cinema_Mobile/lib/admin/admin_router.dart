@@ -27,6 +27,7 @@ import '../features/staff/screens/staff_record_screen.dart';
 import '../features/staff/screens/staff_showtime_editor_screen.dart';
 import '../features/admin/screens/admin_snacks_screen.dart';
 import '../features/admin/screens/admin_promotions_screen.dart';
+import '../features/admin/screens/admin_members_screen.dart';
 
 enum _Access { public, staff, admin }
 
@@ -203,6 +204,13 @@ class AdminRouter {
         return admin((_) => AdminSnacksScreen(service: staffService));
       case AppRoutes.adminPromotions:
         return admin((_) => AdminPromotionsScreen(service: staffService));
+      case AppRoutes.adminMembers:
+        return admin(
+          (_) => AdminMembersScreen(
+            repository: authRepository,
+            service: staffService,
+          ),
+        );
       case AppRoutes.adminUsers:
         return admin((_) => AdminUsersScreen(repository: authRepository));
       case AppRoutes.adminCreateUser:

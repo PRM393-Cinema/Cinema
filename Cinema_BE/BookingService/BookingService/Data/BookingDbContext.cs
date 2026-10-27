@@ -26,6 +26,10 @@ public partial class BookingDbContext : DbContext
 
     public virtual DbSet<Promotion> Promotions { get; set; }
 
+    public virtual DbSet<LoyaltyAccount> LoyaltyAccounts { get; set; }
+
+    public virtual DbSet<LoyaltyTransaction> LoyaltyTransactions { get; set; }
+
     public virtual DbSet<SeatReservation> SeatReservations { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -90,6 +94,12 @@ public partial class BookingDbContext : DbContext
             entity.Property(e => e.PromotionId).HasColumnName("promotion_id");
             entity.Property(e => e.PromotionCode).HasMaxLength(30).HasColumnName("promotion_code");
             entity.Property(e => e.PromotionName).HasMaxLength(100).HasColumnName("promotion_name");
+            entity.Property(e => e.PointsUsed).HasDefaultValue(0).HasColumnName("points_used");
+            entity.Property(e => e.PointsDiscount)
+                .HasPrecision(10, 2)
+                .HasDefaultValue(0m)
+                .HasColumnName("points_discount");
+            entity.Property(e => e.PointsEarned).HasDefaultValue(0).HasColumnName("points_earned");
             entity.Property(e => e.UserId).HasColumnName("user_id");
         });
 
@@ -128,6 +138,44 @@ public partial class BookingDbContext : DbContext
             entity.Property(e => e.ImageUrl).HasMaxLength(500).HasColumnName("image_url");
             entity.Property(e => e.Active).HasDefaultValue(true).HasColumnName("active");
             entity.Property(e => e.SortOrder).HasDefaultValue(0).HasColumnName("sort_order");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("created_at");
+        });
+
+        modelBuilder.Entity<LoyaltyAccount>(entity =>
+        {
+            entity.HasKey(e => e.UserId).HasName("loyalty_accounts_pkey");
+            entity.ToTable("loyalty_accounts");
+            entity.Property(e => e.UserId).ValueGeneratedNever().HasColumnName("user_id");
+            entity.Property(e => e.Points).HasDefaultValue(0).HasColumnName("points");
+            entity.Property(e => e.LifetimeSpend).HasPrecision(14, 2).HasDefaultValue(0m).HasColumnName("lifetime_spend");
+            entity.Property(e => e.Tier).HasMaxLength(10).HasDefaultValue("MEMBER").HasColumnName("tier");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("created_at");
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("updated_at");
+        });
+
+        modelBuilder.Entity<LoyaltyTransaction>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("loyalty_transactions_pkey");
+            entity.ToTable("loyalty_transactions");
+            entity.HasIndex(e => new { e.UserId, e.CreatedAt }, "idx_loyalty_transactions_user");
+            entity.HasIndex(e => e.BookingId, "idx_loyalty_transactions_booking");
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.BookingId).HasColumnName("booking_id");
+            entity.Property(e => e.Type).HasMaxLength(10).HasColumnName("type");
+            entity.Property(e => e.Points).HasColumnName("points");
+            entity.Property(e => e.SpendChange).HasPrecision(14, 2).HasDefaultValue(0m).HasColumnName("spend_change");
+            entity.Property(e => e.Note).HasMaxLength(255).HasColumnName("note");
+            entity.Property(e => e.CreatedBy).HasColumnName("created_by");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")

@@ -24,6 +24,8 @@ import '../../../data/models/concession.dart';
 import '../../booking/widgets/concession_picker.dart';
 import '../../../data/models/promotion.dart';
 import '../../booking/widgets/promotion_box.dart';
+import '../../../data/models/loyalty.dart';
+import '../../profile/widgets/membership_card.dart';
 
 // Selling tickets at the counter: a walk-in guest (no account; email and phone
 // if they want) or a member's account, then a movie, one of its showtimes in
@@ -50,7 +52,15 @@ class _StaffCreateBookingScreenState extends State<StaffCreateBookingScreen> {
   final _user = TextEditingController();
   final _email = TextEditingController();
   final _phone = TextEditingController();
+  final _memberPhone = TextEditingController();
   bool _walkIn = true;
+
+  // The member found by phone and their points; cleared when the ID changes.
+  MemberLookup? _member;
+  List<MemberLookup> _matches = const [];
+  LoyaltyCard? _card;
+  bool _usePoints = false;
+  bool _finding = false;
   List<Movie>? _movies;
   Movie? _movie;
   List<Showtime>? _showtimes;
@@ -77,8 +87,69 @@ class _StaffCreateBookingScreenState extends State<StaffCreateBookingScreen> {
     _user.dispose();
     _email.dispose();
     _phone.dispose();
+    _memberPhone.dispose();
     super.dispose();
   }
+
+  Future<void> _findMember() async {
+    final phone = _memberPhone.text.trim();
+    if (phone.isEmpty) {
+      setState(() => _error = 'Enter the customer’s phone number.');
+      return;
+    }
+    setState(() {
+      _finding = true;
+      _error = null;
+      _matches = const [];
+    });
+    try {
+      final found = await widget.service.findMembers(phone);
+      if (!mounted) return;
+      if (found.isEmpty) {
+        setState(() => _error = 'No member account has this phone number.');
+      } else if (found.length == 1) {
+        await _pickMember(found.single);
+      } else {
+        setState(() => _matches = found);
+      }
+    } on Object catch (error) {
+      if (mounted) setState(() => _error = staffError(error));
+    } finally {
+      if (mounted) setState(() => _finding = false);
+    }
+  }
+
+  Future<void> _pickMember(MemberLookup member) async {
+    setState(() {
+      _member = member;
+      _matches = const [];
+      _card = null;
+      _usePoints = false;
+      _user.text = '${member.userId}';
+      _email.text = member.email;
+    });
+    try {
+      final card = await widget.service.loyalty(member.userId);
+      if (mounted && _member == member) setState(() => _card = card);
+    } on Object {
+      // The tickets still sell without points.
+    }
+  }
+
+  // Typing another ID drops the member found by phone and their points.
+  void _idChanged(String value) {
+    if (_member != null && value.trim() != '${_member!.userId}') {
+      setState(() {
+        _member = null;
+        _card = null;
+        _usePoints = false;
+      });
+    }
+  }
+
+  // Points used on an order of [orderAmount]; only for the member found.
+  int _pointsFor(double orderAmount) =>
+      !_walkIn && _usePoints ? _card?.usableOn(orderAmount) ?? 0 : 0;
 
   String? _id(String? value) =>
       (int.tryParse(value?.trim() ?? '') ?? 0) > 0 ? null : 'Enter a valid ID.';
@@ -109,6 +180,16 @@ class _StaffCreateBookingScreenState extends State<StaffCreateBookingScreen> {
   double _totalOf(Showtime showtime, ShowtimeSeatsData map) => map.seats
       .where((seat) => _selected.contains(seat.id))
       .fold(0, (total, seat) => total + showtime.priceOf(seat.type));
+
+  // The price before points: seats − discount + snacks.
+  double _orderAmount() {
+    final showtime = _showtime;
+    final map = _map;
+    if (showtime == null || map == null || _selected.isEmpty) return 0;
+    return _totalOf(showtime, map) -
+        _promotion.discount +
+        snacksTotal(_snacks, _snackQuantities);
+  }
 
   // A sweetbox is booked as a couple: its other half is picked with it.
   void _toggle(ShowtimeSeatsData map, Seat seat) {
@@ -230,6 +311,7 @@ class _StaffCreateBookingScreenState extends State<StaffCreateBookingScreen> {
         seats: _selected.toList(),
         concessions: Map.of(_snackQuantities),
         promotionCode: _promoCode,
+        usePoints: _pointsFor(_orderAmount()),
       );
       if (mounted) {
         Navigator.pushReplacementNamed(
@@ -303,12 +385,67 @@ class _StaffCreateBookingScreenState extends State<StaffCreateBookingScreen> {
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     if (!_walkIn) ...[
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Expanded(
+                            child: AppTextField(
+                              key: const Key('memberPhoneField'),
+                              label: 'Find by phone',
+                              controller: _memberPhone,
+                              enabled: !_busy && !_finding,
+                              keyboardType: TextInputType.phone,
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          AppButton.secondary(
+                            key: const Key('findMember'),
+                            label: 'Find',
+                            isLoading: _finding,
+                            onPressed: _busy || _finding ? null : _findMember,
+                          ),
+                        ],
+                      ),
+                      for (final match in _matches)
+                        ListTile(
+                          key: ValueKey('memberMatch-${match.userId}'),
+                          contentPadding: EdgeInsets.zero,
+                          leading: const Icon(Icons.person_outline),
+                          title: Text(match.displayName),
+                          subtitle: Text(match.email),
+                          onTap: () => _pickMember(match),
+                        ),
+                      if (_member != null) ...[
+                        const SizedBox(height: AppSpacing.sm),
+                        Row(
+                          key: const Key('memberSummary'),
+                          children: [
+                            const Icon(
+                              Icons.verified_user_outlined,
+                              color: AppColors.success,
+                            ),
+                            const SizedBox(width: AppSpacing.sm),
+                            Expanded(
+                              child: Text(
+                                _card == null
+                                    ? _member!.displayName
+                                    : '${_member!.displayName} · '
+                                          '${_card!.points} points',
+                                style: AppTextStyles.body,
+                              ),
+                            ),
+                            if (_card != null) TierBadge(tier: _card!.tier),
+                          ],
+                        ),
+                      ],
+                      const SizedBox(height: AppSpacing.lg),
                       AppTextField(
                         label: 'Customer account ID',
                         controller: _user,
                         enabled: !_busy,
                         keyboardType: TextInputType.number,
                         validator: _id,
+                        onChanged: _idChanged,
                       ),
                       const SizedBox(height: AppSpacing.lg),
                     ],
@@ -481,10 +618,31 @@ class _StaffCreateBookingScreenState extends State<StaffCreateBookingScreen> {
                     ),
                   ),
                 ],
+                if (_selected.isNotEmpty && !_walkIn && _card != null) ...[
+                  const SizedBox(height: AppSpacing.lg),
+                  CinemaPanel(
+                    surfaceOpacity: 0.8,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Text('Member points', style: AppTextStyles.title),
+                        const SizedBox(height: AppSpacing.md),
+                        UsePointsTile(
+                          card: _card!,
+                          orderAmount: _orderAmount(),
+                          value: _usePoints,
+                          enabled: !_busy,
+                          onChanged: (value) =>
+                              setState(() => _usePoints = value),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 const SizedBox(height: AppSpacing.md),
                 Text(
                   '${_selected.length} seat(s) selected · '
-                  '${formatVnd(_totalOf(showtime, map) - _promotion.discount + snacksTotal(_snacks, _snackQuantities))}',
+                  '${formatVnd(_orderAmount() - _pointsFor(_orderAmount()) * pointValue)}',
                   key: const Key('counterTotal'),
                   style: AppTextStyles.title,
                 ),

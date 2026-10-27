@@ -650,6 +650,12 @@ class _BookingSummary extends StatelessWidget {
               key: const Key('checkoutDiscount'),
               style: AppTextStyles.bodySmall,
             ),
+          if (booking.pointsUsed > 0)
+            Text(
+              'Points: ${booking.pointsUsedText}',
+              key: const Key('checkoutPoints'),
+              style: AppTextStyles.bodySmall,
+            ),
           Text(
             [
               booking.isWalkIn

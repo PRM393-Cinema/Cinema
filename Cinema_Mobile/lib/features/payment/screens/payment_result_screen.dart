@@ -343,6 +343,18 @@ class _TicketCard extends StatelessWidget {
                 'Discount: ${booking.discountText}',
                 style: AppTextStyles.bodySmall,
               ),
+            if (booking.pointsUsed > 0)
+              Text(
+                'Points: ${booking.pointsUsedText}',
+                style: AppTextStyles.bodySmall,
+              ),
+            if (booking.pointsEarned > 0)
+              Text(
+                'Earned ${booking.pointsEarned} points',
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.accent,
+                ),
+              ),
             const SizedBox(height: AppSpacing.md),
             Text(
               formatVnd(booking.totalAmount),

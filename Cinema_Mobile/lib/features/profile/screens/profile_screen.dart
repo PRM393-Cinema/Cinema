@@ -17,16 +17,23 @@ import '../../../core/widgets/loading_state.dart';
 import '../../../data/models/auth_response.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../admin/widgets/admin_page.dart';
+import '../../../data/models/loyalty.dart';
+import '../../../data/repositories/booking_repository.dart';
+import '../widgets/membership_card.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({
     required this.authRepository,
+    this.bookingRepository,
     this.adminMode = false,
     this.staffMode = false,
     super.key,
   });
 
   final AuthRepository authRepository;
+
+  // Customers: loads the membership card (points and tier).
+  final BookingRepository? bookingRepository;
   final bool adminMode;
   final bool staffMode;
 
@@ -41,6 +48,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isLoading = true;
   bool _isLoggingOut = false;
   String? _errorMessage;
+  LoyaltyCard? _card;
 
   @override
   void didChangeDependencies() {
@@ -49,6 +57,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _hasStarted = true;
       _user = SessionProvider.of(context).user;
       _loadProfile();
+      _loadCard();
     }
   }
 
@@ -72,6 +81,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _showError('The server returned an invalid response.');
     } on Object {
       _showError('Something went wrong. Please try again.');
+    }
+  }
+
+  Future<void> _loadCard() async {
+    final bookings = widget.bookingRepository;
+    if (bookings == null || widget.adminMode || widget.staffMode) return;
+    try {
+      final card = await bookings.getMyLoyalty();
+      if (mounted) setState(() => _card = card);
+    } on Object {
+      // The profile still shows without the card.
     }
   }
 
@@ -217,7 +237,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         textAlign: TextAlign.center,
       ),
     ];
+    final card = _card;
     final details = <Widget>[
+      if (card != null) ...[
+        MembershipCard(card: card),
+        const SizedBox(height: AppSpacing.xl),
+      ],
       _InfoCard(
         rows: [
           ('Full name', user.displayName),

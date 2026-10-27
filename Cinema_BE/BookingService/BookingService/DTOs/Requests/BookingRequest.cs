@@ -32,6 +32,10 @@ namespace BookingService.DTOs.Requests
         [MaxLength(30, ErrorMessage = "Promo code must be at most 30 characters")]
         public string? PromotionCode { get; set; }
 
+        // Điểm thành viên dùng cho đơn (1 điểm = 1.000đ, tối đa 50% số tiền phải trả); chỉ khách có tài khoản
+        [Range(0, 1_000_000, ErrorMessage = "Points must not be negative")]
+        public int? UsePoints { get; set; }
+
         // Bắp nước mua kèm (không bắt buộc)
         public List<BookingConcessionRequest> Concessions { get; set; } = new();
     }

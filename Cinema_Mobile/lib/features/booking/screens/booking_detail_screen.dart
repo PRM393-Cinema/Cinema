@@ -367,6 +367,26 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                   ),
                   const SizedBox(height: AppSpacing.sm),
                 ],
+                if (booking.pointsUsed > 0) ...[
+                  Text(
+                    'Points: ${booking.pointsUsedText}',
+                    key: const Key('bookingPointsUsed'),
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.success,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                ],
+                if (booking.pointsEarned > 0) ...[
+                  Text(
+                    'Earned ${booking.pointsEarned} points',
+                    key: const Key('bookingPointsEarned'),
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.accent,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                ],
                 Text(
                   'Total Amount',
                   style: AppTextStyles.bodySmall.copyWith(

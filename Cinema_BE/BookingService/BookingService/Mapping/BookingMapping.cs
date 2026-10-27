@@ -43,7 +43,10 @@ namespace BookingService.Mapping
                 Concessions = concessions,
                 DiscountAmount = booking.DiscountAmount,
                 PromotionCode = booking.PromotionCode,
-                PromotionName = booking.PromotionName
+                PromotionName = booking.PromotionName,
+                PointsUsed = booking.PointsUsed,
+                PointsDiscount = booking.PointsDiscount,
+                PointsEarned = booking.PointsEarned
             };
         }
 

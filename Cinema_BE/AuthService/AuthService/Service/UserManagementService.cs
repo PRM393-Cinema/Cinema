@@ -51,6 +51,26 @@ namespace AuthService.Service
             };
         }
 
+        public async Task<List<MemberResponse>> FindMembersByPhoneAsync(string? phone)
+        {
+            var digits = new string((phone ?? string.Empty).Where(char.IsAsciiDigit).ToArray());
+            if (digits.Length < AccountRules.PhoneMinDigits || digits.Length > AccountRules.PhoneMaxDigits)
+            {
+                throw new BusinessException(
+                    $"Enter a phone number of {AccountRules.PhoneMinDigits} to {AccountRules.PhoneMaxDigits} digits.");
+            }
+
+            return (await _userRepository.FindCustomersByPhoneDigitsAsync(digits))
+                .Select(user => new MemberResponse
+                {
+                    UserId = user.UserId,
+                    Email = user.Email,
+                    FullName = user.FullName,
+                    Phone = user.Phone
+                })
+                .ToList();
+        }
+
         public async Task<UserResponse> GetUserAsync(long actorId, long userId)
         {
             await EnsureActiveAdminAsync(actorId);

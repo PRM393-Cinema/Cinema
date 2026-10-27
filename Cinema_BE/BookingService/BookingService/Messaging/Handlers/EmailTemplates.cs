@@ -113,7 +113,7 @@ namespace BookingService.Messaging.Handlers
             return $"""
                 <p><strong>Phim:</strong> {E(data.MovieTitle ?? "Mobile Cinema")}<br/>
                    <strong>Suất chiếu:</strong> {E(showTime)}<br/>
-                   <strong>Ghế:</strong> {E(string.Join(", ", data.Seats))}<br/>{Snacks(data)}{Discount(data)}
+                   <strong>Ghế:</strong> {E(string.Join(", ", data.Seats))}<br/>{Snacks(data)}{Discount(data)}{Points(data)}
                    <strong>Tổng tiền:</strong> {data.TotalAmount:N0} VND</p>
                 """;
         }
@@ -130,6 +130,17 @@ namespace BookingService.Messaging.Handlers
             return data.DiscountAmount <= 0
                 ? string.Empty
                 : $"\n   <strong>Giảm giá:</strong> -{data.DiscountAmount:N0} VND ({E(data.PromotionName ?? "Khuyến mãi")})<br/>";
+        }
+
+        private static string Points(BookingEventData data)
+        {
+            var used = data.PointsUsed <= 0
+                ? string.Empty
+                : $"\n   <strong>Dùng điểm:</strong> {data.PointsUsed:N0} điểm (-{data.PointsDiscount:N0} VND)<br/>";
+            var earned = data.PointsEarned <= 0
+                ? string.Empty
+                : $"\n   <strong>Điểm thưởng:</strong> +{data.PointsEarned:N0} điểm<br/>";
+            return used + earned;
         }
 
         private static string? Reason(string? reason)

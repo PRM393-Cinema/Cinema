@@ -62,7 +62,7 @@ CosmoQ Cinema gồm ba phần:
 | [Cinema_BE/docs/MESSAGING.md](../Cinema_BE/docs/MESSAGING.md) | Event RabbitMQ, outbox, idempotency |
 | [Cinema_BE/docs/MONITORING.md](../Cinema_BE/docs/MONITORING.md) | Metrics, trace, log |
 | [Cinema_BE/docs/TESTING.md](../Cinema_BE/docs/TESTING.md) | Test tự động và CI |
-| [Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md) | Toàn bộ 89 endpoint và màn hình đang dùng |
+| [Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md) | Toàn bộ 94 endpoint và màn hình đang dùng |
 | [Cinema_Mobile/docs/STAFF_WORKSPACE.md](../Cinema_Mobile/docs/STAFF_WORKSPACE.md) | Nghiệp vụ trang quản trị |
 | `Resource/PRM393.docx` | Yêu cầu môn học: ma trận quyền, thành phần kỹ thuật bắt buộc |
 
@@ -143,7 +143,6 @@ Một tài khoản có thể có nhiều vai trò. Tài khoản Staff/Admin đă
 
 ### 2.7 Ngoài phạm vi
 
-- Tích điểm thành viên và khuyến mãi (để phát triển sau).
 - Đổi mật khẩu bằng mật khẩu hiện tại; sửa hồ sơ cá nhân.
 - Push notification và trạng thái đã đọc của thông báo.
 - Hoàn tiền tự động qua cổng thanh toán (PayOS không có API hoàn tiền).
@@ -206,6 +205,7 @@ Mức ưu tiên: **H** (bắt buộc), **M** (quan trọng), **L** (bổ trợ).
 | FR-AUTH-12 | Gateway kiểm tra trạng thái tài khoản ở mỗi request cần đăng nhập: bị khoá trả 401 `ACCOUNT_LOCKED`; vai trò đã đổi trả 403 `ROLE_CHANGED`; AuthService không phản hồi trả 503. App khách hiện lý do và đưa về màn đăng nhập. | H |
 | FR-AUTH-13 | Kiểm tra dữ liệu tài khoản giống nhau ở app và API (đăng ký, đăng nhập, quên / đặt lại mật khẩu, Admin tạo tài khoản): email bắt buộc, tối đa 150 ký tự, có tên miền và đuôi ≥ 2 chữ cái, không dấu cách; mật khẩu mới 6–72 ký tự tính theo byte UTF-8; họ tên bắt buộc, tối đa 150 ký tự; số điện thoại không bắt buộc, 8–15 chữ số, tối đa 20 ký tự. Sai thì 400 kèm lỗi theo từng trường. Form đăng ký có ô nhập lại mật khẩu. | H |
 | FR-AUTH-14 | Giới hạn 10 request / phút / IP cho các API đăng ký, đăng nhập, OTP, làm mới, quên / đặt lại mật khẩu; vượt thì 429 kèm `Retry-After`. | M |
+| FR-AUTH-15 | Staff/Admin tìm tài khoản khách hàng theo số điện thoại (so theo chữ số, bỏ qua dấu cách / chấm / gạch) để bán vé và tích điểm tại quầy. Số điện thoại ít hơn 8 hoặc quá 15 chữ số bị 400; khách hàng gọi thì 403. | M |
 
 ### 4.2 Quản lý tài khoản (Admin)
 
@@ -287,6 +287,8 @@ Mức ưu tiên: **H** (bắt buộc), **M** (quan trọng), **L** (bổ trợ).
 | FR-BOOK-13 | **Bắp nước kèm vé**: khách (màn xác nhận đặt vé) và quầy (màn bán vé) chọn món trong menu, mỗi món 1–20, tối đa 10 món khác nhau. Giá lấy từ menu đang bán; tiền bắp nước nằm trong tổng tiền nên thanh toán, doanh thu và hoàn tiền tính luôn. Đơn lưu tên và giá lúc mua. Bắp nước hiện trên vé, trang thanh toán, email vé và vé in. Món đã ngừng bán bị từ chối (400). | M |
 | FR-BOOK-14 | Admin quản lý menu bắp nước (Admin → Snacks): thêm, sửa tên / giá / mô tả / ảnh / thứ tự, ngừng bán hoặc bán lại (không xoá món). Khách chỉ thấy món đang bán. | M |
 | FR-BOOK-15 | **Khuyến mãi**: chỉ giảm tiền vé (không giảm bắp nước), theo % (có thể kèm mức giảm tối đa) hoặc số tiền, tối đa 90% tiền vé, làm tròn xuống 1.000đ. Điều kiện: thời gian chạy, thứ của ngày chiếu, số vé tối thiểu, số lượt tối đa. Khuyến mãi không có mã tự áp dụng (chọn cái giảm nhiều nhất); khách / quầy nhập mã voucher thì dùng mã thay cho khuyến mãi tự áp dụng — mỗi đơn một khuyến mãi. Mã sai hoặc không đủ điều kiện bị 400 kèm lý do. Server tính lại khi tạo đơn; lượt dùng chỉ được đếm khi vé đã thanh toán. Giảm giá hiện trên vé, trang thanh toán, email vé và vé in. | M |
+| FR-BOOK-17 | **Điểm thành viên**: khách có tài khoản được cộng điểm khi vé đã thanh toán, theo số tiền thực trả và hạng: Member 5%, VIP (tổng chi tiêu từ 2.000.000đ) 7%, VVIP (từ 5.000.000đ) 10%; 1 điểm = 1.000đ. Khi đặt vé (app hoặc quầy) được dùng điểm, tối đa 50% số tiền phải trả (sau khuyến mãi). Vé giữ chỗ hết hạn / huỷ khi chưa trả thì trả lại điểm đã dùng; vé đã trả bị huỷ / hoàn tiền thì trả điểm đã dùng, thu hồi điểm đã cộng và trừ tổng chi tiêu. Khách vãng lai không có điểm. Khách xem thẻ thành viên (điểm, hạng, mức còn thiếu để lên hạng, lịch sử điểm) ở trang tài khoản. | M |
+| FR-BOOK-18 | Admin xem khách hàng kèm điểm, hạng, tổng chi tiêu (Admin → Members), mở lịch sử điểm và cộng / trừ điểm kèm lý do (không để điểm âm). Quầy xem thẻ của khách tìm được theo số điện thoại. | M |
 | FR-BOOK-16 | Admin quản lý khuyến mãi (Admin → Promotions): thêm, sửa, tạm dừng / chạy lại (không xoá), xem số lượt đã dùng. Mã voucher không trùng nhau (409). Khách chưa đăng nhập chỉ xem được khuyến mãi tự áp dụng đang chạy. | M |
 
 ### 4.7 Thanh toán (PayOS)
@@ -321,7 +323,7 @@ Mức ưu tiên: **H** (bắt buộc), **M** (quan trọng), **L** (bổ trợ).
 
 | Mã | Yêu cầu | Ưu tiên |
 |---|---|---|
-| FR-POS-01 | Staff/Admin bán vé cho **khách vãng lai** (không tài khoản; email và số điện thoại không bắt buộc) hoặc **thành viên** (ID tài khoản + email). Chọn phim, suất trong 7 ngày tới, ghế trên sơ đồ (sweetbox theo cặp, giá theo loại). | H |
+| FR-POS-01 | Staff/Admin bán vé cho **khách vãng lai** (không tài khoản; email và số điện thoại không bắt buộc) hoặc **thành viên** (ID tài khoản + email, hoặc tìm theo số điện thoại; thành viên được dùng và tích điểm). Chọn phim, suất trong 7 ngày tới, ghế trên sơ đồ (sweetbox theo cặp, giá theo loại). | H |
 | FR-POS-02 | Giữ ghế xong chuyển sang màn **Take payment**: thông tin vé, khách, tổng tiền, đồng hồ giữ ghế, ô email nhận vé. | H |
 | FR-POS-03 | **Tiền mặt**: nhập số tiền khách đưa (có nút số tiền chẵn), màn hình tính tiền thối; thiếu tiền thì không cho xác nhận. Server ghi payment `CASH` `SUCCESS` (mã giao dịch `CASH-<mã vé>`) và xác nhận vé. | H |
 | FR-POS-04 | **Chuyển khoản**: hiện VietQR của PayOS để khách quét bằng app ngân hàng (link tạo trước đó thì hiện QR của trang thanh toán); màn hình tự kiểm tra mỗi 3 giây và chuyển sang đã thanh toán khi tiền về. | H |
@@ -398,6 +400,7 @@ Thanh điều hướng bên trái; cửa sổ hẹp hơn 640 px thì mở bằng
 | Rooms | Admin | Thêm phòng theo hàng × ghế, đổi tên, xoá, mở sơ đồ |
 | Snacks | Admin | Menu bắp nước: thêm, sửa, ngừng bán / bán lại |
 | Promotions | Admin | Khuyến mãi tự áp dụng và mã voucher: thêm, sửa, tạm dừng / chạy lại, xem lượt dùng |
+| Members | Admin | Khách hàng kèm điểm, hạng, tổng chi tiêu; lịch sử điểm; cộng / trừ điểm |
 | Accounts | Admin | Tìm, lọc, phân trang, chi tiết, tạo, đổi vai trò, khoá / mở khoá |
 | Profile | Staff, Admin | Hồ sơ, đổi mật khẩu qua OTP, đăng xuất |
 
@@ -522,7 +525,7 @@ Check-in là thuộc tính `checkedInAt` của vé `CONFIRMED`, không phải m�
 | `cinema_auth_db` | `users`, `roles`, `users_roles`, `refresh_tokens`, `otp_codes` | Mật khẩu và OTP chỉ lưu hash BCrypt; email duy nhất |
 | `cinema_movie_db` | `movies` | Trạng thái `ACTIVE` / `INACTIVE`; phân loại `age_rating` P / K / T13 / T16 / T18 |
 | `cinema_showtime_db` | `rooms`, `seats`, `showtimes`, `outbox_messages` | Ghế duy nhất theo (phòng, hàng, số); loại ghế NORMAL / VIP / SWEETBOX |
-| `cinema_booking_db` | `bookings`, `booking_seats`, `seat_reservations`, `concession_items`, `booking_concessions`, `promotions`, `outbox_messages` | `user_id` NULL cho khách vãng lai; `customer_email`, `customer_phone`, `checked_in_at`, `expires_at` |
+| `cinema_booking_db` | `bookings`, `booking_seats`, `seat_reservations`, `concession_items`, `booking_concessions`, `promotions`, `loyalty_accounts`, `loyalty_transactions`, `outbox_messages` | `user_id` NULL cho khách vãng lai; `customer_email`, `customer_phone`, `checked_in_at`, `expires_at` |
 | `cinema_payment_db` | `payments`, `refunds`, `outbox_messages` | Phương thức `PAYOS` / `CASH`; thông tin tài khoản người trả để hoàn tiền |
 | `cinema_notification_db` | `notifications` | Duy nhất theo `event_id` để không gửi trùng |
 
@@ -535,11 +538,11 @@ Check-in là thuộc tính `checkedInAt` của vé `CONFIRMED`, không phải m�
 
 ### 10.1 API
 
-- 89 endpoint nghiệp vụ, REST/JSON, qua gateway `http://<host>:5000`. Danh sách đầy đủ: [MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md).
+- 94 endpoint nghiệp vụ, REST/JSON, qua gateway `http://<host>:5000`. Danh sách đầy đủ: [MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md).
 
 | Nhóm | Tiền tố | Số endpoint |
 |---|---|---|
-| Xác thực, tài khoản, vai trò | `/api/v1/auth` | 15 |
+| Xác thực, tài khoản, vai trò | `/api/v1/auth` | 16 |
 | Phim | `/api/v1/movies` | 7 |
 | Phòng, ghế | `/api/rooms`, `/api/seats` | 13 |
 | Suất chiếu | `/api/showtimes` | 11 |
@@ -548,6 +551,7 @@ Check-in là thuộc tính `checkedInAt` của vé `CONFIRMED`, không phải m�
 | Thông báo | `/api/v1/notifications` | 6 |
 | Bắp nước | `/api/v1/concessions` | 3 |
 | Khuyến mãi | `/api/v1/promotions` | 4 |
+| Điểm thành viên | `/api/v1/loyalty` | 4 |
 
 - Danh sách có phân trang (`page` / `size` hoặc `pageNumber` / `pageSize`), tối đa 50 bản ghi một trang, sắp xếp `sortBy` / `sortDir`.
 - Lỗi theo chuẩn ProblemDetails: `title`, `status`, `detail`, `errors` (lỗi theo trường), `errorCode` (mã nghiệp vụ).
@@ -619,11 +623,11 @@ Check-in là thuộc tính `checkedInAt` của vé `CONFIRMED`, không phải m�
 
 | Phần | Số test | Nội dung chính |
 |---|---|---|
-| AuthService | 27 | Đăng ký, OTP và khoá OTP, đăng nhập, refresh xoay vòng, đăng xuất, khoá tài khoản, đổi vai trò, validate dữ liệu |
+| AuthService | 28 | Đăng ký, OTP và khoá OTP, đăng nhập, refresh xoay vòng, đăng xuất, khoá tài khoản, đổi vai trò, validate dữ liệu |
 | ApiGateway | 21 | Chặn token của tài khoản bị khoá hoặc đã đổi vai trò trước khi chuyển tiếp, không chuyển tiếp khi kiểm tra tài khoản lỗi, 503 khi AuthService không phản hồi |
 | MovieService | 21 | Suất chiếu, trùng lịch, huỷ suất và event, ghế, sweetbox, đổi số ghế, giá theo loại ghế |
-| BookingService | 66 | Đặt vé, giữ ghế, webhook, hết hạn, trả muộn, hoàn tiền, RabbitMQ thật, phân quyền, check-in, thống kê, doanh thu, bán vé tại quầy |
-| Flutter | 180 | Widget test các màn khách và quản trị, validator, luồng thanh toán, check-in, quầy |
+| BookingService | 69 | Đặt vé, giữ ghế, webhook, hết hạn, trả muộn, hoàn tiền, RabbitMQ thật, phân quyền, check-in, thống kê, doanh thu, bán vé tại quầy |
+| Flutter | 185 | Widget test các màn khách và quản trị, validator, luồng thanh toán, check-in, quầy |
 
 Test tích hợp backend chạy với PostgreSQL và RabbitMQ thật (Testcontainers); PayOS, MovieService, SMTP được thay bằng bản giả.
 
@@ -654,7 +658,6 @@ Test tích hợp backend chạy với PostgreSQL và RabbitMQ thật (Testcontai
 | Tìm phim ở trang chủ lọc trên danh sách đã tải | Không tìm được phim chưa tải | Gọi `GET /api/v1/movies/search` |
 | Thông báo chưa có trạng thái đã đọc / push | Khách phải mở app để xem | Bổ sung trạng thái đọc, FCM |
 | Danh sách vé của khách lấy trang đầu (50 vé) | Khách có rất nhiều vé không thấy vé cũ | Tải thêm khi cuộn |
-| Tích điểm, khuyến mãi | Chưa có | Giai đoạn sau |
 
 ---
 
