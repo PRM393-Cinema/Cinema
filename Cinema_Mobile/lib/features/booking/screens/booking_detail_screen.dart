@@ -20,15 +20,25 @@ import 'my_bookings_screen.dart';
 import '../widgets/booking_cancellation_dialog.dart';
 import '../widgets/ticket_qr_card.dart';
 import '../../review/widgets/review_widgets.dart';
+import '../widgets/ticket_share_actions.dart';
+import '../../../data/repositories/catalog_repository.dart';
 
 class BookingDetailScreen extends StatefulWidget {
   const BookingDetailScreen({
     required this.bookingRepository,
     this.bookingId,
+    this.catalogRepository,
+    this.shareTicket,
     super.key,
   });
 
   final BookingRepository bookingRepository;
+
+  // Reads the show's end for "Add to calendar".
+  final CatalogRepository? catalogRepository;
+
+  // The share sheet; null uses the device's.
+  final TextSharer? shareTicket;
 
   // Set when the screen is opened from its URL: the booking is loaded by id.
   final int? bookingId;
@@ -495,6 +505,11 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     final desktop = isDesktopLayout(context);
     // Paid tickets carry the QR code staff scan at the cinema.
     final hasTicket = booking.status == BookingStatus.confirmed;
+    final shareActions = TicketShareActions(
+      booking: booking,
+      catalogRepository: widget.catalogRepository,
+      share: widget.shareTicket ?? TicketShareActions.defaultShare,
+    );
 
     return CinemaPage(
       title: 'Booking Detail',
@@ -516,6 +531,8 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                     if (hasTicket && !desktop) ...[
                       const SizedBox(height: AppSpacing.xl),
                       TicketQrCard(booking: booking),
+                      const SizedBox(height: AppSpacing.md),
+                      shareActions,
                     ],
                     const SizedBox(height: AppSpacing.xl),
                     seatsCard,
@@ -532,6 +549,8 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                   side: [
                     if (hasTicket && desktop) ...[
                       TicketQrCard(booking: booking),
+                      const SizedBox(height: AppSpacing.md),
+                      shareActions,
                       const SizedBox(height: AppSpacing.xl),
                     ],
                     paymentCard,

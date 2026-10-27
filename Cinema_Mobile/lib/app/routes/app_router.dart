@@ -230,6 +230,7 @@ class AppRouter {
           (_) => BookingDetailScreen(
             bookingRepository: bookingRepository,
             bookingId: id,
+            catalogRepository: catalogRepository,
           ),
           signInRequired: true,
         );
