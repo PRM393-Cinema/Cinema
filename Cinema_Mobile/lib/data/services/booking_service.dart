@@ -227,6 +227,32 @@ class BookingService {
     return PagedResult.fromJson(response, AppNotification.fromJson);
   }
 
+  Future<int> getUnreadNotificationCount() async => readInt(
+    readMap(
+      await _apiClient.get(
+        '/api/v1/notifications/unread-count',
+        authenticated: true,
+      ),
+    )['count'],
+  );
+
+  Future<AppNotification> markNotificationRead(int id) async =>
+      AppNotification.fromJson(
+        readMap(
+          await _apiClient.patch(
+            '/api/v1/notifications/$id/read',
+            authenticated: true,
+          ),
+        ),
+      );
+
+  Future<void> markAllNotificationsRead() async {
+    await _apiClient.post(
+      '/api/v1/notifications/read-all',
+      authenticated: true,
+    );
+  }
+
   Future<AppNotification> getNotification(int id) async {
     final response = await _apiClient.get(
       '/api/v1/notifications/$id',

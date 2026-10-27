@@ -10,6 +10,7 @@ namespace BookingService.Messaging
         public const string BookingCancelled = "booking.cancelled";
         public const string BookingRefundRequested = "booking.refund_requested";
         public const string BookingExpired = "booking.expired";
+        public const string BookingReminder = "booking.reminder"; // nhắc giờ chiếu
         public const string PaymentCreated = "payment.created";
         public const string PaymentSucceeded = "payment.succeeded";
         public const string PaymentFailed = "payment.failed";

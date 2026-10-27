@@ -28,4 +28,6 @@ public partial class Notification
     public DateTime? SentAt { get; set; }
 
     public string? Subject { get; set; }
+
+    public DateTime? ReadAt { get; set; } // khách đã mở thông báo trong app
 }

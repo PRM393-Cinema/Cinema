@@ -62,7 +62,7 @@ CosmoQ Cinema gồm ba phần:
 | [Cinema_BE/docs/MESSAGING.md](../Cinema_BE/docs/MESSAGING.md) | Event RabbitMQ, outbox, idempotency |
 | [Cinema_BE/docs/MONITORING.md](../Cinema_BE/docs/MONITORING.md) | Metrics, trace, log |
 | [Cinema_BE/docs/TESTING.md](../Cinema_BE/docs/TESTING.md) | Test tự động và CI |
-| [Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md) | Toàn bộ 101 endpoint và màn hình đang dùng |
+| [Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md) | Toàn bộ 104 endpoint và màn hình đang dùng |
 | [Cinema_Mobile/docs/STAFF_WORKSPACE.md](../Cinema_Mobile/docs/STAFF_WORKSPACE.md) | Nghiệp vụ trang quản trị |
 | `Resource/PRM393.docx` | Yêu cầu môn học: ma trận quyền, thành phần kỹ thuật bắt buộc |
 
@@ -144,7 +144,7 @@ Một tài khoản có thể có nhiều vai trò. Tài khoản Staff/Admin đă
 ### 2.7 Ngoài phạm vi
 
 - Đổi mật khẩu bằng mật khẩu hiện tại; sửa hồ sơ cá nhân.
-- Push notification và trạng thái đã đọc của thông báo.
+- Push notification (FCM).
 - Hoàn tiền tự động qua cổng thanh toán (PayOS không có API hoàn tiền).
 - Kế toán, nhân sự, kho; thiết bị POS chuyên dụng; Kubernetes, service mesh.
 
@@ -357,6 +357,8 @@ Mức ưu tiên: **H** (bắt buộc), **M** (quan trọng), **L** (bổ trợ).
 | FR-NOTI-05 | Xoá thông báo: người nhận xoá của mình, Admin xoá mọi thông báo (qua API). | L |
 | FR-NOTI-06 | Tự gửi email theo event: vé đã xác nhận (kèm ảnh QR nhúng), vé bị huỷ, vé hết hạn, đã ghi nhận yêu cầu hoàn tiền, từ chối hoàn tiền, đã hoàn tiền. Mỗi event gửi đúng một lần. Vé không có email thì bỏ qua. | H |
 | FR-NOTI-07 | AuthService gửi email OTP (xác thực, đặt lại mật khẩu) và email chào mừng. | H |
+| FR-NOTI-08 | **Nhắc giờ chiếu**: job nền (mỗi phút, cấu hình `ShowtimeReminder`) gửi email và ghi vào lịch sử thông báo cho vé đã thanh toán, chưa check-in, có giờ chiếu trong 2 giờ tới; mỗi vé nhắc một lần. Vé đặt khi đã vào khoảng nhắc thì bỏ qua (khách vừa nhận email xác nhận). | M |
+| FR-NOTI-09 | **Đã đọc / chưa đọc**: thông báo chưa mở có chấm và chữ đậm; mở chi tiết là đánh dấu đã đọc; nút **Mark all read**. Chuông trên app và mục Notifications trên web có số thông báo chưa đọc. Chỉ chủ thông báo được đánh dấu (403). | M |
 
 ### 4.12 Dashboard và báo cáo
 
@@ -529,9 +531,9 @@ Check-in là thuộc tính `checkedInAt` của vé `CONFIRMED`, không phải m�
 | `cinema_auth_db` | `users`, `roles`, `users_roles`, `refresh_tokens`, `otp_codes` | Mật khẩu và OTP chỉ lưu hash BCrypt; email duy nhất |
 | `cinema_movie_db` | `movies` | Trạng thái `ACTIVE` / `INACTIVE`; phân loại `age_rating` P / K / T13 / T16 / T18; `director`, `cast_members` |
 | `cinema_showtime_db` | `rooms`, `seats`, `showtimes`, `outbox_messages` | Ghế duy nhất theo (phòng, hàng, số); loại ghế NORMAL / VIP / SWEETBOX; định dạng suất 2D / 3D / IMAX |
-| `cinema_booking_db` | `bookings`, `booking_seats`, `seat_reservations`, `concession_items`, `booking_concessions`, `promotions`, `loyalty_accounts`, `loyalty_transactions`, `movie_reviews`, `outbox_messages` | `user_id` NULL cho khách vãng lai; `customer_email`, `customer_phone`, `checked_in_at`, `expires_at` |
+| `cinema_booking_db` | `bookings`, `booking_seats`, `seat_reservations`, `concession_items`, `booking_concessions`, `promotions`, `loyalty_accounts`, `loyalty_transactions`, `movie_reviews`, `outbox_messages` | `user_id` NULL cho khách vãng lai; `reminded_at` đánh dấu vé đã được nhắc giờ chiếu; `customer_email`, `customer_phone`, `checked_in_at`, `expires_at` |
 | `cinema_payment_db` | `payments`, `refunds`, `outbox_messages` | Phương thức `PAYOS` / `CASH`; thông tin tài khoản người trả để hoàn tiền |
-| `cinema_notification_db` | `notifications` | Duy nhất theo `event_id` để không gửi trùng |
+| `cinema_notification_db` | `notifications` | Duy nhất theo `event_id` để không gửi trùng; `read_at` là lúc khách mở thông báo |
 
 - Lược đồ và dữ liệu seed nằm ở repo **Project-Cinema-DB**: file dump cho DB mới và thư mục `migrations/` cho DB đang có dữ liệu (chạy lại nhiều lần vẫn an toàn).
 - Seed có tài khoản demo, phim mẫu, các phòng Standard / IMAX với sơ đồ ghế khác nhau, và lịch chiếu một tháng cho mọi phim đang chiếu (migration bổ sung lịch khi hết).
@@ -542,7 +544,7 @@ Check-in là thuộc tính `checkedInAt` của vé `CONFIRMED`, không phải m�
 
 ### 10.1 API
 
-- 101 endpoint nghiệp vụ, REST/JSON, qua gateway `http://<host>:5000`. Danh sách đầy đủ: [MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md).
+- 104 endpoint nghiệp vụ, REST/JSON, qua gateway `http://<host>:5000`. Danh sách đầy đủ: [MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md).
 
 | Nhóm | Tiền tố | Số endpoint |
 |---|---|---|
@@ -552,7 +554,7 @@ Check-in là thuộc tính `checkedInAt` của vé `CONFIRMED`, không phải m�
 | Suất chiếu | `/api/showtimes` | 11 |
 | Đặt vé, check-in | `/api/v1/bookings` | 13 |
 | Thanh toán, hoàn tiền | `/api/v1/payments` | 17 |
-| Thông báo | `/api/v1/notifications` | 6 |
+| Thông báo | `/api/v1/notifications` | 9 |
 | Bắp nước | `/api/v1/concessions` | 3 |
 | Khuyến mãi | `/api/v1/promotions` | 4 |
 | Điểm thành viên | `/api/v1/loyalty` | 4 |
@@ -631,8 +633,8 @@ Check-in là thuộc tính `checkedInAt` của vé `CONFIRMED`, không phải m�
 | AuthService | 28 | Đăng ký, OTP và khoá OTP, đăng nhập, refresh xoay vòng, đăng xuất, khoá tài khoản, đổi vai trò, validate dữ liệu |
 | ApiGateway | 21 | Chặn token của tài khoản bị khoá hoặc đã đổi vai trò trước khi chuyển tiếp, không chuyển tiếp khi kiểm tra tài khoản lỗi, 503 khi AuthService không phản hồi |
 | MovieService | 24 | Suất chiếu, trùng lịch, huỷ suất và event, ghế, sweetbox, đổi số ghế, giá theo loại ghế |
-| BookingService | 71 | Đặt vé, giữ ghế, webhook, hết hạn, trả muộn, hoàn tiền, RabbitMQ thật, phân quyền, check-in, thống kê, doanh thu, bán vé tại quầy |
-| Flutter | 195 | Widget test các màn khách và quản trị, validator, luồng thanh toán, check-in, quầy |
+| BookingService | 73 | Đặt vé, giữ ghế, webhook, hết hạn, trả muộn, hoàn tiền, RabbitMQ thật, phân quyền, check-in, thống kê, doanh thu, bán vé tại quầy |
+| Flutter | 198 | Widget test các màn khách và quản trị, validator, luồng thanh toán, check-in, quầy |
 
 Test tích hợp backend chạy với PostgreSQL và RabbitMQ thật (Testcontainers); PayOS, MovieService, SMTP được thay bằng bản giả.
 
@@ -660,7 +662,7 @@ Test tích hợp backend chạy với PostgreSQL và RabbitMQ thật (Testcontai
 |---|---|---|
 | PayOS không có API hoàn tiền | Hoàn tiền phải chuyển khoản tay | Tích hợp cổng có API hoàn tiền nếu cần |
 | Chưa có đổi mật khẩu bằng mật khẩu cũ, chưa sửa hồ sơ | Đổi mật khẩu dùng luồng OTP | Bổ sung endpoint |
-| Thông báo chưa có trạng thái đã đọc / push | Khách phải mở app để xem | Bổ sung trạng thái đọc, FCM |
+| Thông báo chưa có push | Khách phải mở app hoặc email để xem | Tích hợp FCM |
 | Danh sách vé của khách lấy trang đầu (50 vé) | Khách có rất nhiều vé không thấy vé cũ | Tải thêm khi cuộn |
 
 ---

@@ -23,11 +23,19 @@ import '../../../data/repositories/catalog_repository.dart';
 import '../../movie/widgets/movie_card.dart';
 import '../../../core/session/session_state.dart';
 import '../../../core/widgets/age_rating_badge.dart';
+import '../../../data/repositories/booking_repository.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({required this.catalogRepository, super.key});
+  const HomeScreen({
+    required this.catalogRepository,
+    this.bookingRepository,
+    super.key,
+  });
 
   final CatalogRepository catalogRepository;
+
+  // Signed in: loads how many notifications are unread for the bell.
+  final BookingRepository? bookingRepository;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -56,6 +64,29 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _loadMovies();
     _loadGenres();
+  }
+
+  bool _countedUnread = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_countedUnread) return;
+    _countedUnread = true;
+    _loadUnreadCount();
+  }
+
+  Future<void> _loadUnreadCount() async {
+    final session = SessionProvider.of(context);
+    final bookings = widget.bookingRepository;
+    if (bookings == null || !session.isAuthenticated) return;
+    try {
+      session.setUnreadNotifications(
+        await bookings.getUnreadNotificationCount(),
+      );
+    } on Object {
+      // The bell works without the badge.
+    }
   }
 
   @override
@@ -191,7 +222,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           context,
                           AppRoutes.notifications,
                         ),
-                        icon: const Icon(Icons.notifications_none_outlined),
+                        icon: Badge(
+                          key: const Key('unreadBadge'),
+                          isLabelVisible: session.unreadNotifications > 0,
+                          label: Text('${session.unreadNotifications}'),
+                          child: const Icon(Icons.notifications_none_outlined),
+                        ),
                       ),
                       IconButton(
                         tooltip: 'Profile',

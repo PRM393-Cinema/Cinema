@@ -7,8 +7,20 @@ class SessionState extends ChangeNotifier {
   bool _isAuthenticated = false;
   AuthUser? _user;
   String? _expirationMessage;
+  int _unreadNotifications = 0;
 
   bool get isGuest => _isGuest;
+
+  // Notifications not opened yet, for the badge on the bell.
+  int get unreadNotifications => _unreadNotifications;
+
+  void setUnreadNotifications(int count) {
+    final value = count < 0 ? 0 : count;
+    if (value == _unreadNotifications) return;
+    _unreadNotifications = value;
+    notifyListeners();
+  }
+
   bool get isAuthenticated => _isAuthenticated;
   String? get expirationMessage => _expirationMessage;
 
@@ -20,6 +32,7 @@ class SessionState extends ChangeNotifier {
     _isGuest = true;
     _isAuthenticated = false;
     _user = null;
+    _unreadNotifications = 0;
     notifyListeners();
   }
 
@@ -37,6 +50,7 @@ class SessionState extends ChangeNotifier {
     _isGuest = false;
     _isAuthenticated = false;
     _user = null;
+    _unreadNotifications = 0;
     notifyListeners();
   }
 }

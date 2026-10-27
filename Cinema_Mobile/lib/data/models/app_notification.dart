@@ -11,6 +11,7 @@ class AppNotification {
     required this.status,
     this.sentAt,
     required this.createdAt,
+    this.readAt,
   });
 
   factory AppNotification.fromJson(Map<String, Object?> json) {
@@ -23,6 +24,7 @@ class AppNotification {
       status: readString(json['status']),
       sentAt: readDateTime(json['sentAt']),
       createdAt: readRequiredDateTime(json['createdAt']),
+      readAt: readDateTime(json['readAt']),
     );
   }
 
@@ -36,6 +38,23 @@ class AppNotification {
   final String status; // 'PENDING', 'SENT', 'FAILED'
   final DateTime? sentAt;
   final DateTime createdAt;
+
+  // When the customer opened it in the app; null while unread.
+  final DateTime? readAt;
+
+  bool get isRead => readAt != null;
+
+  AppNotification markedRead(DateTime at) => AppNotification(
+    id: id,
+    bookingId: bookingId,
+    subject: subject,
+    type: type,
+    content: content,
+    status: status,
+    sentAt: sentAt,
+    createdAt: createdAt,
+    readAt: readAt ?? at,
+  );
 
   String get plainContent => htmlToPlainText(content);
 }

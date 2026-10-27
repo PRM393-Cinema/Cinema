@@ -78,6 +78,10 @@ namespace BookingService.Services.Interfaces
         /// Đánh dấu EXPIRED cho các booking PENDING đã quá hạn giữ ghế và nhả ghế.
         /// Trả về các booking vừa hết hạn.
         /// </summary>
+        // Nhắc giờ chiếu: vé đã thanh toán, chưa check-in, chưa nhắc, chiếu trong khoảng before tới.
+        // Vé đặt khi đã vào khoảng nhắc thì bỏ qua (khách vừa nhận email xác nhận). Trả số vé được nhắc
+        Task<int> SendShowtimeRemindersAsync(TimeSpan before, int batchSize);
+
         Task<List<BookingResponse>> ExpireOverdueBookingsAsync(int batchSize);
 
         Task<List<long>> GetOccupiedSeatIdsAsync(

@@ -15,6 +15,7 @@ import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_state.dart';
 import '../../../data/models/app_notification.dart';
 import '../../../data/repositories/booking_repository.dart';
+import '../../../core/session/session_state.dart';
 
 class NotificationDetailScreen extends StatefulWidget {
   const NotificationDetailScreen({
@@ -37,9 +38,27 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _notification = widget.bookingRepository.getNotification(
+    _notification = _loadAndMarkRead();
+  }
+
+  // Opening a notification marks it read (and lowers the badge).
+  Future<AppNotification> _loadAndMarkRead() async {
+    final notification = await widget.bookingRepository.getNotification(
       widget.notificationId,
     );
+    if (notification.isRead) return notification;
+    try {
+      final read = await widget.bookingRepository.markNotificationRead(
+        notification.id,
+      );
+      if (mounted) {
+        final session = SessionProvider.of(context);
+        session.setUnreadNotifications(session.unreadNotifications - 1);
+      }
+      return read;
+    } on Object {
+      return notification;
+    }
   }
 
   void _retry() => setState(() {

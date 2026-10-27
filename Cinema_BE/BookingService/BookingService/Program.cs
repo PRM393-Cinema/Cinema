@@ -52,6 +52,8 @@ builder.Services.Configure<JwtOptions>(
     builder.Configuration.GetSection("Jwt"));
 builder.Services.Configure<BookingExpiryOptions>(
     builder.Configuration.GetSection("BookingExpiry"));
+builder.Services.Configure<ShowtimeReminderOptions>(
+    builder.Configuration.GetSection("ShowtimeReminder"));
 builder.Services.Configure<RefundPolicyOptions>(
     builder.Configuration.GetSection("RefundPolicy"));
 builder.Services.Configure<CheckInOptions>(
@@ -196,6 +198,7 @@ builder.Services.AddScoped<IMovieReviewService, MovieReviewService>();
 
 // Job nền: booking PENDING quá 10 phút chưa thanh toán -> EXPIRED, nhả ghế
 builder.Services.AddHostedService<BookingExpiryWorker>();
+builder.Services.AddHostedService<ShowtimeReminderWorker>();
 
 //====== RABBITMQ (SRS §13.1): outbox + publisher + consumer, chi tiết docs/MESSAGING.md ======
 builder.Services

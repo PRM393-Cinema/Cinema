@@ -102,6 +102,9 @@ public partial class BookingDbContext : DbContext
                 .HasDefaultValue(0m)
                 .HasColumnName("points_discount");
             entity.Property(e => e.PointsEarned).HasDefaultValue(0).HasColumnName("points_earned");
+            entity.Property(e => e.RemindedAt)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("reminded_at");
             entity.Property(e => e.UserId).HasColumnName("user_id");
         });
 

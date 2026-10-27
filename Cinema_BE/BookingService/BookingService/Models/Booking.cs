@@ -37,6 +37,8 @@ public partial class Booking
 
     public int PointsEarned { get; set; } // điểm được cộng khi vé đã thanh toán
 
+    public DateTime? RemindedAt { get; set; } // đã gửi nhắc giờ chiếu
+
     public long? PaymentId { get; set; }
 
     public string? MovieTitle { get; set; }

@@ -66,6 +66,13 @@ abstract interface class BookingRepository {
   Future<List<AppNotification>> getMyNotifications(int userId);
 
   Future<AppNotification> getNotification(int id);
+
+  // Notifications not opened yet (the badge on the bell).
+  Future<int> getUnreadNotificationCount();
+
+  Future<AppNotification> markNotificationRead(int id);
+
+  Future<void> markAllNotificationsRead();
 }
 
 class RemoteBookingRepository implements BookingRepository {
@@ -209,4 +216,16 @@ class RemoteBookingRepository implements BookingRepository {
   @override
   Future<AppNotification> getNotification(int id) =>
       _bookingService.getNotification(id);
+
+  @override
+  Future<int> getUnreadNotificationCount() =>
+      _bookingService.getUnreadNotificationCount();
+
+  @override
+  Future<AppNotification> markNotificationRead(int id) =>
+      _bookingService.markNotificationRead(id);
+
+  @override
+  Future<void> markAllNotificationsRead() =>
+      _bookingService.markAllNotificationsRead();
 }

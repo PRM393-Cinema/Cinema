@@ -53,6 +53,26 @@ namespace BookingService.Services.Implementations
             return ToPagedResult(notifications);
         }
 
+        public async Task<NotificationResponse> MarkReadAsync(long id)
+        {
+            var notification = await GetNotificationAsync(id);
+            if (notification.ReadAt == null)
+            {
+                // Như khi đọc lại từ DB: tới micro giây, không gắn múi giờ
+                var now = DateTime.Now;
+                notification.ReadAt = new DateTime(now.Ticks - now.Ticks % 10, DateTimeKind.Unspecified);
+                await _notificationRepository.UpdateAsync(notification);
+            }
+
+            return notification.ToResponse();
+        }
+
+        public Task<int> MarkAllReadAsync(long userId) =>
+            _notificationRepository.MarkAllReadAsync(userId, DateTime.Now);
+
+        public Task<int> CountUnreadAsync(long userId) =>
+            _notificationRepository.CountUnreadAsync(userId);
+
         public async Task<NotificationResponse> GetNotificationByIdAsync(long id)
         {
             var notification = await GetNotificationAsync(id);

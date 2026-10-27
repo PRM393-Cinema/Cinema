@@ -62,7 +62,7 @@ CosmoQ Cinema has three parts:
 | [Cinema_BE/docs/MESSAGING.md](../Cinema_BE/docs/MESSAGING.md) | RabbitMQ events, outbox, idempotency |
 | [Cinema_BE/docs/MONITORING.md](../Cinema_BE/docs/MONITORING.md) | Metrics, traces, logs |
 | [Cinema_BE/docs/TESTING.md](../Cinema_BE/docs/TESTING.md) | Automated tests and CI |
-| [Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md) | All 101 endpoints and the screens that use them |
+| [Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md) | All 104 endpoints and the screens that use them |
 | [Cinema_Mobile/docs/STAFF_WORKSPACE.md](../Cinema_Mobile/docs/STAFF_WORKSPACE.md) | Admin website operations |
 | `Resource/PRM393.docx` | Course requirements: permission matrix, required technical components |
 
@@ -144,7 +144,7 @@ An account can have several roles. A Staff or Admin account signed in to the cus
 ### 2.7 Out of scope
 
 - Changing a password with the current password; editing the profile.
-- Push notifications and read/unread notification state.
+- Push notifications (FCM).
 - Automatic refunds through the payment gateway (PayOS has no refund API).
 - Accounting, HR, inventory; dedicated POS hardware; Kubernetes, service mesh.
 
@@ -357,6 +357,8 @@ Priority: **H** (must have), **M** (important), **L** (nice to have).
 | FR-NOTI-05 | Delete a notification: the recipient deletes their own, an Admin any (API only). | L |
 | FR-NOTI-06 | Emails sent from events: ticket confirmed (with an inline QR image), ticket cancelled, ticket expired, refund requested, refund rejected, refund completed. Each event is emailed exactly once. Tickets without an email are skipped. | H |
 | FR-NOTI-07 | AuthService emails OTP codes (verification, password reset) and a welcome email. | H |
+| FR-NOTI-08 | **Showtime reminders**: a background job (every minute, `ShowtimeReminder` settings) emails and records a notification for paid tickets not checked in whose show starts within 2 hours; each ticket once. Tickets bought inside that window are skipped (the customer just got the confirmation). | M |
+| FR-NOTI-09 | **Read / unread**: unopened notifications have a dot and bold title; opening one marks it read; **Mark all read** button. The app bell and the website Notifications link show how many are unread. Only the owner can mark them (403). | M |
 
 ### 4.12 Dashboards and reports
 
@@ -529,9 +531,9 @@ Check-in is the `checkedInAt` attribute of a `CONFIRMED` ticket, not a separate 
 | `cinema_auth_db` | `users`, `roles`, `users_roles`, `refresh_tokens`, `otp_codes` | Passwords and OTP codes stored only as BCrypt hashes; unique email |
 | `cinema_movie_db` | `movies` | Status `ACTIVE` / `INACTIVE`; rating `age_rating` P / K / T13 / T16 / T18; `director`, `cast_members` |
 | `cinema_showtime_db` | `rooms`, `seats`, `showtimes`, `outbox_messages` | Seat unique by (room, row, number); seat type NORMAL / VIP / SWEETBOX; showtime format 2D / 3D / IMAX |
-| `cinema_booking_db` | `bookings`, `booking_seats`, `seat_reservations`, `concession_items`, `booking_concessions`, `promotions`, `loyalty_accounts`, `loyalty_transactions`, `movie_reviews`, `outbox_messages` | `user_id` NULL for walk-in guests; `customer_email`, `customer_phone`, `checked_in_at`, `expires_at` |
+| `cinema_booking_db` | `bookings`, `booking_seats`, `seat_reservations`, `concession_items`, `booking_concessions`, `promotions`, `loyalty_accounts`, `loyalty_transactions`, `movie_reviews`, `outbox_messages` | `user_id` NULL for walk-in guests; `reminded_at` marks tickets already reminded; `customer_email`, `customer_phone`, `checked_in_at`, `expires_at` |
 | `cinema_payment_db` | `payments`, `refunds`, `outbox_messages` | Method `PAYOS` / `CASH`; payer account kept for refunds |
-| `cinema_notification_db` | `notifications` | Unique by `event_id` so nothing is sent twice |
+| `cinema_notification_db` | `notifications` | Unique by `event_id` so nothing is sent twice; `read_at` is when the customer opened it |
 
 - Schemas and seed data live in the **Project-Cinema-DB** repository: dumps for new databases and a `migrations/` folder for existing ones (safe to run more than once).
 - The seed has demo accounts, sample movies, Standard / IMAX rooms with different seat maps, and a one-month schedule for every movie now showing (a migration adds more when it runs out).
@@ -542,7 +544,7 @@ Check-in is the `checkedInAt` attribute of a `CONFIRMED` ticket, not a separate 
 
 ### 10.1 API
 
-- 101 business endpoints, REST/JSON, through the gateway at `http://<host>:5000`. Full list: [MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md).
+- 104 business endpoints, REST/JSON, through the gateway at `http://<host>:5000`. Full list: [MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md).
 
 | Group | Prefix | Endpoints |
 |---|---|---|
@@ -552,7 +554,7 @@ Check-in is the `checkedInAt` attribute of a `CONFIRMED` ticket, not a separate 
 | Showtimes | `/api/showtimes` | 11 |
 | Bookings, check-in | `/api/v1/bookings` | 13 |
 | Payments, refunds | `/api/v1/payments` | 17 |
-| Notifications | `/api/v1/notifications` | 6 |
+| Notifications | `/api/v1/notifications` | 9 |
 | Snacks | `/api/v1/concessions` | 3 |
 | Promotions | `/api/v1/promotions` | 4 |
 | Member points | `/api/v1/loyalty` | 4 |
@@ -631,8 +633,8 @@ Check-in is the `checkedInAt` attribute of a `CONFIRMED` ticket, not a separate 
 | AuthService | 28 | Registration, OTP and OTP lockout, sign-in, refresh rotation, sign-out, account locking, role changes, field validation |
 | ApiGateway | 21 | Blocks tokens of locked accounts and changed roles before forwarding, never forwards when the account check fails, 503 when AuthService does not answer |
 | MovieService | 24 | Showtimes, overlaps, cancellation and its event, seats, sweetbox pairs, seat counts, prices per seat type |
-| BookingService | 71 | Bookings, seat holds, webhook, expiry, late payment, refunds, real RabbitMQ, authorization, check-in, statistics, revenue, counter sales |
-| Flutter | 195 | Widget tests of customer and admin screens, validators, payment flow, check-in, counter |
+| BookingService | 73 | Bookings, seat holds, webhook, expiry, late payment, refunds, real RabbitMQ, authorization, check-in, statistics, revenue, counter sales |
+| Flutter | 198 | Widget tests of customer and admin screens, validators, payment flow, check-in, counter |
 
 Backend integration tests run against real PostgreSQL and RabbitMQ (Testcontainers); PayOS, MovieService and SMTP are replaced by fakes.
 
@@ -660,7 +662,7 @@ Backend integration tests run against real PostgreSQL and RabbitMQ (Testcontaine
 |---|---|---|
 | PayOS has no refund API | Refunds are manual bank transfers | Integrate a gateway with a refund API if needed |
 | No password change with the current password, no profile editing | Password changes use the OTP flow | Add the endpoints |
-| Notifications have no read state or push | Customers must open the app to see them | Add read state and FCM |
+| Notifications have no push | Customers must open the app or the email | Add FCM |
 | The customer ticket list loads the first page (50 tickets) | Customers with very many tickets do not see the oldest | Load more on scroll |
 
 ---

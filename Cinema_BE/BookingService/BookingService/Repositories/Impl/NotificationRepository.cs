@@ -38,6 +38,18 @@ namespace BookingService.Repositories.Impl
                 .FirstOrDefaultAsync(n => n.Id == id);
         }
 
+        public async Task<int> MarkAllReadAsync(long userId, DateTime readAt)
+        {
+            return await _context.Notifications
+                .Where(n => n.UserId == userId && n.ReadAt == null)
+                .ExecuteUpdateAsync(set => set.SetProperty(n => n.ReadAt, readAt));
+        }
+
+        public async Task<int> CountUnreadAsync(long userId)
+        {
+            return await _context.Notifications.CountAsync(n => n.UserId == userId && n.ReadAt == null);
+        }
+
         public async Task<PagedList<Notification>> GetByUserIdAsync(
             long userId,
             int pageNumber,

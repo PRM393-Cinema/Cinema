@@ -233,6 +233,7 @@ class _WebHeader extends StatelessWidget {
               _HeaderLink(
                 label: 'Notifications',
                 selected: selected == _Section.notifications,
+                badge: SessionProvider.of(context).unreadNotifications,
                 onTap: () => onOpen(AppRoutes.notifications),
               ),
             ],
@@ -275,11 +276,15 @@ class _HeaderLink extends StatelessWidget {
     required this.label,
     required this.selected,
     required this.onTap,
+    this.badge = 0,
   });
 
   final String label;
   final bool selected;
   final VoidCallback onTap;
+
+  // Unread notifications shown next to the label.
+  final int badge;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -300,11 +305,16 @@ class _HeaderLink extends StatelessWidget {
             ),
           ),
         ),
-        child: Text(
-          label,
-          style: AppTextStyles.body.copyWith(
-            color: selected ? AppColors.primary : AppColors.textSecondary,
-            fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+        child: Badge(
+          isLabelVisible: badge > 0,
+          label: Text('$badge'),
+          offset: const Offset(14, -6),
+          child: Text(
+            label,
+            style: AppTextStyles.body.copyWith(
+              color: selected ? AppColors.primary : AppColors.textSecondary,
+              fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+            ),
           ),
         ),
       ),
