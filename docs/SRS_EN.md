@@ -62,7 +62,7 @@ CosmoQ Cinema has three parts:
 | [Cinema_BE/docs/MESSAGING.md](../Cinema_BE/docs/MESSAGING.md) | RabbitMQ events, outbox, idempotency |
 | [Cinema_BE/docs/MONITORING.md](../Cinema_BE/docs/MONITORING.md) | Metrics, traces, logs |
 | [Cinema_BE/docs/TESTING.md](../Cinema_BE/docs/TESTING.md) | Automated tests and CI |
-| [Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md) | All 104 endpoints and the screens that use them |
+| [Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md) | All 106 endpoints and the screens that use them |
 | [Cinema_Mobile/docs/STAFF_WORKSPACE.md](../Cinema_Mobile/docs/STAFF_WORKSPACE.md) | Admin website operations |
 | `Resource/PRM393.docx` | Course requirements: permission matrix, required technical components |
 
@@ -143,7 +143,6 @@ An account can have several roles. A Staff or Admin account signed in to the cus
 
 ### 2.7 Out of scope
 
-- Changing a password with the current password; editing the profile.
 - Push notifications (FCM).
 - Automatic refunds through the payment gateway (PayOS has no refund API).
 - Accounting, HR, inventory; dedicated POS hardware; Kubernetes, service mesh.
@@ -206,6 +205,8 @@ Priority: **H** (must have), **M** (important), **L** (nice to have).
 | FR-AUTH-13 | The app and the API check account fields the same way (registration, sign-in, forgot / reset password, accounts created by Admin): email required, at most 150 characters, a domain with a suffix of at least 2 letters, no spaces; a new password of 6–72 characters counted in UTF-8 bytes; full name required, at most 150 characters; phone optional, 8–15 digits, at most 20 characters. Mistakes return 400 with an error per field. The sign-up form asks for the password twice. | H |
 | FR-AUTH-14 | Registration, sign-in, OTP, refresh and forgot / reset password are limited to 10 requests per minute per IP; beyond that the API returns 429 with `Retry-After`. | M |
 | FR-AUTH-15 | Staff/Admin find a customer account by phone number (digits only; spaces, dots and dashes are ignored) to sell tickets and give points at the counter. Fewer than 8 or more than 15 digits is refused (400); customers get 403. | M |
+| FR-AUTH-16 | Users **edit their profile** (Account → Edit profile): full name (required, at most 150 characters) and phone (optional, same rules as registration; empty removes it). The email is the sign-in name and cannot change. | M |
+| FR-AUTH-17 | **Change the password with the current one** (Account → Change password): current password, new password twice. A wrong current password or the same password is refused (400). Afterwards other devices are signed out (refresh tokens revoked) and this device gets new tokens. A forgotten current password leads to the email OTP flow. Limited to 10 requests per minute like sign-in. | M |
 
 ### 4.2 Account management (Admin)
 
@@ -544,11 +545,11 @@ Check-in is the `checkedInAt` attribute of a `CONFIRMED` ticket, not a separate 
 
 ### 10.1 API
 
-- 104 business endpoints, REST/JSON, through the gateway at `http://<host>:5000`. Full list: [MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md).
+- 106 business endpoints, REST/JSON, through the gateway at `http://<host>:5000`. Full list: [MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md).
 
 | Group | Prefix | Endpoints |
 |---|---|---|
-| Authentication, accounts, roles | `/api/v1/auth` | 16 |
+| Authentication, accounts, roles | `/api/v1/auth` | 18 |
 | Movies | `/api/v1/movies` | 9 |
 | Rooms, seats | `/api/rooms`, `/api/seats` | 13 |
 | Showtimes | `/api/showtimes` | 11 |
@@ -630,11 +631,11 @@ Check-in is the `checkedInAt` attribute of a `CONFIRMED` ticket, not a separate 
 
 | Part | Tests | Main coverage |
 |---|---|---|
-| AuthService | 28 | Registration, OTP and OTP lockout, sign-in, refresh rotation, sign-out, account locking, role changes, field validation |
+| AuthService | 30 | Registration, OTP and OTP lockout, sign-in, refresh rotation, sign-out, account locking, role changes, field validation |
 | ApiGateway | 21 | Blocks tokens of locked accounts and changed roles before forwarding, never forwards when the account check fails, 503 when AuthService does not answer |
 | MovieService | 24 | Showtimes, overlaps, cancellation and its event, seats, sweetbox pairs, seat counts, prices per seat type |
 | BookingService | 73 | Bookings, seat holds, webhook, expiry, late payment, refunds, real RabbitMQ, authorization, check-in, statistics, revenue, counter sales |
-| Flutter | 198 | Widget tests of customer and admin screens, validators, payment flow, check-in, counter |
+| Flutter | 201 | Widget tests of customer and admin screens, validators, payment flow, check-in, counter |
 
 Backend integration tests run against real PostgreSQL and RabbitMQ (Testcontainers); PayOS, MovieService and SMTP are replaced by fakes.
 
@@ -661,7 +662,6 @@ Backend integration tests run against real PostgreSQL and RabbitMQ (Testcontaine
 | Limitation | Impact | Way forward |
 |---|---|---|
 | PayOS has no refund API | Refunds are manual bank transfers | Integrate a gateway with a refund API if needed |
-| No password change with the current password, no profile editing | Password changes use the OTP flow | Add the endpoints |
 | Notifications have no push | Customers must open the app or the email | Add FCM |
 | The customer ticket list loads the first page (50 tickets) | Customers with very many tickets do not see the oldest | Load more on scroll |
 

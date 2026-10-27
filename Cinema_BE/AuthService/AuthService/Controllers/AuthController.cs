@@ -92,6 +92,22 @@ namespace AuthService.Controllers
             return Ok(result);
         }
 
+        // PUT /api/v1/auth/me  (họ tên, số điện thoại)
+        [Authorize]
+        [HttpPut("me")]
+        public async Task<ActionResult<UserResponse>> UpdateMe([FromBody] UpdateProfileRequest request)
+        {
+            return Ok(await _authService.UpdateProfileAsync(User.GetUserId(), request));
+        }
+
+        // POST /api/v1/auth/change-password  -> token mới; các thiết bị khác bị đăng xuất
+        [Authorize]
+        [HttpPost("change-password")]
+        public async Task<ActionResult<AuthResponse>> ChangePassword([FromBody] ChangePasswordRequest request)
+        {
+            return Ok(await _authService.ChangePasswordAsync(User.GetUserId(), request));
+        }
+
         // Quản lý user / role cho Admin: xem UsersController, RolesController
     }
 }

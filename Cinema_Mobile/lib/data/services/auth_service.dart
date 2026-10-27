@@ -181,6 +181,34 @@ class AuthService {
     );
   }
 
+  // The signed-in user's name and phone (empty phone removes it).
+  Future<AuthUser> updateMe({
+    required String fullName,
+    String phone = '',
+  }) async => AuthUser.fromJson(
+    readMap(
+      await _apiClient.put(
+        '/api/v1/auth/me',
+        authenticated: true,
+        body: {'fullName': fullName.trim(), 'phone': phone.trim()},
+      ),
+    ),
+  );
+
+  // New tokens for this device; other devices are signed out.
+  Future<AuthResponse> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async => AuthResponse.fromJson(
+    readMap(
+      await _apiClient.post(
+        '/api/v1/auth/change-password',
+        authenticated: true,
+        body: {'currentPassword': currentPassword, 'newPassword': newPassword},
+      ),
+    ),
+  );
+
   Future<AuthUser> me() async {
     final response = await _apiClient.get(
       '/api/v1/auth/me',

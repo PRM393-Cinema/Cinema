@@ -62,7 +62,7 @@ CosmoQ Cinema gồm ba phần:
 | [Cinema_BE/docs/MESSAGING.md](../Cinema_BE/docs/MESSAGING.md) | Event RabbitMQ, outbox, idempotency |
 | [Cinema_BE/docs/MONITORING.md](../Cinema_BE/docs/MONITORING.md) | Metrics, trace, log |
 | [Cinema_BE/docs/TESTING.md](../Cinema_BE/docs/TESTING.md) | Test tự động và CI |
-| [Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md) | Toàn bộ 104 endpoint và màn hình đang dùng |
+| [Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md) | Toàn bộ 106 endpoint và màn hình đang dùng |
 | [Cinema_Mobile/docs/STAFF_WORKSPACE.md](../Cinema_Mobile/docs/STAFF_WORKSPACE.md) | Nghiệp vụ trang quản trị |
 | `Resource/PRM393.docx` | Yêu cầu môn học: ma trận quyền, thành phần kỹ thuật bắt buộc |
 
@@ -143,7 +143,6 @@ Một tài khoản có thể có nhiều vai trò. Tài khoản Staff/Admin đă
 
 ### 2.7 Ngoài phạm vi
 
-- Đổi mật khẩu bằng mật khẩu hiện tại; sửa hồ sơ cá nhân.
 - Push notification (FCM).
 - Hoàn tiền tự động qua cổng thanh toán (PayOS không có API hoàn tiền).
 - Kế toán, nhân sự, kho; thiết bị POS chuyên dụng; Kubernetes, service mesh.
@@ -206,6 +205,8 @@ Mức ưu tiên: **H** (bắt buộc), **M** (quan trọng), **L** (bổ trợ).
 | FR-AUTH-13 | Kiểm tra dữ liệu tài khoản giống nhau ở app và API (đăng ký, đăng nhập, quên / đặt lại mật khẩu, Admin tạo tài khoản): email bắt buộc, tối đa 150 ký tự, có tên miền và đuôi ≥ 2 chữ cái, không dấu cách; mật khẩu mới 6–72 ký tự tính theo byte UTF-8; họ tên bắt buộc, tối đa 150 ký tự; số điện thoại không bắt buộc, 8–15 chữ số, tối đa 20 ký tự. Sai thì 400 kèm lỗi theo từng trường. Form đăng ký có ô nhập lại mật khẩu. | H |
 | FR-AUTH-14 | Giới hạn 10 request / phút / IP cho các API đăng ký, đăng nhập, OTP, làm mới, quên / đặt lại mật khẩu; vượt thì 429 kèm `Retry-After`. | M |
 | FR-AUTH-15 | Staff/Admin tìm tài khoản khách hàng theo số điện thoại (so theo chữ số, bỏ qua dấu cách / chấm / gạch) để bán vé và tích điểm tại quầy. Số điện thoại ít hơn 8 hoặc quá 15 chữ số bị 400; khách hàng gọi thì 403. | M |
+| FR-AUTH-16 | Người dùng tự **sửa hồ sơ** (Account → Edit profile): họ tên (bắt buộc, tối đa 150 ký tự) và số điện thoại (không bắt buộc, cùng quy tắc với đăng ký; bỏ trống là xoá). Email là tên đăng nhập nên không đổi. | M |
+| FR-AUTH-17 | **Đổi mật khẩu bằng mật khẩu hiện tại** (Account → Change password): nhập mật khẩu hiện tại, mật khẩu mới hai lần. Sai mật khẩu hiện tại hoặc trùng mật khẩu cũ bị 400. Đổi xong các thiết bị khác bị đăng xuất (thu hồi refresh token), thiết bị đang dùng nhận token mới. Quên mật khẩu hiện tại thì chuyển sang luồng OTP email. Giới hạn 10 lần / phút như đăng nhập. | M |
 
 ### 4.2 Quản lý tài khoản (Admin)
 
@@ -544,11 +545,11 @@ Check-in là thuộc tính `checkedInAt` của vé `CONFIRMED`, không phải m�
 
 ### 10.1 API
 
-- 104 endpoint nghiệp vụ, REST/JSON, qua gateway `http://<host>:5000`. Danh sách đầy đủ: [MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md).
+- 106 endpoint nghiệp vụ, REST/JSON, qua gateway `http://<host>:5000`. Danh sách đầy đủ: [MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md).
 
 | Nhóm | Tiền tố | Số endpoint |
 |---|---|---|
-| Xác thực, tài khoản, vai trò | `/api/v1/auth` | 16 |
+| Xác thực, tài khoản, vai trò | `/api/v1/auth` | 18 |
 | Phim | `/api/v1/movies` | 9 |
 | Phòng, ghế | `/api/rooms`, `/api/seats` | 13 |
 | Suất chiếu | `/api/showtimes` | 11 |
@@ -630,11 +631,11 @@ Check-in là thuộc tính `checkedInAt` của vé `CONFIRMED`, không phải m�
 
 | Phần | Số test | Nội dung chính |
 |---|---|---|
-| AuthService | 28 | Đăng ký, OTP và khoá OTP, đăng nhập, refresh xoay vòng, đăng xuất, khoá tài khoản, đổi vai trò, validate dữ liệu |
+| AuthService | 30 | Đăng ký, OTP và khoá OTP, đăng nhập, refresh xoay vòng, đăng xuất, khoá tài khoản, đổi vai trò, validate dữ liệu |
 | ApiGateway | 21 | Chặn token của tài khoản bị khoá hoặc đã đổi vai trò trước khi chuyển tiếp, không chuyển tiếp khi kiểm tra tài khoản lỗi, 503 khi AuthService không phản hồi |
 | MovieService | 24 | Suất chiếu, trùng lịch, huỷ suất và event, ghế, sweetbox, đổi số ghế, giá theo loại ghế |
 | BookingService | 73 | Đặt vé, giữ ghế, webhook, hết hạn, trả muộn, hoàn tiền, RabbitMQ thật, phân quyền, check-in, thống kê, doanh thu, bán vé tại quầy |
-| Flutter | 198 | Widget test các màn khách và quản trị, validator, luồng thanh toán, check-in, quầy |
+| Flutter | 201 | Widget test các màn khách và quản trị, validator, luồng thanh toán, check-in, quầy |
 
 Test tích hợp backend chạy với PostgreSQL và RabbitMQ thật (Testcontainers); PayOS, MovieService, SMTP được thay bằng bản giả.
 
@@ -661,7 +662,6 @@ Test tích hợp backend chạy với PostgreSQL và RabbitMQ thật (Testcontai
 | Giới hạn | Ảnh hưởng | Hướng xử lý |
 |---|---|---|
 | PayOS không có API hoàn tiền | Hoàn tiền phải chuyển khoản tay | Tích hợp cổng có API hoàn tiền nếu cần |
-| Chưa có đổi mật khẩu bằng mật khẩu cũ, chưa sửa hồ sơ | Đổi mật khẩu dùng luồng OTP | Bổ sung endpoint |
 | Thông báo chưa có push | Khách phải mở app hoặc email để xem | Tích hợp FCM |
 | Danh sách vé của khách lấy trang đầu (50 vé) | Khách có rất nhiều vé không thấy vé cũ | Tải thêm khi cuộn |
 

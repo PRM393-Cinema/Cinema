@@ -66,7 +66,7 @@ class FakeAuthRepository implements AuthRepository {
   final String? verifyErrorMessage;
   final String? resetErrorMessage;
   final Duration delay;
-  final AuthUser user;
+  AuthUser user;
 
   int logoutCalls = 0;
   int registerCalls = 0;
@@ -168,6 +168,42 @@ class FakeAuthRepository implements AuthRepository {
 
   @override
   Future<AuthUser> currentUser() async => user;
+
+  // Profile edits and password changes the screens sent.
+  final profileUpdates = <({String fullName, String phone})>[];
+  final passwordChanges = <({String current, String next})>[];
+
+  // The current password the fake accepts.
+  String currentPassword = 'Secret@123';
+
+  @override
+  Future<AuthUser> updateProfile({
+    required String fullName,
+    String phone = '',
+  }) async {
+    profileUpdates.add((fullName: fullName, phone: phone));
+    user = AuthUser.fromJson({
+      ...user.toJson(),
+      'fullName': fullName,
+      'phone': phone.isEmpty ? null : phone,
+    });
+    return user;
+  }
+
+  @override
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    passwordChanges.add((current: currentPassword, next: newPassword));
+    if (currentPassword != this.currentPassword) {
+      throw const ApiException(
+        statusCode: 400,
+        message: 'Current password is incorrect.',
+      );
+    }
+    this.currentPassword = newPassword;
+  }
 
   @override
   Future<void> logout() async {
