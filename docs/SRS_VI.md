@@ -62,7 +62,7 @@ CosmoQ Cinema gồm ba phần:
 | [Cinema_BE/docs/MESSAGING.md](../Cinema_BE/docs/MESSAGING.md) | Event RabbitMQ, outbox, idempotency |
 | [Cinema_BE/docs/MONITORING.md](../Cinema_BE/docs/MONITORING.md) | Metrics, trace, log |
 | [Cinema_BE/docs/TESTING.md](../Cinema_BE/docs/TESTING.md) | Test tự động và CI |
-| [Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md) | Toàn bộ 96 endpoint và màn hình đang dùng |
+| [Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md) | Toàn bộ 101 endpoint và màn hình đang dùng |
 | [Cinema_Mobile/docs/STAFF_WORKSPACE.md](../Cinema_Mobile/docs/STAFF_WORKSPACE.md) | Nghiệp vụ trang quản trị |
 | `Resource/PRM393.docx` | Yêu cầu môn học: ma trận quyền, thành phần kỹ thuật bắt buộc |
 
@@ -232,6 +232,8 @@ Mức ưu tiên: **H** (bắt buộc), **M** (quan trọng), **L** (bổ trợ).
 | FR-MOV-08 | App khách mở trailer của phim (`trailerUrl`). | L |
 | FR-MOV-09 | Phân loại phim theo Luật Điện ảnh 2022: P (mọi độ tuổi), K (dưới 13 tuổi xem cùng cha mẹ / người giám hộ), T13, T16, T18. Admin chọn khi thêm / sửa phim (mặc định P). Nhãn hiện trên thẻ phim, chi tiết phim, xác nhận đặt vé, màn bán vé tại quầy và check-in. Phim khác P thì khách phải xác nhận trước khi giữ ghế; khi check-in, nhân viên được nhắc kiểm tra giấy tờ. | H |
 | FR-MOV-10 | Trang chủ của khách có hai tab **Đang chiếu** (phim ACTIVE đã khởi chiếu hoặc chưa có ngày khởi chiếu, mới thêm trước) và **Sắp chiếu** (phim ACTIVE có ngày khởi chiếu sau hôm nay, khởi chiếu sớm nhất trước, poster ghi ngày khởi chiếu). Lọc theo thể loại (chip lấy từ thể loại của các phim đang có) và tìm theo tên qua API, không phân biệt hoa thường. Chi tiết phim sắp chiếu ghi ngày khởi chiếu; chưa có suất thì báo suất chiếu sẽ được thêm gần ngày khởi chiếu. | M |
+| FR-MOV-11 | Phim có **đạo diễn** và **diễn viên chính** (không bắt buộc, tối đa 150 / 500 ký tự). Admin nhập khi thêm / sửa phim; chi tiết phim hiện ra. | L |
+| FR-MOV-12 | **Đánh giá phim**: khách có vé đã check-in (đã xem phim) chấm 1–5 sao kèm bình luận (tối đa 1.000 ký tự) ngay trên chi tiết vé. Mỗi khách một đánh giá cho một phim: gửi lại là sửa, xoá được. Vé chưa check-in thì bị 400 kèm lý do; vé của người khác như không tồn tại (404). Chi tiết phim hiện cho mọi người điểm trung bình, số đánh giá theo từng mức sao và các đánh giá mới nhất; tên người đánh giá lấy họ tên trong tài khoản (không có thì email đã che bớt). Admin xoá đánh giá không phù hợp từ Admin → Movies → Reviews. | M |
 
 ### 4.4 Phòng và ghế
 
@@ -398,7 +400,7 @@ Thanh điều hướng bên trái; cửa sổ hẹp hơn 640 px thì mở bằng
 | Chi tiết vé / payment / hoàn tiền | Staff, Admin | Huỷ vé, check-in, thu tiền, xác minh PayOS, ghi nhận / từ chối hoàn tiền, gửi thông báo |
 | Suất chiếu | Staff, Admin | Tạo, sửa, mở / đóng bán, huỷ, sơ đồ ghế và danh sách khách |
 | Sơ đồ ghế của phòng | Staff, Admin | Đổi loại từng ghế hoặc tô hàng loạt; Admin đổi số ghế |
-| Movies | Admin | Thêm, sửa, ngừng chiếu / chiếu lại, lọc, tìm |
+| Movies | Admin | Thêm, sửa (cả đạo diễn, diễn viên), ngừng chiếu / chiếu lại, lọc, tìm; xem và xoá đánh giá của phim |
 | Rooms | Admin | Thêm phòng theo hàng × ghế, đổi tên, xoá, mở sơ đồ |
 | Snacks | Admin | Menu bắp nước: thêm, sửa, ngừng bán / bán lại |
 | Promotions | Admin | Khuyến mãi tự áp dụng và mã voucher: thêm, sửa, tạm dừng / chạy lại, xem lượt dùng |
@@ -525,9 +527,9 @@ Check-in là thuộc tính `checkedInAt` của vé `CONFIRMED`, không phải m�
 | Database | Bảng chính | Ghi chú |
 |---|---|---|
 | `cinema_auth_db` | `users`, `roles`, `users_roles`, `refresh_tokens`, `otp_codes` | Mật khẩu và OTP chỉ lưu hash BCrypt; email duy nhất |
-| `cinema_movie_db` | `movies` | Trạng thái `ACTIVE` / `INACTIVE`; phân loại `age_rating` P / K / T13 / T16 / T18 |
+| `cinema_movie_db` | `movies` | Trạng thái `ACTIVE` / `INACTIVE`; phân loại `age_rating` P / K / T13 / T16 / T18; `director`, `cast_members` |
 | `cinema_showtime_db` | `rooms`, `seats`, `showtimes`, `outbox_messages` | Ghế duy nhất theo (phòng, hàng, số); loại ghế NORMAL / VIP / SWEETBOX; định dạng suất 2D / 3D / IMAX |
-| `cinema_booking_db` | `bookings`, `booking_seats`, `seat_reservations`, `concession_items`, `booking_concessions`, `promotions`, `loyalty_accounts`, `loyalty_transactions`, `outbox_messages` | `user_id` NULL cho khách vãng lai; `customer_email`, `customer_phone`, `checked_in_at`, `expires_at` |
+| `cinema_booking_db` | `bookings`, `booking_seats`, `seat_reservations`, `concession_items`, `booking_concessions`, `promotions`, `loyalty_accounts`, `loyalty_transactions`, `movie_reviews`, `outbox_messages` | `user_id` NULL cho khách vãng lai; `customer_email`, `customer_phone`, `checked_in_at`, `expires_at` |
 | `cinema_payment_db` | `payments`, `refunds`, `outbox_messages` | Phương thức `PAYOS` / `CASH`; thông tin tài khoản người trả để hoàn tiền |
 | `cinema_notification_db` | `notifications` | Duy nhất theo `event_id` để không gửi trùng |
 
@@ -540,7 +542,7 @@ Check-in là thuộc tính `checkedInAt` của vé `CONFIRMED`, không phải m�
 
 ### 10.1 API
 
-- 96 endpoint nghiệp vụ, REST/JSON, qua gateway `http://<host>:5000`. Danh sách đầy đủ: [MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md).
+- 101 endpoint nghiệp vụ, REST/JSON, qua gateway `http://<host>:5000`. Danh sách đầy đủ: [MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md).
 
 | Nhóm | Tiền tố | Số endpoint |
 |---|---|---|
@@ -554,6 +556,7 @@ Check-in là thuộc tính `checkedInAt` của vé `CONFIRMED`, không phải m�
 | Bắp nước | `/api/v1/concessions` | 3 |
 | Khuyến mãi | `/api/v1/promotions` | 4 |
 | Điểm thành viên | `/api/v1/loyalty` | 4 |
+| Đánh giá phim | `/api/v1/reviews` | 5 |
 
 - Danh sách có phân trang (`page` / `size` hoặc `pageNumber` / `pageSize`), tối đa 50 bản ghi một trang, sắp xếp `sortBy` / `sortDir`.
 - Lỗi theo chuẩn ProblemDetails: `title`, `status`, `detail`, `errors` (lỗi theo trường), `errorCode` (mã nghiệp vụ).
@@ -627,9 +630,9 @@ Check-in là thuộc tính `checkedInAt` của vé `CONFIRMED`, không phải m�
 |---|---|---|
 | AuthService | 28 | Đăng ký, OTP và khoá OTP, đăng nhập, refresh xoay vòng, đăng xuất, khoá tài khoản, đổi vai trò, validate dữ liệu |
 | ApiGateway | 21 | Chặn token của tài khoản bị khoá hoặc đã đổi vai trò trước khi chuyển tiếp, không chuyển tiếp khi kiểm tra tài khoản lỗi, 503 khi AuthService không phản hồi |
-| MovieService | 23 | Suất chiếu, trùng lịch, huỷ suất và event, ghế, sweetbox, đổi số ghế, giá theo loại ghế |
-| BookingService | 69 | Đặt vé, giữ ghế, webhook, hết hạn, trả muộn, hoàn tiền, RabbitMQ thật, phân quyền, check-in, thống kê, doanh thu, bán vé tại quầy |
-| Flutter | 191 | Widget test các màn khách và quản trị, validator, luồng thanh toán, check-in, quầy |
+| MovieService | 24 | Suất chiếu, trùng lịch, huỷ suất và event, ghế, sweetbox, đổi số ghế, giá theo loại ghế |
+| BookingService | 71 | Đặt vé, giữ ghế, webhook, hết hạn, trả muộn, hoàn tiền, RabbitMQ thật, phân quyền, check-in, thống kê, doanh thu, bán vé tại quầy |
+| Flutter | 195 | Widget test các màn khách và quản trị, validator, luồng thanh toán, check-in, quầy |
 
 Test tích hợp backend chạy với PostgreSQL và RabbitMQ thật (Testcontainers); PayOS, MovieService, SMTP được thay bằng bản giả.
 

@@ -192,6 +192,7 @@ builder.Services.AddScoped<IRefundService, RefundService>();
 builder.Services.AddScoped<IConcessionService, ConcessionService>();
 builder.Services.AddScoped<IPromotionService, PromotionService>();
 builder.Services.AddScoped<ILoyaltyService, LoyaltyService>();
+builder.Services.AddScoped<IMovieReviewService, MovieReviewService>();
 
 // Job nền: booking PENDING quá 10 phút chưa thanh toán -> EXPIRED, nhả ghế
 builder.Services.AddHostedService<BookingExpiryWorker>();

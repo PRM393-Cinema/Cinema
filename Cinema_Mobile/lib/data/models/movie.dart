@@ -16,6 +16,8 @@ class Movie {
     required this.trailerUrl,
     required this.status,
     this.ageRating = AgeRating.p,
+    this.director = '',
+    this.cast = '',
   });
 
   factory Movie.fromJson(Map<String, Object?> json) {
@@ -36,6 +38,8 @@ class Movie {
       trailerUrl: readString(json['trailerUrl']),
       status: readString(json['status']),
       ageRating: AgeRating.parse(readOptionalString(json['ageRating'])),
+      director: readString(json['director']),
+      cast: readString(json['cast']),
     );
   }
 
@@ -50,6 +54,10 @@ class Movie {
   final String trailerUrl;
   final String status; // 'ACTIVE', 'INACTIVE'
   final AgeRating ageRating;
+
+  // Main cast, separated by commas.
+  final String director;
+  final String cast;
 
   String get durationText => '$durationMinutes min';
   String get releaseYear => releaseDate?.year.toString() ?? '';

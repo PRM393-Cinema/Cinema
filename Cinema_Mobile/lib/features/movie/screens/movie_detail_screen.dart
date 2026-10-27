@@ -24,6 +24,7 @@ import '../../../data/repositories/catalog_repository.dart';
 import '../../seat/widgets/seat_type_style.dart';
 import '../../showtime/widgets/showtime_section.dart';
 import '../../../core/widgets/age_rating_badge.dart';
+import '../../review/widgets/review_widgets.dart';
 
 // Movie details with its upcoming showtimes, so customers pick a time here
 // and go straight to the seat map.
@@ -244,6 +245,11 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                             ),
                             const SizedBox(height: AppSpacing.md),
                             _buildShowtimes(),
+                            const SizedBox(height: AppSpacing.xxl),
+                            MovieReviewsSection(
+                              load: () => widget.catalogRepository
+                                  .getMovieReviews(movie.id),
+                            ),
                           ],
                         ),
                       ),
@@ -407,6 +413,22 @@ class _MovieFacts extends StatelessWidget {
         if (movie.genre.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.md),
           Text(movie.genre, style: AppTextStyles.title),
+        ],
+        if (movie.director.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            'Director: ${movie.director}',
+            key: const Key('movieDirector'),
+            style: AppTextStyles.body,
+          ),
+        ],
+        if (movie.cast.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            'Cast: ${movie.cast}',
+            key: const Key('movieCast'),
+            style: AppTextStyles.bodySmall,
+          ),
         ],
         if (trailer != null) ...[
           const SizedBox(height: AppSpacing.lg),

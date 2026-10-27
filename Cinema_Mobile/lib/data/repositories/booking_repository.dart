@@ -9,6 +9,7 @@ import '../services/booking_service.dart';
 import '../models/concession.dart';
 import '../models/promotion.dart';
 import '../models/loyalty.dart';
+import '../models/review.dart';
 
 abstract interface class BookingRepository {
   // Holds the seats for 10 minutes; the booking stays PENDING until paid.
@@ -24,6 +25,17 @@ abstract interface class BookingRepository {
 
   // The signed-in member's points, tier and history.
   Future<LoyaltyCard> getMyLoyalty();
+
+  // Reviews of a ticket's movie: allowed once the ticket was checked in.
+  Future<BookingReview> getBookingReview(int bookingId);
+
+  Future<MovieReview> saveReview({
+    required int bookingId,
+    required int rating,
+    String comment = '',
+  });
+
+  Future<void> deleteReview(int reviewId);
 
   // The discount the tickets would get, before they are held.
   Future<PromotionQuote> quotePromotion({
@@ -83,6 +95,25 @@ class RemoteBookingRepository implements BookingRepository {
 
   @override
   Future<LoyaltyCard> getMyLoyalty() => _bookingService.getMyLoyalty();
+
+  @override
+  Future<BookingReview> getBookingReview(int bookingId) =>
+      _bookingService.getBookingReview(bookingId);
+
+  @override
+  Future<MovieReview> saveReview({
+    required int bookingId,
+    required int rating,
+    String comment = '',
+  }) => _bookingService.saveReview(
+    bookingId: bookingId,
+    rating: rating,
+    comment: comment,
+  );
+
+  @override
+  Future<void> deleteReview(int reviewId) =>
+      _bookingService.deleteReview(reviewId);
 
   @override
   Future<PromotionQuote> quotePromotion({

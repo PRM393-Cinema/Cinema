@@ -9,6 +9,7 @@ import '../models/payos_checkout_request.dart';
 import '../models/concession.dart';
 import '../models/promotion.dart';
 import '../models/loyalty.dart';
+import '../models/review.dart';
 
 // Bookings, PayOS payments, refunds and notifications (BookingService behind
 // the gateway). Every call needs a signed-in user.
@@ -35,6 +36,52 @@ class BookingService {
   Future<List<ConcessionItem>> getConcessions() async {
     final response = await _apiClient.get('/api/v1/concessions');
     return readMapList(response).map(ConcessionItem.fromJson).toList();
+  }
+
+  // The average, the stars and the newest reviews of a movie (public).
+  Future<MovieReviews> getMovieReviews(int movieId, {int page = 1}) async =>
+      MovieReviews.fromJson(
+        readMap(
+          await _apiClient.get(
+            '/api/v1/reviews/movie/$movieId',
+            authenticated: true,
+            query: {'page': page, 'size': 10},
+          ),
+        ),
+      );
+
+  // Whether a ticket's movie can be reviewed, and the review already written.
+  Future<BookingReview> getBookingReview(int bookingId) async =>
+      BookingReview.fromJson(
+        readMap(
+          await _apiClient.get(
+            '/api/v1/reviews/booking/$bookingId',
+            authenticated: true,
+          ),
+        ),
+      );
+
+  // Writes or changes the review of a checked-in ticket's movie.
+  Future<MovieReview> saveReview({
+    required int bookingId,
+    required int rating,
+    String comment = '',
+  }) async => MovieReview.fromJson(
+    readMap(
+      await _apiClient.post(
+        '/api/v1/reviews',
+        authenticated: true,
+        body: {
+          'bookingId': bookingId,
+          'rating': rating,
+          'comment': comment.trim(),
+        },
+      ),
+    ),
+  );
+
+  Future<void> deleteReview(int reviewId) async {
+    await _apiClient.delete('/api/v1/reviews/$reviewId', authenticated: true);
   }
 
   // The signed-in member's points, tier and history.

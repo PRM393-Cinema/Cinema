@@ -23,6 +23,8 @@ import '../widgets/admin_layout.dart';
 import '../widgets/admin_page.dart';
 import '../widgets/admin_pager.dart';
 import '../../../core/widgets/age_rating_badge.dart';
+import '../../review/widgets/review_widgets.dart';
+import '../../../data/models/review.dart';
 
 const _showing = 'ACTIVE';
 const _stopped = 'INACTIVE';
@@ -231,6 +233,13 @@ class _AdminMoviesScreenState extends State<AdminMoviesScreen> {
                         movie: movie,
                         busy: _busyId == movie.id,
                         onEdit: busy ? null : () => _edit(movie),
+                        onReviews: () => showDialog<void>(
+                          context: context,
+                          builder: (_) => _ReviewsDialog(
+                            service: widget.service,
+                            movie: movie,
+                          ),
+                        ),
                         onSetShowing: busy
                             ? null
                             : (showing) => _setShowing(movie, showing: showing),
@@ -257,12 +266,14 @@ class _MovieCard extends StatelessWidget {
     required this.movie,
     required this.busy,
     required this.onEdit,
+    required this.onReviews,
     required this.onSetShowing,
   });
 
   final Movie movie;
   final bool busy;
   final VoidCallback? onEdit;
+  final VoidCallback onReviews;
   final ValueChanged<bool>? onSetShowing;
 
   @override
@@ -330,6 +341,12 @@ class _MovieCard extends StatelessWidget {
               tooltip: 'Edit',
               icon: const Icon(Icons.edit_outlined),
               onPressed: onEdit,
+            ),
+            IconButton(
+              key: Key('movieReviews-${movie.id}'),
+              tooltip: 'Reviews',
+              icon: const Icon(Icons.reviews_outlined),
+              onPressed: onReviews,
             ),
             IconButton(
               key: Key('toggleMovie-${movie.id}'),
@@ -434,6 +451,8 @@ class _MovieFormDialogState extends State<_MovieFormDialog> {
   );
   late final _poster = TextEditingController(text: widget.movie?.posterUrl);
   late final _trailer = TextEditingController(text: widget.movie?.trailerUrl);
+  late final _director = TextEditingController(text: widget.movie?.director);
+  late final _cast = TextEditingController(text: widget.movie?.cast);
   late DateTime _releaseDate =
       widget.movie?.releaseDate ?? DateUtils.dateOnly(DateTime.now());
   late AgeRating _ageRating = widget.movie?.ageRating ?? AgeRating.p;
@@ -450,6 +469,8 @@ class _MovieFormDialogState extends State<_MovieFormDialog> {
       _description,
       _poster,
       _trailer,
+      _director,
+      _cast,
     ]) {
       controller.dispose();
     }
@@ -489,6 +510,8 @@ class _MovieFormDialogState extends State<_MovieFormDialog> {
       posterUrl: _poster.text,
       trailerUrl: _trailer.text,
       ageRating: _ageRating,
+      director: _director.text,
+      cast: _cast.text,
     );
     try {
       final movie = widget.movie;
@@ -646,6 +669,26 @@ class _MovieFormDialogState extends State<_MovieFormDialog> {
                     keyboardType: TextInputType.url,
                     validator: _link,
                   ),
+                  const SizedBox(height: AppSpacing.md),
+                  AppTextField(
+                    key: const Key('movieDirectorField'),
+                    label: 'Director (optional)',
+                    controller: _director,
+                    enabled: !_saving,
+                    validator: (value) => (value?.trim().length ?? 0) > 150
+                        ? 'Use at most 150 characters.'
+                        : null,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  AppTextField(
+                    key: const Key('movieCastField'),
+                    label: 'Main cast, separated by commas (optional)',
+                    controller: _cast,
+                    enabled: !_saving,
+                    validator: (value) => (value?.trim().length ?? 0) > 500
+                        ? 'Use at most 500 characters.'
+                        : null,
+                  ),
                   if (_error != null) ...[
                     const SizedBox(height: AppSpacing.md),
                     Text(
@@ -682,6 +725,137 @@ class _MovieFormDialogState extends State<_MovieFormDialog> {
                 ],
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Admin: the reviews of a movie, newest first, to remove unsuitable ones.
+class _ReviewsDialog extends StatefulWidget {
+  const _ReviewsDialog({required this.service, required this.movie});
+
+  final StaffService service;
+  final Movie movie;
+
+  @override
+  State<_ReviewsDialog> createState() => _ReviewsDialogState();
+}
+
+class _ReviewsDialogState extends State<_ReviewsDialog> {
+  MovieReviews? _reviews;
+  String? _error;
+  int? _busyId;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final reviews = await widget.service.movieReviews(widget.movie.id);
+      if (mounted) setState(() => _reviews = reviews);
+    } on Object catch (error) {
+      if (mounted) setState(() => _error = staffError(error));
+    }
+  }
+
+  Future<void> _delete(MovieReview review) async {
+    setState(() => _busyId = review.id);
+    try {
+      await widget.service.deleteReview(review.id);
+      await _load();
+    } on Object catch (error) {
+      if (mounted) setState(() => _error = staffError(error));
+    } finally {
+      if (mounted) setState(() => _busyId = null);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final reviews = _reviews;
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 560, maxHeight: 640),
+        child: CinemaPanel(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Reviews of ${widget.movie.title}',
+                style: AppTextStyles.heading2,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                reviews == null
+                    ? 'Loading reviews...'
+                    : reviews.count == 0
+                    ? 'No reviews yet.'
+                    : '${reviews.average.toStringAsFixed(1)} ★ from '
+                          '${reviews.count} review(s). Remove reviews that are '
+                          'abusive or off topic.',
+                style: AppTextStyles.bodySmall,
+              ),
+              if (_error != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: AppSpacing.sm),
+                  child: Text(
+                    _error!,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.error,
+                    ),
+                  ),
+                ),
+              const SizedBox(height: AppSpacing.md),
+              Flexible(
+                child: ListView(
+                  shrinkWrap: true,
+                  children: [
+                    for (final review in reviews?.reviews.items ?? const [])
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                        child: ReviewTile(
+                          review: review,
+                          trailing: _busyId == review.id
+                              ? const Padding(
+                                  padding: EdgeInsets.all(AppSpacing.sm),
+                                  child: SizedBox.square(
+                                    dimension: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  ),
+                                )
+                              : IconButton(
+                                  key: ValueKey('removeReview-${review.id}'),
+                                  tooltip: 'Remove review',
+                                  onPressed: _busyId == null
+                                      ? () => _delete(review)
+                                      : null,
+                                  icon: const Icon(
+                                    Icons.delete_outline,
+                                    color: AppColors.error,
+                                  ),
+                                ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Close'),
+                ),
+              ),
+            ],
           ),
         ),
       ),

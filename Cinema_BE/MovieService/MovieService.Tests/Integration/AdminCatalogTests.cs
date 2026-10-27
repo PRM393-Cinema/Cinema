@@ -57,6 +57,44 @@ public class AdminCatalogTests
     }
 
     [Fact]
+    public async Task DirectorAndCast_AreSaved_AndClearedWhenLeftEmpty()
+    {
+        var title = $"Credited movie {Guid.NewGuid():N}";
+        var body = new
+        {
+            title,
+            description = "Phim thử",
+            durationMinutes = 110,
+            genre = "Drama",
+            releaseDate = new DateTime(2026, 9, 1),
+            director = "  Christopher Nolan ",
+            cast = "Cillian Murphy, Emily Blunt"
+        };
+        var created = await (await _admin.PostAsJsonAsync("/api/v1/movies", body)).Content.ReadFromJsonAsync<JsonElement>();
+        var id = created.GetProperty("id").GetInt64();
+        Assert.Equal("Christopher Nolan", created.GetProperty("director").GetString());
+        Assert.Equal("Cillian Murphy, Emily Blunt", created.GetProperty("cast").GetString());
+
+        var cleared = await (await _admin.PutAsJsonAsync($"/api/v1/movies/{id}", new
+        {
+            title,
+            durationMinutes = 110,
+            releaseDate = new DateTime(2026, 9, 1),
+            director = " "
+        })).Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(JsonValueKind.Null, cleared.GetProperty("director").ValueKind);
+        Assert.Equal(JsonValueKind.Null, cleared.GetProperty("cast").ValueKind);
+
+        Assert.Equal(HttpStatusCode.BadRequest, (await _admin.PutAsJsonAsync($"/api/v1/movies/{id}", new
+        {
+            title,
+            durationMinutes = 110,
+            releaseDate = new DateTime(2026, 9, 1),
+            cast = new string('x', 501)
+        })).StatusCode);
+    }
+
+    [Fact]
     public async Task StoppedMovie_CanBeShownAgain_ByAdminOnly()
     {
         var title = $"Admin movie {Guid.NewGuid():N}";

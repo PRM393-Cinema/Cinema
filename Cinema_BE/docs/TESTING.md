@@ -6,8 +6,8 @@ Mỗi service có một project test xUnit nằm cạnh project chính, và đã
 |---|---|---|
 | AuthService | `AuthService/AuthService.Tests` | 28 |
 | ApiGateway | `ApiGateway/ApiGateway.Tests` | 21 |
-| MovieService | `MovieService/MovieService.Tests` | 23 |
-| BookingService | `BookingService/BookingService.Tests` | 69 |
+| MovieService | `MovieService/MovieService.Tests` | 24 |
+| BookingService | `BookingService/BookingService.Tests` | 71 |
 
 ## 1. Chạy test
 
@@ -43,6 +43,8 @@ Mỗi service chạy xong trong khoảng 15–30 giây.
 | Đổi role | Role cũ bị từ chối với `403 ROLE_CHANGED`; thu hồi refresh token khi quyền thay đổi, giữ phiên khi lưu cùng quyền | `ApiGateway.Tests/*`, `AuthService.Tests/Integration/UserManagementTests.cs` |
 | Check-in | Staff tra vé theo mã (QR), check-in một lần; vé chưa trả tiền, đã huỷ, chưa tới giờ hoặc đã check-in bị 409; khách không tra / check-in được; sơ đồ ghế đã đặt của suất (kèm email khách); thống kê vé theo suất (đã bán, đang giữ, đã check-in) theo id và theo giờ chiếu | `BookingService.Tests/Integration/CheckInTests.cs` |
 | Trang chủ | Tab đang chiếu / sắp chiếu tách theo ngày khởi chiếu (phim khởi chiếu hôm nay là đang chiếu), sắp chiếu xếp khởi chiếu sớm nhất trước, phim đã ngừng không hiện; lọc thể loại và tìm tên không phân biệt hoa thường, `%` không phải ký tự đại diện; danh sách thể loại không trùng; `when` sai bị 400 | `MovieService.Tests/Integration/BrowseMoviesTests.cs` |
+| Đánh giá phim | Chưa check-in thì chưa được đánh giá; vé người khác 404; số sao ngoài 1–5 bị 400; gửi lại là sửa (không tạo thêm); tên người đánh giá là email che bớt khi token không có họ tên; khách chưa đăng nhập xem được, người viết thấy `mine`; điểm trung bình và số đánh giá theo sao đúng; chủ đánh giá hoặc Admin xoá được, người khác 403 | `BookingService.Tests/Integration/MovieReviewTests.cs` |
+| Đạo diễn, diễn viên | Lưu khi thêm phim (bỏ khoảng trắng thừa), bỏ trống khi sửa thì xoá, diễn viên quá 500 ký tự bị 400 | `MovieService.Tests/Integration/AdminCatalogTests.cs` |
 | Phim | Ngừng / chiếu lại phim chỉ Admin; phân loại phim mặc định P, bỏ trống khi sửa thì giữ nguyên, mức không có (vd `C18`) bị 400 | `MovieService.Tests/Integration/AdminCatalogTests.cs` |
 | Định dạng suất chiếu | IMAX cộng 40.000đ, 3D cộng 20.000đ vào ghế thường rồi mới tính VIP / sweetbox; giá ghế gửi BookingService gồm phụ thu; bỏ trống khi sửa thì giữ nguyên; mặc định 2D; định dạng lạ bị 400 | `MovieService.Tests/Integration/ShowtimeFormatTests.cs` |
 | Suất chiếu | Quyền, trùng lịch 409, suất còn đặt được theo phim, huỷ mềm và ghi event `showtime.cancelled` | `MovieService.Tests/Integration/ShowtimeTests.cs` |

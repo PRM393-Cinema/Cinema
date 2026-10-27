@@ -13,6 +13,8 @@ class MovieDraft {
     this.posterUrl = '',
     this.trailerUrl = '',
     this.ageRating = AgeRating.p,
+    this.director = '',
+    this.cast = '',
   });
 
   factory MovieDraft.fromMovie(Movie movie) => MovieDraft(
@@ -25,6 +27,8 @@ class MovieDraft {
     posterUrl: movie.posterUrl,
     trailerUrl: movie.trailerUrl,
     ageRating: movie.ageRating,
+    director: movie.director,
+    cast: movie.cast,
   );
 
   final String title;
@@ -36,6 +40,8 @@ class MovieDraft {
   final String posterUrl;
   final String trailerUrl;
   final AgeRating ageRating;
+  final String director;
+  final String cast;
 
   Map<String, Object?> toJson() => {
     'title': title.trim(),
@@ -52,5 +58,7 @@ class MovieDraft {
     'posterUrl': posterUrl.trim(),
     'trailerUrl': trailerUrl.trim(),
     'ageRating': ageRating.code,
+    'director': director.trim(),
+    'cast': cast.trim(),
   };
 }
