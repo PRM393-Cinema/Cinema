@@ -1,6 +1,6 @@
 # Chức năng, endpoint và giao diện mobile
 
-Nhánh: `feat/Ngữ/UI_Update`. Đối chiếu từ controller backend, service Flutter và router hiện tại. Có **101 endpoint nghiệp vụ** trong các controller; mỗi dòng dưới đây tương ứng một method + đường dẫn. Không tính Swagger, metrics và health check.
+Nhánh: `feat/Ngữ/UI_Update`. Đối chiếu từ controller backend, service Flutter và router hiện tại. Có **104 endpoint nghiệp vụ** trong các controller; mỗi dòng dưới đây tương ứng một method + đường dẫn. Không tính Swagger, metrics và health check.
 
 “Đã nối API” nghĩa là có lời gọi thật trong code; không khẳng định đã thử end-to-end với server, SMTP hay PayOS thật.
 
@@ -24,7 +24,7 @@ Cập nhật: 12/10/2026. Đây là bảng kiểm tra kết nối API, không ph
 | Chi tiết/hủy vé | `/bookings/{id}` | GET `/api/v1/bookings/{id}`; POST `/api/v1/bookings/{id}/cancel`; GET `/api/v1/payments/{id}/refund`; GET `/api/v1/reviews/booking/{id}`; POST / DELETE `/api/v1/reviews` (thẻ **Your review** của vé đã check-in) | Đã nối; vé đã thanh toán có mã QR (mã vé) để check-in tại rạp, vé đã dùng hiện giờ check-in |
 | Thanh toán/kết quả | `/bookings/{id}/payment`, `/bookings/{id}/result` | GET `/api/v1/bookings/{id}`; POST `/api/v1/payments/payos/checkout`; POST `/api/v1/payments/payos/{orderCode}/verify` | Đã nối |
 | Lịch sử thanh toán | `/payments` | GET `/api/v1/payments/user/{userId}` | Đã nối; đọc đủ các trang |
-| Danh sách thông báo/làm mới | `/notifications` | GET `/api/v1/notifications/user/{userId}` | Đã nối; đọc đủ các trang |
+| Danh sách thông báo/làm mới | `/notifications` | GET `/api/v1/notifications/user/{userId}`; GET `/api/v1/notifications/{id}`; PATCH `/api/v1/notifications/{id}/read`; POST `/api/v1/notifications/read-all`; GET `/api/v1/notifications/unread-count` | Đã nối; đọc đủ các trang; thông báo chưa đọc có chấm, mở là đánh dấu đã đọc, nút **Mark all read**; chuông (app) / mục Notifications (web) có số chưa đọc |
 | Chi tiết thông báo/mở vé liên quan | `/notifications/{id}` | GET `/api/v1/notifications/{id}`; GET `/api/v1/bookings/{id}` khi mở vé | Đã nối; tải theo ID, hỗ trợ mở lại URL |
 | Làm mới phiên | Không có màn riêng | POST `/api/v1/auth/refresh` | Đã nối tự động trong lớp API |
 | Dashboard Admin | `/admin/dashboard` | GET `/api/v1/bookings/date-range`; GET `/api/v1/payments/summary`; GET `/api/v1/movies/status/ACTIVE`; GET `/api/showtimes/date-range`; GET `/api/v1/auth/users` (tổng/active/locked); GET `/api/v1/auth/roles` | Đã nối; khối **Today** (như dashboard Staff), booking và doanh thu tháng này, phim đang chiếu, suất hôm nay, rồi thống kê tài khoản (các phần tải độc lập); ROLE_ADMIN |
@@ -203,9 +203,12 @@ Các route `/admin/*` và `/staff/*` thuộc **trang quản trị web** (`lib/ma
 | Danh sách thông báo | GET | `/api/v1/notifications` | Chưa có UI nối endpoint này | [NotificationController:24](../../Cinema_BE/BookingService/BookingService/Controllers/NotificationController.cs#L24) |
 | Chi tiết thông báo | GET | `/api/v1/notifications/{id}` | Chi tiết thông báo theo ID · đã nối API | [NotificationController:36](../../Cinema_BE/BookingService/BookingService/Controllers/NotificationController.cs#L36) |
 | Lịch sử theo người dùng thông báo | GET | `/api/v1/notifications/user/{userId}` | Danh sách thông báo · đã nối API | [NotificationController:49](../../Cinema_BE/BookingService/BookingService/Controllers/NotificationController.cs#L49) |
-| Tạo thông báo | POST | `/api/v1/notifications` | Staff → Booking details → Customer notification · đã nối API | [NotificationController:66](../../Cinema_BE/BookingService/BookingService/Controllers/NotificationController.cs#L66) |
-| Gửi thông báo | POST | `/api/v1/notifications/{id}/send` | Staff → gửi/gửi lại thông báo đã tạo · đã nối API | [NotificationController:74](../../Cinema_BE/BookingService/BookingService/Controllers/NotificationController.cs#L74) |
-| Xoá thông báo | DELETE | `/api/v1/notifications/{id}` | Chưa có UI nối endpoint này | [NotificationController:82](../../Cinema_BE/BookingService/BookingService/Controllers/NotificationController.cs#L82) |
+| Tạo thông báo | POST | `/api/v1/notifications` | Staff → Booking details → Customer notification · đã nối API | [NotificationController:96](../../Cinema_BE/BookingService/BookingService/Controllers/NotificationController.cs#L96) |
+| Gửi thông báo | POST | `/api/v1/notifications/{id}/send` | Staff → gửi/gửi lại thông báo đã tạo · đã nối API | [NotificationController:104](../../Cinema_BE/BookingService/BookingService/Controllers/NotificationController.cs#L104) |
+| Số thông báo chưa đọc | GET | `/api/v1/notifications/unread-count` | Chuông trên Home (app), mục Notifications trên web · đã nối API | [NotificationController:67](../../Cinema_BE/BookingService/BookingService/Controllers/NotificationController.cs#L67) |
+| Đánh dấu đã đọc | PATCH | `/api/v1/notifications/{id}/read` | Mở chi tiết thông báo; chỉ chủ thông báo (403), đọc rồi giữ thời điểm cũ · đã nối API | [NotificationController:77](../../Cinema_BE/BookingService/BookingService/Controllers/NotificationController.cs#L77) |
+| Đánh dấu đọc hết | POST | `/api/v1/notifications/read-all` | Notifications → Mark all read · đã nối API | [NotificationController:89](../../Cinema_BE/BookingService/BookingService/Controllers/NotificationController.cs#L89) |
+| Xoá thông báo | DELETE | `/api/v1/notifications/{id}` | Chưa có UI nối endpoint này | [NotificationController:112](../../Cinema_BE/BookingService/BookingService/Controllers/NotificationController.cs#L112) |
 
 ## Kết quả đối chiếu và giới hạn
 
@@ -214,7 +217,7 @@ Các route `/admin/*` và `/staff/*` thuộc **trang quản trị web** (`lib/ma
 3. **Tìm phim:** ô tìm kiếm trên Home gọi `GET /api/v1/movies/browse` (chỉ phim ACTIVE của tab đang mở); Admin → Movies dùng `GET /api/v1/movies/search` (cả phim đã ngừng).
 4. **Phân trang:** vé đã đặt hiện chỉ lấy trang đầu tối đa 50 bản ghi; thông báo và lịch sử thanh toán đã đọc đủ các trang. Hai danh sách này tải toàn bộ khi mở/làm mới, chưa tải thêm theo cuộn.
 5. **Quản trị:** quản lý user, role, phim, phòng, ghế, suất chiếu, xử lý hoàn tiền và gửi thông báo nằm trong trang quản trị web (`lib/main_admin.dart`), không có trong app khách.
-6. **Thông báo còn thiếu:** DELETE `/api/v1/notifications/{id}` có ở backend nhưng chưa có thao tác xóa trên mobile. Backend chưa có endpoint đánh dấu đã đọc/chưa đọc hoặc số thông báo chưa đọc. `status` hiện là trạng thái gửi email, không phải trạng thái đọc.
+6. **Thông báo còn thiếu:** DELETE `/api/v1/notifications/{id}` có ở backend nhưng chưa có thao tác xóa trên mobile. `status` là trạng thái gửi email; trạng thái đọc nằm ở `readAt`. Chưa có push notification (FCM).
 7. **Thông báo trống:** thông báo được tạo từ sự kiện xác nhận/hủy/hết hạn vé, yêu cầu/hoàn tiền/từ chối hoàn tiền. Đăng ký, xác thực email và đặt lại mật khẩu chưa tạo bản ghi trong lịch sử này. Không có dữ liệu mẫu tự chèn cho tài khoản mới; kéo xuống để lấy dữ liệu mới. Chưa có cập nhật thời gian thực/push notification.
 
 Chưa kiểm tra thiết bị thật, email thật, thanh toán thật hoặc tải đồng thời nhiều người dùng. Trạng thái kết nối API ở trên được đối chiếu từ code.

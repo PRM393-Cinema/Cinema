@@ -44,6 +44,13 @@ namespace BookingService.Messaging.Handlers
                         data.CustomerEmail,
                         email => EmailTemplates.BookingExpired(data, email));
                 }
+                case EventTypes.BookingReminder:
+                {
+                    var data = integrationEvent.GetData<BookingEventData>();
+                    return SendAsync(integrationEvent, data.UserId, data.BookingId, "SHOWTIME_REMINDER",
+                        data.CustomerEmail,
+                        email => EmailTemplates.ShowtimeReminder(data, email));
+                }
                 case EventTypes.PaymentRefundRequested:
                 {
                     var data = integrationEvent.GetData<PaymentEventData>();

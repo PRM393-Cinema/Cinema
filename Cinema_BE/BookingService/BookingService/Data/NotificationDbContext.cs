@@ -47,6 +47,9 @@ public partial class NotificationDbContext : DbContext
             entity.Property(e => e.SentAt)
                 .HasColumnType("timestamp(6) without time zone")
                 .HasColumnName("sent_at");
+            entity.Property(e => e.ReadAt)
+                .HasColumnType("timestamp(6) without time zone")
+                .HasColumnName("read_at");
             entity.Property(e => e.Status)
                 .HasMaxLength(20)
                 .HasDefaultValueSql("'PENDING'::character varying")

@@ -67,6 +67,8 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
         _isLoading = false;
         _isRefreshing = false;
       });
+      SessionProvider.of(context)
+          .setUnreadNotifications(notifications.where((n) => !n.isRead).length);
     } on ApiException catch (error) {
       _showError(error.message);
     } on FormatException {
@@ -74,6 +76,40 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
     } on Object {
       _showError('Something went wrong. Please try again.');
     }
+  }
+
+  Future<void> _markAllRead() async {
+    try {
+      await widget.bookingRepository.markAllNotificationsRead();
+      if (!mounted) return;
+      final now = DateTime.now();
+      setState(() {
+        _notifications = [
+          for (final notification in _notifications)
+            notification.markedRead(now),
+        ];
+      });
+      SessionProvider.of(context).setUnreadNotifications(0);
+    } on Object {
+      if (mounted) {
+        setState(() => _errorMessage = 'Could not mark them as read.');
+      }
+    }
+  }
+
+  Future<void> _open(AppNotification notification) async {
+    await Navigator.pushNamed(
+      context,
+      AppRoutes.notificationDetail(notification.id),
+    );
+    // The detail page marks it read.
+    if (!mounted || notification.isRead) return;
+    setState(() {
+      _notifications = [
+        for (final item in _notifications)
+          item.id == notification.id ? item.markedRead(DateTime.now()) : item,
+      ];
+    });
   }
 
   void _showError(String message) {
@@ -128,6 +164,7 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
       );
     }
 
+    final unread = _notifications.where((n) => !n.isRead).length;
     return RefreshIndicator(
       onRefresh: _loadNotifications,
       child: ListView.separated(
@@ -143,9 +180,24 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
               children: [
                 Text('Your cinema updates', style: AppTextStyles.heading2),
                 const SizedBox(height: AppSpacing.sm),
-                Text(
-                  formatCount(_notifications.length, 'notification'),
-                  style: AppTextStyles.caption,
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        [
+                          formatCount(_notifications.length, 'notification'),
+                          if (unread > 0) '$unread unread',
+                        ].join(' · '),
+                        style: AppTextStyles.caption,
+                      ),
+                    ),
+                    if (unread > 0)
+                      TextButton(
+                        key: const Key('markAllRead'),
+                        onPressed: _markAllRead,
+                        child: const Text('Mark all read'),
+                      ),
+                  ],
                 ),
                 if (_errorMessage != null) ...[
                   const SizedBox(height: AppSpacing.sm),
@@ -162,10 +214,7 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
           final notification = _notifications[index - 1];
           return _NotificationTile(
             notification: notification,
-            onTap: () => Navigator.pushNamed(
-              context,
-              AppRoutes.notificationDetail(notification.id),
-            ),
+            onTap: () => _open(notification),
           );
         },
       ),
@@ -192,7 +241,9 @@ class _NotificationTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Icon(
-                notification.type.startsWith('REFUND')
+                notification.type == 'SHOWTIME_REMINDER'
+                    ? Icons.alarm_rounded
+                    : notification.type.startsWith('REFUND')
                     ? Icons.receipt_long_outlined
                     : Icons.confirmation_number_outlined,
                 color: AppColors.primary,
@@ -202,11 +253,33 @@ class _NotificationTile extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      notification.subject,
-                      style: AppTextStyles.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                    Row(
+                      children: [
+                        if (!notification.isRead) ...[
+                          Container(
+                            key: ValueKey('unread-${notification.id}'),
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              color: AppColors.accent,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                        ],
+                        Expanded(
+                          child: Text(
+                            notification.subject,
+                            style: AppTextStyles.title.copyWith(
+                              fontWeight: notification.isRead
+                                  ? FontWeight.w500
+                                  : FontWeight.w800,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: AppSpacing.xs),
                     Text(

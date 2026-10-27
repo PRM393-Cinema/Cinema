@@ -90,8 +90,10 @@ class AppRouter {
     return [home, onGenerateRoute(RouteSettings(name: initialRoute))];
   }
 
-  Widget _home(BuildContext context) =>
-      HomeScreen(catalogRepository: catalogRepository);
+  Widget _home(BuildContext context) => HomeScreen(
+    catalogRepository: catalogRepository,
+    bookingRepository: bookingRepository,
+  );
 
   // Staff and admin accounts are pointed to the admin website, and can check
   // tickets in from the app.

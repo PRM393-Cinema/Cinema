@@ -1,5 +1,10 @@
 ﻿namespace BookingService.DTOs.Responses
 {
+    public class UnreadCountResponse
+    {
+        public int Count { get; set; }
+    }
+
     public class NotificationResponse
     {
         public long Id { get; set; }
@@ -23,5 +28,8 @@
         public string? ErrorMessage { get; set; }
 
         public DateTime CreatedAt { get; set; }
+
+        // Khách đã mở thông báo trong app; null là chưa đọc
+        public DateTime? ReadAt { get; set; }
     }
 }

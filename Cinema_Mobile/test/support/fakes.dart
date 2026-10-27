@@ -419,6 +419,32 @@ class FakeBookingRepository implements BookingRepository {
     return booking;
   }
 
+  // Notifications opened (marked read) and "Mark all read" taps.
+  final readNotificationIds = <int>[];
+  int markAllReadCalls = 0;
+
+  @override
+  Future<int> getUnreadNotificationCount() async =>
+      notifications.where((n) => !n.isRead).length;
+
+  @override
+  Future<AppNotification> markNotificationRead(int id) async {
+    readNotificationIds.add(id);
+    notifications = [
+      for (final n in notifications)
+        n.id == id ? n.markedRead(DateTime.now()) : n,
+    ];
+    return notifications.firstWhere((n) => n.id == id);
+  }
+
+  @override
+  Future<void> markAllNotificationsRead() async {
+    markAllReadCalls++;
+    notifications = [
+      for (final n in notifications) n.markedRead(DateTime.now()),
+    ];
+  }
+
   @override
   Future<Booking> getBooking(int bookingId) async {
     return bookings.firstWhere(

@@ -7,7 +7,7 @@ Mỗi service có một project test xUnit nằm cạnh project chính, và đã
 | AuthService | `AuthService/AuthService.Tests` | 28 |
 | ApiGateway | `ApiGateway/ApiGateway.Tests` | 21 |
 | MovieService | `MovieService/MovieService.Tests` | 24 |
-| BookingService | `BookingService/BookingService.Tests` | 71 |
+| BookingService | `BookingService/BookingService.Tests` | 73 |
 
 ## 1. Chạy test
 
@@ -55,6 +55,7 @@ Mỗi service chạy xong trong khoảng 15–30 giây.
 | Khuyến mãi | Chỉ Admin quản lý, mã trùng bị 409, khách chỉ thấy khuyến mãi tự áp dụng đang chạy; mã voucher chỉ giảm tiền vé (không giảm bắp nước), có trần, cần đủ số vé, lượt dùng đếm khi đã thanh toán và hết lượt thì bị 400, email vé có dòng giảm giá; khuyến mãi tự áp dụng chọn cái giảm nhiều nhất, đúng thứ của ngày chiếu, nhập mã thì thay cho khuyến mãi tự áp dụng | `BookingService.Tests/Integration/PromotionTests.cs` |
 | Điểm thành viên | Cộng điểm khi đã thanh toán theo hạng (5% / 7% / 10%), lên VIP khi tổng chi tiêu đủ 2.000.000đ; dùng điểm tối đa 50%, không quá số điểm đang có; giữ chỗ hết hạn thì trả điểm; quầy huỷ vé đã trả thì trả điểm đã dùng, thu hồi điểm đã cộng; quầy dùng điểm của thành viên và trả tiền mặt; chỉ Admin chỉnh điểm, phải có lý do, không để điểm âm; khách không xem thẻ người khác; vé vãng lai không dùng điểm | `BookingService.Tests/Integration/LoyaltyTests.cs` |
 | Tra cứu thành viên | Staff tìm khách theo số điện thoại, bỏ qua dấu ngăn cách, chỉ trả tài khoản khách hàng; số quá ngắn bị 400; khách hàng bị 403 | `AuthService.Tests/Integration/MemberLookupTests.cs` |
+| Nhắc giờ chiếu, đã đọc | Vé đã thanh toán có suất trong 2 giờ tới được nhắc một lần (chạy job hai lần vẫn một event); vé suất xa, vé đã check-in, vé vừa đặt trong khoảng nhắc không được nhắc; email "Nhắc giờ chiếu" và thông báo `SHOWTIME_REMINDER`; số chưa đọc, đánh dấu đã đọc giữ thời điểm đầu, người khác 403, đọc hết về 0 | `BookingService.Tests/Integration/ShowtimeReminderTests.cs` |
 | Doanh thu | Dashboard Admin: doanh thu tăng đúng số tiền vé vừa thanh toán; Staff / khách bị 403; khoảng thời gian ngược bị 400 | `BookingService.Tests/Integration/PaymentSummaryTests.cs` |
 | Giám sát | `/metrics` mở cho Prometheus và đếm booking theo trạng thái; chỉ trả ở cổng nội bộ khi cấu hình `MetricsPort` | `BookingService.Tests/Integration/ObservabilityTests.cs` |
 

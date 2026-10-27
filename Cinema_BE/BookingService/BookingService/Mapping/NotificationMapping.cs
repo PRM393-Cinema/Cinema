@@ -20,7 +20,8 @@ namespace BookingService.Mapping
                 Status = notification.Status,
                 SentAt = notification.SentAt,
                 ErrorMessage = notification.ErrorMessage,
-                CreatedAt = notification.CreatedAt
+                CreatedAt = notification.CreatedAt,
+                ReadAt = notification.ReadAt
             };
         }
     }

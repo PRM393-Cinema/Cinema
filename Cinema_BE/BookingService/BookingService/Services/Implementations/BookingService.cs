@@ -696,6 +696,35 @@ namespace BookingService.Services.Implementations
             await transaction.CommitAsync();
         }
 
+        public async Task<int> SendShowtimeRemindersAsync(TimeSpan before, int batchSize)
+        {
+            var now = DateTime.Now;
+            var until = now.Add(before);
+            var due = await _context.Bookings
+                .Where(b => b.Status == "CONFIRMED" &&
+                            b.CheckedInAt == null &&
+                            b.RemindedAt == null &&
+                            b.ShowTime > now &&
+                            b.ShowTime <= until)
+                .OrderBy(b => b.ShowTime)
+                .Take(batchSize)
+                .ToListAsync();
+
+            foreach (var booking in due)
+            {
+                // Mỗi lượt gửi được đánh dấu ngay để job chạy lại không nhắc hai lần
+                booking.RemindedAt = now;
+                if (booking.CreatedAt < booking.ShowTime!.Value.Subtract(before))
+                {
+                    var seats = await _bookingSeatRepository.GetByBookingIdAsync(booking.Id);
+                    _outbox.Add(EventTypes.BookingReminder, EventFactory.Booking(booking, seats));
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return due.Count(b => b.CreatedAt < b.ShowTime!.Value.Subtract(before));
+        }
+
         // Job chạy nền gọi định kỳ: booking PENDING quá hạn giữ ghế -> EXPIRED, nhả ghế.
         // Mỗi booking một transaction ngắn; booking vừa được thanh toán / huỷ trong lúc đó thì bỏ qua.
         public async Task<List<BookingResponse>> ExpireOverdueBookingsAsync(

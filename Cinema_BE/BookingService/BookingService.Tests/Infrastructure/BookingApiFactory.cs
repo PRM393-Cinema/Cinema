@@ -83,6 +83,7 @@ public class BookingApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("PayOS:ApiKey", "test-api-key");
         builder.UseSetting("PayOS:ChecksumKey", ChecksumKey);
         builder.UseSetting("BookingExpiry:Enabled", "false");
+        builder.UseSetting("ShowtimeReminder:Enabled", "false");
         builder.UseSetting("RabbitMq:Enabled", UseRabbitMq ? "true" : "false");
 
         if (RabbitMqContainer != null)

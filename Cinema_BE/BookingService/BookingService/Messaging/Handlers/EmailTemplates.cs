@@ -66,6 +66,19 @@ namespace BookingService.Messaging.Handlers
             return Build(recipientEmail, $"Đơn đặt vé {data.BookingCode} đã hết hạn", body);
         }
 
+        public static EmailMessage ShowtimeReminder(BookingEventData data, string recipientEmail)
+        {
+            var body = $"""
+                <h2>Sắp tới giờ chiếu</h2>
+                <p>Suất chiếu của vé <strong>{E(data.BookingCode)}</strong> sắp bắt đầu.
+                   Bạn nhớ có mặt sớm 15 phút và đưa mã QR trên vé cho nhân viên soát vé.</p>
+                {BookingDetails(data)}
+                <p>Chúc bạn xem phim vui vẻ!</p>
+                """;
+
+            return Build(recipientEmail, $"Nhắc giờ chiếu: {data.MovieTitle ?? "vé"} {data.BookingCode}", body);
+        }
+
         public static EmailMessage RefundRequested(PaymentEventData data, string recipientEmail)
         {
             var body = $"""
