@@ -76,8 +76,8 @@ Các route `/admin/*` và `/staff/*` thuộc **trang quản trị web** (`lib/ma
 | Chi tiết phim | GET | `/api/v1/movies/{id}` | Chi tiết phim · đã nối API | [MoviesController:34](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L34) |
 | Lọc trạng thái phim | GET | `/api/v1/movies/status/{status}` | Home/phim đang chiếu; Admin → Movies → lọc Showing/Stopped · đã nối API | [MoviesController:42](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L42) |
 | Tìm kiếm phim | GET | `/api/v1/movies/search` | Admin → Movies → tìm tên · đã nối API; ô tìm trên Home vẫn lọc local | [MoviesController:55](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L55) |
-| Tạo phim | POST | `/api/v1/movies` | Admin → Movies → Add movie · đã nối API | [MoviesController:68](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L68) |
-| Sửa phim | PUT | `/api/v1/movies/{id}` | Admin → Movies → Edit; Show again gửi `status: ACTIVE` · đã nối API | [MoviesController:77](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L77) |
+| Tạo phim | POST | `/api/v1/movies` | Admin → Movies → Add movie; `ageRating` P / K / T13 / T16 / T18 (bỏ trống là P) · đã nối API | [MoviesController:68](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L68) |
+| Sửa phim | PUT | `/api/v1/movies/{id}` | Admin → Movies → Edit; Show again gửi `status: ACTIVE`; bỏ trống `ageRating` thì giữ nguyên · đã nối API | [MoviesController:77](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L77) |
 | Xoá phim | DELETE | `/api/v1/movies/{id}` | Admin → Movies → Stop showing (chuyển `INACTIVE`, không xoá dữ liệu) · đã nối API | [MoviesController:85](../../Cinema_BE/MovieService/MovieService/Controllers/MoviesController.cs#L85) |
 
 ## Phòng và ghế

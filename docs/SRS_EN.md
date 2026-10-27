@@ -230,6 +230,7 @@ Priority: **H** (must have), **M** (important), **L** (nice to have).
 | FR-MOV-06 | Admin edits a movie, including bringing a stopped movie back (**Show again**). | H |
 | FR-MOV-07 | Admin stops a movie (**Stop showing**): it becomes `INACTIVE` and disappears from the customer app; its data and tickets stay. | H |
 | FR-MOV-08 | The customer app opens the movie trailer (`trailerUrl`). | L |
+| FR-MOV-09 | Film classification under the Cinema Law 2022: P (all ages), K (under 13 with a parent or guardian), T13, T16, T18. Admins pick it when adding / editing a movie (P by default). The rating shows on movie cards, movie details, the booking summary, the counter sale screen and check-in. For anything but P the customer must confirm before the seats are held; at check-in staff are reminded to check ID. | H |
 
 ### 4.4 Rooms and seats
 
@@ -513,7 +514,7 @@ Check-in is the `checkedInAt` attribute of a `CONFIRMED` ticket, not a separate 
 | Database | Main tables | Notes |
 |---|---|---|
 | `cinema_auth_db` | `users`, `roles`, `users_roles`, `refresh_tokens`, `otp_codes` | Passwords and OTP codes stored only as BCrypt hashes; unique email |
-| `cinema_movie_db` | `movies` | Status `ACTIVE` / `INACTIVE` |
+| `cinema_movie_db` | `movies` | Status `ACTIVE` / `INACTIVE`; rating `age_rating` P / K / T13 / T16 / T18 |
 | `cinema_showtime_db` | `rooms`, `seats`, `showtimes`, `outbox_messages` | Seat unique by (room, row, number); seat type NORMAL / VIP / SWEETBOX |
 | `cinema_booking_db` | `bookings`, `booking_seats`, `seat_reservations`, `outbox_messages` | `user_id` NULL for walk-in guests; `customer_email`, `customer_phone`, `checked_in_at`, `expires_at` |
 | `cinema_payment_db` | `payments`, `refunds`, `outbox_messages` | Method `PAYOS` / `CASH`; payer account kept for refunds |
@@ -612,9 +613,9 @@ Check-in is the `checkedInAt` attribute of a `CONFIRMED` ticket, not a separate 
 |---|---|---|
 | AuthService | 27 | Registration, OTP and OTP lockout, sign-in, refresh rotation, sign-out, account locking, role changes, field validation |
 | ApiGateway | 21 | Blocks tokens of locked accounts and changed roles before forwarding, never forwards when the account check fails, 503 when AuthService does not answer |
-| MovieService | 20 | Showtimes, overlaps, cancellation and its event, seats, sweetbox pairs, seat counts, prices per seat type |
+| MovieService | 21 | Showtimes, overlaps, cancellation and its event, seats, sweetbox pairs, seat counts, prices per seat type |
 | BookingService | 60 | Bookings, seat holds, webhook, expiry, late payment, refunds, real RabbitMQ, authorization, check-in, statistics, revenue, counter sales |
-| Flutter | 169 | Widget tests of customer and admin screens, validators, payment flow, check-in, counter |
+| Flutter | 172 | Widget tests of customer and admin screens, validators, payment flow, check-in, counter |
 
 Backend integration tests run against real PostgreSQL and RabbitMQ (Testcontainers); PayOS, MovieService and SMTP are replaced by fakes.
 

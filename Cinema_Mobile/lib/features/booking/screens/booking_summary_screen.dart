@@ -17,6 +17,7 @@ import '../../../core/widgets/cinema_account_widgets.dart';
 import '../../../data/models/booking_draft.dart';
 import '../../../data/repositories/booking_repository.dart';
 import '../../seat/widgets/seat_type_style.dart';
+import '../../../core/widgets/age_rating_badge.dart';
 
 class BookingSummaryScreen extends StatefulWidget {
   const BookingSummaryScreen({required this.bookingRepository, super.key});
@@ -31,7 +32,48 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
   bool _isSubmitting = false;
   String? _errorMessage;
 
+  // A restricted movie needs the viewer to confirm the age rule first; staff
+  // may check ID at the entrance.
+  Future<bool> _confirmAgeRating(AgeRating rating) async {
+    if (!rating.restricted) return true;
+    final agreed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Row(
+          children: [
+            AgeRatingBadge(rating: rating, large: true),
+            const SizedBox(width: AppSpacing.sm),
+            const Expanded(child: Text('Age rating')),
+          ],
+        ),
+        content: Text(
+          rating == AgeRating.k
+              ? 'This movie is rated K: viewers under 13 must watch with a '
+                    'parent or guardian.'
+              : 'This movie is rated ${rating.code}: only for viewers '
+                    '${rating.meaning.toLowerCase()}. Staff may ask for ID at '
+                    'the entrance, and tickets of underage viewers are not '
+                    'refunded.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Back'),
+          ),
+          TextButton(
+            key: const Key('confirmAgeRating'),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('I understand'),
+          ),
+        ],
+      ),
+    );
+    return agreed ?? false;
+  }
+
   Future<void> _confirmBooking(BookingDraft draft) async {
+    if (!await _confirmAgeRating(draft.movie.ageRating) || !mounted) return;
     setState(() {
       _isSubmitting = true;
       _errorMessage = null;
@@ -140,7 +182,15 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(draft.movie.title, style: AppTextStyles.heading2),
+          Row(
+            children: [
+              AgeRatingBadge(rating: draft.movie.ageRating),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(draft.movie.title, style: AppTextStyles.heading2),
+              ),
+            ],
+          ),
           const SizedBox(height: AppSpacing.sm),
           _DetailRow(
             icon: Icons.calendar_today_outlined,

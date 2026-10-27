@@ -19,6 +19,7 @@ import '../../../data/models/movie.dart';
 import '../../../data/repositories/catalog_repository.dart';
 import '../../movie/widgets/movie_card.dart';
 import '../../../core/session/session_state.dart';
+import '../../../core/widgets/age_rating_badge.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({required this.catalogRepository, super.key});
@@ -470,9 +471,17 @@ class _FeaturedMovieContent extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: AppSpacing.sm),
-        Text(
-          '${movie.genre} • ${movie.durationText}',
-          style: AppTextStyles.body.copyWith(color: Colors.white70),
+        Row(
+          children: [
+            AgeRatingBadge(rating: movie.ageRating),
+            const SizedBox(width: AppSpacing.sm),
+            Flexible(
+              child: Text(
+                '${movie.genre} • ${movie.durationText}',
+                style: AppTextStyles.body.copyWith(color: Colors.white70),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: AppSpacing.xl),
         Row(
@@ -523,6 +532,7 @@ class _MovieGrid extends StatelessWidget {
           posterUrl: movie.posterUrl,
           genre: movie.genre,
           duration: movie.durationText,
+          ageRating: movie.ageRating,
           onTap: () => onMovieTap(movie),
         );
       },

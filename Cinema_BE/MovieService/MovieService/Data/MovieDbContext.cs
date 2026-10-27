@@ -72,6 +72,10 @@ public partial class MovieDbContext : DbContext
             entity.Property(e => e.TrailerUrl)
                 .HasMaxLength(500)
                 .HasColumnName("trailer_url");
+            entity.Property(e => e.AgeRating)
+                .HasMaxLength(3)
+                .HasDefaultValueSql("'P'::character varying")
+                .HasColumnName("age_rating");
         });
 
         OnModelCreatingPartial(modelBuilder);

@@ -93,6 +93,22 @@ namespace MovieService.Service.Impl
             return movies.ToPagedResult();
         }
 
+        private static readonly string[] AgeRatings = ["P", "K", "T13", "T16", "T18"];
+
+        // null khi bỏ trống; sai mức thì 400
+        private static string? NormalizeAgeRating(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return null;
+            }
+
+            var rating = value.Trim().ToUpperInvariant();
+            return AgeRatings.Contains(rating)
+                ? rating
+                : throw new BusinessException("Age rating must be P, K, T13, T16 or T18.");
+        }
+
         // ======= CREATE MOVIE =======
         public async Task<MovieResponse> CreateMovieAsync(MovieRequest request)
         {
@@ -113,6 +129,7 @@ namespace MovieService.Service.Impl
                 ReleaseDate = DateOnly.FromDateTime(request.ReleaseDate), // FIX: Convert DateTime to DateOnly
                 PosterUrl = request.PosterUrl?.Trim(),
                 TrailerUrl = request.TrailerUrl?.Trim(),
+                AgeRating = NormalizeAgeRating(request.AgeRating) ?? "P",
                 Status = "ACTIVE", // Đặt mặc định trạng thái
                 CreatedAt = DateTime.Now
             };
@@ -144,6 +161,7 @@ namespace MovieService.Service.Impl
             movie.ReleaseDate = DateOnly.FromDateTime(request.ReleaseDate);
             movie.PosterUrl = request.PosterUrl?.Trim();
             movie.TrailerUrl = request.TrailerUrl?.Trim();
+            movie.AgeRating = NormalizeAgeRating(request.AgeRating) ?? movie.AgeRating;
 
             // Admin chiếu lại phim đã ngừng (DELETE chỉ chuyển sang INACTIVE)
             if (!string.IsNullOrWhiteSpace(request.Status))

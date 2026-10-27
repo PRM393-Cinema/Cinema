@@ -430,6 +430,9 @@ class StaffService {
     ),
   ).map(Seat.fromJson).toList();
 
+  Future<Movie> movie(int id) async => Movie.fromJson(
+    readMap(await _client.get('/api/v1/movies/$id', authenticated: true)),
+  );
   Future<PagedResult<Movie>> movies({int page = 1}) async =>
       PagedResult.fromJson(
         await _client.get(

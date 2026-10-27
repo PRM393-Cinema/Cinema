@@ -1,3 +1,4 @@
+import '../../core/widgets/age_rating_badge.dart';
 import 'json_readers.dart';
 
 class Movie {
@@ -12,6 +13,7 @@ class Movie {
     required this.posterUrl,
     required this.trailerUrl,
     required this.status,
+    this.ageRating = AgeRating.p,
   });
 
   factory Movie.fromJson(Map<String, Object?> json) {
@@ -31,6 +33,7 @@ class Movie {
       posterUrl: readString(json['posterUrl']),
       trailerUrl: readString(json['trailerUrl']),
       status: readString(json['status']),
+      ageRating: AgeRating.parse(readOptionalString(json['ageRating'])),
     );
   }
 
@@ -44,6 +47,7 @@ class Movie {
   final String posterUrl;
   final String trailerUrl;
   final String status; // 'ACTIVE', 'INACTIVE'
+  final AgeRating ageRating;
 
   String get durationText => '$durationMinutes min';
   String get releaseYear => releaseDate?.year.toString() ?? '';

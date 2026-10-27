@@ -21,7 +21,7 @@ public class AdminCatalogTests
         _admin = factory.ClientFor(TestJwt.Create(301, "admin@test.local", "ROLE_ADMIN"));
     }
 
-    private static object MovieBody(string title, string? status = null) => new
+    private static object MovieBody(string title, string? status = null, string? ageRating = null) => new
     {
         title,
         description = "Phim thử",
@@ -30,8 +30,31 @@ public class AdminCatalogTests
         language = "Vietnamese",
         releaseDate = new DateTime(2026, 9, 1),
         posterUrl = "https://example.com/poster.jpg",
-        status
+        status,
+        ageRating
     };
+
+    [Fact]
+    public async Task AgeRating_DefaultsToP_KeepsWhenLeftOut_AndRejectsUnknownLevels()
+    {
+        var title = $"Rated movie {Guid.NewGuid():N}";
+        var created = await _admin.PostAsJsonAsync("/api/v1/movies", MovieBody(title));
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        var movie = await created.Content.ReadFromJsonAsync<JsonElement>();
+        var id = movie.GetProperty("id").GetInt64();
+        Assert.Equal("P", movie.GetProperty("ageRating").GetString());
+
+        var rated = await _admin.PutAsJsonAsync($"/api/v1/movies/{id}", MovieBody(title, ageRating: "t16"));
+        Assert.Equal("T16", (await rated.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("ageRating").GetString());
+
+        // Sửa thông tin khác mà bỏ trống phân loại thì giữ nguyên
+        Assert.Equal(HttpStatusCode.OK, (await _admin.PutAsJsonAsync($"/api/v1/movies/{id}", MovieBody(title))).StatusCode);
+        var read = await _factory.CreateClient().GetFromJsonAsync<JsonElement>($"/api/v1/movies/{id}");
+        Assert.Equal("T16", read.GetProperty("ageRating").GetString());
+
+        Assert.Equal(HttpStatusCode.BadRequest,
+            (await _admin.PutAsJsonAsync($"/api/v1/movies/{id}", MovieBody(title, ageRating: "C18"))).StatusCode);
+    }
 
     [Fact]
     public async Task StoppedMovie_CanBeShownAgain_ByAdminOnly()

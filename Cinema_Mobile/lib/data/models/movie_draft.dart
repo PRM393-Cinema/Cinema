@@ -1,4 +1,5 @@
 import 'movie.dart';
+import '../../core/widgets/age_rating_badge.dart';
 
 // Fields an admin fills in to add or edit a movie (MovieRequest on the API).
 class MovieDraft {
@@ -11,6 +12,7 @@ class MovieDraft {
     this.language = '',
     this.posterUrl = '',
     this.trailerUrl = '',
+    this.ageRating = AgeRating.p,
   });
 
   factory MovieDraft.fromMovie(Movie movie) => MovieDraft(
@@ -22,6 +24,7 @@ class MovieDraft {
     language: movie.language,
     posterUrl: movie.posterUrl,
     trailerUrl: movie.trailerUrl,
+    ageRating: movie.ageRating,
   );
 
   final String title;
@@ -32,6 +35,7 @@ class MovieDraft {
   final String language;
   final String posterUrl;
   final String trailerUrl;
+  final AgeRating ageRating;
 
   Map<String, Object?> toJson() => {
     'title': title.trim(),
@@ -47,5 +51,6 @@ class MovieDraft {
     ).toIso8601String(),
     'posterUrl': posterUrl.trim(),
     'trailerUrl': trailerUrl.trim(),
+    'ageRating': ageRating.code,
   };
 }

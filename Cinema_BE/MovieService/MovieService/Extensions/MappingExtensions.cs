@@ -20,6 +20,7 @@ namespace MovieService.Extensions
                 ReleaseDate = movie.ReleaseDate ?? default,
                 PosterUrl = movie.PosterUrl,
                 TrailerUrl = movie.TrailerUrl,
+                AgeRating = movie.AgeRating,
                 Status = movie.Status,
                 CreatedAt = movie.CreatedAt
             };

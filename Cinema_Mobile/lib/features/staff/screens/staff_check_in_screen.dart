@@ -16,6 +16,8 @@ import '../../../data/services/staff_service.dart';
 import '../../admin/widgets/admin_page.dart';
 import '../../booking/screens/my_bookings_screen.dart';
 import '../widgets/staff_feedback.dart';
+import '../../../core/widgets/age_rating_badge.dart';
+import '../../../data/models/movie.dart';
 
 // Opens the camera and returns the first QR code it reads, or null when the
 // staff member closes it.
@@ -92,6 +94,7 @@ class _CheckInPanelState extends State<CheckInPanel> {
   final _focus = FocusNode();
   Booking? _booking;
   Showtime? _showtime;
+  Movie? _movie;
   String? _error;
   bool _busy = false;
   bool _justCheckedIn = false;
@@ -115,21 +118,26 @@ class _CheckInPanelState extends State<CheckInPanel> {
       _error = null;
       _booking = null;
       _showtime = null;
+      _movie = null;
       _justCheckedIn = false;
     });
     try {
       final booking = await widget.service.bookingByCode(code);
-      // The room is on the showtime; the ticket is still shown without it.
+      // The room is on the showtime and the age rating on its movie; the
+      // ticket is still shown without them.
       Showtime? showtime;
+      Movie? movie;
       try {
         showtime = await widget.service.showtime(booking.showtimeId);
+        movie = await widget.service.movie(showtime.movieId);
       } on Object {
-        showtime = null;
+        // Shown without the room or the rating.
       }
       if (!mounted) return;
       setState(() {
         _booking = booking;
         _showtime = showtime;
+        _movie = movie;
       });
     } on Object catch (error) {
       if (mounted) setState(() => _error = staffError(error));
@@ -243,6 +251,7 @@ class _CheckInPanelState extends State<CheckInPanel> {
           _TicketResult(
             booking: booking,
             showtime: _showtime,
+            ageRating: _movie?.ageRating,
             justCheckedIn: _justCheckedIn,
             busy: _busy,
             onCheckIn: () => _checkIn(booking),
@@ -260,10 +269,12 @@ class _TicketResult extends StatelessWidget {
     required this.justCheckedIn,
     required this.busy,
     required this.onCheckIn,
+    this.ageRating,
   });
 
   final Booking booking;
   final Showtime? showtime;
+  final AgeRating? ageRating;
   final bool justCheckedIn;
   final bool busy;
   final VoidCallback onCheckIn;
@@ -298,6 +309,27 @@ class _TicketResult extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(booking.bookingCode, style: AppTextStyles.caption),
+          if (ageRating case final rating? when rating.restricted) ...[
+            const SizedBox(height: AppSpacing.md),
+            Row(
+              key: const Key('checkInAgeRating'),
+              children: [
+                AgeRatingBadge(rating: rating, large: true),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(
+                    rating == AgeRating.k
+                        ? 'Children under 13 must come with a parent or '
+                              'guardian.'
+                        : 'Check ID: ${rating.meaning.toLowerCase()} only.',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: rating.color,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
           const SizedBox(height: AppSpacing.lg),
           _Fact(
             icon: Icons.schedule,
