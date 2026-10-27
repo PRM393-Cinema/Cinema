@@ -42,6 +42,7 @@ dependencies:
   mobile_scanner: ^7.4.2
   # Printing counter tickets from the admin website.
   web: ^1.1.1
+  share_plus: ^13.3.1
 
 dev_dependencies:
   flutter_test:

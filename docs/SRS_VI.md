@@ -292,9 +292,10 @@ Mức ưu tiên: **H** (bắt buộc), **M** (quan trọng), **L** (bổ trợ).
 | FR-BOOK-13 | **Bắp nước kèm vé**: khách (màn xác nhận đặt vé) và quầy (màn bán vé) chọn món trong menu, mỗi món 1–20, tối đa 10 món khác nhau. Giá lấy từ menu đang bán; tiền bắp nước nằm trong tổng tiền nên thanh toán, doanh thu và hoàn tiền tính luôn. Đơn lưu tên và giá lúc mua. Bắp nước hiện trên vé, trang thanh toán, email vé và vé in. Món đã ngừng bán bị từ chối (400). | M |
 | FR-BOOK-14 | Admin quản lý menu bắp nước (Admin → Snacks): thêm, sửa tên / giá / mô tả / ảnh / thứ tự, ngừng bán hoặc bán lại (không xoá món). Khách chỉ thấy món đang bán. | M |
 | FR-BOOK-15 | **Khuyến mãi**: chỉ giảm tiền vé (không giảm bắp nước), theo % (có thể kèm mức giảm tối đa) hoặc số tiền, tối đa 90% tiền vé, làm tròn xuống 1.000đ. Điều kiện: thời gian chạy, thứ của ngày chiếu, số vé tối thiểu, số lượt tối đa. Khuyến mãi không có mã tự áp dụng (chọn cái giảm nhiều nhất); khách / quầy nhập mã voucher thì dùng mã thay cho khuyến mãi tự áp dụng — mỗi đơn một khuyến mãi. Mã sai hoặc không đủ điều kiện bị 400 kèm lý do. Server tính lại khi tạo đơn; lượt dùng chỉ được đếm khi vé đã thanh toán. Giảm giá hiện trên vé, trang thanh toán, email vé và vé in. | M |
+| FR-BOOK-16 | Admin quản lý khuyến mãi (Admin → Promotions): thêm, sửa, tạm dừng / chạy lại (không xoá), xem số lượt đã dùng. Mã voucher không trùng nhau (409). Khách chưa đăng nhập chỉ xem được khuyến mãi tự áp dụng đang chạy. | M |
 | FR-BOOK-17 | **Điểm thành viên**: khách có tài khoản được cộng điểm khi vé đã thanh toán, theo số tiền thực trả và hạng: Member 5%, VIP (tổng chi tiêu từ 2.000.000đ) 7%, VVIP (từ 5.000.000đ) 10%; 1 điểm = 1.000đ. Khi đặt vé (app hoặc quầy) được dùng điểm, tối đa 50% số tiền phải trả (sau khuyến mãi). Vé giữ chỗ hết hạn / huỷ khi chưa trả thì trả lại điểm đã dùng; vé đã trả bị huỷ / hoàn tiền thì trả điểm đã dùng, thu hồi điểm đã cộng và trừ tổng chi tiêu. Khách vãng lai không có điểm. Khách xem thẻ thành viên (điểm, hạng, mức còn thiếu để lên hạng, lịch sử điểm) ở trang tài khoản. | M |
 | FR-BOOK-18 | Admin xem khách hàng kèm điểm, hạng, tổng chi tiêu (Admin → Members), mở lịch sử điểm và cộng / trừ điểm kèm lý do (không để điểm âm). Quầy xem thẻ của khách tìm được theo số điện thoại. | M |
-| FR-BOOK-16 | Admin quản lý khuyến mãi (Admin → Promotions): thêm, sửa, tạm dừng / chạy lại (không xoá), xem số lượt đã dùng. Mã voucher không trùng nhau (409). Khách chưa đăng nhập chỉ xem được khuyến mãi tự áp dụng đang chạy. | M |
+| FR-BOOK-19 | Vé đã thanh toán có nút **Share ticket** (chia sẻ tên phim, giờ chiếu, ghế và mã vé cho người đi cùng qua bảng chia sẻ của máy; trình duyệt không hỗ trợ thì chép vào clipboard) và **Add to calendar** (mở sự kiện Google Calendar theo giờ Việt Nam, kết thúc theo giờ kết thúc suất chiếu; chỉ hiện khi suất chưa chiếu). | L |
 
 ### 4.7 Thanh toán (PayOS)
 
@@ -635,7 +636,7 @@ Check-in là thuộc tính `checkedInAt` của vé `CONFIRMED`, không phải m�
 | ApiGateway | 21 | Chặn token của tài khoản bị khoá hoặc đã đổi vai trò trước khi chuyển tiếp, không chuyển tiếp khi kiểm tra tài khoản lỗi, 503 khi AuthService không phản hồi |
 | MovieService | 24 | Suất chiếu, trùng lịch, huỷ suất và event, ghế, sweetbox, đổi số ghế, giá theo loại ghế |
 | BookingService | 73 | Đặt vé, giữ ghế, webhook, hết hạn, trả muộn, hoàn tiền, RabbitMQ thật, phân quyền, check-in, thống kê, doanh thu, bán vé tại quầy |
-| Flutter | 201 | Widget test các màn khách và quản trị, validator, luồng thanh toán, check-in, quầy |
+| Flutter | 206 | Widget test các màn khách và quản trị, validator, luồng thanh toán, check-in, quầy |
 
 Test tích hợp backend chạy với PostgreSQL và RabbitMQ thật (Testcontainers); PayOS, MovieService, SMTP được thay bằng bản giả.
 

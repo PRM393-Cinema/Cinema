@@ -292,9 +292,10 @@ Priority: **H** (must have), **M** (important), **L** (nice to have).
 | FR-BOOK-13 | **Snacks with tickets**: customers (booking summary) and the counter (sale screen) pick items from the menu, 1–20 of each, at most 10 different items. Prices come from the menu on sale; the snacks are part of the total, so payment, revenue and refunds include them. The order keeps the name and price at the time of purchase. Snacks show on the ticket, the payment page, the ticket email and the printed ticket. Stopped items are refused (400). | M |
 | FR-BOOK-14 | Admins manage the snacks menu (Admin → Snacks): add, edit name / price / description / image / order, stop or resume selling (items are never deleted). Customers only see items on sale. | M |
 | FR-BOOK-15 | **Promotions**: only the ticket price is discounted (never snacks), by a percentage (optionally capped) or an amount, at most 90% of the tickets, rounded down to 1,000 VND. Conditions: running period, day of the week of the show, minimum tickets, maximum uses. A promotion without a code applies by itself (the biggest discount wins); a promo code typed by the customer or the counter replaces it — one promotion per booking. A wrong or unusable code is refused (400) with the reason. The server works the discount out again when the booking is made; a use is only counted once the ticket is paid. The discount shows on the ticket, the payment page, the ticket email and the printed ticket. | M |
+| FR-BOOK-16 | Admins manage promotions (Admin → Promotions): add, edit, pause / resume (never deleted), see how often each was used. Promo codes are unique (409). Guests only see the automatic promotions that are running. | M |
 | FR-BOOK-17 | **Member points**: customers with an account earn points once a ticket is paid, on the amount actually paid and by tier: Member 5%, VIP (from 2,000,000 VND spent) 7%, VVIP (from 5,000,000 VND) 10%; 1 point = 1,000 VND. When booking (app or counter) points can pay at most 50% of the price (after promotions). An unpaid hold that expires or is cancelled gives the used points back; a paid ticket that is cancelled or refunded gives the used points back, takes the earned points back and lowers the total spent. Walk-in guests have no points. Customers see their member card (points, tier, what is left to the next tier, history) on the account page. | M |
 | FR-BOOK-18 | Admins see customers with their points, tier and total spent (Admin → Members), open the history and add or take away points with a reason (never below zero). The counter sees the card of a customer found by phone. | M |
-| FR-BOOK-16 | Admins manage promotions (Admin → Promotions): add, edit, pause / resume (never deleted), see how often each was used. Promo codes are unique (409). Guests only see the automatic promotions that are running. | M |
+| FR-BOOK-19 | Paid tickets have **Share ticket** (movie, show time, seats and ticket code sent to friends through the device's share sheet; copied to the clipboard where the browser cannot share) and **Add to calendar** (a Google Calendar event in Vietnam time ending when the show ends; only for shows still to come). | L |
 
 ### 4.7 Payments (PayOS)
 
@@ -635,7 +636,7 @@ Check-in is the `checkedInAt` attribute of a `CONFIRMED` ticket, not a separate 
 | ApiGateway | 21 | Blocks tokens of locked accounts and changed roles before forwarding, never forwards when the account check fails, 503 when AuthService does not answer |
 | MovieService | 24 | Showtimes, overlaps, cancellation and its event, seats, sweetbox pairs, seat counts, prices per seat type |
 | BookingService | 73 | Bookings, seat holds, webhook, expiry, late payment, refunds, real RabbitMQ, authorization, check-in, statistics, revenue, counter sales |
-| Flutter | 201 | Widget tests of customer and admin screens, validators, payment flow, check-in, counter |
+| Flutter | 206 | Widget tests of customer and admin screens, validators, payment flow, check-in, counter |
 
 Backend integration tests run against real PostgreSQL and RabbitMQ (Testcontainers); PayOS, MovieService and SMTP are replaced by fakes.
 
