@@ -7,6 +7,7 @@ import '../models/paged_result.dart';
 import '../models/payment.dart';
 import '../models/payos_checkout_request.dart';
 import '../models/concession.dart';
+import '../models/promotion.dart';
 
 // Bookings, PayOS payments, refunds and notifications (BookingService behind
 // the gateway). Every call needs a signed-in user.
@@ -34,6 +35,27 @@ class BookingService {
     final response = await _apiClient.get('/api/v1/concessions');
     return readMapList(response).map(ConcessionItem.fromJson).toList();
   }
+
+  // The discount the tickets would get: [code] or the best automatic deal.
+  Future<PromotionQuote> quotePromotion({
+    required int showtimeId,
+    required double ticketAmount,
+    required int tickets,
+    String? code,
+  }) async => PromotionQuote.fromJson(
+    readMap(
+      await _apiClient.post(
+        '/api/v1/promotions/quote',
+        authenticated: true,
+        body: {
+          'showtimeId': showtimeId,
+          'ticketAmount': ticketAmount,
+          'tickets': tickets,
+          'code': ?code,
+        },
+      ),
+    ),
+  );
 
   Future<Booking> createBooking(CreateBookingRequest request) async {
     final response = await _apiClient.post(

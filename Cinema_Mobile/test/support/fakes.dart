@@ -18,6 +18,7 @@ import 'package:url_launcher_platform_interface/url_launcher_platform_interface.
 import 'fixtures.dart';
 
 import 'package:cinema_fe/data/models/concession.dart';
+import 'package:cinema_fe/data/models/promotion.dart';
 
 class FakeAuthRepository implements AuthRepository {
   @override
@@ -233,11 +234,13 @@ class CreateBookingCall {
     this.showtimeId,
     this.seatIds, [
     this.concessions = const {},
+    this.promotionCode,
   ]);
 
   final int showtimeId;
   final List<int> seatIds;
   final Map<int, int> concessions;
+  final String? promotionCode;
 }
 
 class FakeBookingRepository implements BookingRepository {
@@ -269,6 +272,28 @@ class FakeBookingRepository implements BookingRepository {
   @override
   Future<List<ConcessionItem>> getConcessions() async => snacks;
 
+  // Promo codes that work, and the automatic deal (none by default). An
+  // unknown code is refused like the API does.
+  final promoCodes = <String, PromotionQuote>{};
+  PromotionQuote automaticDeal = PromotionQuote.none;
+  final quoteCodes = <String?>[];
+
+  @override
+  Future<PromotionQuote> quotePromotion({
+    required int showtimeId,
+    required double ticketAmount,
+    required int tickets,
+    String? code,
+  }) async {
+    quoteCodes.add(code);
+    if (code == null) return automaticDeal;
+    return promoCodes[code] ??
+        (throw ApiException(
+          statusCode: 400,
+          message: 'Promo code $code is not valid.',
+        ));
+  }
+
   // PayOS order codes and their bookings; verify takes either, like the API.
   final orderCodes = <int, int>{};
 
@@ -285,8 +310,11 @@ class FakeBookingRepository implements BookingRepository {
     required int showtimeId,
     required List<int> seatIds,
     Map<int, int> concessions = const {},
+    String? promotionCode,
   }) async {
-    createCalls.add(CreateBookingCall(showtimeId, seatIds, concessions));
+    createCalls.add(
+      CreateBookingCall(showtimeId, seatIds, concessions, promotionCode),
+    );
     if (createError != null) {
       throw createError!;
     }

@@ -620,6 +620,12 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
           'Snacks (${formatVnd(booking.concessionsAmount)})',
           booking.snacksText,
         ),
+      if (booking.hasDiscount)
+        _detailField(
+          Icons.local_offer_outlined,
+          'Discount',
+          booking.discountText,
+        ),
       _detailField(
         Icons.person_outline,
         booking.isWalkIn ? 'Walk-in guest' : 'Customer #${booking.userId}',

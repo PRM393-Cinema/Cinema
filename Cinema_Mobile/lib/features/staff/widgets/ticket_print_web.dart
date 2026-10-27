@@ -69,6 +69,7 @@ small { font-size: 10px; }
 ${booking.showTime == null ? '' : row('Showtime', formatDateTime(booking.showTime!))}
 ${row('Seats', booking.seatLabels)}
 ${booking.concessions.isEmpty ? '' : row('Snacks', booking.snacksText)}
+${booking.hasDiscount ? row('Discount', booking.discountText) : ''}
 ${row('Total', formatVnd(booking.totalAmount))}
 ${row('Status', booking.isCheckedIn ? 'Checked in' : 'Paid')}
 <hr>

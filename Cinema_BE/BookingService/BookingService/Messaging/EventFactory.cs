@@ -28,6 +28,8 @@ namespace BookingService.Messaging
                     .OrderBy(item => item.Id)
                     .Select(item => $"{item.Quantity} × {item.ItemName}")
                     .ToList(),
+                DiscountAmount = booking.DiscountAmount,
+                PromotionName = booking.PromotionName,
                 TotalAmount = booking.TotalAmount,
                 Status = booking.Status,
                 PreviousStatus = previousStatus,

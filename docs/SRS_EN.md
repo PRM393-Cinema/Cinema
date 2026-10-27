@@ -62,7 +62,7 @@ CosmoQ Cinema has three parts:
 | [Cinema_BE/docs/MESSAGING.md](../Cinema_BE/docs/MESSAGING.md) | RabbitMQ events, outbox, idempotency |
 | [Cinema_BE/docs/MONITORING.md](../Cinema_BE/docs/MONITORING.md) | Metrics, traces, logs |
 | [Cinema_BE/docs/TESTING.md](../Cinema_BE/docs/TESTING.md) | Automated tests and CI |
-| [Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md) | All 85 endpoints and the screens that use them |
+| [Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md) | All 89 endpoints and the screens that use them |
 | [Cinema_Mobile/docs/STAFF_WORKSPACE.md](../Cinema_Mobile/docs/STAFF_WORKSPACE.md) | Admin website operations |
 | `Resource/PRM393.docx` | Course requirements: permission matrix, required technical components |
 
@@ -286,6 +286,8 @@ Priority: **H** (must have), **M** (important), **L** (nice to have).
 | FR-BOOK-12 | Ticket statistics per showtime for Staff/Admin: bookings, seats sold, seats held, checked in (by a list of ids or by a start-time range of at most 31 days). | M |
 | FR-BOOK-13 | **Snacks with tickets**: customers (booking summary) and the counter (sale screen) pick items from the menu, 1–20 of each, at most 10 different items. Prices come from the menu on sale; the snacks are part of the total, so payment, revenue and refunds include them. The order keeps the name and price at the time of purchase. Snacks show on the ticket, the payment page, the ticket email and the printed ticket. Stopped items are refused (400). | M |
 | FR-BOOK-14 | Admins manage the snacks menu (Admin → Snacks): add, edit name / price / description / image / order, stop or resume selling (items are never deleted). Customers only see items on sale. | M |
+| FR-BOOK-15 | **Promotions**: only the ticket price is discounted (never snacks), by a percentage (optionally capped) or an amount, at most 90% of the tickets, rounded down to 1,000 VND. Conditions: running period, day of the week of the show, minimum tickets, maximum uses. A promotion without a code applies by itself (the biggest discount wins); a promo code typed by the customer or the counter replaces it — one promotion per booking. A wrong or unusable code is refused (400) with the reason. The server works the discount out again when the booking is made; a use is only counted once the ticket is paid. The discount shows on the ticket, the payment page, the ticket email and the printed ticket. | M |
+| FR-BOOK-16 | Admins manage promotions (Admin → Promotions): add, edit, pause / resume (never deleted), see how often each was used. Promo codes are unique (409). Guests only see the automatic promotions that are running. | M |
 
 ### 4.7 Payments (PayOS)
 
@@ -395,6 +397,7 @@ Navigation on the left; on windows narrower than 640 px it opens from a menu but
 | Movies | Admin | Add, edit, stop / show again, filter, search |
 | Rooms | Admin | Add a room as rows × seats, rename, delete, open the seat map |
 | Snacks | Admin | Snacks menu: add, edit, stop / resume selling |
+| Promotions | Admin | Automatic deals and promo codes: add, edit, pause / resume, see uses |
 | Accounts | Admin | Search, filter, paging, details, create, change roles, lock / unlock |
 | Profile | Staff, Admin | Profile, change password through OTP, sign out |
 
@@ -519,7 +522,7 @@ Check-in is the `checkedInAt` attribute of a `CONFIRMED` ticket, not a separate 
 | `cinema_auth_db` | `users`, `roles`, `users_roles`, `refresh_tokens`, `otp_codes` | Passwords and OTP codes stored only as BCrypt hashes; unique email |
 | `cinema_movie_db` | `movies` | Status `ACTIVE` / `INACTIVE`; rating `age_rating` P / K / T13 / T16 / T18 |
 | `cinema_showtime_db` | `rooms`, `seats`, `showtimes`, `outbox_messages` | Seat unique by (room, row, number); seat type NORMAL / VIP / SWEETBOX |
-| `cinema_booking_db` | `bookings`, `booking_seats`, `seat_reservations`, `concession_items`, `booking_concessions`, `outbox_messages` | `user_id` NULL for walk-in guests; `customer_email`, `customer_phone`, `checked_in_at`, `expires_at` |
+| `cinema_booking_db` | `bookings`, `booking_seats`, `seat_reservations`, `concession_items`, `booking_concessions`, `promotions`, `outbox_messages` | `user_id` NULL for walk-in guests; `customer_email`, `customer_phone`, `checked_in_at`, `expires_at` |
 | `cinema_payment_db` | `payments`, `refunds`, `outbox_messages` | Method `PAYOS` / `CASH`; payer account kept for refunds |
 | `cinema_notification_db` | `notifications` | Unique by `event_id` so nothing is sent twice |
 
@@ -532,7 +535,7 @@ Check-in is the `checkedInAt` attribute of a `CONFIRMED` ticket, not a separate 
 
 ### 10.1 API
 
-- 85 business endpoints, REST/JSON, through the gateway at `http://<host>:5000`. Full list: [MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md).
+- 89 business endpoints, REST/JSON, through the gateway at `http://<host>:5000`. Full list: [MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md).
 
 | Group | Prefix | Endpoints |
 |---|---|---|
@@ -544,6 +547,7 @@ Check-in is the `checkedInAt` attribute of a `CONFIRMED` ticket, not a separate 
 | Payments, refunds | `/api/v1/payments` | 17 |
 | Notifications | `/api/v1/notifications` | 6 |
 | Snacks | `/api/v1/concessions` | 3 |
+| Promotions | `/api/v1/promotions` | 4 |
 
 - Lists are paged (`page` / `size` or `pageNumber` / `pageSize`), at most 50 records per page, sorted with `sortBy` / `sortDir`.
 - Errors follow ProblemDetails: `title`, `status`, `detail`, `errors` (per field), `errorCode` (business code).
@@ -618,8 +622,8 @@ Check-in is the `checkedInAt` attribute of a `CONFIRMED` ticket, not a separate 
 | AuthService | 27 | Registration, OTP and OTP lockout, sign-in, refresh rotation, sign-out, account locking, role changes, field validation |
 | ApiGateway | 21 | Blocks tokens of locked accounts and changed roles before forwarding, never forwards when the account check fails, 503 when AuthService does not answer |
 | MovieService | 21 | Showtimes, overlaps, cancellation and its event, seats, sweetbox pairs, seat counts, prices per seat type |
-| BookingService | 63 | Bookings, seat holds, webhook, expiry, late payment, refunds, real RabbitMQ, authorization, check-in, statistics, revenue, counter sales |
-| Flutter | 175 | Widget tests of customer and admin screens, validators, payment flow, check-in, counter |
+| BookingService | 66 | Bookings, seat holds, webhook, expiry, late payment, refunds, real RabbitMQ, authorization, check-in, statistics, revenue, counter sales |
+| Flutter | 180 | Widget tests of customer and admin screens, validators, payment flow, check-in, counter |
 
 Backend integration tests run against real PostgreSQL and RabbitMQ (Testcontainers); PayOS, MovieService and SMTP are replaced by fakes.
 

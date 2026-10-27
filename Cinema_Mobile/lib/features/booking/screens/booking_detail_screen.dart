@@ -357,6 +357,16 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                   ),
                   const SizedBox(height: AppSpacing.sm),
                 ],
+                if (booking.hasDiscount) ...[
+                  Text(
+                    'Discount: ${booking.discountText}',
+                    key: const Key('bookingDiscount'),
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.success,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                ],
                 Text(
                   'Total Amount',
                   style: AppTextStyles.bodySmall.copyWith(

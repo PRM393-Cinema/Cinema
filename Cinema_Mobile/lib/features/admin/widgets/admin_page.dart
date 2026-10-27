@@ -17,6 +17,7 @@ enum AdminSection {
   movies,
   rooms,
   snacks,
+  promotions,
   accounts,
   profile,
 }
@@ -67,6 +68,12 @@ List<_Destination> _destinationsFor({required bool admin}) => [
       'Snacks',
       Icons.fastfood_outlined,
       AppRoutes.adminSnacks,
+    ),
+    _Destination(
+      AdminSection.promotions,
+      'Promotions',
+      Icons.local_offer_outlined,
+      AppRoutes.adminPromotions,
     ),
     _Destination(
       AdminSection.accounts,

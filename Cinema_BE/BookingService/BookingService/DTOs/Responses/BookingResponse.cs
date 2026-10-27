@@ -36,6 +36,13 @@
         // Tiền bắp nước, đã tính trong TotalAmount
         public decimal ConcessionsAmount { get; set; }
 
+        // Tiền vé được giảm nhờ khuyến mãi, đã trừ trong TotalAmount
+        public decimal DiscountAmount { get; set; }
+
+        public string? PromotionCode { get; set; }
+
+        public string? PromotionName { get; set; }
+
         public List<BookingConcessionResponse> Concessions { get; set; } = new();
     }
 }

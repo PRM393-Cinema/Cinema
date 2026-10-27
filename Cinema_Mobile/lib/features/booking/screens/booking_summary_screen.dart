@@ -20,6 +20,8 @@ import '../../seat/widgets/seat_type_style.dart';
 import '../../../core/widgets/age_rating_badge.dart';
 import '../../../data/models/concession.dart';
 import '../widgets/concession_picker.dart';
+import '../../../data/models/promotion.dart';
+import '../widgets/promotion_box.dart';
 
 class BookingSummaryScreen extends StatefulWidget {
   const BookingSummaryScreen({required this.bookingRepository, super.key});
@@ -37,6 +39,10 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
   // The snacks menu; empty when it cannot load (tickets still sell).
   List<ConcessionItem> _snacks = const [];
   final _snackQuantities = <int, int>{};
+
+  // The ticket discount shown; the server works it out again when booking.
+  PromotionQuote _promotion = PromotionQuote.none;
+  String? _promoCode;
 
   @override
   void initState() {
@@ -109,6 +115,7 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
               in _snackQuantities.entries)
             if (quantity > 0) id: quantity,
         },
+        promotionCode: _promoCode,
       );
 
       if (!mounted) return;
@@ -262,6 +269,21 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
             setState(() => _snackQuantities[id] = quantity),
       ),
     );
+    final promotionCard = _SummaryCard(
+      title: 'Promotion',
+      child: PromotionBox(
+        quote: widget.bookingRepository.quotePromotion,
+        showtimeId: showtime.id,
+        tickets: draft.ticketCount,
+        ticketAmount: draft.totalPrice,
+        enabled: !_isSubmitting,
+        onChanged: (quote, code) => setState(() {
+          _promotion = quote;
+          _promoCode = code;
+        }),
+      ),
+    );
+    final discount = _promotion.discount;
     final priceCard = _SummaryCard(
       title: 'Price Details',
       child: Column(
@@ -283,6 +305,27 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                   Text(
                     formatVnd(ticketsByType[type]! * showtime.priceOf(type)),
                     style: AppTextStyles.body,
+                  ),
+                ],
+              ),
+            ),
+          if (discount > 0)
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.xs),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Discount (${_promotion.name ?? 'Promotion'})',
+                      style: AppTextStyles.body,
+                    ),
+                  ),
+                  Text(
+                    '−${formatVnd(discount)}',
+                    key: const Key('summaryDiscount'),
+                    style: AppTextStyles.body.copyWith(
+                      color: AppColors.success,
+                    ),
                   ),
                 ],
               ),
@@ -314,7 +357,7 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
             children: [
               const Text('Total', style: AppTextStyles.heading2),
               Text(
-                formatVnd(draft.totalPrice + snacksTotalPrice),
+                formatVnd(draft.totalPrice - discount + snacksTotalPrice),
                 style: AppTextStyles.heading2.copyWith(
                   color: AppColors.primary,
                 ),
@@ -363,6 +406,8 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                         const SizedBox(height: AppSpacing.xl),
                         snacksCard,
                       ],
+                      const SizedBox(height: AppSpacing.xl),
+                      promotionCard,
                       if (!desktop) const SizedBox(height: AppSpacing.xl),
                     ],
                     side: [

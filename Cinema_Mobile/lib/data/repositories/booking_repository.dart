@@ -7,14 +7,25 @@ import '../models/payment.dart';
 import '../models/payos_checkout_request.dart';
 import '../services/booking_service.dart';
 import '../models/concession.dart';
+import '../models/promotion.dart';
 
 abstract interface class BookingRepository {
   // Holds the seats for 10 minutes; the booking stays PENDING until paid.
-  // [concessions] maps snack item ids to quantities.
+  // [concessions] maps snack item ids to quantities; [promotionCode] is a
+  // promo code typed in (none: the best automatic deal applies).
   Future<Booking> createBooking({
     required int showtimeId,
     required List<int> seatIds,
     Map<int, int> concessions = const {},
+    String? promotionCode,
+  });
+
+  // The discount the tickets would get, before they are held.
+  Future<PromotionQuote> quotePromotion({
+    required int showtimeId,
+    required double ticketAmount,
+    required int tickets,
+    String? code,
   });
 
   // The snacks and drinks menu.
@@ -51,15 +62,30 @@ class RemoteBookingRepository implements BookingRepository {
     required int showtimeId,
     required List<int> seatIds,
     Map<int, int> concessions = const {},
+    String? promotionCode,
   }) {
     return _bookingService.createBooking(
       CreateBookingRequest(
         showtimeId: showtimeId,
         seatIds: seatIds,
         concessions: concessions,
+        promotionCode: promotionCode,
       ),
     );
   }
+
+  @override
+  Future<PromotionQuote> quotePromotion({
+    required int showtimeId,
+    required double ticketAmount,
+    required int tickets,
+    String? code,
+  }) => _bookingService.quotePromotion(
+    showtimeId: showtimeId,
+    ticketAmount: ticketAmount,
+    tickets: tickets,
+    code: code,
+  );
 
   @override
   Future<List<ConcessionItem>> getConcessions() =>

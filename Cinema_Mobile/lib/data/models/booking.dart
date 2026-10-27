@@ -1,5 +1,6 @@
 import 'concession.dart';
 import 'json_readers.dart';
+import '../../core/utils/formatters.dart';
 
 class BookingSeat {
   const BookingSeat({
@@ -61,6 +62,9 @@ class Booking {
     required this.seats,
     this.concessions = const [],
     this.concessionsAmount = 0,
+    this.discountAmount = 0,
+    this.promotionCode,
+    this.promotionName,
   });
 
   factory Booking.fromJson(Map<String, Object?> json) {
@@ -84,6 +88,9 @@ class Booking {
           .map(BookingConcession.fromJson)
           .toList(),
       concessionsAmount: readDouble(json['concessionsAmount']),
+      discountAmount: readDouble(json['discountAmount']),
+      promotionCode: readOptionalString(json['promotionCode']),
+      promotionName: readOptionalString(json['promotionName']),
     );
   }
 
@@ -120,6 +127,20 @@ class Booking {
   final double concessionsAmount;
 
   String get snacksText => concessions.map((snack) => snack.label).join(', ');
+
+  // The ticket discount of a promotion, already taken off [totalAmount].
+  final double discountAmount;
+
+  // The promo code typed in; null when the deal applied automatically.
+  final String? promotionCode;
+  final String? promotionName;
+
+  bool get hasDiscount => discountAmount > 0;
+
+  // e.g. "−30.000 ₫ (Thứ Ba vui vẻ)".
+  String get discountText =>
+      '−${formatVnd(discountAmount)} '
+      '(${promotionName ?? promotionCode ?? 'Promotion'})';
 
   bool get isCheckedIn => checkedInAt != null;
 

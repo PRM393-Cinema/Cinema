@@ -113,7 +113,7 @@ namespace BookingService.Messaging.Handlers
             return $"""
                 <p><strong>Phim:</strong> {E(data.MovieTitle ?? "Mobile Cinema")}<br/>
                    <strong>Suất chiếu:</strong> {E(showTime)}<br/>
-                   <strong>Ghế:</strong> {E(string.Join(", ", data.Seats))}<br/>{Snacks(data)}
+                   <strong>Ghế:</strong> {E(string.Join(", ", data.Seats))}<br/>{Snacks(data)}{Discount(data)}
                    <strong>Tổng tiền:</strong> {data.TotalAmount:N0} VND</p>
                 """;
         }
@@ -123,6 +123,13 @@ namespace BookingService.Messaging.Handlers
             return data.Concessions.Count == 0
                 ? string.Empty
                 : $"\n   <strong>Bắp nước:</strong> {E(string.Join(", ", data.Concessions))}<br/>";
+        }
+
+        private static string Discount(BookingEventData data)
+        {
+            return data.DiscountAmount <= 0
+                ? string.Empty
+                : $"\n   <strong>Giảm giá:</strong> -{data.DiscountAmount:N0} VND ({E(data.PromotionName ?? "Khuyến mãi")})<br/>";
         }
 
         private static string? Reason(string? reason)

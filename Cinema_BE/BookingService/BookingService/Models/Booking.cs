@@ -23,6 +23,14 @@ public partial class Booking
 
     public decimal ConcessionsAmount { get; set; } // tiền bắp nước trong tổng tiền
 
+    public decimal DiscountAmount { get; set; } // tiền vé được giảm nhờ khuyến mãi (đã trừ trong tổng tiền)
+
+    public long? PromotionId { get; set; }
+
+    public string? PromotionCode { get; set; } // mã voucher khách nhập; null nếu khuyến mãi tự áp dụng
+
+    public string? PromotionName { get; set; }
+
     public long? PaymentId { get; set; }
 
     public string? MovieTitle { get; set; }
