@@ -23,6 +23,7 @@ import '../../../data/models/showtime.dart';
 import '../../../data/repositories/catalog_repository.dart';
 import '../../seat/widgets/seat_type_style.dart';
 import '../../showtime/widgets/showtime_section.dart';
+import '../../../core/widgets/age_rating_badge.dart';
 
 // Movie details with its upcoming showtimes, so customers pick a time here
 // and go straight to the seat map.
@@ -370,12 +371,20 @@ class _MovieFacts extends StatelessWidget {
         Wrap(
           spacing: AppSpacing.sm,
           runSpacing: AppSpacing.sm,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
+            AgeRatingBadge(rating: movie.ageRating, large: true),
             if (movie.releaseYear.isNotEmpty)
               _InfoPill(label: movie.releaseYear),
             _InfoPill(label: movie.durationText),
             if (movie.language.isNotEmpty) _InfoPill(label: movie.language),
           ],
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Text(
+          '${movie.ageRating.code}: ${movie.ageRating.meaning}',
+          key: const Key('ageRatingMeaning'),
+          style: AppTextStyles.bodySmall.copyWith(color: movie.ageRating.color),
         ),
         if (movie.genre.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.md),

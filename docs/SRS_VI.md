@@ -230,6 +230,7 @@ Mức ưu tiên: **H** (bắt buộc), **M** (quan trọng), **L** (bổ trợ).
 | FR-MOV-06 | Admin sửa phim, kể cả cho phim đã ngừng chiếu chiếu lại (**Show again**). | H |
 | FR-MOV-07 | Admin ngừng chiếu (**Stop showing**): phim chuyển `INACTIVE`, ẩn khỏi app khách, dữ liệu và vé cũ giữ nguyên. | H |
 | FR-MOV-08 | App khách mở trailer của phim (`trailerUrl`). | L |
+| FR-MOV-09 | Phân loại phim theo Luật Điện ảnh 2022: P (mọi độ tuổi), K (dưới 13 tuổi xem cùng cha mẹ / người giám hộ), T13, T16, T18. Admin chọn khi thêm / sửa phim (mặc định P). Nhãn hiện trên thẻ phim, chi tiết phim, xác nhận đặt vé, màn bán vé tại quầy và check-in. Phim khác P thì khách phải xác nhận trước khi giữ ghế; khi check-in, nhân viên được nhắc kiểm tra giấy tờ. | H |
 
 ### 4.4 Phòng và ghế
 
@@ -513,7 +514,7 @@ Check-in là thuộc tính `checkedInAt` của vé `CONFIRMED`, không phải m�
 | Database | Bảng chính | Ghi chú |
 |---|---|---|
 | `cinema_auth_db` | `users`, `roles`, `users_roles`, `refresh_tokens`, `otp_codes` | Mật khẩu và OTP chỉ lưu hash BCrypt; email duy nhất |
-| `cinema_movie_db` | `movies` | Trạng thái `ACTIVE` / `INACTIVE` |
+| `cinema_movie_db` | `movies` | Trạng thái `ACTIVE` / `INACTIVE`; phân loại `age_rating` P / K / T13 / T16 / T18 |
 | `cinema_showtime_db` | `rooms`, `seats`, `showtimes`, `outbox_messages` | Ghế duy nhất theo (phòng, hàng, số); loại ghế NORMAL / VIP / SWEETBOX |
 | `cinema_booking_db` | `bookings`, `booking_seats`, `seat_reservations`, `outbox_messages` | `user_id` NULL cho khách vãng lai; `customer_email`, `customer_phone`, `checked_in_at`, `expires_at` |
 | `cinema_payment_db` | `payments`, `refunds`, `outbox_messages` | Phương thức `PAYOS` / `CASH`; thông tin tài khoản người trả để hoàn tiền |
@@ -612,9 +613,9 @@ Check-in là thuộc tính `checkedInAt` của vé `CONFIRMED`, không phải m�
 |---|---|---|
 | AuthService | 27 | Đăng ký, OTP và khoá OTP, đăng nhập, refresh xoay vòng, đăng xuất, khoá tài khoản, đổi vai trò, validate dữ liệu |
 | ApiGateway | 21 | Chặn token của tài khoản bị khoá hoặc đã đổi vai trò trước khi chuyển tiếp, không chuyển tiếp khi kiểm tra tài khoản lỗi, 503 khi AuthService không phản hồi |
-| MovieService | 20 | Suất chiếu, trùng lịch, huỷ suất và event, ghế, sweetbox, đổi số ghế, giá theo loại ghế |
+| MovieService | 21 | Suất chiếu, trùng lịch, huỷ suất và event, ghế, sweetbox, đổi số ghế, giá theo loại ghế |
 | BookingService | 60 | Đặt vé, giữ ghế, webhook, hết hạn, trả muộn, hoàn tiền, RabbitMQ thật, phân quyền, check-in, thống kê, doanh thu, bán vé tại quầy |
-| Flutter | 169 | Widget test các màn khách và quản trị, validator, luồng thanh toán, check-in, quầy |
+| Flutter | 172 | Widget test các màn khách và quản trị, validator, luồng thanh toán, check-in, quầy |
 
 Test tích hợp backend chạy với PostgreSQL và RabbitMQ thật (Testcontainers); PayOS, MovieService, SMTP được thay bằng bản giả.
 

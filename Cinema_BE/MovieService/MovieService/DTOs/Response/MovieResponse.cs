@@ -13,6 +13,7 @@ namespace MovieService.DTOs.Response
         public DateOnly ReleaseDate { get; set; }
         public string? PosterUrl { get; set; }
         public string? TrailerUrl { get; set; }
+        public string AgeRating { get; set; } = "P";
         public string? Status { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
     }

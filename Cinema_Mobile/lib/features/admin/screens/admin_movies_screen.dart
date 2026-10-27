@@ -22,6 +22,7 @@ import '../../../core/widgets/responsive_columns.dart';
 import '../widgets/admin_layout.dart';
 import '../widgets/admin_page.dart';
 import '../widgets/admin_pager.dart';
+import '../../../core/widgets/age_rating_badge.dart';
 
 const _showing = 'ACTIVE';
 const _stopped = 'INACTIVE';
@@ -289,11 +290,19 @@ class _MovieCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  movie.title,
-                  style: AppTextStyles.title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                Row(
+                  children: [
+                    AgeRatingBadge(rating: movie.ageRating),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        movie.title,
+                        style: AppTextStyles.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(details, style: AppTextStyles.bodySmall),
@@ -427,6 +436,7 @@ class _MovieFormDialogState extends State<_MovieFormDialog> {
   late final _trailer = TextEditingController(text: widget.movie?.trailerUrl);
   late DateTime _releaseDate =
       widget.movie?.releaseDate ?? DateUtils.dateOnly(DateTime.now());
+  late AgeRating _ageRating = widget.movie?.ageRating ?? AgeRating.p;
   bool _saving = false;
   String? _error;
 
@@ -478,6 +488,7 @@ class _MovieFormDialogState extends State<_MovieFormDialog> {
       language: _language.text,
       posterUrl: _poster.text,
       trailerUrl: _trailer.text,
+      ageRating: _ageRating,
     );
     try {
       final movie = widget.movie;
@@ -563,6 +574,36 @@ class _MovieFormDialogState extends State<_MovieFormDialog> {
                       value: formatDate(_releaseDate),
                       onTap: _saving ? null : _pickDate,
                     ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  DropdownButtonFormField<AgeRating>(
+                    key: const Key('movieAgeRatingField'),
+                    initialValue: _ageRating,
+                    isExpanded: true,
+                    decoration: const InputDecoration(labelText: 'Age rating'),
+                    items: [
+                      for (final rating in AgeRating.values)
+                        DropdownMenuItem(
+                          value: rating,
+                          child: Row(
+                            children: [
+                              AgeRatingBadge(rating: rating),
+                              const SizedBox(width: AppSpacing.sm),
+                              Expanded(
+                                child: Text(
+                                  rating.meaning,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                    onChanged: _saving
+                        ? null
+                        : (rating) => setState(
+                            () => _ageRating = rating ?? AgeRating.p,
+                          ),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   _FieldPair(

@@ -23,6 +23,10 @@ namespace MovieService.DTOs.Request
 
         public string? TrailerUrl { get; set; }
 
+        // Phân loại phim: P (mọi độ tuổi), K (dưới 13 tuổi xem cùng cha mẹ), T13, T16, T18.
+        // Thêm phim mà bỏ trống thì là P; sửa phim mà bỏ trống thì giữ nguyên
+        public string? AgeRating { get; set; }
+
         // Chỉ dùng khi sửa phim: ACTIVE (đang chiếu) / INACTIVE (ngừng chiếu). Bỏ trống thì giữ nguyên
         public string? Status { get; set; }
     }

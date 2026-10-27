@@ -4,6 +4,7 @@ import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_radius.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
+import '../../../core/widgets/age_rating_badge.dart';
 import '../../../core/widgets/app_network_image.dart';
 
 class MovieCard extends StatelessWidget {
@@ -12,6 +13,7 @@ class MovieCard extends StatelessWidget {
     this.posterUrl,
     this.genre,
     this.duration,
+    this.ageRating,
     this.onTap,
     super.key,
   });
@@ -20,6 +22,7 @@ class MovieCard extends StatelessWidget {
   final String? posterUrl;
   final String? genre;
   final String? duration;
+  final AgeRating? ageRating;
   final VoidCallback? onTap;
 
   @override
@@ -34,15 +37,28 @@ class MovieCard extends StatelessWidget {
             child: DecoratedBox(
               decoration: BoxDecoration(
                 borderRadius: AppRadius.borderRadiusMd,
-                border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
-              ),
-              child: ClipRRect(
-                borderRadius: AppRadius.borderRadiusMd,
-                child: AppNetworkImage(
-                  imageUrl: posterUrl ?? '',
-                  width: double.infinity,
-                  height: double.infinity,
+                border: Border.all(
+                  color: AppColors.border.withValues(alpha: 0.5),
                 ),
+              ),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  ClipRRect(
+                    borderRadius: AppRadius.borderRadiusMd,
+                    child: AppNetworkImage(
+                      imageUrl: posterUrl ?? '',
+                      width: double.infinity,
+                      height: double.infinity,
+                    ),
+                  ),
+                  if (ageRating case final rating?)
+                    Positioned(
+                      top: AppSpacing.sm,
+                      left: AppSpacing.sm,
+                      child: AgeRatingBadge(rating: rating),
+                    ),
+                ],
               ),
             ),
           ),
@@ -56,8 +72,13 @@ class MovieCard extends StatelessWidget {
           if (genre != null || duration != null) ...[
             const SizedBox(height: AppSpacing.xs),
             Text(
-              [if (genre != null) genre, if (duration != null) duration].join(' • '),
-              style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary),
+              [
+                if (genre != null) genre,
+                if (duration != null) duration,
+              ].join(' • '),
+              style: AppTextStyles.caption.copyWith(
+                color: AppColors.textSecondary,
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),

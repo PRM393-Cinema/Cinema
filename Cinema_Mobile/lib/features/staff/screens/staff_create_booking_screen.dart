@@ -19,6 +19,7 @@ import '../../seat/widgets/seat_legend.dart';
 import '../../seat/widgets/seat_map_rows.dart';
 import '../../seat/widgets/seat_type_style.dart';
 import '../widgets/staff_feedback.dart';
+import '../../../core/widgets/age_rating_badge.dart';
 
 // Selling tickets at the counter: a walk-in guest (no account; email and phone
 // if they want) or a member's account, then a movie, one of its showtimes in
@@ -326,14 +327,38 @@ class _StaffCreateBookingScreenState extends State<StaffCreateBookingScreen> {
                         for (final movie in movies ?? const <Movie>[])
                           DropdownMenuItem(
                             value: movie,
-                            child: Text(
-                              movie.title,
-                              overflow: TextOverflow.ellipsis,
+                            child: Row(
+                              children: [
+                                AgeRatingBadge(rating: movie.ageRating),
+                                const SizedBox(width: AppSpacing.sm),
+                                Expanded(
+                                  child: Text(
+                                    movie.title,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                       ],
                       onChanged: _busy ? null : _pickMovie,
                     ),
+                    if (_movie?.ageRating case final rating?
+                        when rating.restricted) ...[
+                      const SizedBox(height: AppSpacing.sm),
+                      Text(
+                        rating == AgeRating.k
+                            ? 'Rated K: children under 13 must come with a '
+                                  'parent or guardian.'
+                            : 'Rated ${rating.code}: '
+                                  '${rating.meaning.toLowerCase()} only. Check '
+                                  'the customer’s ID.',
+                        key: const Key('sellAgeRating'),
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: rating.color,
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: AppSpacing.lg),
                     DropdownButtonFormField<Showtime>(
                       key: ValueKey('bookingShowtime-${_movie?.id}'),
