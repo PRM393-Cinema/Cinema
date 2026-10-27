@@ -65,7 +65,11 @@ void main() {
         ),
       );
       await pumpRoute(tester);
-      expect(paths, ['/api/v1/auth/me']);
+      // The session check runs first; public movie requests may follow.
+      expect(paths.first, '/api/v1/auth/me');
+      expect(paths.where((path) => path.startsWith('/api/v1/auth')), [
+        '/api/v1/auth/me',
+      ]);
       expect(session.isAuthenticated, isFalse);
       expect(await storage.readAccessToken(), isNull);
       expect(find.byKey(const Key('loginTitle')), findsOneWidget);

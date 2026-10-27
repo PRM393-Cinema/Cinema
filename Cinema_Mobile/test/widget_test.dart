@@ -251,6 +251,7 @@ void main() {
     await pumpRoute(tester);
 
     expect(find.text('Unable to load movies'), findsNothing);
+    await scrollHomeTo(tester, find.text(movieFixtures.first.title).first);
     expect(find.text(movieFixtures.first.title), findsWidgets);
   });
 
@@ -260,7 +261,7 @@ void main() {
     await _openHome(tester);
 
     await tester.enterText(find.byKey(const Key('movieSearchField')), 'inter');
-    await tester.pump();
+    await pumpRoute(tester);
     await scrollHomeTo(tester, find.text('Interstellar').first);
 
     expect(find.text('Interstellar'), findsWidgets);
@@ -273,7 +274,7 @@ void main() {
     await _openHome(tester);
 
     await tester.enterText(find.byKey(const Key('movieSearchField')), 'inter');
-    await tester.pump();
+    await pumpRoute(tester);
     await scrollHomeTo(tester, find.text('Interstellar').last);
     await tester.tap(find.text('Interstellar').last);
     await pumpRoute(tester);

@@ -7,6 +7,15 @@ import '../services/movie_service.dart';
 abstract interface class CatalogRepository {
   Future<List<Movie>> getNowShowingMovies();
 
+  // Home: movies now showing (or coming soon), filtered by genre and title.
+  Future<List<Movie>> browseMovies({
+    bool comingSoon = false,
+    String? genre,
+    String? keyword,
+  });
+
+  Future<List<String>> getGenres();
+
   // Used when a screen is opened from its URL (web refresh or shared link).
   Future<Movie> getMovie(int movieId);
 
@@ -33,6 +42,23 @@ class RemoteCatalogRepository implements CatalogRepository {
     final result = await _movies.getMoviesByStatus('ACTIVE');
     return result.items;
   }
+
+  @override
+  Future<List<Movie>> browseMovies({
+    bool comingSoon = false,
+    String? genre,
+    String? keyword,
+  }) async {
+    final result = await _movies.browseMovies(
+      comingSoon: comingSoon,
+      genre: genre,
+      keyword: keyword,
+    );
+    return result.items;
+  }
+
+  @override
+  Future<List<String>> getGenres() => _movies.getGenres();
 
   @override
   Future<Movie> getMovie(int movieId) => _movies.getMovie(movieId);

@@ -62,7 +62,7 @@ CosmoQ Cinema gồm ba phần:
 | [Cinema_BE/docs/MESSAGING.md](../Cinema_BE/docs/MESSAGING.md) | Event RabbitMQ, outbox, idempotency |
 | [Cinema_BE/docs/MONITORING.md](../Cinema_BE/docs/MONITORING.md) | Metrics, trace, log |
 | [Cinema_BE/docs/TESTING.md](../Cinema_BE/docs/TESTING.md) | Test tự động và CI |
-| [Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md) | Toàn bộ 94 endpoint và màn hình đang dùng |
+| [Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md) | Toàn bộ 96 endpoint và màn hình đang dùng |
 | [Cinema_Mobile/docs/STAFF_WORKSPACE.md](../Cinema_Mobile/docs/STAFF_WORKSPACE.md) | Nghiệp vụ trang quản trị |
 | `Resource/PRM393.docx` | Yêu cầu môn học: ma trận quyền, thành phần kỹ thuật bắt buộc |
 
@@ -231,6 +231,7 @@ Mức ưu tiên: **H** (bắt buộc), **M** (quan trọng), **L** (bổ trợ).
 | FR-MOV-07 | Admin ngừng chiếu (**Stop showing**): phim chuyển `INACTIVE`, ẩn khỏi app khách, dữ liệu và vé cũ giữ nguyên. | H |
 | FR-MOV-08 | App khách mở trailer của phim (`trailerUrl`). | L |
 | FR-MOV-09 | Phân loại phim theo Luật Điện ảnh 2022: P (mọi độ tuổi), K (dưới 13 tuổi xem cùng cha mẹ / người giám hộ), T13, T16, T18. Admin chọn khi thêm / sửa phim (mặc định P). Nhãn hiện trên thẻ phim, chi tiết phim, xác nhận đặt vé, màn bán vé tại quầy và check-in. Phim khác P thì khách phải xác nhận trước khi giữ ghế; khi check-in, nhân viên được nhắc kiểm tra giấy tờ. | H |
+| FR-MOV-10 | Trang chủ của khách có hai tab **Đang chiếu** (phim ACTIVE đã khởi chiếu hoặc chưa có ngày khởi chiếu, mới thêm trước) và **Sắp chiếu** (phim ACTIVE có ngày khởi chiếu sau hôm nay, khởi chiếu sớm nhất trước, poster ghi ngày khởi chiếu). Lọc theo thể loại (chip lấy từ thể loại của các phim đang có) và tìm theo tên qua API, không phân biệt hoa thường. Chi tiết phim sắp chiếu ghi ngày khởi chiếu; chưa có suất thì báo suất chiếu sẽ được thêm gần ngày khởi chiếu. | M |
 
 ### 4.4 Phòng và ghế
 
@@ -538,12 +539,12 @@ Check-in là thuộc tính `checkedInAt` của vé `CONFIRMED`, không phải m�
 
 ### 10.1 API
 
-- 94 endpoint nghiệp vụ, REST/JSON, qua gateway `http://<host>:5000`. Danh sách đầy đủ: [MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md).
+- 96 endpoint nghiệp vụ, REST/JSON, qua gateway `http://<host>:5000`. Danh sách đầy đủ: [MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md).
 
 | Nhóm | Tiền tố | Số endpoint |
 |---|---|---|
 | Xác thực, tài khoản, vai trò | `/api/v1/auth` | 16 |
-| Phim | `/api/v1/movies` | 7 |
+| Phim | `/api/v1/movies` | 9 |
 | Phòng, ghế | `/api/rooms`, `/api/seats` | 13 |
 | Suất chiếu | `/api/showtimes` | 11 |
 | Đặt vé, check-in | `/api/v1/bookings` | 13 |
@@ -625,9 +626,9 @@ Check-in là thuộc tính `checkedInAt` của vé `CONFIRMED`, không phải m�
 |---|---|---|
 | AuthService | 28 | Đăng ký, OTP và khoá OTP, đăng nhập, refresh xoay vòng, đăng xuất, khoá tài khoản, đổi vai trò, validate dữ liệu |
 | ApiGateway | 21 | Chặn token của tài khoản bị khoá hoặc đã đổi vai trò trước khi chuyển tiếp, không chuyển tiếp khi kiểm tra tài khoản lỗi, 503 khi AuthService không phản hồi |
-| MovieService | 21 | Suất chiếu, trùng lịch, huỷ suất và event, ghế, sweetbox, đổi số ghế, giá theo loại ghế |
+| MovieService | 22 | Suất chiếu, trùng lịch, huỷ suất và event, ghế, sweetbox, đổi số ghế, giá theo loại ghế |
 | BookingService | 69 | Đặt vé, giữ ghế, webhook, hết hạn, trả muộn, hoàn tiền, RabbitMQ thật, phân quyền, check-in, thống kê, doanh thu, bán vé tại quầy |
-| Flutter | 185 | Widget test các màn khách và quản trị, validator, luồng thanh toán, check-in, quầy |
+| Flutter | 188 | Widget test các màn khách và quản trị, validator, luồng thanh toán, check-in, quầy |
 
 Test tích hợp backend chạy với PostgreSQL và RabbitMQ thật (Testcontainers); PayOS, MovieService, SMTP được thay bằng bản giả.
 
@@ -655,7 +656,6 @@ Test tích hợp backend chạy với PostgreSQL và RabbitMQ thật (Testcontai
 |---|---|---|
 | PayOS không có API hoàn tiền | Hoàn tiền phải chuyển khoản tay | Tích hợp cổng có API hoàn tiền nếu cần |
 | Chưa có đổi mật khẩu bằng mật khẩu cũ, chưa sửa hồ sơ | Đổi mật khẩu dùng luồng OTP | Bổ sung endpoint |
-| Tìm phim ở trang chủ lọc trên danh sách đã tải | Không tìm được phim chưa tải | Gọi `GET /api/v1/movies/search` |
 | Thông báo chưa có trạng thái đã đọc / push | Khách phải mở app để xem | Bổ sung trạng thái đọc, FCM |
 | Danh sách vé của khách lấy trang đầu (50 vé) | Khách có rất nhiều vé không thấy vé cũ | Tải thêm khi cuộn |
 

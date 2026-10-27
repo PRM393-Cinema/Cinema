@@ -6,7 +6,7 @@ Mỗi service có một project test xUnit nằm cạnh project chính, và đã
 |---|---|---|
 | AuthService | `AuthService/AuthService.Tests` | 28 |
 | ApiGateway | `ApiGateway/ApiGateway.Tests` | 21 |
-| MovieService | `MovieService/MovieService.Tests` | 21 |
+| MovieService | `MovieService/MovieService.Tests` | 22 |
 | BookingService | `BookingService/BookingService.Tests` | 69 |
 
 ## 1. Chạy test
@@ -42,6 +42,7 @@ Mỗi service chạy xong trong khoảng 15–30 giây.
 | Khóa tài khoản | Token còn hạn bị từ chối ở gateway sau khi khóa; lỗi kết nối AuthService trả 503 và không chuyển tiếp request | `ApiGateway.Tests/*`, `AuthService.Tests/Integration/UserManagementTests.cs` |
 | Đổi role | Role cũ bị từ chối với `403 ROLE_CHANGED`; thu hồi refresh token khi quyền thay đổi, giữ phiên khi lưu cùng quyền | `ApiGateway.Tests/*`, `AuthService.Tests/Integration/UserManagementTests.cs` |
 | Check-in | Staff tra vé theo mã (QR), check-in một lần; vé chưa trả tiền, đã huỷ, chưa tới giờ hoặc đã check-in bị 409; khách không tra / check-in được; sơ đồ ghế đã đặt của suất (kèm email khách); thống kê vé theo suất (đã bán, đang giữ, đã check-in) theo id và theo giờ chiếu | `BookingService.Tests/Integration/CheckInTests.cs` |
+| Trang chủ | Tab đang chiếu / sắp chiếu tách theo ngày khởi chiếu (phim khởi chiếu hôm nay là đang chiếu), sắp chiếu xếp khởi chiếu sớm nhất trước, phim đã ngừng không hiện; lọc thể loại và tìm tên không phân biệt hoa thường, `%` không phải ký tự đại diện; danh sách thể loại không trùng; `when` sai bị 400 | `MovieService.Tests/Integration/BrowseMoviesTests.cs` |
 | Phim | Ngừng / chiếu lại phim chỉ Admin; phân loại phim mặc định P, bỏ trống khi sửa thì giữ nguyên, mức không có (vd `C18`) bị 400 | `MovieService.Tests/Integration/AdminCatalogTests.cs` |
 | Suất chiếu | Quyền, trùng lịch 409, suất còn đặt được theo phim, huỷ mềm và ghi event `showtime.cancelled` | `MovieService.Tests/Integration/ShowtimeTests.cs` |
 | Sơ đồ ghế | Sinh ghế một lần, đổi loại ghế; đổi số ghế lấp hàng cuối rồi sang hàng mới, bớt từ ghế cuối, chỉ Admin, không quá hàng Z, chặn khi phòng có suất chiếu. Sweetbox theo cặp (1-2, 3-4): đổi loại cả cặp (cả khi tô nhiều ghế một lần; hàng có ghế lẻ cặp bị từ chối), xoá / bớt ghế làm nửa cặp còn lại thành ghế thường, đặt vé phải đủ cặp. Giá ghế theo loại: VIP +20%, sweetbox +30% mỗi ghế, phụ thu làm tròn tới 1.000đ | `MovieService.Tests/Integration/SeatTests.cs` |

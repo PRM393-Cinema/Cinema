@@ -62,7 +62,7 @@ CosmoQ Cinema has three parts:
 | [Cinema_BE/docs/MESSAGING.md](../Cinema_BE/docs/MESSAGING.md) | RabbitMQ events, outbox, idempotency |
 | [Cinema_BE/docs/MONITORING.md](../Cinema_BE/docs/MONITORING.md) | Metrics, traces, logs |
 | [Cinema_BE/docs/TESTING.md](../Cinema_BE/docs/TESTING.md) | Automated tests and CI |
-| [Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md) | All 94 endpoints and the screens that use them |
+| [Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md) | All 96 endpoints and the screens that use them |
 | [Cinema_Mobile/docs/STAFF_WORKSPACE.md](../Cinema_Mobile/docs/STAFF_WORKSPACE.md) | Admin website operations |
 | `Resource/PRM393.docx` | Course requirements: permission matrix, required technical components |
 
@@ -231,6 +231,7 @@ Priority: **H** (must have), **M** (important), **L** (nice to have).
 | FR-MOV-07 | Admin stops a movie (**Stop showing**): it becomes `INACTIVE` and disappears from the customer app; its data and tickets stay. | H |
 | FR-MOV-08 | The customer app opens the movie trailer (`trailerUrl`). | L |
 | FR-MOV-09 | Film classification under the Cinema Law 2022: P (all ages), K (under 13 with a parent or guardian), T13, T16, T18. Admins pick it when adding / editing a movie (P by default). The rating shows on movie cards, movie details, the booking summary, the counter sale screen and check-in. For anything but P the customer must confirm before the seats are held; at check-in staff are reminded to check ID. | H |
+| FR-MOV-10 | The customer home has two tabs: **Now showing** (ACTIVE movies already released or without a release date, newest first) and **Coming soon** (ACTIVE movies released after today, earliest first, the release date on the poster). Movies can be filtered by genre (chips built from the genres of the movies on offer) and searched by title through the API, ignoring case. A movie coming soon shows its release date; without showtimes the page says they will be added closer to the release. | M |
 
 ### 4.4 Rooms and seats
 
@@ -538,12 +539,12 @@ Check-in is the `checkedInAt` attribute of a `CONFIRMED` ticket, not a separate 
 
 ### 10.1 API
 
-- 94 business endpoints, REST/JSON, through the gateway at `http://<host>:5000`. Full list: [MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md).
+- 96 business endpoints, REST/JSON, through the gateway at `http://<host>:5000`. Full list: [MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md).
 
 | Group | Prefix | Endpoints |
 |---|---|---|
 | Authentication, accounts, roles | `/api/v1/auth` | 16 |
-| Movies | `/api/v1/movies` | 7 |
+| Movies | `/api/v1/movies` | 9 |
 | Rooms, seats | `/api/rooms`, `/api/seats` | 13 |
 | Showtimes | `/api/showtimes` | 11 |
 | Bookings, check-in | `/api/v1/bookings` | 13 |
@@ -625,9 +626,9 @@ Check-in is the `checkedInAt` attribute of a `CONFIRMED` ticket, not a separate 
 |---|---|---|
 | AuthService | 28 | Registration, OTP and OTP lockout, sign-in, refresh rotation, sign-out, account locking, role changes, field validation |
 | ApiGateway | 21 | Blocks tokens of locked accounts and changed roles before forwarding, never forwards when the account check fails, 503 when AuthService does not answer |
-| MovieService | 21 | Showtimes, overlaps, cancellation and its event, seats, sweetbox pairs, seat counts, prices per seat type |
+| MovieService | 22 | Showtimes, overlaps, cancellation and its event, seats, sweetbox pairs, seat counts, prices per seat type |
 | BookingService | 69 | Bookings, seat holds, webhook, expiry, late payment, refunds, real RabbitMQ, authorization, check-in, statistics, revenue, counter sales |
-| Flutter | 185 | Widget tests of customer and admin screens, validators, payment flow, check-in, counter |
+| Flutter | 188 | Widget tests of customer and admin screens, validators, payment flow, check-in, counter |
 
 Backend integration tests run against real PostgreSQL and RabbitMQ (Testcontainers); PayOS, MovieService and SMTP are replaced by fakes.
 
@@ -655,7 +656,6 @@ Backend integration tests run against real PostgreSQL and RabbitMQ (Testcontaine
 |---|---|---|
 | PayOS has no refund API | Refunds are manual bank transfers | Integrate a gateway with a refund API if needed |
 | No password change with the current password, no profile editing | Password changes use the OTP flow | Add the endpoints |
-| Home search filters the loaded list | Movies not loaded cannot be found | Call `GET /api/v1/movies/search` |
 | Notifications have no read state or push | Customers must open the app to see them | Add read state and FCM |
 | The customer ticket list loads the first page (50 tickets) | Customers with very many tickets do not see the oldest | Load more on scroll |
 

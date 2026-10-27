@@ -14,6 +14,7 @@ class MovieCard extends StatelessWidget {
     this.genre,
     this.duration,
     this.ageRating,
+    this.badge,
     this.onTap,
     super.key,
   });
@@ -23,6 +24,9 @@ class MovieCard extends StatelessWidget {
   final String? genre;
   final String? duration;
   final AgeRating? ageRating;
+
+  // A note on the poster, e.g. the release date of a movie coming soon.
+  final String? badge;
   final VoidCallback? onTap;
 
   @override
@@ -57,6 +61,30 @@ class MovieCard extends StatelessWidget {
                       top: AppSpacing.sm,
                       left: AppSpacing.sm,
                       child: AgeRatingBadge(rating: rating),
+                    ),
+                  if (badge case final text?)
+                    Positioned(
+                      top: AppSpacing.sm,
+                      right: AppSpacing.sm,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: AppColors.accent,
+                          borderRadius: AppRadius.borderRadiusSm,
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.sm,
+                            vertical: 2,
+                          ),
+                          child: Text(
+                            text,
+                            style: AppTextStyles.caption.copyWith(
+                              color: AppColors.background,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                 ],
               ),
