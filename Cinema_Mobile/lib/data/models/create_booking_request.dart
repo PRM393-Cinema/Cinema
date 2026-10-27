@@ -3,6 +3,7 @@ class CreateBookingRequest {
     required this.showtimeId,
     required this.seatIds,
     this.concessions = const {},
+    this.promotionCode,
   });
 
   final int showtimeId;
@@ -10,6 +11,9 @@ class CreateBookingRequest {
 
   // Snack item id → quantity; the backend prices them from its menu.
   final Map<int, int> concessions;
+
+  // A promo code typed in; without one the best automatic deal applies.
+  final String? promotionCode;
 
   // The backend reads the customer, movie title, show time and seat prices
   // itself, so only the showtime and seat ids are sent.
@@ -19,6 +23,7 @@ class CreateBookingRequest {
       'seats': [
         for (final seatId in seatIds) {'seatId': seatId},
       ],
+      'promotionCode': ?promotionCode,
       if (concessions.isNotEmpty)
         'concessions': [
           for (final MapEntry(key: itemId, value: quantity)

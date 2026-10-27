@@ -24,6 +24,8 @@ public partial class BookingDbContext : DbContext
 
     public virtual DbSet<BookingConcession> BookingConcessions { get; set; }
 
+    public virtual DbSet<Promotion> Promotions { get; set; }
+
     public virtual DbSet<SeatReservation> SeatReservations { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -81,6 +83,13 @@ public partial class BookingDbContext : DbContext
                 .HasPrecision(10, 2)
                 .HasDefaultValue(0m)
                 .HasColumnName("concessions_amount");
+            entity.Property(e => e.DiscountAmount)
+                .HasPrecision(10, 2)
+                .HasDefaultValue(0m)
+                .HasColumnName("discount_amount");
+            entity.Property(e => e.PromotionId).HasColumnName("promotion_id");
+            entity.Property(e => e.PromotionCode).HasMaxLength(30).HasColumnName("promotion_code");
+            entity.Property(e => e.PromotionName).HasMaxLength(100).HasColumnName("promotion_name");
             entity.Property(e => e.UserId).HasColumnName("user_id");
         });
 
@@ -119,6 +128,31 @@ public partial class BookingDbContext : DbContext
             entity.Property(e => e.ImageUrl).HasMaxLength(500).HasColumnName("image_url");
             entity.Property(e => e.Active).HasDefaultValue(true).HasColumnName("active");
             entity.Property(e => e.SortOrder).HasDefaultValue(0).HasColumnName("sort_order");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("created_at");
+        });
+
+        modelBuilder.Entity<Promotion>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("promotions_pkey");
+            entity.ToTable("promotions");
+            entity.HasIndex(e => e.Code, "promotions_code_key").IsUnique();
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Code).HasMaxLength(30).HasColumnName("code");
+            entity.Property(e => e.Name).HasMaxLength(100).HasColumnName("name");
+            entity.Property(e => e.Description).HasMaxLength(255).HasColumnName("description");
+            entity.Property(e => e.DiscountType).HasMaxLength(10).HasColumnName("discount_type");
+            entity.Property(e => e.DiscountValue).HasPrecision(10, 2).HasColumnName("discount_value");
+            entity.Property(e => e.MaxDiscount).HasPrecision(10, 2).HasColumnName("max_discount");
+            entity.Property(e => e.MinTickets).HasDefaultValue(1).HasColumnName("min_tickets");
+            entity.Property(e => e.DaysOfWeek).HasMaxLength(20).HasColumnName("days_of_week");
+            entity.Property(e => e.StartsAt).HasColumnType("timestamp without time zone").HasColumnName("starts_at");
+            entity.Property(e => e.EndsAt).HasColumnType("timestamp without time zone").HasColumnName("ends_at");
+            entity.Property(e => e.UsageLimit).HasColumnName("usage_limit");
+            entity.Property(e => e.UsedCount).HasDefaultValue(0).HasColumnName("used_count");
+            entity.Property(e => e.Active).HasDefaultValue(true).HasColumnName("active");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")

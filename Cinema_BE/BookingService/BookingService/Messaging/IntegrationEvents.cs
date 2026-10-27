@@ -68,6 +68,10 @@ namespace BookingService.Messaging
         // Bắp nước mua kèm, vd "2 × Combo đôi"
         public List<string> Concessions { get; set; } = new();
 
+        public decimal DiscountAmount { get; set; }
+
+        public string? PromotionName { get; set; }
+
         public decimal TotalAmount { get; set; }
 
         public string Status { get; set; } = string.Empty;

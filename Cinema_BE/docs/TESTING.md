@@ -7,7 +7,7 @@ Mỗi service có một project test xUnit nằm cạnh project chính, và đã
 | AuthService | `AuthService/AuthService.Tests` | 27 |
 | ApiGateway | `ApiGateway/ApiGateway.Tests` | 21 |
 | MovieService | `MovieService/MovieService.Tests` | 21 |
-| BookingService | `BookingService/BookingService.Tests` | 63 |
+| BookingService | `BookingService/BookingService.Tests` | 66 |
 
 ## 1. Chạy test
 
@@ -48,6 +48,7 @@ Mỗi service chạy xong trong khoảng 15–30 giây.
 | Bán vé tại quầy | Vé khách vãng lai (không tài khoản, số điện thoại sai bị 400); thu tiền mặt: thiếu tiền 400, khách gọi 403, trả lần hai 409, payment CASH tính vào doanh thu, email vé tới email khách cho ở quầy, check-in ngay; vé vãng lai không email thì không gửi email nhưng vẫn hoàn tiền được; Staff tạo QR chuyển khoản (có `qrCode`) rồi khách trả tiền mặt thì link PayOS bị huỷ; khách đã chuyển khoản thì tiền mặt bị 409 | `BookingService.Tests/Integration/CounterSaleTests.cs` |
 | Mã đơn PayOS | Mã đơn = id booking × 1.000.000 + 6 số cuối mã vé, gọi lại không đổi; webhook của đơn môi trường khác bị bỏ qua; xác minh bằng mã đơn hoặc id booking; payment cũ (mã = id booking) vẫn dùng được | `BookingService.Tests/Integration/PayOsOrderCodeTests.cs` |
 | Bắp nước | Chỉ Admin sửa menu, khách chỉ thấy món đang bán; tiền bắp nước cộng vào tổng tiền theo giá menu, đổi giá menu không đổi đơn cũ, email vé liệt kê bắp nước; món ngừng bán / không có / quá số lượng / trùng món bị 400 | `BookingService.Tests/Integration/ConcessionTests.cs` |
+| Khuyến mãi | Chỉ Admin quản lý, mã trùng bị 409, khách chỉ thấy khuyến mãi tự áp dụng đang chạy; mã voucher chỉ giảm tiền vé (không giảm bắp nước), có trần, cần đủ số vé, lượt dùng đếm khi đã thanh toán và hết lượt thì bị 400, email vé có dòng giảm giá; khuyến mãi tự áp dụng chọn cái giảm nhiều nhất, đúng thứ của ngày chiếu, nhập mã thì thay cho khuyến mãi tự áp dụng | `BookingService.Tests/Integration/PromotionTests.cs` |
 | Doanh thu | Dashboard Admin: doanh thu tăng đúng số tiền vé vừa thanh toán; Staff / khách bị 403; khoảng thời gian ngược bị 400 | `BookingService.Tests/Integration/PaymentSummaryTests.cs` |
 | Giám sát | `/metrics` mở cho Prometheus và đếm booking theo trạng thái; chỉ trả ở cổng nội bộ khi cấu hình `MetricsPort` | `BookingService.Tests/Integration/ObservabilityTests.cs` |
 

@@ -27,6 +27,8 @@ namespace BookingService.Services.Implementations
         private readonly IBookingRepository _bookingRepository;
         private readonly IBookingSeatRepository _bookingSeatRepository;
         private readonly IConcessionRepository _concessionRepository;
+        private readonly IPromotionRepository _promotionRepository;
+        private readonly IPromotionService _promotionService;
         private readonly ISeatReservationRepository _seatReservationRepository;
         private readonly IRefundRepository _refundRepository;
         private readonly IShowtimeClient _showtimeClient;
@@ -41,6 +43,8 @@ namespace BookingService.Services.Implementations
             IBookingRepository bookingRepository,
             IBookingSeatRepository bookingSeatRepository,
             IConcessionRepository concessionRepository,
+            IPromotionRepository promotionRepository,
+            IPromotionService promotionService,
             ISeatReservationRepository seatReservationRepository,
             IRefundRepository refundRepository,
             IShowtimeClient showtimeClient,
@@ -54,6 +58,8 @@ namespace BookingService.Services.Implementations
             _bookingRepository = bookingRepository;
             _bookingSeatRepository = bookingSeatRepository;
             _concessionRepository = concessionRepository;
+            _promotionRepository = promotionRepository;
+            _promotionService = promotionService;
             _seatReservationRepository = seatReservationRepository;
             _refundRepository = refundRepository;
             _showtimeClient = showtimeClient;
@@ -203,7 +209,14 @@ namespace BookingService.Services.Implementations
             // Bắp nước: giá lấy từ menu đang bán, không tin giá app gửi lên
             var concessions = await PriceConcessionsAsync(request.Concessions);
             var concessionsAmount = concessions.Sum(item => item.UnitPrice * item.Quantity);
-            var totalAmount = seatsAmount + concessionsAmount;
+
+            // Khuyến mãi chỉ giảm tiền vé: mã khách nhập, hoặc ưu đãi tự áp dụng tốt nhất
+            var (promotion, discountAmount) = await _promotionService.ResolveAsync(
+                request.PromotionCode,
+                seatsAmount,
+                seatIds.Count,
+                showtime.StartTime);
+            var totalAmount = seatsAmount - discountAmount + concessionsAmount;
 
             var expiresAt =
                 DateTime.Now.Add(HoldDuration);
@@ -265,6 +278,10 @@ namespace BookingService.Services.Implementations
                     TotalAmount = totalAmount,
                     ConcessionsAmount = concessionsAmount,
                     Concessions = concessions,
+                    DiscountAmount = discountAmount,
+                    PromotionId = promotion?.Id,
+                    PromotionCode = promotion?.Code,
+                    PromotionName = promotion?.Name,
                     BookingCode = GenerateBookingCode(),
                     MovieTitle = movieTitle,
                     ShowTime = showtime.StartTime,
@@ -986,6 +1003,12 @@ namespace BookingService.Services.Implementations
 
             // Email vé liệt kê cả bắp nước
             await _context.Entry(booking).Collection(b => b.Concessions).LoadAsync();
+
+            // Lượt dùng khuyến mãi được đếm khi vé đã thanh toán
+            if (booking.PromotionId.HasValue)
+            {
+                await _promotionRepository.IncrementUsageAsync(booking.PromotionId.Value);
+            }
 
             // Khách vãng lai cho email lúc trả tiền tại quầy: lưu vào vé để email huỷ / hoàn tiền sau này cũng tới
             if (string.IsNullOrWhiteSpace(booking.CustomerEmail) && !string.IsNullOrWhiteSpace(recipientEmail))

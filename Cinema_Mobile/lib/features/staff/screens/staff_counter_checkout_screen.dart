@@ -644,6 +644,12 @@ class _BookingSummary extends StatelessWidget {
               key: const Key('checkoutSnacks'),
               style: AppTextStyles.bodySmall,
             ),
+          if (booking.hasDiscount)
+            Text(
+              'Discount: ${booking.discountText}',
+              key: const Key('checkoutDiscount'),
+              style: AppTextStyles.bodySmall,
+            ),
           Text(
             [
               booking.isWalkIn

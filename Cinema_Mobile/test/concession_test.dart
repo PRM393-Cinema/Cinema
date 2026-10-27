@@ -76,6 +76,7 @@ void main() {
       await tester.tap(find.byKey(ValueKey(key)));
       await tester.pump();
     }
+    await tester.ensureVisible(find.byKey(const ValueKey('snackRemove-1')));
     await tester.tap(find.byKey(const ValueKey('snackRemove-1')));
     await tester.pump();
     expect(find.text('1x Popcorn (M)'), findsOneWidget);

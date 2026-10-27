@@ -28,6 +28,10 @@ namespace BookingService.DTOs.Requests
         [MinLength(1, ErrorMessage = "At least one seat must be selected")]
         public List<SeatRequest> Seats { get; set; } = new();
 
+        // Mã voucher (không bắt buộc). Không có mã thì tự áp khuyến mãi tốt nhất đang có
+        [MaxLength(30, ErrorMessage = "Promo code must be at most 30 characters")]
+        public string? PromotionCode { get; set; }
+
         // Bắp nước mua kèm (không bắt buộc)
         public List<BookingConcessionRequest> Concessions { get; set; } = new();
     }

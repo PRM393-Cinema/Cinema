@@ -11,6 +11,7 @@ import '../models/room.dart';
 import '../models/seat.dart';
 import '../models/showtime.dart';
 import '../models/concession.dart';
+import '../models/promotion.dart';
 
 class StaffService {
   StaffService({required this._client});
@@ -81,6 +82,7 @@ class StaffService {
     required int showtimeId,
     required List<int> seats,
     Map<int, int> concessions = const {},
+    String? promotionCode,
   }) async => Booking.fromJson(
     readMap(
       await _client.post(
@@ -94,6 +96,7 @@ class StaffService {
           'seats': [
             for (final id in seats) {'seatId': id},
           ],
+          'promotionCode': ?promotionCode,
           'concessions': [
             for (final MapEntry(key: itemId, value: quantity)
                 in concessions.entries)
@@ -103,6 +106,83 @@ class StaffService {
       ),
     ),
   );
+  // The discount the counter's tickets would get: [code] or the best
+  // automatic deal.
+  Future<PromotionQuote> quotePromotion({
+    required int showtimeId,
+    required double ticketAmount,
+    required int tickets,
+    String? code,
+  }) async => PromotionQuote.fromJson(
+    readMap(
+      await _client.post(
+        '/api/v1/promotions/quote',
+        authenticated: true,
+        body: {
+          'showtimeId': showtimeId,
+          'ticketAmount': ticketAmount,
+          'tickets': tickets,
+          'code': ?code,
+        },
+      ),
+    ),
+  );
+  // Admin: every promotion, also promo codes and ended ones.
+  Future<List<Promotion>> promotions() async => readMapList(
+    await _client.get(
+      '/api/v1/promotions',
+      authenticated: true,
+      query: {'all': true},
+    ),
+  ).map(Promotion.fromJson).toList();
+  // Admin: adds a promotion ([id] null) or changes one. [code] empty: applied
+  // automatically.
+  Future<Promotion> savePromotion({
+    int? id,
+    String code = '',
+    required String name,
+    String description = '',
+    required String discountType,
+    required double discountValue,
+    double? maxDiscount,
+    int minTickets = 1,
+    List<int> daysOfWeek = const [],
+    DateTime? startsAt,
+    DateTime? endsAt,
+    int? usageLimit,
+    bool active = true,
+  }) async {
+    final body = {
+      'code': code.trim().isEmpty ? null : code.trim().toUpperCase(),
+      'name': name.trim(),
+      'description': description.trim(),
+      'discountType': discountType,
+      'discountValue': discountValue,
+      'maxDiscount': maxDiscount,
+      'minTickets': minTickets,
+      'daysOfWeek': daysOfWeek,
+      'startsAt': startsAt?.toIso8601String(),
+      'endsAt': endsAt?.toIso8601String(),
+      'usageLimit': usageLimit,
+      'active': active,
+    };
+    return Promotion.fromJson(
+      readMap(
+        id == null
+            ? await _client.post(
+                '/api/v1/promotions',
+                authenticated: true,
+                body: body,
+              )
+            : await _client.put(
+                '/api/v1/promotions/$id',
+                authenticated: true,
+                body: body,
+              ),
+      ),
+    );
+  }
+
   // The snacks menu; [includeInactive] adds stopped items (staff/admin).
   Future<List<ConcessionItem>> concessions({
     bool includeInactive = false,

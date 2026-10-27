@@ -36,7 +36,8 @@ void main() {
       final service = StaffService(
         client: ApiClient(
           httpClient: MockClient((request) async {
-            if (request.method == 'POST') {
+            if (request.method == 'POST' &&
+                request.url.path == '/api/v1/bookings') {
               posts.add((jsonDecode(request.body) as Map).cast());
             }
             return http.Response(
@@ -160,7 +161,8 @@ void main() {
     final service = StaffService(
       client: ApiClient(
         httpClient: MockClient((request) async {
-          if (request.method == 'POST') {
+          if (request.method == 'POST' &&
+              request.url.path == '/api/v1/bookings') {
             posts.add((jsonDecode(request.body) as Map).cast());
           }
           return _json({

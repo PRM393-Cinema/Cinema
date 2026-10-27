@@ -597,6 +597,12 @@ class _BookingCard extends StatelessWidget {
               'Snacks: ${booking.snacksText}',
               style: AppTextStyles.bodySmall,
             ),
+          if (booking.hasDiscount)
+            Text(
+              'Discount: ${booking.discountText}',
+              key: const Key('paymentDiscount'),
+              style: AppTextStyles.bodySmall,
+            ),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
             child: Divider(height: 1, color: AppColors.border),

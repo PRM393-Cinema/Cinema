@@ -40,7 +40,31 @@ namespace BookingService.Mapping
                 CreatedAt = booking.CreatedAt,
                 Seats = seats ?? new List<BookingSeatResponse>(),
                 ConcessionsAmount = booking.ConcessionsAmount,
-                Concessions = concessions
+                Concessions = concessions,
+                DiscountAmount = booking.DiscountAmount,
+                PromotionCode = booking.PromotionCode,
+                PromotionName = booking.PromotionName
+            };
+        }
+
+        public static PromotionResponse ToResponse(this Promotion promotion)
+        {
+            return new PromotionResponse
+            {
+                Id = promotion.Id,
+                Code = promotion.Code,
+                Name = promotion.Name,
+                Description = promotion.Description,
+                DiscountType = promotion.DiscountType,
+                DiscountValue = promotion.DiscountValue,
+                MaxDiscount = promotion.MaxDiscount,
+                MinTickets = promotion.MinTickets,
+                DaysOfWeek = Helpers.PromotionRules.ParseDays(promotion.DaysOfWeek),
+                StartsAt = promotion.StartsAt,
+                EndsAt = promotion.EndsAt,
+                UsageLimit = promotion.UsageLimit,
+                UsedCount = promotion.UsedCount,
+                Active = promotion.Active
             };
         }
 

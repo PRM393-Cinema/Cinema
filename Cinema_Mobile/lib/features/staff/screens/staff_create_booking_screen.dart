@@ -22,6 +22,8 @@ import '../widgets/staff_feedback.dart';
 import '../../../core/widgets/age_rating_badge.dart';
 import '../../../data/models/concession.dart';
 import '../../booking/widgets/concession_picker.dart';
+import '../../../data/models/promotion.dart';
+import '../../booking/widgets/promotion_box.dart';
 
 // Selling tickets at the counter: a walk-in guest (no account; email and phone
 // if they want) or a member's account, then a movie, one of its showtimes in
@@ -57,6 +59,10 @@ class _StaffCreateBookingScreenState extends State<StaffCreateBookingScreen> {
   final _selected = <int>{};
   List<ConcessionItem> _snacks = const [];
   final _snackQuantities = <int, int>{};
+
+  // The ticket discount of the picked seats; the server works it out again.
+  PromotionQuote _promotion = PromotionQuote.none;
+  String? _promoCode;
   bool _busy = false;
   String? _error;
 
@@ -120,7 +126,13 @@ class _StaffCreateBookingScreenState extends State<StaffCreateBookingScreen> {
         _selected.add(seat.id);
         if (partner != null) _selected.add(partner.id);
       }
+      if (_selected.isEmpty) _clearPromotion();
     });
+  }
+
+  void _clearPromotion() {
+    _promotion = PromotionQuote.none;
+    _promoCode = null;
   }
 
   Future<void> _run(Future<void> Function() load) async {
@@ -155,6 +167,7 @@ class _StaffCreateBookingScreenState extends State<StaffCreateBookingScreen> {
       _showtime = null;
       _map = null;
       _selected.clear();
+      _clearPromotion();
     });
     if (movie == null) return;
     await _run(() async {
@@ -176,6 +189,7 @@ class _StaffCreateBookingScreenState extends State<StaffCreateBookingScreen> {
       _showtime = show;
       _map = null;
       _selected.clear();
+      _clearPromotion();
     });
     if (show == null) return;
     await _run(() async {
@@ -215,6 +229,7 @@ class _StaffCreateBookingScreenState extends State<StaffCreateBookingScreen> {
         showtimeId: _showtime!.id,
         seats: _selected.toList(),
         concessions: Map.of(_snackQuantities),
+        promotionCode: _promoCode,
       );
       if (mounted) {
         Navigator.pushReplacementNamed(
@@ -442,10 +457,34 @@ class _StaffCreateBookingScreenState extends State<StaffCreateBookingScreen> {
                     ),
                   ),
                 ],
+                if (_selected.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.lg),
+                  CinemaPanel(
+                    surfaceOpacity: 0.8,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Text('Promotion', style: AppTextStyles.title),
+                        const SizedBox(height: AppSpacing.md),
+                        PromotionBox(
+                          quote: widget.service.quotePromotion,
+                          showtimeId: showtime.id,
+                          tickets: _selected.length,
+                          ticketAmount: _totalOf(showtime, map),
+                          enabled: !_busy,
+                          onChanged: (quote, code) => setState(() {
+                            _promotion = quote;
+                            _promoCode = code;
+                          }),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 const SizedBox(height: AppSpacing.md),
                 Text(
                   '${_selected.length} seat(s) selected · '
-                  '${formatVnd(_totalOf(showtime, map) + snacksTotal(_snacks, _snackQuantities))}',
+                  '${formatVnd(_totalOf(showtime, map) - _promotion.discount + snacksTotal(_snacks, _snackQuantities))}',
                   key: const Key('counterTotal'),
                   style: AppTextStyles.title,
                 ),
