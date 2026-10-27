@@ -26,6 +26,8 @@ public partial class BookingDbContext : DbContext
 
     public virtual DbSet<Promotion> Promotions { get; set; }
 
+    public virtual DbSet<MovieReview> MovieReviews { get; set; }
+
     public virtual DbSet<LoyaltyAccount> LoyaltyAccounts { get; set; }
 
     public virtual DbSet<LoyaltyTransaction> LoyaltyTransactions { get; set; }
@@ -180,6 +182,29 @@ public partial class BookingDbContext : DbContext
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
+        });
+
+        modelBuilder.Entity<MovieReview>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("movie_reviews_pkey");
+            entity.ToTable("movie_reviews");
+            entity.HasIndex(e => new { e.UserId, e.MovieId }, "movie_reviews_user_movie_key").IsUnique();
+            entity.HasIndex(e => new { e.MovieId, e.CreatedAt }, "idx_movie_reviews_movie");
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.MovieId).HasColumnName("movie_id");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.BookingId).HasColumnName("booking_id");
+            entity.Property(e => e.ReviewerName).HasMaxLength(150).HasColumnName("reviewer_name");
+            entity.Property(e => e.Rating).HasColumnName("rating");
+            entity.Property(e => e.Comment).HasMaxLength(1000).HasColumnName("comment");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("created_at");
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("updated_at");
         });
 
         modelBuilder.Entity<Promotion>(entity =>

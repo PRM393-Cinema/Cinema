@@ -14,17 +14,19 @@ public sealed class FakeShowtimeClient : IShowtimeClient
 
     public const string MovieTitle = "Phim Kiểm Thử";
 
+    public const long DefaultMovieId = 7;
+
     public decimal SeatPrice { get; set; } = 90_000;
 
     // Giả lập MovieService chết / circuit breaker mở
     public bool Unavailable { get; set; }
 
-    public ShowtimeInfo AddShowtime(DateTime startTime, string status = "OPEN")
+    public ShowtimeInfo AddShowtime(DateTime startTime, string status = "OPEN", long movieId = DefaultMovieId)
     {
         var showtime = new ShowtimeInfo
         {
             Id = Interlocked.Increment(ref _nextId),
-            MovieId = 7,
+            MovieId = movieId,
             StartTime = startTime,
             EndTime = startTime.AddHours(2),
             Status = status

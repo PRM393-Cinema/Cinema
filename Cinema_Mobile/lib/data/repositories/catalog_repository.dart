@@ -3,6 +3,7 @@ import '../models/seat.dart';
 import '../models/showtime.dart';
 import '../services/booking_service.dart';
 import '../services/movie_service.dart';
+import '../models/review.dart';
 
 abstract interface class CatalogRepository {
   Future<List<Movie>> getNowShowingMovies();
@@ -15,6 +16,9 @@ abstract interface class CatalogRepository {
   });
 
   Future<List<String>> getGenres();
+
+  // Ratings of a movie by customers who watched it.
+  Future<MovieReviews> getMovieReviews(int movieId);
 
   // Used when a screen is opened from its URL (web refresh or shared link).
   Future<Movie> getMovie(int movieId);
@@ -59,6 +63,10 @@ class RemoteCatalogRepository implements CatalogRepository {
 
   @override
   Future<List<String>> getGenres() => _movies.getGenres();
+
+  @override
+  Future<MovieReviews> getMovieReviews(int movieId) =>
+      _bookings.getMovieReviews(movieId);
 
   @override
   Future<Movie> getMovie(int movieId) => _movies.getMovie(movieId);

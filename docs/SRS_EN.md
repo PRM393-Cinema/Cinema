@@ -62,7 +62,7 @@ CosmoQ Cinema has three parts:
 | [Cinema_BE/docs/MESSAGING.md](../Cinema_BE/docs/MESSAGING.md) | RabbitMQ events, outbox, idempotency |
 | [Cinema_BE/docs/MONITORING.md](../Cinema_BE/docs/MONITORING.md) | Metrics, traces, logs |
 | [Cinema_BE/docs/TESTING.md](../Cinema_BE/docs/TESTING.md) | Automated tests and CI |
-| [Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md) | All 96 endpoints and the screens that use them |
+| [Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md) | All 101 endpoints and the screens that use them |
 | [Cinema_Mobile/docs/STAFF_WORKSPACE.md](../Cinema_Mobile/docs/STAFF_WORKSPACE.md) | Admin website operations |
 | `Resource/PRM393.docx` | Course requirements: permission matrix, required technical components |
 
@@ -232,6 +232,8 @@ Priority: **H** (must have), **M** (important), **L** (nice to have).
 | FR-MOV-08 | The customer app opens the movie trailer (`trailerUrl`). | L |
 | FR-MOV-09 | Film classification under the Cinema Law 2022: P (all ages), K (under 13 with a parent or guardian), T13, T16, T18. Admins pick it when adding / editing a movie (P by default). The rating shows on movie cards, movie details, the booking summary, the counter sale screen and check-in. For anything but P the customer must confirm before the seats are held; at check-in staff are reminded to check ID. | H |
 | FR-MOV-10 | The customer home has two tabs: **Now showing** (ACTIVE movies already released or without a release date, newest first) and **Coming soon** (ACTIVE movies released after today, earliest first, the release date on the poster). Movies can be filtered by genre (chips built from the genres of the movies on offer) and searched by title through the API, ignoring case. A movie coming soon shows its release date; without showtimes the page says they will be added closer to the release. | M |
+| FR-MOV-11 | Movies have a **director** and **main cast** (optional, at most 150 / 500 characters). Admins fill them in when adding / editing a movie; the movie page shows them. | L |
+| FR-MOV-12 | **Movie reviews**: customers whose ticket was checked in (they watched the movie) rate it 1–5 stars with a comment (at most 1,000 characters) from the ticket page. One review per customer per movie: sending again edits it, and it can be deleted. A ticket not checked in is refused (400) with the reason; someone else's ticket is treated as missing (404). The movie page shows everyone the average, the count per star and the newest reviews; the reviewer name is the account's full name (or a masked email). Admins remove unsuitable reviews from Admin → Movies → Reviews. | M |
 
 ### 4.4 Rooms and seats
 
@@ -398,7 +400,7 @@ Navigation on the left; on windows narrower than 640 px it opens from a menu but
 | Booking / payment / refund details | Staff, Admin | Cancel, check in, take payment, verify PayOS, record / reject refunds, notify the customer |
 | Showtimes | Staff, Admin | Create, edit, open / close sales, cancel, seat map and customer list |
 | Room seat map | Staff, Admin | Change one seat or paint many; Admin changes the seat count |
-| Movies | Admin | Add, edit, stop / show again, filter, search |
+| Movies | Admin | Add, edit (also director and cast), stop / show again, filter, search; see and remove a movie's reviews |
 | Rooms | Admin | Add a room as rows × seats, rename, delete, open the seat map |
 | Snacks | Admin | Snacks menu: add, edit, stop / resume selling |
 | Promotions | Admin | Automatic deals and promo codes: add, edit, pause / resume, see uses |
@@ -525,9 +527,9 @@ Check-in is the `checkedInAt` attribute of a `CONFIRMED` ticket, not a separate 
 | Database | Main tables | Notes |
 |---|---|---|
 | `cinema_auth_db` | `users`, `roles`, `users_roles`, `refresh_tokens`, `otp_codes` | Passwords and OTP codes stored only as BCrypt hashes; unique email |
-| `cinema_movie_db` | `movies` | Status `ACTIVE` / `INACTIVE`; rating `age_rating` P / K / T13 / T16 / T18 |
+| `cinema_movie_db` | `movies` | Status `ACTIVE` / `INACTIVE`; rating `age_rating` P / K / T13 / T16 / T18; `director`, `cast_members` |
 | `cinema_showtime_db` | `rooms`, `seats`, `showtimes`, `outbox_messages` | Seat unique by (room, row, number); seat type NORMAL / VIP / SWEETBOX; showtime format 2D / 3D / IMAX |
-| `cinema_booking_db` | `bookings`, `booking_seats`, `seat_reservations`, `concession_items`, `booking_concessions`, `promotions`, `loyalty_accounts`, `loyalty_transactions`, `outbox_messages` | `user_id` NULL for walk-in guests; `customer_email`, `customer_phone`, `checked_in_at`, `expires_at` |
+| `cinema_booking_db` | `bookings`, `booking_seats`, `seat_reservations`, `concession_items`, `booking_concessions`, `promotions`, `loyalty_accounts`, `loyalty_transactions`, `movie_reviews`, `outbox_messages` | `user_id` NULL for walk-in guests; `customer_email`, `customer_phone`, `checked_in_at`, `expires_at` |
 | `cinema_payment_db` | `payments`, `refunds`, `outbox_messages` | Method `PAYOS` / `CASH`; payer account kept for refunds |
 | `cinema_notification_db` | `notifications` | Unique by `event_id` so nothing is sent twice |
 
@@ -540,7 +542,7 @@ Check-in is the `checkedInAt` attribute of a `CONFIRMED` ticket, not a separate 
 
 ### 10.1 API
 
-- 96 business endpoints, REST/JSON, through the gateway at `http://<host>:5000`. Full list: [MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md).
+- 101 business endpoints, REST/JSON, through the gateway at `http://<host>:5000`. Full list: [MOBILE_UI_ENDPOINTS.md](../Cinema_Mobile/docs/MOBILE_UI_ENDPOINTS.md).
 
 | Group | Prefix | Endpoints |
 |---|---|---|
@@ -554,6 +556,7 @@ Check-in is the `checkedInAt` attribute of a `CONFIRMED` ticket, not a separate 
 | Snacks | `/api/v1/concessions` | 3 |
 | Promotions | `/api/v1/promotions` | 4 |
 | Member points | `/api/v1/loyalty` | 4 |
+| Movie reviews | `/api/v1/reviews` | 5 |
 
 - Lists are paged (`page` / `size` or `pageNumber` / `pageSize`), at most 50 records per page, sorted with `sortBy` / `sortDir`.
 - Errors follow ProblemDetails: `title`, `status`, `detail`, `errors` (per field), `errorCode` (business code).
@@ -627,9 +630,9 @@ Check-in is the `checkedInAt` attribute of a `CONFIRMED` ticket, not a separate 
 |---|---|---|
 | AuthService | 28 | Registration, OTP and OTP lockout, sign-in, refresh rotation, sign-out, account locking, role changes, field validation |
 | ApiGateway | 21 | Blocks tokens of locked accounts and changed roles before forwarding, never forwards when the account check fails, 503 when AuthService does not answer |
-| MovieService | 23 | Showtimes, overlaps, cancellation and its event, seats, sweetbox pairs, seat counts, prices per seat type |
-| BookingService | 69 | Bookings, seat holds, webhook, expiry, late payment, refunds, real RabbitMQ, authorization, check-in, statistics, revenue, counter sales |
-| Flutter | 191 | Widget tests of customer and admin screens, validators, payment flow, check-in, counter |
+| MovieService | 24 | Showtimes, overlaps, cancellation and its event, seats, sweetbox pairs, seat counts, prices per seat type |
+| BookingService | 71 | Bookings, seat holds, webhook, expiry, late payment, refunds, real RabbitMQ, authorization, check-in, statistics, revenue, counter sales |
+| Flutter | 195 | Widget tests of customer and admin screens, validators, payment flow, check-in, counter |
 
 Backend integration tests run against real PostgreSQL and RabbitMQ (Testcontainers); PayOS, MovieService and SMTP are replaced by fakes.
 

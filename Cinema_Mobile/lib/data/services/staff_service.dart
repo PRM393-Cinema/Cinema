@@ -13,6 +13,7 @@ import '../models/showtime.dart';
 import '../models/concession.dart';
 import '../models/promotion.dart';
 import '../models/loyalty.dart';
+import '../models/review.dart';
 
 class StaffService {
   StaffService({required this._client});
@@ -130,6 +131,21 @@ class StaffService {
       ),
     ),
   );
+  // Admin: the reviews of a movie, to remove unsuitable ones.
+  Future<MovieReviews> movieReviews(int movieId, {int page = 1}) async =>
+      MovieReviews.fromJson(
+        readMap(
+          await _client.get(
+            '/api/v1/reviews/movie/$movieId',
+            authenticated: true,
+            query: {'page': page, 'size': 50},
+          ),
+        ),
+      );
+  Future<void> deleteReview(int reviewId) async {
+    await _client.delete('/api/v1/reviews/$reviewId', authenticated: true);
+  }
+
   // Customer accounts with this phone number (separators are ignored).
   Future<List<MemberLookup>> findMembers(String phone) async => readMapList(
     await _client.get(

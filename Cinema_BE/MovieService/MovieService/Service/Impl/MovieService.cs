@@ -127,6 +127,9 @@ namespace MovieService.Service.Impl
                 .ToList();
         }
 
+        private static string? Blank(string? value) =>
+            string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
         private static readonly string[] AgeRatings = ["P", "K", "T13", "T16", "T18"];
 
         // null khi bỏ trống; sai mức thì 400
@@ -164,6 +167,8 @@ namespace MovieService.Service.Impl
                 PosterUrl = request.PosterUrl?.Trim(),
                 TrailerUrl = request.TrailerUrl?.Trim(),
                 AgeRating = NormalizeAgeRating(request.AgeRating) ?? "P",
+                Director = Blank(request.Director),
+                Cast = Blank(request.Cast),
                 Status = "ACTIVE", // Đặt mặc định trạng thái
                 CreatedAt = DateTime.Now
             };
@@ -196,6 +201,8 @@ namespace MovieService.Service.Impl
             movie.PosterUrl = request.PosterUrl?.Trim();
             movie.TrailerUrl = request.TrailerUrl?.Trim();
             movie.AgeRating = NormalizeAgeRating(request.AgeRating) ?? movie.AgeRating;
+            movie.Director = Blank(request.Director);
+            movie.Cast = Blank(request.Cast);
 
             // Admin chiếu lại phim đã ngừng (DELETE chỉ chuyển sang INACTIVE)
             if (!string.IsNullOrWhiteSpace(request.Status))

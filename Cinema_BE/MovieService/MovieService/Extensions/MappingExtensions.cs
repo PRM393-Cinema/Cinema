@@ -21,6 +21,8 @@ namespace MovieService.Extensions
                 PosterUrl = movie.PosterUrl,
                 TrailerUrl = movie.TrailerUrl,
                 AgeRating = movie.AgeRating,
+                Director = movie.Director,
+                Cast = movie.Cast,
                 Status = movie.Status,
                 CreatedAt = movie.CreatedAt
             };

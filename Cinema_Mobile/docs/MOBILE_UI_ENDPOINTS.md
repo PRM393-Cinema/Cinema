@@ -1,6 +1,6 @@
 # Chức năng, endpoint và giao diện mobile
 
-Nhánh: `feat/Ngữ/UI_Update`. Đối chiếu từ controller backend, service Flutter và router hiện tại. Có **96 endpoint nghiệp vụ** trong các controller; mỗi dòng dưới đây tương ứng một method + đường dẫn. Không tính Swagger, metrics và health check.
+Nhánh: `feat/Ngữ/UI_Update`. Đối chiếu từ controller backend, service Flutter và router hiện tại. Có **101 endpoint nghiệp vụ** trong các controller; mỗi dòng dưới đây tương ứng một method + đường dẫn. Không tính Swagger, metrics và health check.
 
 “Đã nối API” nghĩa là có lời gọi thật trong code; không khẳng định đã thử end-to-end với server, SMTP hay PayOS thật.
 
@@ -17,11 +17,11 @@ Cập nhật: 12/10/2026. Đây là bảng kiểm tra kết nối API, không ph
 | Quên/đổi mật khẩu: gửi mã | `/forgot-password` | POST `/api/v1/auth/forgot-password` | Đã nối; Login và Account dùng cùng màn |
 | Đặt mật khẩu mới | `/reset-password` | POST `/api/v1/auth/reset-password`; POST `/api/v1/auth/logout` | Đã nối; cần email từ bước gửi mã |
 | Tài khoản/đăng xuất | `/profile` | GET `/api/v1/auth/me`; GET `/api/v1/loyalty/me`; POST `/api/v1/auth/logout` | Đã nối; thẻ thành viên: điểm, hạng, mức còn thiếu để lên hạng, lịch sử điểm |
-| Chi tiết phim và suất chiếu | `/movies/{id}` | GET `/api/v1/movies/{id}`; GET `/api/showtimes/movie/{movieId}/open` | Đã nối; nút **Watch trailer** mở `trailerUrl` của phim |
+| Chi tiết phim và suất chiếu | `/movies/{id}` | GET `/api/v1/movies/{id}`; GET `/api/showtimes/movie/{movieId}/open`; GET `/api/v1/reviews/movie/{movieId}` | Đã nối; nút **Watch trailer** mở `trailerUrl` của phim; đạo diễn, diễn viên; điểm trung bình, số đánh giá theo sao và đánh giá mới nhất |
 | Chọn ghế | `/showtimes/{id}/seats` | GET `/api/showtimes/{showtimeId}`; GET `/api/seats/room/{roomId}`; GET `/api/v1/bookings/showtime/{showtimeId}/occupied-seats` | Đã nối; màu theo loại ghế, hàng sweetbox ở cuối; sweetbox chọn / bỏ theo cặp (1-2, 3-4), server cũng từ chối đặt nửa cặp; giá theo loại ghế lấy từ `seatPrices` của suất chiếu; tự làm mới mỗi 5 giây, ghế đang chọn bị người khác đặt thì bỏ chọn và báo |
 | Xác nhận đặt vé | `/showtimes/{id}/summary` | GET `/api/v1/concessions`; POST `/api/v1/promotions/quote`; POST `/api/v1/bookings` | Đã nối; ghế được truyền từ màn chọn ghế; chọn bắp nước (− / +), tổng tiền gồm bắp nước; khối Promotion hiện khuyến mãi tự áp dụng và ô nhập mã (Apply), tổng tiền trừ phần giảm; phim khác P phải xác nhận độ tuổi |
 | Vé đã đặt | `/bookings` | GET `/api/v1/bookings/user/{userId}` | Đã nối; mới lấy trang đầu |
-| Chi tiết/hủy vé | `/bookings/{id}` | GET `/api/v1/bookings/{id}`; POST `/api/v1/bookings/{id}/cancel`; GET `/api/v1/payments/{id}/refund` | Đã nối; vé đã thanh toán có mã QR (mã vé) để check-in tại rạp, vé đã dùng hiện giờ check-in |
+| Chi tiết/hủy vé | `/bookings/{id}` | GET `/api/v1/bookings/{id}`; POST `/api/v1/bookings/{id}/cancel`; GET `/api/v1/payments/{id}/refund`; GET `/api/v1/reviews/booking/{id}`; POST / DELETE `/api/v1/reviews` (thẻ **Your review** của vé đã check-in) | Đã nối; vé đã thanh toán có mã QR (mã vé) để check-in tại rạp, vé đã dùng hiện giờ check-in |
 | Thanh toán/kết quả | `/bookings/{id}/payment`, `/bookings/{id}/result` | GET `/api/v1/bookings/{id}`; POST `/api/v1/payments/payos/checkout`; POST `/api/v1/payments/payos/{orderCode}/verify` | Đã nối |
 | Lịch sử thanh toán | `/payments` | GET `/api/v1/payments/user/{userId}` | Đã nối; đọc đủ các trang |
 | Danh sách thông báo/làm mới | `/notifications` | GET `/api/v1/notifications/user/{userId}` | Đã nối; đọc đủ các trang |
@@ -31,7 +31,7 @@ Cập nhật: 12/10/2026. Đây là bảng kiểm tra kết nối API, không ph
 | Hồ sơ Admin | `/admin/profile` | GET `/api/v1/auth/me`; POST `/api/v1/auth/logout` | Đã nối; hồ sơ và đăng xuất trong khu vực Admin |
 | Quản lý tài khoản Admin | `/admin/users` | GET `/api/v1/auth/users`; GET `/api/v1/auth/roles` | Đã nối; tìm kiếm, lọc quyền/trạng thái, phân trang; chỉ ROLE_ADMIN |
 | Chi tiết/phân quyền/khóa tài khoản | `/admin/users/{id}` | GET `/api/v1/auth/users/{id}`; GET `/api/v1/auth/roles`; PUT `/api/v1/auth/users/{id}/roles`; PATCH `/api/v1/auth/users/{id}/status` | Đã nối; chỉ ROLE_ADMIN |
-| Quản lý phim (Admin) | `/admin/movies` | GET `/api/v1/movies`, `/api/v1/movies/status/{status}`, `/api/v1/movies/search`; POST `/api/v1/movies`; PUT `/api/v1/movies/{id}`; DELETE `/api/v1/movies/{id}` | Đã nối; thêm/sửa, ngừng chiếu và chiếu lại, lọc trạng thái, tìm tên, phân trang; chỉ ROLE_ADMIN |
+| Quản lý phim (Admin) | `/admin/movies` | GET `/api/v1/movies`, `/api/v1/movies/status/{status}`, `/api/v1/movies/search`; POST `/api/v1/movies`; PUT `/api/v1/movies/{id}`; DELETE `/api/v1/movies/{id}` | Đã nối; thêm/sửa (cả đạo diễn, diễn viên), ngừng chiếu và chiếu lại, lọc trạng thái, tìm tên, phân trang; nút **Reviews** xem và xoá đánh giá (GET `/api/v1/reviews/movie/{id}`, DELETE `/api/v1/reviews/{id}`); chỉ ROLE_ADMIN |
 | Menu bắp nước (Admin) | `/admin/snacks` | GET `/api/v1/concessions?includeInactive=true`; POST `/api/v1/concessions`; PUT `/api/v1/concessions/{id}` | Đã nối; thêm / sửa món, ngừng bán / bán lại; chỉ ROLE_ADMIN |
 | Thành viên (Admin) | `/admin/members` | GET `/api/v1/auth/users?role=ROLE_CUSTOMER`; GET `/api/v1/loyalty/accounts?userIds=`; GET `/api/v1/loyalty/users/{id}`; POST `/api/v1/loyalty/users/{id}/adjust` | Đã nối; khách hàng kèm điểm / hạng / tổng chi tiêu, lịch sử điểm, cộng / trừ điểm kèm lý do; chỉ ROLE_ADMIN |
 | Khuyến mãi (Admin) | `/admin/promotions` | GET `/api/v1/promotions?all=true`; POST `/api/v1/promotions`; PUT `/api/v1/promotions/{id}` | Đã nối; thêm / sửa (mã, % hoặc số tiền, trần, số vé tối thiểu, thứ trong tuần, thời gian, số lượt), tạm dừng / chạy lại, xem lượt dùng; chỉ ROLE_ADMIN |
@@ -176,6 +176,16 @@ Các route `/admin/*` và `/staff/*` thuộc **trang quản trị web** (`lib/ma
 | Xem trước tiền giảm | POST | `/api/v1/promotions/quote` | Xác nhận đặt vé, bán vé tại quầy: `{ showtimeId, ticketAmount, tickets, code? }` → khuyến mãi được áp và số tiền giảm; mã sai / không đủ điều kiện bị 400 kèm lý do · đã nối API | [PromotionController:33](../../Cinema_BE/BookingService/BookingService/Controllers/PromotionController.cs#L33) |
 | Thêm khuyến mãi | POST | `/api/v1/promotions` | Admin → Promotions → Add promotion; % từ 1 đến 90, mã trùng bị 409 · đã nối API | [PromotionController:40](../../Cinema_BE/BookingService/BookingService/Controllers/PromotionController.cs#L40) |
 | Sửa / tạm dừng khuyến mãi | PUT | `/api/v1/promotions/{id}` | Admin → Promotions → Edit / công tắc; bỏ trống `active` thì giữ nguyên · đã nối API | [PromotionController:47](../../Cinema_BE/BookingService/BookingService/Controllers/PromotionController.cs#L47) |
+
+## Đánh giá phim
+
+| Chức năng | Method | Endpoint | UI hiện có | Nguồn backend |
+|---|---|---|---|---|
+| Đánh giá của một phim | GET | `/api/v1/reviews/movie/{movieId}` | Chi tiết phim (ai cũng xem được): điểm trung bình, số đánh giá theo sao, đánh giá mới nhất; Admin → Movies → Reviews · đã nối API | [MovieReviewController:25](../../Cinema_BE/BookingService/BookingService/Controllers/MovieReviewController.cs#L25) |
+| Đánh giá của tôi | GET | `/api/v1/reviews/mine` | Chưa có UI riêng (các đánh giá khách đã viết) | [MovieReviewController:36](../../Cinema_BE/BookingService/BookingService/Controllers/MovieReviewController.cs#L36) |
+| Đánh giá theo vé | GET | `/api/v1/reviews/booking/{bookingId}` | Chi tiết vé → Your review: vé đã check-in chưa, đánh giá hiện có cho phim của vé; vé người khác 404 · đã nối API | [MovieReviewController:43](../../Cinema_BE/BookingService/BookingService/Controllers/MovieReviewController.cs#L43) |
+| Viết / sửa đánh giá | POST | `/api/v1/reviews` | Chi tiết vé → Write a review / Edit: `{ bookingId, rating 1–5, comment }`; vé chưa check-in bị 400 · đã nối API | [MovieReviewController:50](../../Cinema_BE/BookingService/BookingService/Controllers/MovieReviewController.cs#L50) |
+| Xoá đánh giá | DELETE | `/api/v1/reviews/{id}` | Chi tiết vé → Delete (chủ đánh giá); Admin → Movies → Reviews (Admin) · đã nối API | [MovieReviewController:58](../../Cinema_BE/BookingService/BookingService/Controllers/MovieReviewController.cs#L58) |
 
 ## Điểm thành viên
 

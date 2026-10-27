@@ -20,6 +20,7 @@ import 'fixtures.dart';
 import 'package:cinema_fe/data/models/concession.dart';
 import 'package:cinema_fe/data/models/promotion.dart';
 import 'package:cinema_fe/data/models/loyalty.dart';
+import 'package:cinema_fe/data/models/review.dart';
 
 class FakeAuthRepository implements AuthRepository {
   @override
@@ -224,6 +225,13 @@ class FakeCatalogRepository implements CatalogRepository {
     ];
   }
 
+  // Reviews per movie id; none by default.
+  final reviews = <int, MovieReviews>{};
+
+  @override
+  Future<MovieReviews> getMovieReviews(int movieId) async =>
+      reviews[movieId] ?? MovieReviews.empty;
+
   @override
   Future<List<String>> getGenres() async => {
     for (final movie in movies)
@@ -316,6 +324,40 @@ class FakeBookingRepository implements BookingRepository {
 
   // The member's card; null makes loading it fail (no points used then).
   LoyaltyCard? loyalty;
+
+  // The review state of each ticket; a ticket not listed cannot be reviewed.
+  final bookingReviews = <int, BookingReview>{};
+  final savedReviews = <({int bookingId, int rating, String comment})>[];
+  final deletedReviews = <int>[];
+
+  @override
+  Future<BookingReview> getBookingReview(int bookingId) async =>
+      bookingReviews[bookingId] ??
+      BookingReview(bookingId: bookingId, movieId: 0, canReview: false);
+
+  @override
+  Future<MovieReview> saveReview({
+    required int bookingId,
+    required int rating,
+    String comment = '',
+  }) async {
+    savedReviews.add((bookingId: bookingId, rating: rating, comment: comment));
+    final now = DateTime.now();
+    return MovieReview(
+      id: 500 + savedReviews.length,
+      movieId: bookingReviews[bookingId]?.movieId ?? 1,
+      bookingId: bookingId,
+      reviewerName: 'Nguyen Van Khach',
+      rating: rating,
+      comment: comment.isEmpty ? null : comment,
+      createdAt: now,
+      updatedAt: now,
+      mine: true,
+    );
+  }
+
+  @override
+  Future<void> deleteReview(int reviewId) async => deletedReviews.add(reviewId);
 
   @override
   Future<LoyaltyCard> getMyLoyalty() async =>
