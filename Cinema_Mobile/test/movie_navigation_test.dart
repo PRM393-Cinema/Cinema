@@ -2,7 +2,6 @@ import 'package:cinema_fe/app/routes/app_routes.dart';
 import 'package:cinema_fe/data/models/movie.dart';
 import 'package:cinema_fe/features/movie/screens/movie_detail_screen.dart';
 import 'package:cinema_fe/features/movie/widgets/movie_preview_card.dart';
-import 'package:cinema_fe/features/movie/widgets/movie_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -40,15 +39,13 @@ void main() {
           (widget) => widget is MoviePreviewCard && widget.movie.id == movie.id,
         );
         await scrollHomeTo(tester, card);
-        final posterCard = find.descendant(
-          of: card,
-          matching: find.byType(MovieCard),
-        );
-        final position = tester.getTopLeft(posterCard);
-        tester.widget<MoviePreviewCard>(card).active.value = movie.id;
+        final position = tester.getTopLeft(card);
+        await tester.tapAt(tester.getTopLeft(card) + const Offset(40, 40));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 150));
-        expect(tester.getTopLeft(posterCard), position);
+        expect(tester.getTopLeft(card), position);
+        expect(find.byType(MovieDetailScreen), findsNothing);
+        expect(tester.widget<MoviePreviewCard>(card).active.value, movie.id);
         await tester.tap(
           find.descendant(of: card, matching: find.text('View details')),
         );
@@ -82,6 +79,9 @@ void main() {
       await tester.tap(
         find.descendant(of: card, matching: find.text('Interstellar')),
       );
+      await pumpRoute(tester);
+      expect(find.byType(MovieDetailScreen), findsNothing);
+      await tester.tap(find.text('View details'));
       await pumpRoute(tester);
       expect(
         tester

@@ -278,6 +278,8 @@ void main() {
     await scrollHomeTo(tester, find.text('Interstellar').last);
     await tester.tap(find.text('Interstellar').last);
     await pumpRoute(tester);
+    await tester.tap(find.text('View details'));
+    await pumpRoute(tester);
 
     expect(find.text('Interstellar'), findsWidgets);
     expect(find.text('Showtimes'), findsOneWidget);
@@ -290,9 +292,11 @@ void main() {
     await _openHome(tester);
 
     await tester.enterText(find.byKey(const Key('movieSearchField')), 'oppen');
-    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
     await scrollHomeTo(tester, find.text('Oppenheimer').last);
     await tester.tap(find.text('Oppenheimer').last);
+    await pumpRoute(tester);
+    await tester.tap(find.text('View details'));
     await pumpRoute(tester);
 
     expect(find.text('Oppenheimer'), findsWidgets);
@@ -378,6 +382,8 @@ Future<void> _openHome(WidgetTester tester, {bool authenticated = true}) async {
 Future<void> _openMovieDetail(WidgetTester tester) async {
   await scrollHomeTo(tester, find.text(inception.title).first);
   await tester.tap(find.text(inception.title).first);
+  await pumpRoute(tester);
+  await tester.tap(find.text('View details'));
   await pumpRoute(tester);
 }
 

@@ -6,6 +6,7 @@ import 'package:cinema_fe/data/models/movie.dart';
 import 'package:cinema_fe/features/movie/widgets/movie_preview_card.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show PlatformViewHitTestBehavior;
 import 'package:flutter_test/flutter_test.dart';
 
 const movie = Movie(
@@ -86,6 +87,12 @@ void main() {
     await tester.tap(find.text(movie.title));
     await tester.pump();
     expect(find.byType(TrailerPreview), findsOneWidget);
+    expect(
+      tester
+          .widget<HtmlElementView>(find.byType(HtmlElementView))
+          .hitTestBehavior,
+      PlatformViewHitTestBehavior.transparent,
+    );
     expect(active.value, movie.id);
     expect(opened, isFalse);
     await tester.tapAt(tester.getCenter(find.byType(TrailerPreview)));
@@ -95,4 +102,45 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     active.dispose();
   });
+  testWidgets(
+    'Failed playback stays in preview and can retry before opening details',
+    (tester) async {
+      final active = ValueNotifier<int?>(null);
+      var opened = false;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 240,
+              height: 340,
+              child: MoviePreviewCard(
+                movie: movie,
+                active: active,
+                onOpen: () => opened = true,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text(movie.title));
+      await tester.pump();
+      tester.widget<TrailerPreview>(find.byType(TrailerPreview)).onDone();
+      await tester.pump();
+      expect(active.value, movie.id);
+      expect(opened, isFalse);
+      expect(find.text('Preview unavailable'), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      await tester.tap(find.text('Retry preview'));
+      await tester.pump();
+      expect(find.byType(TrailerPreview), findsOneWidget);
+      expect(opened, isFalse);
+      await tester.pump(const Duration(seconds: 12));
+      expect(find.text('Preview unavailable'), findsOneWidget);
+      expect(active.value, movie.id);
+      await tester.tap(find.text('View details'));
+      expect(opened, isTrue);
+      await tester.pumpWidget(const SizedBox());
+      active.dispose();
+    },
+  );
 }

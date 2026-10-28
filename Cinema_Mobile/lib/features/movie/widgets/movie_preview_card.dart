@@ -32,7 +32,6 @@ class _MoviePreviewCardState extends State<MoviePreviewCard> {
   bool _failed = false;
   bool get _active => widget.active.value == widget.movie.id;
   bool get _available =>
-      !_failed &&
       supportsTrailerPreview &&
       directPreviewUrl(Uri.tryParse(widget.movie.previewUrl) ?? Uri()) != null;
 
@@ -45,16 +44,28 @@ class _MoviePreviewCardState extends State<MoviePreviewCard> {
   @override
   void didUpdateWidget(covariant MoviePreviewCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _failed = false;
+    if (oldWidget.active != widget.active) {
+      oldWidget.active.removeListener(_changed);
+      widget.active.addListener(_changed);
+    }
+    if (oldWidget.movie.id != widget.movie.id ||
+        oldWidget.movie.previewUrl != widget.movie.previewUrl ||
+        oldWidget.active != widget.active) {
+      _changed();
+    }
   }
 
   void _changed() {
     _deadline?.cancel();
-    if (_active) {
-      // Return to the poster if embedding or autoplay is blocked.
+    if (_active && _available) {
       _deadline = Timer(const Duration(seconds: 12), _fail);
     }
-    if (mounted) setState(() => _playing = false);
+    if (mounted) {
+      setState(() {
+        _playing = false;
+        _failed = false;
+      });
+    }
   }
 
   void _stop() {
@@ -62,12 +73,16 @@ class _MoviePreviewCardState extends State<MoviePreviewCard> {
   }
 
   void _fail() {
-    _failed = true;
-    _stop();
+    if (!mounted || !_active) return;
+    _deadline?.cancel();
+    setState(() {
+      _failed = true;
+      _playing = false;
+    });
   }
 
   void _start() {
-    if (_available && !_active) widget.active.value = widget.movie.id;
+    if (!_active) widget.active.value = widget.movie.id;
   }
 
   void _open() {
@@ -76,7 +91,7 @@ class _MoviePreviewCardState extends State<MoviePreviewCard> {
   }
 
   void _tap() {
-    if (_active || !_available) {
+    if (_active) {
       _open();
     } else {
       _start();
@@ -99,89 +114,129 @@ class _MoviePreviewCardState extends State<MoviePreviewCard> {
           _start();
         }
       },
-      onExit: (_) => _stop(),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          MovieCard(
-            title: widget.movie.title,
-            posterUrl: widget.movie.posterUrl,
-            genre: widget.movie.genre,
-            duration: widget.movie.durationText,
-            ageRating: widget.movie.ageRating,
-            badge: widget.movie.isComingSoon()
-                ? formatShortDate(widget.movie.releaseDate!)
-                : null,
-            onTap: _tap,
-          ),
-          if (_active)
-            Material(
-              color: AppColors.surface,
-              borderRadius: AppRadius.borderRadiusMd,
-              clipBehavior: Clip.antiAlias,
-              child: Column(
-                children: [
-                  Expanded(
-                    child: InkWell(
-                      onTap: _open,
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          TrailerPreview(
-                            key: ValueKey(widget.movie.id),
-                            url: directPreviewUrl(
-                              Uri.parse(widget.movie.previewUrl),
-                            )!,
-                            onPlaying: () {
-                              _deadline?.cancel();
-                              if (mounted && _active) {
-                                setState(() => _playing = true);
-                              }
-                            },
-                            onDone: _fail,
-                          ),
-                          if (!_playing) ...[
-                            AppNetworkImage(imageUrl: widget.movie.posterUrl),
-                            const Center(
-                              child: SizedBox.square(
-                                dimension: 24,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
+      onExit: (event) {
+        if (event.kind == PointerDeviceKind.mouse) _stop();
+      },
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 1, end: _active && !reduceMotion ? 1.08 : 1),
+        duration: reduceMotion
+            ? Duration.zero
+            : const Duration(milliseconds: 120),
+        curve: Curves.easeOutCubic,
+        builder: (context, scale, child) => Transform.scale(
+          scale: scale,
+          // Zoom the artwork while keeping taps inside the original grid slot.
+          transformHitTests: false,
+          child: child,
+        ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            MovieCard(
+              title: widget.movie.title,
+              posterUrl: widget.movie.posterUrl,
+              genre: widget.movie.genre,
+              duration: widget.movie.durationText,
+              ageRating: widget.movie.ageRating,
+              badge: widget.movie.isComingSoon()
+                  ? formatShortDate(widget.movie.releaseDate!)
+                  : null,
+              onTap: _tap,
+            ),
+            if (_active)
+              Material(
+                color: AppColors.surface,
+                borderRadius: AppRadius.borderRadiusMd,
+                clipBehavior: Clip.antiAlias,
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: InkWell(
+                        onTap: _open,
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            if (_available && !_failed)
+                              TrailerPreview(
+                                key: ValueKey(widget.movie.id),
+                                url: directPreviewUrl(
+                                  Uri.parse(widget.movie.previewUrl),
+                                )!,
+                                onPlaying: () {
+                                  _deadline?.cancel();
+                                  if (mounted && _active) {
+                                    setState(() => _playing = true);
+                                  }
+                                },
+                                onDone: _fail,
                               ),
-                            ),
+                            if (!_playing) ...[
+                              AppNetworkImage(imageUrl: widget.movie.posterUrl),
+                              if (_available && !_failed)
+                                const Center(
+                                  child: SizedBox.square(
+                                    dimension: 24,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  ),
+                                ),
+                              if (!_available || _failed)
+                                Center(
+                                  child: Container(
+                                    color: AppColors.background.withValues(
+                                      alpha: 0.9,
+                                    ),
+                                    padding: const EdgeInsets.all(8),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Text(
+                                          'Preview unavailable',
+                                          textAlign: TextAlign.center,
+                                        ),
+                                        if (_available)
+                                          TextButton(
+                                            onPressed: _changed,
+                                            child: const Text('Retry preview'),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ],
-                        ],
-                      ),
-                    ),
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextButton(
-                          onPressed: _open,
-                          child: const Text('View details'),
                         ),
                       ),
-                      IconButton(
-                        tooltip: 'Stop preview',
-                        onPressed: _stop,
-                        icon: const Icon(Icons.stop_circle_outlined),
-                      ),
-                    ],
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.only(bottom: 8),
-                    child: Text(
-                      'Tap again for details · Muted',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 12),
                     ),
-                  ),
-                ],
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: _open,
+                            child: const Text('View details'),
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: 'Stop preview',
+                          onPressed: _stop,
+                          icon: const Icon(Icons.stop_circle_outlined),
+                        ),
+                      ],
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 8),
+                      child: Text(
+                        'Tap again for details · Muted',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

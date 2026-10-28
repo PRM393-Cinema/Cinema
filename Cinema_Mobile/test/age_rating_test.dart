@@ -55,6 +55,8 @@ void main() {
     expect(find.byKey(const ValueKey('ageRating-T16')), findsWidgets);
     await tester.tap(find.text(_rated.title).first);
     await pumpRoute(tester);
+    await tester.tap(find.text('View details'));
+    await pumpRoute(tester);
     expect(find.text('16 and over'), findsOneWidget);
 
     await tester.ensureVisible(find.text('Room 1'));
@@ -91,6 +93,8 @@ void main() {
     await pumpRoute(tester);
     await scrollHomeTo(tester, find.text(inception.title).first);
     await tester.tap(find.text(inception.title).first);
+    await pumpRoute(tester);
+    await tester.tap(find.text('View details'));
     await pumpRoute(tester);
     await tester.ensureVisible(find.text('Room 1'));
     await tester.pump();

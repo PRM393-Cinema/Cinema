@@ -887,6 +887,8 @@ Future<void> _openSeatSelection(
   await scrollHomeTo(tester, find.text(inception.title).first);
   await tester.tap(find.text(inception.title).first);
   await pumpRoute(tester);
+  await tester.tap(find.text('View details'));
+  await pumpRoute(tester);
 
   // Showtimes are listed on the movie detail screen.
   await tester.ensureVisible(find.text('Room 1'));

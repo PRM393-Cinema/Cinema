@@ -59,6 +59,8 @@ void main() {
     await scrollHomeTo(tester, find.text(inception.title).first);
     await tester.tap(find.text(inception.title).first);
     await pumpRoute(tester);
+    await tester.tap(find.text('View details'));
+    await pumpRoute(tester);
     await tester.ensureVisible(find.text('Room 1'));
     await tester.pump();
     await tester.tap(find.text('Room 1'));

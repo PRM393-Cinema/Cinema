@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:js_interop';
 
 import 'package:flutter/widgets.dart';
+import 'package:flutter/rendering.dart' show PlatformViewHitTestBehavior;
 import 'package:web/web.dart' as web;
 
 const supportsTrailerPreview = true;
@@ -47,6 +48,7 @@ class _TrailerPreviewState extends State<TrailerPreview> {
   @override
   Widget build(BuildContext context) => HtmlElementView.fromTagName(
     tagName: 'video',
+    hitTestBehavior: PlatformViewHitTestBehavior.transparent,
     onElementCreated: (element) {
       final video = element as web.HTMLVideoElement;
       _video = video;

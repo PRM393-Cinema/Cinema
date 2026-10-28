@@ -237,9 +237,11 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                                   color: AppColors.primary,
                                 ),
                                 SizedBox(width: AppSpacing.sm),
-                                Text(
-                                  'Showtimes',
-                                  style: AppTextStyles.heading2,
+                                Flexible(
+                                  child: Text(
+                                    'Showtimes',
+                                    style: AppTextStyles.heading2,
+                                  ),
                                 ),
                               ],
                             ),
@@ -339,35 +341,43 @@ class _MovieOverview extends StatelessWidget {
         ? null
         : _Synopsis(description: movie.description);
 
-    // Poster beside the facts keeps the title and details on the first
-    // screen. Wide screens also put the synopsis in that column.
+    final poster = AppNetworkImage(
+      key: const Key('movieOverviewPoster'),
+      imageUrl: movie.posterUrl,
+      width: isWide ? 220 : double.infinity,
+      height: isWide ? 330 : 200,
+      fit: BoxFit.contain,
+      borderRadius: AppRadius.borderRadiusLg,
+    );
+    final facts = _MovieFacts(movie: movie, isWide: isWide);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            AppNetworkImage(
-              imageUrl: movie.posterUrl,
-              width: isWide ? 220 : 96,
-              height: isWide ? 330 : 144,
-              borderRadius: AppRadius.borderRadiusLg,
-            ),
-            SizedBox(width: isWide ? AppSpacing.xxl : AppSpacing.lg),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _MovieFacts(movie: movie, isWide: isWide),
-                  if (isWide && synopsis != null) ...[
-                    const SizedBox(height: AppSpacing.xl),
-                    synopsis,
+        if (!isWide) ...[
+          poster,
+          const SizedBox(height: AppSpacing.lg),
+          facts,
+        ] else
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              poster,
+              const SizedBox(width: AppSpacing.xxl),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    facts,
+                    if (synopsis != null) ...[
+                      const SizedBox(height: AppSpacing.xl),
+                      synopsis,
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
         if (!isWide && synopsis != null) ...[
           const SizedBox(height: AppSpacing.xl),
           synopsis,
@@ -399,6 +409,7 @@ class _MovieFacts extends StatelessWidget {
       children: [
         Text(
           movie.title,
+          key: const Key('movieOverviewTitle'),
           style: isWide ? AppTextStyles.display : AppTextStyles.heading2,
         ),
         const SizedBox(height: AppSpacing.md),
