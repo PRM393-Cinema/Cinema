@@ -811,13 +811,14 @@ void main() {
       await tester.tap(find.byTooltip('Notifications'));
       await pumpRoute(tester);
 
-      expect(find.text(notificationFixture.subject), findsOneWidget);
+      expect(find.text(notificationFixture.displayTitle), findsOneWidget);
 
-      await tester.tap(find.text(notificationFixture.subject));
+      await tester.tap(find.text(notificationFixture.displayTitle));
       await pumpRoute(tester);
 
       expect(find.textContaining('Đặt vé thành công'), findsOneWidget);
-      expect(find.textContaining('Phim: Inception & bạn'), findsOneWidget);
+      expect(find.text('Phim'), findsOneWidget);
+      expect(find.text('Inception & bạn'), findsOneWidget);
     });
 
     testWidgets('Forgot password sends a code and resets the password', (

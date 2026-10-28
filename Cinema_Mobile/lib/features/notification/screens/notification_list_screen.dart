@@ -237,69 +237,67 @@ class _NotificationTile extends StatelessWidget {
         borderRadius: AppRadius.borderRadiusMd,
         child: CinemaPanel(
           surfaceOpacity: 0.8,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Icon(
-                notification.type == 'SHOWTIME_REMINDER'
-                    ? Icons.alarm_rounded
-                    : notification.type.startsWith('REFUND')
-                    ? Icons.receipt_long_outlined
-                    : Icons.confirmation_number_outlined,
-                color: AppColors.primary,
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        if (!notification.isRead) ...[
-                          Container(
-                            key: ValueKey('unread-${notification.id}'),
-                            width: 8,
-                            height: 8,
-                            decoration: const BoxDecoration(
-                              color: AppColors.accent,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: AppSpacing.sm),
-                        ],
-                        Expanded(
-                          child: Text(
-                            notification.subject,
-                            style: AppTextStyles.body.copyWith(
-                              fontWeight: notification.isRead
-                                  ? FontWeight.w500
-                                  : FontWeight.w700,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      notification.plainContent,
-                      style: AppTextStyles.bodySmall.copyWith(height: 1.5),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    Text(
+              Row(
+                children: [
+                  const Icon(
+                    Icons.notifications_outlined,
+                    color: AppColors.primary,
+                    size: 24,
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Text(
                       formatDateTime(notification.createdAt),
                       style: AppTextStyles.bodySmall,
                     ),
+                  ),
+                  if (!notification.isRead) ...[
+                    const SizedBox(width: AppSpacing.sm),
+                    Semantics(
+                      label: 'Unread',
+                      child: Container(
+                        key: ValueKey('unread-${notification.id}'),
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          color: AppColors.accent,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
                   ],
+                  const SizedBox(width: AppSpacing.sm),
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    color: AppColors.textSecondary,
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              Text(
+                notification.displayTitle,
+                key: ValueKey('notificationTitle-${notification.id}'),
+                style: AppTextStyles.heading2,
+              ),
+              if (notification.bookingCode != null) ...[
+                const SizedBox(height: AppSpacing.sm),
+                Text(notification.bookingCode!, style: AppTextStyles.bodySmall),
+              ],
+              if (notification.previewText.isNotEmpty) ...[
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+                  child: Divider(height: 1, color: AppColors.border),
                 ),
-              ),
-              const Icon(
-                Icons.chevron_right_rounded,
-                color: AppColors.textSecondary,
-              ),
+                Text(
+                  notification.previewText,
+                  style: AppTextStyles.body.copyWith(height: 1.5),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ],
           ),
         ),

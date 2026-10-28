@@ -123,7 +123,7 @@ void main() {
     expect(find.byKey(const ValueKey('unread-1')), findsNothing);
     expect(find.textContaining('2 unread'), findsOneWidget);
 
-    await tester.tap(find.text(_reminder.subject));
+    await tester.tap(find.byKey(const ValueKey('notificationTitle-2')));
     await pumpRoute(tester);
     expect(bookings.readNotificationIds, [2]);
     tester.state<NavigatorState>(find.byType(Navigator).first).pop();

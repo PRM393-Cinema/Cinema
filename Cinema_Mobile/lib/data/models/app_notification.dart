@@ -57,4 +57,34 @@ class AppNotification {
   );
 
   String get plainContent => htmlToPlainText(content);
+
+  RegExpMatch? get _heading => RegExp(
+    r'<h[1-6]\b[^>]*>([\s\S]*?)</h[1-6]>',
+    caseSensitive: false,
+  ).firstMatch(content);
+
+  String get displayTitle {
+    final heading = _heading;
+    final title = heading == null ? '' : htmlToPlainText(heading.group(1)!);
+    return title.trim().isEmpty
+        ? subject
+        : title.replaceAll(RegExp(r'\s+'), ' ');
+  }
+
+  String? get bookingCode =>
+      RegExp(r'\bBK-[A-Za-z0-9-]+')
+          .firstMatch('$subject ${htmlToPlainText(content)}')
+          ?.group(0);
+
+  String get bodyContent {
+    final heading = _heading;
+    return heading == null
+        ? content
+        : content.replaceFirst(heading.group(0)!, '');
+  }
+
+  String get previewText =>
+      htmlToPlainText(bodyContent.replaceAll(RegExp(r'\s+'), ' '))
+          .split('\n')
+          .firstWhere((line) => line != displayTitle, orElse: () => '');
 }
