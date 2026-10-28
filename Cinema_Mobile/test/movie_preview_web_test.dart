@@ -23,46 +23,45 @@ const movie = Movie(
 );
 
 void main() {
-  testWidgets(
-    'Hover waits, keeps playing beyond ten seconds, and stops on exit',
-    (tester) async {
-      final active = ValueNotifier<int?>(null);
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SizedBox(
-              width: 240,
-              height: 340,
-              child: MoviePreviewCard(
-                movie: movie,
-                active: active,
-                onOpen: () {},
-              ),
+  testWidgets('Hover starts immediately, keeps looping, and stops on exit', (
+    tester,
+  ) async {
+    final active = ValueNotifier<int?>(null);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 240,
+            height: 340,
+            child: MoviePreviewCard(
+              movie: movie,
+              active: active,
+              onOpen: () {},
             ),
           ),
         ),
-      );
-      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
-      await mouse.addPointer(location: const Offset(600, 500));
-      await mouse.moveTo(const Offset(100, 100));
-      await tester.pump(const Duration(milliseconds: 400));
-      expect(active.value, isNull);
-      await tester.pump(const Duration(milliseconds: 100));
-      expect(active.value, movie.id);
-      tester.widget<TrailerPreview>(find.byType(TrailerPreview)).onPlaying();
-      await tester.pump(const Duration(seconds: 30));
-      expect(active.value, movie.id);
-      await mouse.moveTo(const Offset(600, 500));
-      await tester.pump();
-      expect(active.value, isNull);
-      await tester.pumpWidget(const SizedBox());
-      await mouse.removePointer();
-      active.dispose();
-      expect(tester.takeException(), isNull);
-    },
-  );
+      ),
+    );
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: const Offset(600, 500));
+    await mouse.moveTo(const Offset(100, 100));
+    expect(active.value, movie.id);
+    await tester.pump();
+    tester.widget<TrailerPreview>(find.byType(TrailerPreview)).onPlaying();
+    await tester.pump(const Duration(seconds: 30));
+    expect(active.value, movie.id);
+    await mouse.moveTo(const Offset(600, 500));
+    await tester.pump();
+    expect(active.value, isNull);
+    await tester.pumpWidget(const SizedBox());
+    await mouse.removePointer();
+    active.dispose();
+    expect(tester.takeException(), isNull);
+  });
 
-  testWidgets('Phone has separate details and preview actions', (tester) async {
+  testWidgets('Phone first tap previews and second tap opens details', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(375, 812);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -86,17 +85,10 @@ void main() {
     );
     await tester.tap(find.text(movie.title));
     await tester.pump();
-    expect(active.value, isNull);
-    expect(opened, isTrue);
-    opened = false;
-    await tester.tap(find.byTooltip('Preview ${movie.title}'));
-    await tester.pump();
     expect(find.byType(TrailerPreview), findsOneWidget);
-    expect(active.value, isNull);
+    expect(active.value, movie.id);
     expect(opened, isFalse);
-    tester.widget<TrailerPreview>(find.byType(TrailerPreview)).onPlaying();
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('View details'));
+    await tester.tapAt(tester.getCenter(find.byType(TrailerPreview)));
     await tester.pump();
     expect(opened, isTrue);
     expect(active.value, isNull);

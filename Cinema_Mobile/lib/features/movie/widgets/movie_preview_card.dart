@@ -7,10 +7,10 @@ import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_radius.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/utils/trailer_url.dart';
+import '../../../core/widgets/app_network_image.dart';
 import '../../../core/widgets/trailer_preview.dart';
 import '../../../data/models/movie.dart';
 import 'movie_card.dart';
-import 'movie_preview_sheet.dart';
 
 class MoviePreviewCard extends StatefulWidget {
   const MoviePreviewCard({
@@ -27,10 +27,12 @@ class MoviePreviewCard extends StatefulWidget {
 }
 
 class _MoviePreviewCardState extends State<MoviePreviewCard> {
-  Timer? _hover;
   Timer? _deadline;
+  bool _playing = false;
+  bool _failed = false;
   bool get _active => widget.active.value == widget.movie.id;
   bool get _available =>
+      !_failed &&
       supportsTrailerPreview &&
       directPreviewUrl(Uri.tryParse(widget.movie.previewUrl) ?? Uri()) != null;
 
@@ -40,18 +42,28 @@ class _MoviePreviewCardState extends State<MoviePreviewCard> {
     widget.active.addListener(_changed);
   }
 
+  @override
+  void didUpdateWidget(covariant MoviePreviewCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _failed = false;
+  }
+
   void _changed() {
     _deadline?.cancel();
     if (_active) {
       // Return to the poster if embedding or autoplay is blocked.
-      _deadline = Timer(const Duration(seconds: 12), _stop);
+      _deadline = Timer(const Duration(seconds: 12), _fail);
     }
-    if (mounted) setState(() {});
+    if (mounted) setState(() => _playing = false);
   }
 
   void _stop() {
-    _hover?.cancel();
     if (_active) widget.active.value = null;
+  }
+
+  void _fail() {
+    _failed = true;
+    _stop();
   }
 
   void _start() {
@@ -63,14 +75,16 @@ class _MoviePreviewCardState extends State<MoviePreviewCard> {
     widget.onOpen();
   }
 
-  void _preview() {
-    _stop();
-    showMoviePreview(context, widget.movie, _open);
+  void _tap() {
+    if (_active || !_available) {
+      _open();
+    } else {
+      _start();
+    }
   }
 
   @override
   void dispose() {
-    _hover?.cancel();
     _deadline?.cancel();
     widget.active.removeListener(_changed);
     super.dispose();
@@ -82,7 +96,7 @@ class _MoviePreviewCardState extends State<MoviePreviewCard> {
     return MouseRegion(
       onEnter: (event) {
         if (event.kind == PointerDeviceKind.mouse && !reduceMotion) {
-          _hover = Timer(const Duration(milliseconds: 450), _start);
+          _start();
         }
       },
       onExit: (_) => _stop(),
@@ -90,7 +104,7 @@ class _MoviePreviewCardState extends State<MoviePreviewCard> {
         scale: _active && !reduceMotion ? 1.12 : 1,
         duration: reduceMotion
             ? Duration.zero
-            : const Duration(milliseconds: 180),
+            : const Duration(milliseconds: 120),
         curve: Curves.easeOutCubic,
         child: Stack(
           fit: StackFit.expand,
@@ -104,8 +118,7 @@ class _MoviePreviewCardState extends State<MoviePreviewCard> {
               badge: widget.movie.isComingSoon()
                   ? formatShortDate(widget.movie.releaseDate!)
                   : null,
-              onTap: _open,
-              onPreview: _available ? _preview : null,
+              onTap: _tap,
             ),
             if (_active)
               Material(
@@ -115,15 +128,37 @@ class _MoviePreviewCardState extends State<MoviePreviewCard> {
                 child: Column(
                   children: [
                     Expanded(
-                      child: TrailerPreview(
-                        key: ValueKey(widget.movie.id),
-                        url: directPreviewUrl(
-                          Uri.parse(widget.movie.previewUrl),
-                        )!,
-                        onPlaying: () {
-                          _deadline?.cancel();
-                        },
-                        onDone: _stop,
+                      child: InkWell(
+                        onTap: _open,
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            TrailerPreview(
+                              key: ValueKey(widget.movie.id),
+                              url: directPreviewUrl(
+                                Uri.parse(widget.movie.previewUrl),
+                              )!,
+                              onPlaying: () {
+                                _deadline?.cancel();
+                                if (mounted && _active) {
+                                  setState(() => _playing = true);
+                                }
+                              },
+                              onDone: _fail,
+                            ),
+                            if (!_playing) ...[
+                              AppNetworkImage(imageUrl: widget.movie.posterUrl),
+                              const Center(
+                                child: SizedBox.square(
+                                  dimension: 24,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
                       ),
                     ),
                     Row(
@@ -144,7 +179,8 @@ class _MoviePreviewCardState extends State<MoviePreviewCard> {
                     const Padding(
                       padding: EdgeInsets.only(bottom: 8),
                       child: Text(
-                        '10s loop · Muted',
+                        'Tap again for details · Muted',
+                        textAlign: TextAlign.center,
                         style: TextStyle(fontSize: 12),
                       ),
                     ),

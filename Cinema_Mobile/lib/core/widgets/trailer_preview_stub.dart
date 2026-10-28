@@ -7,13 +7,11 @@ class TrailerPreview extends StatelessWidget {
     required this.url,
     required this.onPlaying,
     required this.onDone,
-    this.crop = true,
     super.key,
   });
   final Uri url;
   final VoidCallback onPlaying;
   final VoidCallback onDone;
-  final bool crop;
   @override
   Widget build(BuildContext context) => const SizedBox.shrink();
 }

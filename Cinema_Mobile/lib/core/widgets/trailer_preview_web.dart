@@ -11,13 +11,11 @@ class TrailerPreview extends StatefulWidget {
     required this.url,
     required this.onPlaying,
     required this.onDone,
-    this.crop = true,
     super.key,
   });
   final Uri url;
   final VoidCallback onPlaying;
   final VoidCallback onDone;
-  final bool crop;
   @override
   State<TrailerPreview> createState() => _TrailerPreviewState();
 }
@@ -64,7 +62,7 @@ class _TrailerPreviewState extends State<TrailerPreview> {
       video.style
         ..width = '100%'
         ..height = '100%'
-        ..objectFit = widget.crop ? 'cover' : 'contain'
+        ..objectFit = 'cover'
         ..pointerEvents = 'none';
       _events.add(
         video.onPlaying.listen((_) {

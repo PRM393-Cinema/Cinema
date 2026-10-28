@@ -1,8 +1,10 @@
+@TestOn('vm')
+library;
+
 import 'package:cinema_fe/app/theme/app_theme.dart';
 import 'package:cinema_fe/core/widgets/trailer_preview.dart';
 import 'package:cinema_fe/data/models/movie.dart';
-import 'package:cinema_fe/features/movie/widgets/movie_card.dart';
-import 'package:cinema_fe/features/movie/widgets/movie_preview_sheet.dart';
+import 'package:cinema_fe/features/movie/widgets/movie_preview_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -21,129 +23,109 @@ const _movie = Movie(
 );
 
 void main() {
-  testWidgets('Preview and opening movie details are separate touch actions', (
+  testWidgets('Unsupported platforms still open details on the first tap', (
     tester,
   ) async {
-    var previews = 0;
     var opened = 0;
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.darkTheme,
-        home: Scaffold(
-          body: SizedBox(
-            width: 160,
-            height: 340,
-            child: MovieCard(
-              title: _movie.title,
-              onPreview: () => previews++,
-              onTap: () => opened++,
-            ),
-          ),
-        ),
-      ),
-    );
-    final preview = find.byTooltip('Preview ${_movie.title}');
-    expect(tester.getSize(preview).height, greaterThanOrEqualTo(48));
-    await tester.tap(preview);
-    expect(previews, 1);
-    expect(opened, 0);
+    await _card(tester, active: false, onOpen: () => opened++);
     await tester.tap(find.text(_movie.title));
     expect(opened, 1);
+    expect(find.byType(TrailerPreview), findsNothing);
+  });
+
+  testWidgets('A tap on a loading preview opens details immediately', (
+    tester,
+  ) async {
+    var opened = 0;
+    final active = await _card(tester, onOpen: () => opened++);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    await tester.tapAt(tester.getCenter(find.byType(TrailerPreview)));
+    await tester.pump();
+    expect(opened, 1);
+    expect(active.value, isNull);
+    expect(find.byType(TrailerPreview), findsNothing);
   });
 
   for (final size in [const Size(375, 844), const Size(844, 375)]) {
-    testWidgets('Preview fits $size with large text and opens details', (
-      tester,
-    ) async {
+    testWidgets('Inline playback and second tap fit $size', (tester) async {
       tester.view.physicalSize = size;
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
       var opened = 0;
-      await _openPreview(tester, onOpen: () => opened++, largeText: true);
+      final active = await _card(tester, onOpen: () => opened++);
       tester.widget<TrailerPreview>(find.byType(TrailerPreview)).onPlaying();
-      await tester.pumpAndSettle();
-
-      final video = tester.getRect(find.byType(AspectRatio));
-      expect(video.width / video.height, closeTo(16 / 9, 0.01));
-      expect(video.left, greaterThanOrEqualTo(0));
-      expect(video.right, lessThanOrEqualTo(size.width));
-      final details = find.text('View details');
-      await tester.ensureVisible(details);
-      await tester.tap(details);
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 30));
+      expect(active.value, _movie.id);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      await tester.tapAt(tester.getCenter(find.byType(TrailerPreview)));
+      await tester.pump();
       expect(opened, 1);
-      expect(find.byType(TrailerPreview), findsNothing);
+      expect(active.value, isNull);
       expect(tester.takeException(), isNull);
     });
   }
 
-  testWidgets('Slow or blocked playback offers details and can be closed', (
+  testWidgets('Stop preview returns to the poster without opening details', (
     tester,
   ) async {
-    await _openPreview(tester);
+    var opened = 0;
+    final active = await _card(tester, onOpen: () => opened++);
+    await tester.tap(find.byTooltip('Stop preview'));
+    await tester.pump();
+    expect(active.value, isNull);
+    expect(opened, 0);
+    expect(find.byType(TrailerPreview), findsNothing);
+  });
+
+  testWidgets('Slow or blocked playback returns to the poster', (tester) async {
+    final active = await _card(tester);
     await tester.pump(const Duration(seconds: 12));
-    expect(find.textContaining('Preview unavailable'), findsOneWidget);
-    expect(find.text('View details'), findsOneWidget);
+    expect(active.value, isNull);
     expect(find.byType(TrailerPreview), findsNothing);
-    await tester.tap(find.byTooltip('Close preview'));
-    await tester.pumpAndSettle();
-    expect(find.text(_movie.title), findsNothing);
   });
 
-  testWidgets('Playback continues until an error and keeps details available', (
+  testWidgets('Video errors return to the poster and leave details usable', (
     tester,
   ) async {
-    await _openPreview(tester);
-    tester.widget<TrailerPreview>(find.byType(TrailerPreview)).onPlaying();
-    await tester.pump(const Duration(seconds: 30));
-    expect(find.byType(TrailerPreview), findsOneWidget);
+    var opened = 0;
+    final active = await _card(tester, onOpen: () => opened++);
     tester.widget<TrailerPreview>(find.byType(TrailerPreview)).onDone();
-    await tester.pumpAndSettle();
-    expect(find.textContaining('Preview unavailable'), findsOneWidget);
-    expect(find.text('View details'), findsOneWidget);
-    await tester.tap(find.byTooltip('Close preview'));
-    await tester.pumpAndSettle();
-  });
-
-  testWidgets('Preview stops when the app goes into the background', (
-    tester,
-  ) async {
-    await _openPreview(tester);
-    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
-    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
-    await tester.pumpAndSettle();
-    expect(find.byType(TrailerPreview), findsNothing);
-    expect(find.byTooltip('Close preview'), findsNothing);
+    await tester.pump();
+    expect(active.value, isNull);
+    await tester.tap(find.text(_movie.title));
+    expect(opened, 1);
   });
 }
 
-Future<void> _openPreview(
+Future<ValueNotifier<int?>> _card(
   WidgetTester tester, {
+  bool active = true,
   VoidCallback? onOpen,
-  bool largeText = false,
 }) async {
+  final selected = ValueNotifier<int?>(null);
+  addTearDown(selected.dispose);
   await tester.pumpWidget(
     MaterialApp(
       theme: AppTheme.darkTheme,
-      builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context).copyWith(
-          textScaler: TextScaler.linear(largeText ? 2 : 1),
-          disableAnimations: largeText,
-        ),
-        child: child!,
-      ),
       home: Scaffold(
-        body: Builder(
-          builder: (context) => TextButton(
-            onPressed: () => showMoviePreview(context, _movie, onOpen ?? () {}),
-            child: const Text('Open preview'),
+        body: Center(
+          child: SizedBox(
+            width: 160,
+            height: 340,
+            child: MoviePreviewCard(
+              movie: _movie,
+              active: selected,
+              onOpen: onOpen ?? () {},
+            ),
           ),
         ),
       ),
     ),
   );
-  await tester.tap(find.text('Open preview'));
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 400));
+  if (active) {
+    selected.value = _movie.id;
+    await tester.pump();
+  }
+  return selected;
 }
