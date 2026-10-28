@@ -514,13 +514,6 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (booking.status == BookingStatus.pending) ...[
-          SeatHoldTimer(
-            remaining: booking.expiresAt?.difference(DateTime.now()),
-            expired: booking.isHoldExpired(),
-          ),
-          const SizedBox(height: AppSpacing.md),
-        ],
         if (canPay) ...[
           AppButton(
             label: 'Pay Now',
@@ -556,6 +549,14 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
       child: Column(
         children: [
           if (_isRefreshing) const LinearProgressIndicator(minHeight: 2),
+          if (booking.status == BookingStatus.pending)
+            Padding(
+              padding: pagePadding(context, AppSpacing.sm),
+              child: SeatHoldTimer(
+                remaining: booking.expiresAt?.difference(DateTime.now()),
+                expired: booking.isHoldExpired(),
+              ),
+            ),
           Expanded(
             child: RefreshIndicator(
               onRefresh: _refresh,

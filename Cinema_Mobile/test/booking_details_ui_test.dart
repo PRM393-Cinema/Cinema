@@ -26,6 +26,11 @@ void main() {
       await pumpRoute(tester);
       final timer = find.byKey(const Key('holdTimerText'));
       expect(timer, findsOneWidget);
+      expect(timer.hitTestable(), findsOneWidget);
+      expect(
+        tester.getTopLeft(timer).dy,
+        lessThan(tester.getTopLeft(find.text('Your booking')).dy),
+      );
       expect(find.text('Pay Now'), findsOneWidget);
       final before = tester.widget<Text>(timer).data;
       await tester.runAsync(
