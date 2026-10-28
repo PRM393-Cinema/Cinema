@@ -612,35 +612,35 @@ File: l3backend-xetex.def 2022-02-07 L3 backend support: XeTeX
 ) (main.aux)
 \openout1 = `main.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 19.
-LaTeX Font Info:    ... okay on input line 19.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 19.
-LaTeX Font Info:    ... okay on input line 19.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 19.
-LaTeX Font Info:    ... okay on input line 19.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 19.
-LaTeX Font Info:    ... okay on input line 19.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 19.
-LaTeX Font Info:    Trying to load font information for TS1+cmr on input line 1
-9.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 41.
+LaTeX Font Info:    ... okay on input line 41.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 41.
+LaTeX Font Info:    ... okay on input line 41.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 41.
+LaTeX Font Info:    ... okay on input line 41.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 41.
+LaTeX Font Info:    ... okay on input line 41.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 41.
+LaTeX Font Info:    Trying to load font information for TS1+cmr on input line 4
+1.
  (ts1cmr.fd
 File: ts1cmr.fd 2019/12/16 v2.5j Standard LaTeX font definitions
 )
-LaTeX Font Info:    ... okay on input line 19.
-LaTeX Font Info:    Checking defaults for TU/lmr/m/n on input line 19.
-LaTeX Font Info:    ... okay on input line 19.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 19.
-LaTeX Font Info:    ... okay on input line 19.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 19.
-LaTeX Font Info:    ... okay on input line 19.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 19.
-LaTeX Font Info:    ... okay on input line 19.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 19.
-LaTeX Font Info:    ... okay on input line 19.
+LaTeX Font Info:    ... okay on input line 41.
+LaTeX Font Info:    Checking defaults for TU/lmr/m/n on input line 41.
+LaTeX Font Info:    ... okay on input line 41.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 41.
+LaTeX Font Info:    ... okay on input line 41.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 41.
+LaTeX Font Info:    ... okay on input line 41.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 41.
+LaTeX Font Info:    ... okay on input line 41.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 41.
+LaTeX Font Info:    ... okay on input line 41.
 
 -- Lines per column: 56 (exact).
 \c@lstlisting=\count328
-Package hyperref Info: Link coloring OFF on input line 19.
+Package hyperref Info: Link coloring OFF on input line 41.
 (nameref.sty
 Package: nameref 2021-04-02 v2.47 Cross-referencing by name of section
  (refcount.sty
@@ -650,252 +650,93 @@ Package: gettitlestring 2019/12/15 v1.6 Cleanup title references (HO)
 )
 \c@section@level=\count329
 )
-LaTeX Info: Redefining \ref on input line 19.
-LaTeX Info: Redefining \pageref on input line 19.
-LaTeX Info: Redefining \nameref on input line 19.
+LaTeX Info: Redefining \ref on input line 41.
+LaTeX Info: Redefining \pageref on input line 41.
+LaTeX Info: Redefining \nameref on input line 41.
  (main.out) (main.out)
 \@outlinefile=\write4
 \openout4 = `main.out'.
 
-LaTeX Font Info:    Trying to load font information for T1+pcr on input line 70
+LaTeX Font Info:    Trying to load font information for T1+pcr on input line 90
 .
 
 (t1pcr.fd
 File: t1pcr.fd 2001/06/04 font definitions for T1/pcr.
-) [1
+)
+LaTeX Font Info:    Trying to load font information for U+msa on input line 98.
+
+ (umsa.fd
+File: umsa.fd 2013/01/14 v3.01 AMS symbols A
+)
+LaTeX Font Info:    Trying to load font information for U+msb on input line 98.
+
+ (umsb.fd
+File: umsb.fd 2013/01/14 v3.01 AMS symbols B
+) (figures/architecture
+LaTeX Font Info:    Trying to load font information for T1+phv on input line 13
+.
+ (t1phv.fd
+File: t1phv.fd 2020/03/25 scalable font definitions for T1/phv.
+)) [1
 
 
-] (figures/architecture) (umsa.fd) (umsb.fd)
-Underfull \hbox (badness 5637) in paragraph at lines 151--157
+]
+Underfull \hbox (badness 5637) in paragraph at lines 175--181
 []\T1/pcr/m/n/10 ApiConfig \T1/ptm/m/n/10 de-faults An-droid's em-u-la-tor con-
 nec-tion
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 151--157
+Underfull \hbox (badness 10000) in paragraph at lines 175--181
 \T1/ptm/m/n/10 to \T1/pcr/m/n/10 http://10.0.2.2:5000\T1/ptm/m/n/10 ; other de-
 fault tar-gets
  []
 
-[2] (figures/data) [3]
-Underfull \hbox (badness 1824) in paragraph at lines 298--304
+[2]
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+
+(figures/data) [3]
+Underfull \hbox (badness 1824) in paragraph at lines 322--328
 []\T1/pcr/m/n/10 SessionState \T1/ptm/m/n/10 is a \T1/pcr/m/n/10 ChangeNotifier
 \T1/ptm/m/n/10 , dis-tributed
  []
 
 Package hyperref Info: bookmark level for unknown lstlisting defaults to 0 on i
-nput line 312.
-[4] (figures/flow)
-Underfull \hbox (badness 1546) in paragraph at lines 451--457
-[]\T1/ptm/m/n/10 Backend pass-word/OTP hash-ing, in-put val-i-da-tion, role
+nput line 336.
+[4]
+Underfull \hbox (badness 2393) in paragraph at lines 373--376
+[]\T1/ptm/b/n/10 Ticket dis-play and scan-ning. \T1/pcr/m/n/10 qr_flutter \T1/p
+tm/m/n/10 ren-
  []
 
-[5] (verification-table)
-Underfull \hbox (badness 10000) in paragraph at lines 484--495
+(figures/flow) [5] (verification-table)
+Underfull \hbox (badness 10000) in paragraph at lines 512--523
 []\T1/ptm/m/n/10 After restor-ing the ex-ist-ing de-clared Flutter
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 484--495
+Underfull \hbox (badness 10000) in paragraph at lines 512--523
 \T1/ptm/m/n/10 de-pen-den-cies, the full \T1/pcr/m/n/10 flutter test --no-pub
  []
 
 
-Underfull \hbox (badness 1546) in paragraph at lines 484--495
+Underfull \hbox (badness 1546) in paragraph at lines 512--523
 \T1/pcr/m/n/10 analyze --no-pub \T1/ptm/m/n/10 re-ported one in-for-ma-tional f
 ind-ing,
  []
 
 
-Underfull \hbox (badness 2221) in paragraph at lines 484--495
+Underfull \hbox (badness 2221) in paragraph at lines 512--523
 \T1/pcr/m/n/10 curly_braces_in_flow_control_structures\T1/ptm/m/n/10 , in
  []
 
-
-Underfull \hbox (badness 4391) in paragraph at lines 507--514
+[6]
+Underfull \hbox (badness 4391) in paragraph at lines 535--542
 \T1/ptm/m/n/10 Test-con-tain-ers and can en-able a RabbitMQ con-tainer;
  []
 
-[6] (main.bbl
-Underfull \hbox (badness 5119) in paragraph at lines 25--29
-\T1/ptm/m/n/8 55642353331f7119c16d4fef05f54bfc559cae8b / Cinema _ Mobile / lib$
-[], in-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 31--35
-[]\T1/ptm/m/n/8 ------, ``Book-ing, pay-ment, re-fund, loy-alty, no-ti-fi-ca-ti
-on, and
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 31--35
-\T1/ptm/m/n/8 mes-sag-ing im-ple-men-ta-tion,'' Repos-i-tory source, re-vi-sion
-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 31--35
-\T1/ptm/m/n/8 55642353331f, []$https : / / github . com / PRM393 -[] Cinema / C
-inema /
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 31--35
-\T1/ptm/m/n/8 tree / 55642353331f7119c16d4fef05f54bfc559cae8b / Cinema _ BE /
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 37--41
-\T1/ptm/m/n/8 Cinema / Cinema / tree / 55642353331f7119c16d4fef05f54bfc559cae8b
- /
- []
-
-
-Underfull \hbox (badness 2837) in paragraph at lines 43--47
-[]\T1/ptm/m/n/8 ------, ``Com-pose de-ploy-ment and database ini-tial-iza-tion 
-scripts,''
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 43--47
-\T1/ptm/m/n/8 Cinema / Cinema / tree / 55642353331f7119c16d4fef05f54bfc559cae8b
- /
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 49--51
-[]\T1/ptm/m/n/8 Flutter, ``Ar-chi-tect-ing Flutter apps,'' []$https : / / docs 
-. ^^]utter . dev / app -[]
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 53--57
-[]\T1/ptm/m/n/8 CosmoQ Cin-ema Stu-dent De-vel-op-ers, ``Back-end tests and
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 53--57
-\T1/ptm/m/n/8 Flutter ver-i-fi-ca-tion work-flows,'' Repos-i-tory source, re-vi
--sion
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 53--57
-\T1/ptm/m/n/8 55642353331f, []$https : / / github . com / PRM393 -[] Cinema / C
-inema / tree /
- []
-
-
-Underfull \hbox (badness 6725) in paragraph at lines 53--57
-\T1/ptm/m/n/8 55642353331f7119c16d4fef05f54bfc559cae8b / .$[], in-spected Oct. 
-28,
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 59--63
-[]\T1/ptm/m/n/8 ------, ``Au-then-ti-ca-tion, ac-count val-i-da-tion, JWT gen-e
-r-a-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 59--63
-\T1/ptm/m/n/8 tion, and user man-age-ment,'' Repos-i-tory source, re-vi-sion
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 59--63
-\T1/ptm/m/n/8 55642353331f, []$https : / / github . com / PRM393 -[] Cinema / C
-inema /
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 59--63
-\T1/ptm/m/n/8 tree / 55642353331f7119c16d4fef05f54bfc559cae8b / Cinema _ BE /
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 65--68
-[]$\T1/ptm/m/n/8 https : / / learn . microsoft . com / en -[] us / aspnet / cor
-e / security / authentication /
- []
-
-
-Underfull \hbox (badness 3199) in paragraph at lines 70--74
-[]\T1/ptm/m/n/8 CosmoQ Cin-ema Stu-dent De-vel-op-ers, ``Movie, room, show-time
-,
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 70--74
-\T1/ptm/m/n/8 and seat-pricing im-ple-men-ta-tion,'' Repos-i-tory source, re-vi
--sion
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 70--74
-\T1/ptm/m/n/8 55642353331f, []$https : / / github . com / PRM393 -[] Cinema / C
-inema /
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 70--74
-\T1/ptm/m/n/8 tree / 55642353331f7119c16d4fef05f54bfc559cae8b / Cinema _ BE /
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 76--80
-[]\T1/ptm/m/n/8 ------, ``Cin-ema database SQL schemas and mi-gra-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 76--80
-\T1/ptm/m/n/8 tions,'' Repos-i-tory source, re-vi-sion e455d297c76b, []$https :
-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 76--80
-\T1/ptm/m/n/8 / / github . com / PRM393 -[] Cinema / Project -[] Cinema -[] DB 
-/ tree /
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 76--80
-\T1/ptm/m/n/8 e455d297c76b14e3fd6aa8c0af4bb11f77ec6a2b$[], in-spected Oct. 28,
- []
-
-
-Underfull \hbox (badness 2384) in paragraph at lines 99--103
-[]\T1/ptm/m/n/8 CosmoQ Cin-ema Stu-dent De-vel-op-ers, ``Cus-tomer browser lay-
-out
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 99--103
-\T1/ptm/m/n/8 and ad-min-is-tra-tion work-flows,'' Repos-i-tory source, re-vi-s
-ion
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 99--103
-\T1/ptm/m/n/8 55642353331f, []$https : / / github . com / PRM393 -[] Cinema / C
-inema / tree /
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 99--103
-\T1/ptm/m/n/8 55642353331f7119c16d4fef05f54bfc559cae8b / Cinema _ Mobile / lib 
-/
- []
-
-
-Underfull \hbox (badness 7540) in paragraph at lines 105--108
-[]\T1/ptm/m/n/8 flutter_secure_storage Main-tain-ers, ``flutter_secure_storage 
-11.2.0,''
- []
-
-)
+(main.bbl [7])
 
 ** Conference Paper **
 Before submitting the final camera ready copy, remember to:
@@ -907,8 +748,8 @@ Before submitting the final camera ready copy, remember to:
  uses only Type 1 fonts and that every step in the generation
  process uses the appropriate paper size.
 
-[7] (main.aux)
+[8] (main.aux)
 Package rerunfilecheck Info: File `main.out' has not changed.
 (rerunfilecheck)             Checksum: D6F6353DE122F46D1AE0919B01324F71;6889.
  )
-Output written on main.xdv (7 pages, 103192 bytes).
+Output written on main.xdv (8 pages, 121768 bytes).

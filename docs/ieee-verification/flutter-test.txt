@@ -1,0 +1,211 @@
+00:00 +0: loading D:/CinemaProject/Cinema/Cinema_Mobile/test/account_lock_flow_test.dart
+00:00 +0: D:/CinemaProject/Cinema/Cinema_Mobile/test/account_lock_flow_test.dart: Home public request expires the old role and shows a top notice
+00:07 +1: D:/CinemaProject/Cinema/Cinema_Mobile/test/account_lock_flow_test.dart: Account change opens login (ACCOUNT_LOCKED)
+00:09 +2: D:/CinemaProject/Cinema/Cinema_Mobile/test/account_lock_flow_test.dart: Account change opens login (null)
+00:11 +3: D:/CinemaProject/Cinema/Cinema_Mobile/test/admin_website_test.dart: Admin website access Signed out: a page link asks to sign in, with no sign up
+00:11 +4: D:/CinemaProject/Cinema/Cinema_Mobile/test/admin_website_test.dart: Admin website access Signed out: a page link asks to sign in, with no sign up
+00:11 +5: D:/CinemaProject/Cinema/Cinema_Mobile/test/admin_website_test.dart: Admin website access Signed out: a page link asks to sign in, with no sign up
+00:11 +6: D:/CinemaProject/Cinema/Cinema_Mobile/test/admin_website_test.dart: Admin website access Signed out: a page link asks to sign in, with no sign up
+00:11 +7: D:/CinemaProject/Cinema/Cinema_Mobile/test/admin_website_test.dart: Admin website access Signed out: a page link asks to sign in, with no sign up
+00:11 +8: D:/CinemaProject/Cinema/Cinema_Mobile/test/admin_website_test.dart: Admin website access Signed out: a page link asks to sign in, with no sign up
+00:12 +9: D:/CinemaProject/Cinema/Cinema_Mobile/test/admin_website_test.dart: Admin website access Signed out: a page link asks to sign in, with no sign up
+00:13 +10: D:/CinemaProject/Cinema/Cinema_Mobile/test/account_lock_flow_test.dart: Locked login shows the account notice (HTTP 401)
+00:14 +11: D:/CinemaProject/Cinema/Cinema_Mobile/test/account_lock_flow_test.dart: Locked login shows the account notice (HTTP 401)
+00:14 +12: D:/CinemaProject/Cinema/Cinema_Mobile/test/admin_user_roles_test.dart: Changing roles replaces the selection and saves one role
+00:14 +13: D:/CinemaProject/Cinema/Cinema_Mobile/test/admin_user_roles_test.dart: Changing roles replaces the selection and saves one role
+00:16 +14: D:/CinemaProject/Cinema/Cinema_Mobile/test/admin_user_roles_test.dart: Changing roles replaces the selection and saves one role
+00:16 +15: D:/CinemaProject/Cinema/Cinema_Mobile/test/admin_user_roles_test.dart: Changing roles replaces the selection and saves one role
+00:18 +16: D:/CinemaProject/Cinema/Cinema_Mobile/test/admin_user_roles_test.dart: Changing roles replaces the selection and saves one role
+00:19 +17: D:/CinemaProject/Cinema/Cinema_Mobile/test/admin_user_roles_test.dart: Changing roles replaces the selection and saves one role
+00:20 +18: D:/CinemaProject/Cinema/Cinema_Mobile/test/admin_user_roles_test.dart: Changing roles replaces the selection and saves one role
+00:20 +19: D:/CinemaProject/Cinema/Cinema_Mobile/test/admin_user_roles_test.dart: Changing roles replaces the selection and saves one role
+00:20 +20: D:/CinemaProject/Cinema/Cinema_Mobile/test/age_rating_test.dart: A rated movie shows its rating and asks before booking
+00:21 +21: D:/CinemaProject/Cinema/Cinema_Mobile/test/age_rating_test.dart: A rated movie shows its rating and asks before booking
+00:21 +22: D:/CinemaProject/Cinema/Cinema_Mobile/test/age_rating_test.dart: A rated movie shows its rating and asks before booking
+00:22 +23: D:/CinemaProject/Cinema/Cinema_Mobile/test/age_rating_test.dart: A rated movie shows its rating and asks before booking
+00:22 +24: D:/CinemaProject/Cinema/Cinema_Mobile/test/age_rating_test.dart: A rated movie shows its rating and asks before booking
+00:22 +25: D:/CinemaProject/Cinema/Cinema_Mobile/test/age_rating_test.dart: A rated movie shows its rating and asks before booking
+00:22 +26: D:/CinemaProject/Cinema/Cinema_Mobile/test/age_rating_test.dart: A rated movie shows its rating and asks before booking
+00:22 +27: D:/CinemaProject/Cinema/Cinema_Mobile/test/age_rating_test.dart: A rated movie shows its rating and asks before booking
+00:22 +28: D:/CinemaProject/Cinema/Cinema_Mobile/test/age_rating_test.dart: A rated movie shows its rating and asks before booking
+00:22 +29: D:/CinemaProject/Cinema/Cinema_Mobile/test/age_rating_test.dart: A rated movie shows its rating and asks before booking
+00:22 +30: D:/CinemaProject/Cinema/Cinema_Mobile/test/age_rating_test.dart: A rated movie shows its rating and asks before booking
+00:22 +31: D:/CinemaProject/Cinema/Cinema_Mobile/test/age_rating_test.dart: A rated movie shows its rating and asks before booking
+00:22 +32: D:/CinemaProject/Cinema/Cinema_Mobile/test/age_rating_test.dart: A rated movie shows its rating and asks before booking
+00:22 +33: D:/CinemaProject/Cinema/Cinema_Mobile/test/age_rating_test.dart: A rated movie shows its rating and asks before booking
+00:22 +34: D:/CinemaProject/Cinema/Cinema_Mobile/test/age_rating_test.dart: A rated movie shows its rating and asks before booking
+00:22 +35: D:/CinemaProject/Cinema/Cinema_Mobile/test/age_rating_test.dart: A rated movie shows its rating and asks before booking
+00:22 +36: D:/CinemaProject/Cinema/Cinema_Mobile/test/age_rating_test.dart: A rated movie shows its rating and asks before booking
+00:22 +37: D:/CinemaProject/Cinema/Cinema_Mobile/test/age_rating_test.dart: A rated movie shows its rating and asks before booking
+00:22 +38: D:/CinemaProject/Cinema/Cinema_Mobile/test/age_rating_test.dart: A rated movie shows its rating and asks before booking
+00:22 +39: D:/CinemaProject/Cinema/Cinema_Mobile/test/age_rating_test.dart: A rated movie shows its rating and asks before booking
+00:22 +40: D:/CinemaProject/Cinema/Cinema_Mobile/test/age_rating_test.dart: A rated movie shows its rating and asks before booking
+00:22 +41: D:/CinemaProject/Cinema/Cinema_Mobile/test/age_rating_test.dart: A rated movie shows its rating and asks before booking
+00:22 +42: D:/CinemaProject/Cinema/Cinema_Mobile/test/age_rating_test.dart: A rated movie shows its rating and asks before booking
+00:22 +43: D:/CinemaProject/Cinema/Cinema_Mobile/test/age_rating_test.dart: A rated movie shows its rating and asks before booking
+00:22 +44: D:/CinemaProject/Cinema/Cinema_Mobile/test/age_rating_test.dart: A rated movie shows its rating and asks before booking
+00:23 +45: D:/CinemaProject/Cinema/Cinema_Mobile/test/age_rating_test.dart: A rated movie shows its rating and asks before booking
+00:24 +46: D:/CinemaProject/Cinema/Cinema_Mobile/test/age_rating_test.dart: A rated movie shows its rating and asks before booking
+00:24 +47: D:/CinemaProject/Cinema/Cinema_Mobile/test/age_rating_test.dart: A rated movie shows its rating and asks before booking
+00:24 +48: D:/CinemaProject/Cinema/Cinema_Mobile/test/age_rating_test.dart: A rated movie shows its rating and asks before booking
+00:24 +49: D:/CinemaProject/Cinema/Cinema_Mobile/test/age_rating_test.dart: A rated movie shows its rating and asks before booking
+00:24 +50: D:/CinemaProject/Cinema/Cinema_Mobile/test/age_rating_test.dart: A rated movie shows its rating and asks before booking
+00:24 +51: D:/CinemaProject/Cinema/Cinema_Mobile/test/age_rating_test.dart: A rated movie shows its rating and asks before booking
+00:24 +52: D:/CinemaProject/Cinema/Cinema_Mobile/test/age_rating_test.dart: A rated movie shows its rating and asks before booking
+00:24 +53: D:/CinemaProject/Cinema/Cinema_Mobile/test/age_rating_test.dart: A rated movie shows its rating and asks before booking
+00:24 +54: D:/CinemaProject/Cinema/Cinema_Mobile/test/age_rating_test.dart: A rated movie shows its rating and asks before booking
+00:24 +55: D:/CinemaProject/Cinema/Cinema_Mobile/test/age_rating_test.dart: A rated movie shows its rating and asks before booking
+00:24 +56: D:/CinemaProject/Cinema/Cinema_Mobile/test/age_rating_test.dart: A rated movie shows its rating and asks before booking
+00:24 +57: D:/CinemaProject/Cinema/Cinema_Mobile/test/age_rating_test.dart: A rated movie shows its rating and asks before booking
+00:25 +58: D:/CinemaProject/Cinema/Cinema_Mobile/test/admin_website_test.dart: Movies Adding a movie sends the form and shows it in the list
+00:26 +59: D:/CinemaProject/Cinema/Cinema_Mobile/test/admin_website_test.dart: Movies Adding a movie sends the form and shows it in the list
+00:26 +60: D:/CinemaProject/Cinema/Cinema_Mobile/test/admin_website_test.dart: Movies Adding a movie sends the form and shows it in the list
+00:26 +61: D:/CinemaProject/Cinema/Cinema_Mobile/test/admin_website_test.dart: Movies Adding a movie sends the form and shows it in the list
+00:26 +62: D:/CinemaProject/Cinema/Cinema_Mobile/test/admin_website_test.dart: Movies Adding a movie sends the form and shows it in the list
+00:26 +63: D:/CinemaProject/Cinema/Cinema_Mobile/test/admin_website_test.dart: Movies Adding a movie sends the form and shows it in the list
+00:27 +64: D:/CinemaProject/Cinema/Cinema_Mobile/test/admin_website_test.dart: Movies Adding a movie sends the form and shows it in the list
+00:30 +65: D:/CinemaProject/Cinema/Cinema_Mobile/test/admin_website_test.dart: Movies Adding a movie sends the form and shows it in the list
+00:30 +66: D:/CinemaProject/Cinema/Cinema_Mobile/test/admin_website_test.dart: Movies A refused save keeps the form open with the reason
+00:30 +67: D:/CinemaProject/Cinema/Cinema_Mobile/test/admin_website_test.dart: Movies Stopping a movie and showing it again
+00:31 +68: D:/CinemaProject/Cinema/Cinema_Mobile/test/booking_details_ui_test.dart: Booking details fit 320.0 at text scale 1.0
+00:32 +69: D:/CinemaProject/Cinema/Cinema_Mobile/test/booking_details_ui_test.dart: Booking details fit 320.0 at text scale 1.0
+00:34 +70: D:/CinemaProject/Cinema/Cinema_Mobile/test/booking_flow_test.dart: A movie trailer opens outside the app
+00:36 +71: D:/CinemaProject/Cinema/Cinema_Mobile/test/admin_website_test.dart: Movies The status filter and the search ask the right list
+00:36 +72: D:/CinemaProject/Cinema/Cinema_Mobile/test/check_in_test.dart: Staff check-in A paid ticket is found by its code and checked in once
+00:36 +73: D:/CinemaProject/Cinema/Cinema_Mobile/test/check_in_test.dart: Staff check-in A paid ticket is found by its code and checked in once
+00:38 +74: D:/CinemaProject/Cinema/Cinema_Mobile/test/check_in_test.dart: Staff check-in A paid ticket is found by its code and checked in once
+00:38 +75: D:/CinemaProject/Cinema/Cinema_Mobile/test/check_in_test.dart: Staff check-in A paid ticket is found by its code and checked in once
+00:39 +76: D:/CinemaProject/Cinema/Cinema_Mobile/test/booking_flow_test.dart: Seat selection and booking Seat map fits a phone screen and stays centered
+00:40 +77: D:/CinemaProject/Cinema/Cinema_Mobile/test/booking_flow_test.dart: Seat selection and booking Seat map fits a phone screen and stays centered
+00:40 +78: D:/CinemaProject/Cinema/Cinema_Mobile/test/booking_flow_test.dart: Seat selection and booking Seat map fits a phone screen and stays centered
+00:40 +79: D:/CinemaProject/Cinema/Cinema_Mobile/test/booking_flow_test.dart: Seat selection and booking Seat map fits a phone screen and stays centered
+00:40 +80: D:/CinemaProject/Cinema/Cinema_Mobile/test/coming_soon_test.dart: Home splits now showing and coming soon, and filters genres
+00:41 +81: D:/CinemaProject/Cinema/Cinema_Mobile/test/coming_soon_test.dart: Home splits now showing and coming soon, and filters genres
+00:42 +82: D:/CinemaProject/Cinema/Cinema_Mobile/test/coming_soon_test.dart: Home splits now showing and coming soon, and filters genres
+00:43 +83: D:/CinemaProject/Cinema/Cinema_Mobile/test/coming_soon_test.dart: Home splits now showing and coming soon, and filters genres
+00:45 +84: D:/CinemaProject/Cinema/Cinema_Mobile/test/coming_soon_test.dart: Home splits now showing and coming soon, and filters genres
+00:48 +85: D:/CinemaProject/Cinema/Cinema_Mobile/test/coming_soon_test.dart: Home splits now showing and coming soon, and filters genres
+00:48 +86: D:/CinemaProject/Cinema/Cinema_Mobile/test/coming_soon_test.dart: Home splits now showing and coming soon, and filters genres
+00:48 +87: D:/CinemaProject/Cinema/Cinema_Mobile/test/coming_soon_test.dart: Home splits now showing and coming soon, and filters genres
+00:49 +88: D:/CinemaProject/Cinema/Cinema_Mobile/test/coming_soon_test.dart: Home splits now showing and coming soon, and filters genres
+00:49 +89: D:/CinemaProject/Cinema/Cinema_Mobile/test/coming_soon_test.dart: Home splits now showing and coming soon, and filters genres
+00:50 +90: D:/CinemaProject/Cinema/Cinema_Mobile/test/coming_soon_test.dart: Home splits now showing and coming soon, and filters genres
+00:50 +91: D:/CinemaProject/Cinema/Cinema_Mobile/test/coming_soon_test.dart: Home splits now showing and coming soon, and filters genres
+00:53 +92: D:/CinemaProject/Cinema/Cinema_Mobile/test/coming_soon_test.dart: Home splits now showing and coming soon, and filters genres
+00:54 +93: D:/CinemaProject/Cinema/Cinema_Mobile/test/coming_soon_test.dart: Home splits now showing and coming soon, and filters genres
+00:55 +94: D:/CinemaProject/Cinema/Cinema_Mobile/test/coming_soon_test.dart: Home splits now showing and coming soon, and filters genres
+00:56 +95: D:/CinemaProject/Cinema/Cinema_Mobile/test/coming_soon_test.dart: Home splits now showing and coming soon, and filters genres
+00:57 +96: D:/CinemaProject/Cinema/Cinema_Mobile/test/coming_soon_test.dart: Home splits now showing and coming soon, and filters genres
+00:57 +97: D:/CinemaProject/Cinema/Cinema_Mobile/test/coming_soon_test.dart: Home splits now showing and coming soon, and filters genres
+00:58 +98: D:/CinemaProject/Cinema/Cinema_Mobile/test/coming_soon_test.dart: Home splits now showing and coming soon, and filters genres
+00:58 +99: D:/CinemaProject/Cinema/Cinema_Mobile/test/coming_soon_test.dart: Home splits now showing and coming soon, and filters genres
+00:58 +100: D:/CinemaProject/Cinema/Cinema_Mobile/test/coming_soon_test.dart: Home splits now showing and coming soon, and filters genres
+00:59 +101: D:/CinemaProject/Cinema/Cinema_Mobile/test/coming_soon_test.dart: Home splits now showing and coming soon, and filters genres
+00:59 +102: D:/CinemaProject/Cinema/Cinema_Mobile/test/coming_soon_test.dart: Home splits now showing and coming soon, and filters genres
+00:59 +103: D:/CinemaProject/Cinema/Cinema_Mobile/test/coming_soon_test.dart: Home splits now showing and coming soon, and filters genres
+01:00 +104: D:/CinemaProject/Cinema/Cinema_Mobile/test/booking_flow_test.dart: PayOS payment Coming back from PayOS confirms the booking and shows success
+01:00 +105: D:/CinemaProject/Cinema/Cinema_Mobile/test/concession_test.dart: Snacks picked on the summary are added to the booking
+01:00 +106: D:/CinemaProject/Cinema/Cinema_Mobile/test/concession_test.dart: Snacks picked on the summary are added to the booking
+01:00 +107: D:/CinemaProject/Cinema/Cinema_Mobile/test/concession_test.dart: Snacks picked on the summary are added to the booking
+01:01 +108: D:/CinemaProject/Cinema/Cinema_Mobile/test/concession_test.dart: Snacks picked on the summary are added to the booking
+01:02 +109: D:/CinemaProject/Cinema/Cinema_Mobile/test/concession_test.dart: Snacks picked on the summary are added to the booking
+01:02 +110: D:/CinemaProject/Cinema/Cinema_Mobile/test/concession_test.dart: Snacks picked on the summary are added to the booking
+01:02 +111: D:/CinemaProject/Cinema/Cinema_Mobile/test/concession_test.dart: Snacks picked on the summary are added to the booking
+01:03 +112: D:/CinemaProject/Cinema/Cinema_Mobile/test/concession_test.dart: Snacks picked on the summary are added to the booking
+01:04 +113: D:/CinemaProject/Cinema/Cinema_Mobile/test/counter_booking_test.dart: Staff sell a member tickets: movie, showtime, seats on the map
+01:04 +114: D:/CinemaProject/Cinema/Cinema_Mobile/test/counter_booking_test.dart: Staff sell a member tickets: movie, showtime, seats on the map
+01:05 +115: D:/CinemaProject/Cinema/Cinema_Mobile/test/counter_booking_test.dart: Staff sell a member tickets: movie, showtime, seats on the map
+01:05 +116: D:/CinemaProject/Cinema/Cinema_Mobile/test/counter_booking_test.dart: Staff sell a member tickets: movie, showtime, seats on the map
+01:05 +117: D:/CinemaProject/Cinema/Cinema_Mobile/test/counter_booking_test.dart: Staff sell a member tickets: movie, showtime, seats on the map
+01:05 +118: D:/CinemaProject/Cinema/Cinema_Mobile/test/counter_booking_test.dart: Staff sell a member tickets: movie, showtime, seats on the map
+01:06 +119: D:/CinemaProject/Cinema/Cinema_Mobile/test/counter_booking_test.dart: Staff sell a member tickets: movie, showtime, seats on the map
+01:06 +120: D:/CinemaProject/Cinema/Cinema_Mobile/test/counter_booking_test.dart: Staff sell a member tickets: movie, showtime, seats on the map
+01:06 +121: D:/CinemaProject/Cinema/Cinema_Mobile/test/counter_booking_test.dart: Staff sell a member tickets: movie, showtime, seats on the map
+01:07 +122: D:/CinemaProject/Cinema/Cinema_Mobile/test/counter_booking_test.dart: Staff sell a member tickets: movie, showtime, seats on the map
+01:07 +123: D:/CinemaProject/Cinema/Cinema_Mobile/test/counter_booking_test.dart: Staff sell a member tickets: movie, showtime, seats on the map
+01:08 +124: D:/CinemaProject/Cinema/Cinema_Mobile/test/booking_flow_test.dart: Account Forgot password sends a code and resets the password
+01:08 +125: D:/CinemaProject/Cinema/Cinema_Mobile/test/counter_booking_test.dart: A walk-in guest needs no account, email or phone
+01:08 +126: D:/CinemaProject/Cinema/Cinema_Mobile/test/counter_booking_test.dart: A walk-in guest needs no account, email or phone
+01:09 +127: D:/CinemaProject/Cinema/Cinema_Mobile/test/counter_booking_test.dart: A walk-in guest needs no account, email or phone
+01:10 +128: D:/CinemaProject/Cinema/Cinema_Mobile/test/loyalty_test.dart: The profile shows the membership card
+01:11 +129: D:/CinemaProject/Cinema/Cinema_Mobile/test/loyalty_test.dart: The profile shows the membership card
+01:11 +130: D:/CinemaProject/Cinema/Cinema_Mobile/test/notification_read_test.dart: The bell shows how many notifications are unread
+01:11 +131: D:/CinemaProject/Cinema/Cinema_Mobile/test/notification_read_test.dart: The bell shows how many notifications are unread
+01:12 +132: D:/CinemaProject/Cinema/Cinema_Mobile/test/profile_edit_test.dart: Customers edit their name and phone
+01:13 +133: D:/CinemaProject/Cinema/Cinema_Mobile/test/profile_edit_test.dart: Customers edit their name and phone
+01:13 +134: D:/CinemaProject/Cinema/Cinema_Mobile/test/profile_edit_test.dart: Customers edit their name and phone
+01:15 +135: D:/CinemaProject/Cinema/Cinema_Mobile/test/loyalty_test.dart: The counter finds a member by phone and uses their points
+01:15 +136: D:/CinemaProject/Cinema/Cinema_Mobile/test/loyalty_test.dart: The counter finds a member by phone and uses their points
+01:15 +137: D:/CinemaProject/Cinema/Cinema_Mobile/test/loyalty_test.dart: The counter finds a member by phone and uses their points
+01:16 +138: D:/CinemaProject/Cinema/Cinema_Mobile/test/profile_edit_test.dart: Changing the password needs the current one
+01:16 +139: D:/CinemaProject/Cinema/Cinema_Mobile/test/promotion_test.dart: The summary takes off the automatic deal or a promo code
+01:16 +140: D:/CinemaProject/Cinema/Cinema_Mobile/test/promotion_test.dart: The summary takes off the automatic deal or a promo code
+01:17 +141: D:/CinemaProject/Cinema/Cinema_Mobile/test/promotion_test.dart: The summary takes off the automatic deal or a promo code
+01:20 +142: D:/CinemaProject/Cinema/Cinema_Mobile/test/refund_details_ui_test.dart: Staff refund PENDING fits small screen and has correct actions
+01:20 +143: D:/CinemaProject/Cinema/Cinema_Mobile/test/refund_details_ui_test.dart: Staff refund PENDING fits small screen and has correct actions
+01:22 +144: D:/CinemaProject/Cinema/Cinema_Mobile/test/register_validation_test.dart: Sign up shows each mistake and sends nothing until fixed
+01:22 +145: D:/CinemaProject/Cinema/Cinema_Mobile/test/register_validation_test.dart: Sign up shows each mistake and sends nothing until fixed
+01:22 +146: D:/CinemaProject/Cinema/Cinema_Mobile/test/register_validation_test.dart: Sign up shows each mistake and sends nothing until fixed
+01:23 +147: D:/CinemaProject/Cinema/Cinema_Mobile/test/register_validation_test.dart: Sign up shows each mistake and sends nothing until fixed
+01:23 +148: D:/CinemaProject/Cinema/Cinema_Mobile/test/register_validation_test.dart: Sign up shows each mistake and sends nothing until fixed
+01:23 +149: D:/CinemaProject/Cinema/Cinema_Mobile/test/register_validation_test.dart: Sign up shows each mistake and sends nothing until fixed
+01:24 +150: D:/CinemaProject/Cinema/Cinema_Mobile/test/review_test.dart: A checked-in ticket writes, edits and deletes its review
+01:24 +151: D:/CinemaProject/Cinema/Cinema_Mobile/test/review_test.dart: A checked-in ticket writes, edits and deletes its review
+01:25 +152: D:/CinemaProject/Cinema/Cinema_Mobile/test/promotion_test.dart: Admin adds a promo code
+01:25 +153: D:/CinemaProject/Cinema/Cinema_Mobile/test/review_test.dart: A ticket not checked in yet cannot be reviewed
+01:26 +154: D:/CinemaProject/Cinema/Cinema_Mobile/test/seat_map_test.dart: Sweetbox pairs an odd seat pairs with the seat on its right, an even one left
+01:26 +155: D:/CinemaProject/Cinema/Cinema_Mobile/test/seat_map_test.dart: Sweetbox pairs only two sweetbox seats make a pair
+01:26 +156: D:/CinemaProject/Cinema/Cinema_Mobile/test/seat_map_test.dart: Sweetbox rows go to the back of the seat map
+01:26 +157: D:/CinemaProject/Cinema/Cinema_Mobile/test/seat_map_test.dart: A sweetbox row keeps the columns of the rows in front
+01:28 +158: D:/CinemaProject/Cinema/Cinema_Mobile/test/share_ticket_test.dart: The shared text has the show, seats and ticket code
+01:28 +159: D:/CinemaProject/Cinema/Cinema_Mobile/test/share_ticket_test.dart: The calendar event covers the show in Vietnam time
+01:28 +160: D:/CinemaProject/Cinema/Cinema_Mobile/test/share_ticket_test.dart: A paid ticket is shared and added to the calendar
+01:29 +161: D:/CinemaProject/Cinema/Cinema_Mobile/test/share_ticket_test.dart: A paid ticket is shared and added to the calendar
+01:29 +162: D:/CinemaProject/Cinema/Cinema_Mobile/test/showtime_format_test.dart: Customers see the format and the price with its surcharge
+01:30 +163: D:/CinemaProject/Cinema/Cinema_Mobile/test/showtime_format_test.dart: Customers see the format and the price with its surcharge
+01:31 +164: D:/CinemaProject/Cinema/Cinema_Mobile/test/showtime_format_test.dart: Customers see the format and the price with its surcharge
+01:31 +165: D:/CinemaProject/Cinema/Cinema_Mobile/test/staff_booking_details_ui_test.dart: Staff booking details fit 320.0 with text scale 1.0
+01:32 +166: D:/CinemaProject/Cinema/Cinema_Mobile/test/staff_booking_details_ui_test.dart: Staff booking details fit 320.0 with text scale 1.0
+01:33 +167: D:/CinemaProject/Cinema/Cinema_Mobile/test/staff_payment_details_ui_test.dart: Staff payment SUCCESS shows details without initiating refunds
+01:33 +168: D:/CinemaProject/Cinema/Cinema_Mobile/test/staff_booking_details_ui_test.dart: Staff booking details fit 412.0 with text scale 1.5
+01:33 +169: D:/CinemaProject/Cinema/Cinema_Mobile/test/staff_payment_details_ui_test.dart: Staff payment REFUND_PENDING shows details without initiating refunds
+01:34 +170: D:/CinemaProject/Cinema/Cinema_Mobile/test/today_at_cinema_test.dart: The dashboard shows today and the showtimes around now
+01:35 +171: D:/CinemaProject/Cinema/Cinema_Mobile/test/today_at_cinema_test.dart: The dashboard shows today and the showtimes around now
+01:35 +172: D:/CinemaProject/Cinema/Cinema_Mobile/test/today_at_cinema_test.dart: The dashboard shows today and the showtimes around now
+01:36 +173: D:/CinemaProject/Cinema/Cinema_Mobile/test/today_at_cinema_test.dart: The dashboard shows today and the showtimes around now
+01:36 +174: D:/CinemaProject/Cinema/Cinema_Mobile/test/today_at_cinema_test.dart: The dashboard shows today and the showtimes around now
+01:37 +175: D:/CinemaProject/Cinema/Cinema_Mobile/test/web_layout_test.dart: Customer website on a computer Navigation is at the top, without the tab bar
+01:40 +176: D:/CinemaProject/Cinema/Cinema_Mobile/test/web_routes_test.dart: Movie page loads the movie from its URL and goes back home
+01:41 +177: D:/CinemaProject/Cinema/Cinema_Mobile/test/widget_test.dart: Session expiry shows its reason and removes protected pages
+01:41 +178: D:/CinemaProject/Cinema/Cinema_Mobile/test/widget_test.dart: Session expiry shows its reason and removes protected pages
+01:41 +179: D:/CinemaProject/Cinema/Cinema_Mobile/test/widget_test.dart: Session expiry shows its reason and removes protected pages
+01:41 +180: D:/CinemaProject/Cinema/Cinema_Mobile/test/widget_test.dart: Session expiry shows its reason and removes protected pages
+01:41 +181: D:/CinemaProject/Cinema/Cinema_Mobile/test/widget_test.dart: Session expiry shows its reason and removes protected pages
+01:42 +182: D:/CinemaProject/Cinema/Cinema_Mobile/test/widget_test.dart: Session expiry shows its reason and removes protected pages
+01:42 +183: D:/CinemaProject/Cinema/Cinema_Mobile/test/widget_test.dart: Session expiry shows its reason and removes protected pages
+01:42 +184: D:/CinemaProject/Cinema/Cinema_Mobile/test/widget_test.dart: Session expiry shows its reason and removes protected pages
+01:42 +185: D:/CinemaProject/Cinema/Cinema_Mobile/test/widget_test.dart: Session expiry shows its reason and removes protected pages
+01:42 +186: D:/CinemaProject/Cinema/Cinema_Mobile/test/widget_test.dart: Session expiry shows its reason and removes protected pages
+01:42 +187: D:/CinemaProject/Cinema/Cinema_Mobile/test/widget_test.dart: Session expiry shows its reason and removes protected pages
+01:42 +188: D:/CinemaProject/Cinema/Cinema_Mobile/test/widget_test.dart: Session expiry shows its reason and removes protected pages
+01:42 +189: D:/CinemaProject/Cinema/Cinema_Mobile/test/widget_test.dart: Session expiry shows its reason and removes protected pages
+01:43 +190: D:/CinemaProject/Cinema/Cinema_Mobile/test/web_routes_test.dart: Signed-out link asks to sign in, then opens the page
+01:43 +191: D:/CinemaProject/Cinema/Cinema_Mobile/test/web_routes_test.dart: Signed-out link asks to sign in, then opens the page
+01:43 +192: D:/CinemaProject/Cinema/Cinema_Mobile/test/web_routes_test.dart: Signed-out link asks to sign in, then opens the page
+01:44 +193: D:/CinemaProject/Cinema/Cinema_Mobile/test/web_routes_test.dart: Signed-out link asks to sign in, then opens the page
+01:44 +194: D:/CinemaProject/Cinema/Cinema_Mobile/test/widget_test.dart: Login loading state works
+01:45 +195: D:/CinemaProject/Cinema/Cinema_Mobile/test/widget_test.dart: Successful fake login navigates to Home with the user
+01:47 +196: D:/CinemaProject/Cinema/Cinema_Mobile/test/widget_test.dart: Failed fake login shows error and stays on Login
+01:47 +197: D:/CinemaProject/Cinema/Cinema_Mobile/test/widget_test.dart: Register loading state works
+01:48 +198: D:/CinemaProject/Cinema/Cinema_Mobile/test/widget_test.dart: Register success navigates to Verify Email with email
+01:49 +199: D:/CinemaProject/Cinema/Cinema_Mobile/test/widget_test.dart: Register failure displays error and stays on Register
+01:49 +200: D:/CinemaProject/Cinema/Cinema_Mobile/test/widget_test.dart: Verify Email success navigates to Login
+01:50 +201: D:/CinemaProject/Cinema/Cinema_Mobile/test/widget_test.dart: Invalid OTP displays error on Verify Email
+01:50 +202: D:/CinemaProject/Cinema/Cinema_Mobile/test/widget_test.dart: Home renders movies from the API
+01:50 +203: D:/CinemaProject/Cinema/Cinema_Mobile/test/widget_test.dart: Home shows an error with retry when movies cannot load
+01:51 +204: D:/CinemaProject/Cinema/Cinema_Mobile/test/widget_test.dart: Home local search filters movie list
+01:51 +205: D:/CinemaProject/Cinema/Cinema_Mobile/test/widget_test.dart: Tapping a movie opens Movie Detail
+01:52 +206: D:/CinemaProject/Cinema/Cinema_Mobile/test/widget_test.dart: Movie Detail renders selected movie title
+01:52 +207: D:/CinemaProject/Cinema/Cinema_Mobile/test/widget_test.dart: Movie Detail lists the upcoming showtimes
+01:52 +208: D:/CinemaProject/Cinema/Cinema_Mobile/test/widget_test.dart: Guest attempting protected action goes to Login
+01:53 +209: All tests passed!

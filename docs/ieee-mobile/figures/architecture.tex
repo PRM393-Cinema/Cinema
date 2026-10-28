@@ -1,19 +1,53 @@
-\begin{figure}[t]
+\begin{figure*}[t]
 \centering
-\begin{tikzpicture}[node distance=5mm and 4mm]
-\node[box,text width=54mm] (ui) {Flutter mobile app\\screens and repositories};
-\node[box,below=of ui,text width=54mm] (gw) {YARP API gateway / JWT policies};
-\node[box,below=7mm of gw] (mo) {MovieService\\movies and showtimes};
-\node[box,left=of mo] (au) {AuthService\\accounts and tokens};
-\node[box,right=of mo] (bo) {BookingService\\booking / payment / mail};
-\node[box,below=of mo,text width=82mm] (db) {PostgreSQL: auth, movie, showtime, booking, payment, notification};
-\node[box,below=of db,text width=82mm] (ext) {RabbitMQ events; PayOS HTTP; SMTP email\\external calls are made by backend services};
-\draw[arr] (ui)--node[right,font=\tiny]{JSON / bearer token}(gw);
-\draw[arr] (gw)--(au);\draw[arr] (gw)--(mo);\draw[arr] (gw)--(bo);
-\draw[arr] (au)--(db.north west);\draw[arr] (mo)--(db);\draw[arr] (bo)--(db.north east);
-\draw[arr] (bo.east) -- ++(2mm,0) |- (ext.east);
+\begin{tikzpicture}[x=1mm,y=1mm,
+ layer/.style={font=\sffamily\scriptsize\bfseries,text=ReportMuted,anchor=west},
+ component/.style={draw=ReportInk,rounded corners=2pt,fill=white,
+ align=center,font=\footnotesize,inner sep=3pt},
+ connection/.style={-{Latex[length=2mm]},draw=ReportInk,line width=0.55pt}]
+% Each horizontal band has a single purpose; external bindings never run through a database.
+\fill[ReportTint,rounded corners=3pt] (0,8) rectangle (170,-11);
+\fill[ReportTint,rounded corners=3pt] (0,-15) rectangle (170,-37);
+\fill[ReportTint,rounded corners=3pt] (0,-41) rectangle (170,-79);
+\fill[ReportTint,rounded corners=3pt] (0,-83) rectangle (170,-108);
+\node[layer] at (3,4) {CLIENT};
+\node[component,text width=112mm,minimum height=10mm] (client) at (85,-3)
+ {\textbf{Flutter Mobile}\\Customer screens, remote repositories and native plugin calls};
+\node[layer] at (3,-19) {API ENTRY};
+\node[component,text width=112mm,minimum height=10mm] (gateway) at (85,-29)
+ {\textbf{YARP API Gateway}\\JWT validation, role policies, account-status checks};
+\node[layer] at (3,-45) {BACKEND SERVICES AND OWNED DATABASES};
+\node[component,text width=46mm,minimum height=10mm] (auth) at (29,-55)
+ {\textbf{AuthService}\\Accounts, OTPs, access and refresh tokens};
+\node[component,text width=46mm,minimum height=10mm] (movie) at (85,-55)
+ {\textbf{MovieService}\\Movies, rooms, seats and showtimes};
+\node[component,text width=46mm,minimum height=10mm] (booking) at (141,-55)
+ {\textbf{BookingService}\\Bookings, payments and notifications};
+\node[component,text width=46mm,minimum height=9mm] (authdb) at (29,-71)
+ {PostgreSQL\\\code{auth}};
+\node[component,text width=46mm,minimum height=9mm] (moviedb) at (85,-71)
+ {PostgreSQL\\\code{movie}, \code{showtime}};
+\node[component,text width=46mm,minimum height=9mm] (bookingdb) at (141,-71)
+ {PostgreSQL\\\code{booking}, \code{payment}, \code{notification}};
+\draw[connection] (client)--node[right,font=\scriptsize,fill=white,inner sep=1pt]
+ {JSON / bearer token}(gateway);
+\draw[connection] (gateway.south)--(85,-48)-|(auth.north);
+\draw[connection] (gateway.south)--(movie.north);
+\draw[connection] (gateway.south)--(85,-48)-|(booking.north);
+\draw[connection] (booking.west)--node[above,font=\tiny]{HTTP}(movie.east);
+\draw[connection] (auth)--(authdb);
+\draw[connection] (movie)--(moviedb);
+\draw[connection] (booking)--(bookingdb);
+\node[layer] at (3,-87) {SERVICE INTEGRATIONS};
+\node[component,text width=46mm,minimum height=13mm] at (29,-98)
+ {\textbf{SMTP email}\\Invoked by AuthService\\and BookingService};
+\node[component,text width=46mm,minimum height=13mm] at (85,-98)
+ {\textbf{RabbitMQ events}\\Outbox publishers / consumers\\in MovieService and BookingService};
+\node[component,text width=46mm,minimum height=13mm] at (141,-98)
+ {\textbf{PayOS HTTP API}\\Checkout links and status queries\\from BookingService};
 \end{tikzpicture}
-\caption{Selected deployment overview. Requests enter the gateway; services
-access their database contexts. The bottom box groups backend integrations.}
+\caption{Mobile system architecture: the app uses the shared gateway; backend services own persistence and integrations. Solid arrows show client/API and persistence paths.
+The integration cards identify the backend services responsible for each external binding.
+Database labels abbreviate the six \code{cinema\_\ldots\_db} names; all six use one PostgreSQL instance in Compose.}
 \label{fig:architecture}
-\end{figure}
+\end{figure*}

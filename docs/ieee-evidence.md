@@ -109,3 +109,7 @@ A = implemented and source verified (runtime proof is claimed only where explici
 Full Flutter command output is retained in `ieee-verification/`. Backend results were observed directly from command output; the table is a transcription, not a fabricated raw log.
 
 Both customer and admin Flutter Web release builds succeeded. Commands used `--no-pub --no-web-resources-cdn`; the admin target was `lib/main_admin.dart`, with `/admin/` base href and isolated `build/ieee-admin-verification` output. Raw build outputs are in `ieee-verification/`. Native release builds remain not executed.
+
+## Presentation revision after visual comparison
+
+The user authorized revising both reports after supplying `D:/Downloads/Downloads/Dike.pdf`. That paper informed visual hierarchy only. The CosmoQ reports retain the same citation-key sets, nine numbered sections, original verification results, and source-equivalent listing tokens. The architecture was redrawn as a two-column vector figure with explicit service/database ownership and integration bindings; selected prose was reorganized without introducing new system capabilities. Final outputs: Web 7 pages, Mobile 8 pages. All 15 pages were rendered and visually inspected. Final TeX logs contain no overfull boxes, undefined citations/references, missing glyphs, or font substitution warnings. No application source was modified and no application tests were rerun for this layout-only revision.

@@ -16,10 +16,10 @@
 \gdef\HyperFirstAtBeginDocument#1{#1}
 \providecommand*\HyPL@Entry[1]{}
 \citation{client,booking}
+\citation{client,gateway,deployment}
 \HyPL@Entry{0<</S/D>>}
 \@writefile{toc}{\contentsline {section}{\numberline {I}Introduction}{1}{section.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {I-A}}Inspection Method and Claim Boundaries}{1}{subsection.1.1}\protected@file@percent }
-\citation{client,gateway,deployment}
 \citation{flutter}
 \citation{client}
 \citation{tests,client}
@@ -27,80 +27,75 @@
 \citation{auth}
 \citation{gateway,jwt}
 \citation{movie}
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Selected deployment overview. Requests enter the gateway; services access their database contexts. The bottom box groups backend integrations.}}{2}{figure.1}\protected@file@percent }
-\newlabel{fig:architecture}{{1}{2}{Selected deployment overview. Requests enter the gateway; services access their database contexts. The bottom box groups backend integrations}{figure.1}{}}
+\citation{booking}
+\@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces Verified Mobile Technology Stack}}{2}{table.1}\protected@file@percent }
+\newlabel{tab:stack}{{I}{2}{Verified Mobile Technology Stack}{table.1}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {II}System Architecture Overview}{2}{section.2}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-A}}Mobile-to-Service Topology}{2}{subsection.2.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-B}}Verified Technology Stack}{2}{subsection.2.2}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces Verified Mobile Technology Stack}}{2}{table.1}\protected@file@percent }
-\newlabel{tab:stack}{{I}{2}{Verified Mobile Technology Stack}{table.1}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-C}}Configuration and Data Flow}{2}{subsection.2.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {III}Backend Design and Implementation}{2}{section.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-A}}Identity as a Mobile Session Dependency}{2}{subsection.3.1}\protected@file@percent }
-\citation{booking}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-B}}Catalog and Seat Information}{2}{subsection.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-C}}Reservation Lifecycle}{2}{subsection.3.3}\protected@file@percent }
 \citation{booking,db,postgres}
 \citation{booking}
 \citation{db,booking,npgsql}
 \citation{deployment,db}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Mobile system architecture: the app uses the shared gateway; backend services own persistence and integrations. Solid arrows show client/API and persistence paths. The integration cards identify the backend services responsible for each external binding. Database labels abbreviate the six \texttt  {cinema\_\ldots  \_db} names; all six use one PostgreSQL instance in Compose.}}{3}{figure.1}\protected@file@percent }
+\newlabel{fig:architecture}{{1}{3}{Mobile system architecture: the app uses the shared gateway; backend services own persistence and integrations. Solid arrows show client/API and persistence paths. The integration cards identify the backend services responsible for each external binding. Database labels abbreviate the six \code {cinema\_\ldots \_db} names; all six use one PostgreSQL instance in Compose}{figure.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-D}}Database Design for Mobile Workflows}{3}{subsection.3.4}\protected@file@percent }
 \citation{booking,payos}
 \citation{booking,rabbit}
 \citation{client}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-B}}Catalog and Seat Information}{3}{subsection.3.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-C}}Reservation Lifecycle}{3}{subsection.3.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-D}}Database Design for Mobile Workflows}{3}{subsection.3.4}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Selected schema relationships reconstructed from SQL. Solid arrows denote parent-to-child SQL foreign keys; dashed arrows denote logical ID references. Reservations, identity, and other extension tables are omitted.}}{3}{figure.2}\protected@file@percent }
-\newlabel{fig:data}{{2}{3}{Selected schema relationships reconstructed from SQL. Solid arrows denote parent-to-child SQL foreign keys; dashed arrows denote logical ID references. Reservations, identity, and other extension tables are omitted}{figure.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-E}}Payment and Asynchronous Follow-Up}{3}{subsection.3.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {IV}Mobile Application Architecture and Implementation}{3}{section.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-A}}Startup and Navigation}{3}{subsection.4.1}\protected@file@percent }
 \citation{client}
 \citation{client}
 \citation{client,webui}
-\citation{client}
-\citation{client}
-\citation{client,auth}
-\citation{client}
-\citation{client,booking}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Selected schema relationships reconstructed from SQL. Solid arrows denote parent-to-child SQL foreign keys; dashed arrows denote logical ID references. Reservations, identity, and other extension tables are omitted.}}{4}{figure.2}\protected@file@percent }
+\newlabel{fig:data}{{2}{4}{Selected schema relationships reconstructed from SQL. Solid arrows denote parent-to-child SQL foreign keys; dashed arrows denote logical ID references. Reservations, identity, and other extension tables are omitted}{figure.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-E}}Payment and Asynchronous Follow-Up}{4}{subsection.3.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {IV}Mobile Application Architecture and Implementation}{4}{section.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-A}}Startup and Navigation}{4}{subsection.4.1}\protected@file@percent }
 \@writefile{lot}{\contentsline {table}{\numberline {II}{\ignorespaces Representative Mobile Screens}}{4}{table.2}\protected@file@percent }
 \newlabel{tab:routes}{{II}{4}{Representative Mobile Screens}{table.2}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-B}}Session State and Token Recovery}{4}{subsection.4.2}\protected@file@percent }
 \newlabel{lst:refresh}{{1}{4}{Concurrent refresh coordination from TokenManager}{lstlisting.1}{}}
 \@writefile{lol}{\contentsline {lstlisting}{\numberline {1}Concurrent refresh coordination from TokenManager.}{4}{lstlisting.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-C}}UI Composition and Feedback}{4}{subsection.4.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-D}}Platform-Specific Actions}{4}{subsection.4.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {V}Core Business Workflows}{4}{section.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-A}}Authentication and Account Use}{4}{subsection.5.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-B}}Discovery, Showtimes, and Seat Choice}{4}{subsection.5.2}\protected@file@percent }
+\citation{client}
+\citation{client,auth}
+\citation{client}
+\citation{client,booking}
 \citation{booking}
 \citation{client}
 \citation{client,booking}
-\citation{storage}
-\citation{client}
-\citation{auth,gateway,booking}
-\citation{client,booking,deployment}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-D}}Platform-Specific Actions}{5}{subsection.4.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {V}Core Business Workflows}{5}{section.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-A}}Authentication and Account Use}{5}{subsection.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-B}}Discovery, Showtimes, and Seat Choice}{5}{subsection.5.2}\protected@file@percent }
 \@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Mobile external-checkout and resumption flow. No client redirect or timer is itself proof of payment.}}{5}{figure.3}\protected@file@percent }
 \newlabel{fig:flow}{{3}{5}{Mobile external-checkout and resumption flow. No client redirect or timer is itself proof of payment}{figure.3}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-C}}Order Calculation}{5}{subsection.5.3}\protected@file@percent }
 \newlabel{eq:total}{{1}{5}{Order Calculation}{equation.5.1}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-D}}External Checkout and App Resumption}{5}{subsection.5.4}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {III}{\ignorespaces Major Mobile Functional Modules}}{5}{table.3}\protected@file@percent }
-\newlabel{tab:modules}{{III}{5}{Major Mobile Functional Modules}{table.3}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-E}}Tickets, Notifications, and Reviews}{5}{subsection.5.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {VI}Security and Data Protection}{5}{section.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-A}}Token and Account Protection}{5}{subsection.6.1}\protected@file@percent }
+\citation{client,storage}
+\citation{auth,booking}
+\citation{gateway}
+\citation{client,booking,deployment}
+\@writefile{lot}{\contentsline {table}{\numberline {III}{\ignorespaces Major Mobile Functional Modules}}{6}{table.3}\protected@file@percent }
+\newlabel{tab:modules}{{III}{6}{Major Mobile Functional Modules}{table.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {VI}Security and Data Protection}{6}{section.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-A}}Token and Account Protection}{6}{subsection.6.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-B}}Transport and External Data}{6}{subsection.6.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {IV}{\ignorespaces Verification Executed on October 28, 2026}}{6}{table.4}\protected@file@percent }
+\newlabel{tab:tests}{{IV}{6}{Verification Executed on October 28, 2026}{table.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {VII}Testing, Verification, and Evaluation}{6}{section.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-A}}Executed Checks}{6}{subsection.7.1}\protected@file@percent }
 \citation{fluttertest,tests}
 \citation{tests,db}
 \citation{client}
 \citation{booking,client,deployment}
-\@writefile{lot}{\contentsline {table}{\numberline {IV}{\ignorespaces Verification Executed on October 28, 2026}}{6}{table.4}\protected@file@percent }
-\newlabel{tab:tests}{{IV}{6}{Verification Executed on October 28, 2026}{table.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-B}}Transport and External Data}{6}{subsection.6.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {VII}Testing, Verification, and Evaluation}{6}{section.7}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-A}}Executed Checks}{6}{subsection.7.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-B}}What the Test Suite Can Establish}{6}{subsection.7.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-C}}Interpretation}{6}{subsection.7.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {VIII}Limitations and Future Development}{6}{section.8}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VIII-A}}Current Limitations}{6}{subsection.8.1}\protected@file@percent }
 \bibstyle{IEEEtran}
 \bibdata{references}
 \bibcite{client}{1}
@@ -109,6 +104,13 @@
 \bibcite{deployment}{4}
 \bibcite{flutter}{5}
 \bibcite{tests}{6}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-B}}What the Test Suite Can Establish}{7}{subsection.7.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-C}}Interpretation}{7}{subsection.7.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {VIII}Limitations and Future Development}{7}{section.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VIII-A}}Current Limitations}{7}{subsection.8.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VIII-B}}Recommendations}{7}{subsection.8.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {IX}Conclusion}{7}{section.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{References}{7}{section*.2}\protected@file@percent }
 \bibcite{auth}{7}
 \bibcite{jwt}{8}
 \bibcite{movie}{9}
@@ -120,7 +122,4 @@
 \bibcite{webui}{15}
 \bibcite{storage}{16}
 \bibcite{fluttertest}{17}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VIII-B}}Recommendations}{7}{subsection.8.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {IX}Conclusion}{7}{section.9}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{References}{7}{section*.2}\protected@file@percent }
-\gdef \@abspage@last{7}
+\gdef \@abspage@last{8}

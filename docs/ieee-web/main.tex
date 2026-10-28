@@ -5,30 +5,52 @@
 \usepackage{cite,amsmath,amssymb,graphicx,booktabs,array,tabularx}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning,fit}
-\usepackage{listings}
+\usepackage{listings,xcolor}
 \usepackage[hyphens]{url}
 \usepackage[hidelinks]{hyperref}
 \urlstyle{same}
 \newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+
+% Restrained visual hierarchy; IEEEtran controls the page geometry and headings.
+\definecolor{ReportInk}{HTML}{24465E}
+\definecolor{ReportMuted}{HTML}{526270}
+\definecolor{ReportRule}{HTML}{9AAAB5}
+\definecolor{ReportTint}{HTML}{F2F5F7}
+\definecolor{CodeString}{HTML}{486650}
+\newenvironment{keypoints}{\begin{itemize}\setlength{\itemsep}{2pt}%
+\setlength{\parsep}{0pt}}{\end{itemize}}
+\renewcommand{\arraystretch}{1.12}
+\setlength{\tabcolsep}{4pt}
+\newcommand{\BIBdecl}{\raggedright}
+\lstdefinelanguage{CSharp}{keywords={new,return,public,private,static,void,null},
+ sensitive=true,morecomment=[l]{//},morestring=[b]"}
+\lstdefinelanguage{Dart}{keywords={return,null,final,Future,void,async,await},
+ sensitive=true,morecomment=[l]{//},morestring=[b]'}
 \lstset{basicstyle=\ttfamily\scriptsize,breaklines=true,columns=fullflexible,
- frame=single,aboveskip=6pt,belowskip=6pt,showstringspaces=false}
-\tikzset{box/.style={draw,rounded corners=1pt,align=center,font=\scriptsize,
- minimum height=7mm,inner sep=2pt,text width=22mm},arr/.style={-{Latex[length=1.5mm]},thin}}
+ numbers=left,numberstyle=\tiny\color{ReportMuted},numbersep=6pt,
+ keywordstyle=\color{ReportInk}\bfseries,stringstyle=\color{CodeString},
+ commentstyle=\color{ReportMuted}\itshape,backgroundcolor=\color{ReportTint},
+ frame=single,rulecolor=\color{ReportRule},framerule=0.35pt,
+ xleftmargin=12pt,xrightmargin=2pt,framexleftmargin=3pt,
+ aboveskip=8pt,belowskip=8pt,captionpos=b,showstringspaces=false,
+ keepspaces=true,tabsize=2}
+\tikzset{box/.style={draw=ReportInk,fill=ReportTint,rounded corners=1pt,
+ align=center,font=\scriptsize,minimum height=7mm,inner sep=2pt,text width=22mm},
+ arr/.style={-{Latex[length=1.5mm]},draw=ReportInk,thin}}
+
 \newcommand{\code}[1]{\texttt{#1}}
 \hyphenation{PostgreSQL RabbitMQ PayOS Flutter}
 \begin{document}
-\title{CosmoQ Cinema: A Flutter Web Ticket Booking and Cinema Management System with an ASP.NET Core Backend}
+\title{CosmoQ Cinema: Web Ticket Booking and Cinema\\Management with Flutter and ASP.NET Core}
 \author{
-\IEEEauthorblockN{Nguyen Nguyen Ngu (QE190064), Dao Thi Thanh Huong (QE190046),\\
-Pham Ngo Bich Tram (QE1900100), Nguyen Hoang Ngoc Chau (QE190088),\\
-Nguyen Xuan Dang Khoa (QE1900126)}
+\IEEEauthorblockN{\small Nguyen Nguyen Ngu (QE190064), Dao Thi Thanh Huong (QE190046), Pham Ngo Bich Tram (QE1900100)\\
+\small Nguyen Hoang Ngoc Chau (QE190088), Nguyen Xuan Dang Khoa (QE1900126)}
 \IEEEauthorblockA{Student Developers, Class: SEK19B.Net\\
 Department of Software Engineering\\
 FPT University Quy Nhon Campus, Binh Dinh, Vietnam}
-\IEEEauthorblockN{Huynh Vang}
-\IEEEauthorblockA{Project Advisor, Lecturer, Department of Software Engineering\\
-FPT University Quy Nhon Campus, Binh Dinh, Vietnam\\
-vangh@fe.edu.vn}}
+\IEEEauthorblockA{\textbf{Huynh Vang} --- Project Advisor, Lecturer\\
+Department of Software Engineering, FPT University Quy Nhon Campus\\
+Binh Dinh, Vietnam \quad\textbar\quad vangh@fe.edu.vn}}
 \maketitle
 \begin{abstract}
 Cinema ticketing requires customer purchases and cinema operations to agree on
@@ -77,14 +99,19 @@ but its platform behavior is outside the primary scope of this paper.
 Repository evidence, including source-level dependencies and SQL, establishes
 the implementation described here \cite{client,webui,deployment,db}.
 
-The engineering contribution is an integration of browser navigation, role-aware
-management interfaces, server-priced bookings, transactional seat reservations,
-and payment reconciliation. Supporting modules include concessions, promotions,
-loyalty balances, customer reviews, ticket check-in, and notification records.
-These capabilities are assessed at the implementation level; their presence does
-not establish a production deployment or a successful live financial transaction.
-The work does not claim a new booking algorithm or a performance improvement over
-other ticketing systems.
+The principal engineering contributions are the following integrated mechanisms:
+\begin{keypoints}
+\item \textbf{Browser workflow composition.} Named navigation, session recovery,
+responsive customer pages, and role-aware management entry points share remote API adapters.
+\item \textbf{Server-controlled reservation.} Backend pricing, transactional seat
+holds, and a seat/showtime uniqueness constraint coordinate competing purchases.
+\item \textbf{Payment and operational follow-up.} Provider reconciliation and
+outbox events connect booking state to notifications, refunds, and cinema operations.
+\end{keypoints}
+Concessions, promotions, loyalty balances, reviews, check-in, and notification
+records support these workflows. Their source implementation does not establish
+a production deployment, successful live payment, or performance improvement
+over another ticketing system.
 
 \subsection{Evidence and Scope}
 Inspection used repository revision \code{55642353331f} and database submodule
@@ -134,7 +161,7 @@ Backend projects target \code{net8.0}; the local build host uses .NET SDK 9.0.30
 \caption{Verified Web Technology Stack}\label{tab:stack}
 \centering\footnotesize
 \begin{tabularx}{\columnwidth}{@{}lYY@{}}\toprule
-Component & Technology & Responsibility\\\midrule
+\textbf{Component} & \textbf{Technology} & \textbf{Responsibility}\\\midrule
 Browser UI & Flutter, Dart, Material & Customer and administration views\\
 Client API & Dart \code{http} & JSON requests and bearer tokens\\
 Gateway & ASP.NET Core 8, YARP 2.3.0 & Routing and request policies\\
@@ -157,10 +184,10 @@ context for separation of UI and data access \cite{flutter}; CosmoQ's actual
 dependency construction remains the relevant evidence \cite{client}.
 
 \subsection{Persistence Boundaries}
-Compose initializes six databases on one PostgreSQL instance:
-\code{cinema\_auth\_db}, \code{cinema\_movie\_db},
-\code{cinema\_showtime\_db}, \code{cinema\_booking\_db},
-\code{cinema\_payment\_db}, and \code{cinema\_notification\_db}.
+Compose initializes six databases on one PostgreSQL instance. Their domain
+suffixes are \code{auth}, \code{movie}, \code{showtime}, \code{booking},
+\code{payment}, and \code{notification}; full names follow the
+\code{cinema\_...\_db} convention.
 MovieService owns two EF contexts and BookingService owns three. Thus six
 database names do not imply six backend executables. Npgsql supplies the EF
 Core provider \cite{npgsql}; source registration selects each database
@@ -168,7 +195,7 @@ Core provider \cite{npgsql}; source registration selects each database
 
 \section{Backend Design and Implementation}
 \subsection{Identity and Access Services}
-AuthService implements registration, email verification, login, refresh,
+\textbf{Account lifecycle.} AuthService implements registration, email verification, login, refresh,
 logout, profile changes, password changes, and administrative account operations.
 Passwords and OTP values are hashed with BCrypt. JWT generation uses
 HMAC-SHA256 and includes user identity and role claims. Refresh tokens are
@@ -177,7 +204,7 @@ database, and revoked when rotated. A logout revokes the supplied refresh token;
 it is not described here as an instantaneous blacklist of every previously
 issued access token \cite{auth}.
 
-JWT validation checks issuer, audience, signature, and lifetime. Gateway policies
+\textbf{Request authorization.} JWT validation checks issuer, audience, signature, and lifetime. Gateway policies
 and downstream controller policies restrict privileged actions. Protected
 gateway requests also query AuthService's current-account endpoint. Disabled
 accounts are refused, and a mismatch between current roles and token roles
@@ -210,21 +237,28 @@ movie title normally comes from MovieService, although the code retains a
 request-title fallback if no title is returned; therefore it would be inaccurate
 to claim that every display field is exclusively server-derived \cite{booking}.
 
-Inside a PostgreSQL transaction, the service locks existing reservation rows
-with \code{FOR UPDATE}. It rejects booked seats and unexpired holds. For a new
-seat/showtime pair, the SQL constraint \code{uq\_seat\_per\_showtime} supplies
-the conflict boundary when no row yet exists to lock. A unique-violation catch
-rolls the transaction back and returns a conflict. The booking, seat snapshots,
-holds, and outbox event are committed together. This supports a specific
-concurrency mechanism, not an unrestricted claim that duplicate bookings can
-never occur under any failure mode \cite{booking,db,postgres}.
+The transaction uses three complementary mechanisms \cite{booking,db,postgres}:
+\begin{keypoints}
+\item \textbf{Lock existing reservations.} PostgreSQL \code{FOR UPDATE} locks
+the selected rows; booked seats and unexpired holds are rejected.
+\item \textbf{Constrain new reservations.} The unique
+\code{uq\_seat\_}\allowbreak\code{per\_showtime} key protects a seat/showtime pair before a row
+exists to lock. A unique violation rolls back the transaction and returns a conflict.
+\item \textbf{Commit related state.} The booking, seat snapshots, holds, and
+outbox event are persisted in one local transaction.
+\end{keypoints}
+These are specific concurrency mechanisms; they do not establish an unrestricted
+guarantee under every failure mode.
 
 Listing~\ref{lst:seat} reproduces the relevant EF mapping. The database schema
 contains the corresponding unique constraint. UI disabling alone would not
 provide this protection; simultaneous browser sessions can submit the same
 selection despite a recently refreshed map.
-\begin{lstlisting}[caption={Reservation uniqueness mapping from BookingDbContext.},label={lst:seat}]
-entity.HasIndex(e => new { e.ShowtimeId, e.SeatId }, "uq_seat_per_showtime").IsUnique();
+\begin{lstlisting}[language=CSharp,caption={Reservation uniqueness mapping from BookingDbContext.},label={lst:seat}]
+entity.HasIndex(
+    e => new { e.ShowtimeId, e.SeatId },
+    "uq_seat_per_showtime")
+  .IsUnique();
 \end{lstlisting}
 
 \subsection{Database Model and Relationships}
@@ -261,7 +295,7 @@ booking-confirmation conflict can initiate a refund request. These operations
 are integrated in source; live merchant delivery was not exercised
 \cite{booking,payos}.
 
-Outbox publishers read unpublished events with \code{FOR UPDATE SKIP LOCKED},
+\textbf{Asynchronous delivery.} Outbox publishers read unpublished events with \code{FOR UPDATE SKIP LOCKED},
 publish persistent messages with publisher confirmations, and record publication
 state. Consumers handle booking cancellation, payment/refund changes, email
 notifications, and showtime cancellation. Event identifiers and uniqueness checks
@@ -292,7 +326,7 @@ not proof that a hosting environment serves both correctly \cite{client,tests}.
 \caption{Representative Browser Screens and Routes}\label{tab:routes}
 \centering\footnotesize
 \begin{tabularx}{\columnwidth}{@{}lYY@{}}\toprule
-View & Route or entry & Responsibility\\\midrule
+\textbf{View} & \textbf{Route or entry} & \textbf{Responsibility}\\\midrule
 Customer home & \code{/home} & Browse and filter movies\\
 Movie details & \code{/movies/\{id\}} & Metadata, reviews, showtimes\\
 Seats & \code{/showtimes/}\allowbreak\code{\{id\}/seats} & Selection and availability\\
@@ -340,7 +374,7 @@ evaluated. Table~\ref{tab:modules} summarizes the main functional divisions.
 \caption{Major Web Functional Modules}\label{tab:modules}
 \centering\footnotesize
 \begin{tabularx}{\columnwidth}{@{}lYY@{}}\toprule
-Module & Implemented responsibility & Principal layers\\\midrule
+\textbf{Module} & \textbf{Implemented responsibility} & \textbf{Principal layers}\\\midrule
 Catalog & Browse, details, genres, trailers & Flutter; MovieService\\
 Booking & Seats, summary, history, QR ticket & Flutter; BookingService\\
 Checkout & PayOS link and status checks & Flutter; payment service\\
@@ -360,7 +394,7 @@ schedule selection to a seven-day window and can fetch subsequent pages while
 that window is relevant. Room seats and occupied seat IDs are requested in
 parallel and combined into a client map \cite{client,webui}.
 
-Selection is initially local. Every five seconds, the seat screen attempts to
+\textbf{Selection versus reservation.} Selection is initially local. Every five seconds, the seat screen attempts to
 refresh availability while it is current; seats no longer free are removed
 from the local selection, including paired-seat adjustments. Submitting the
 summary creates the backend hold described in Section III. A conflict still
@@ -407,12 +441,17 @@ repeated admission is rejected by business logic \cite{booking,webui}.
 
 \section{Security and Data Protection}
 \subsection{Trust Boundaries}
-Role-based routing is paired with gateway and service authorization. Booking
-reads compare ownership for non-management users, and self-service creation
-overwrites user identity from claims. Server pricing avoids trusting a browser's
-seat or concession totals. Webhook signature validation rejects malformed or
-tampered provider data before booking confirmation. Password validation also
-accounts for BCrypt's input-length boundary \cite{auth,gateway,booking}.
+The implementation places checks at three trust boundaries
+\cite{auth,gateway,booking}:
+\begin{keypoints}
+\item \textbf{Identity and ownership.} Gateway/service authorization accompanies
+UI routing. Booking reads check ownership; self-service creation uses identity claims.
+\item \textbf{Order value.} Server pricing recalculates seat and concession
+amounts instead of trusting totals submitted by the browser.
+\item \textbf{Provider data.} Webhook signatures are checked before payment data
+is used to confirm a booking.
+\end{keypoints}
+Password validation additionally accounts for BCrypt's input-length boundary.
 
 \subsection{Browser Storage and Configuration}
 The client actively uses \code{flutter\_secure\_storage} for access/refresh
@@ -423,7 +462,7 @@ application-level guarantee against script execution or browser compromise.
 The package documents HTTPS or localhost requirements for its Web backend
 \cite{client,storage}.
 
-Gateway CORS uses configured origins when present, but falls back to allowing
+\textbf{Deployment configuration.} Gateway CORS uses configured origins when present, but falls back to allowing
 any origin if the list is empty. Fixed-window IP rate limits include a separate
 authentication policy and return 429 responses. Compose passes secrets via
 environment variables; the review did not open or publish credential values.
@@ -472,7 +511,7 @@ clients. Flutter workflow tests likewise use fake repositories and plugin
 substitutes. Their test names describe intended assertions, not evidence of
 real merchant payments or actual email delivery \cite{tests}.
 
-Docker's daemon was unavailable during this review, preventing the
+\textbf{Runtime verification boundary.} Docker's daemon was unavailable during this review, preventing the
 container-dependent suites and a complete Compose deployment from being
 verified. SQL files and EF mappings were inspected directly, but no live-schema
 or migration execution result is claimed. Browser-hosted checkout, external
@@ -520,11 +559,14 @@ specific implementation properties, while the reported runtime limitations
 prevent broader claims about production security, live payments, or capacity.
 The resulting system is a documented engineering implementation whose next
 evaluation step is controlled end-to-end deployment verification.
+\par\noindent\begin{minipage}{\columnwidth}
 \section*{Acknowledgment}
 The student developers thank Mr. Huynh Vang, Department of Software Engineering,
 FPT University Quy Nhon Campus, for his guidance as project advisor and for
 supporting the team's software engineering work on CosmoQ Cinema.
-\balance
+\end{minipage}\par
+% Start the bibliography in a fresh column after the intact acknowledgment.
+\newpage
 \bibliographystyle{IEEEtran}
 \bibliography{references}
 \end{document}

@@ -1,0 +1,34 @@
+{
+  "web": {
+    "pages": 7,
+    "compile": "success",
+    "references": 17,
+    "overfull_boxes": 0,
+    "undefined_references_or_citations": 0,
+    "font_substitution_warnings": 0,
+    "missing_glyph_warnings": 0,
+    "figure_count": 3,
+    "table_count": 4,
+    "pdf_sha256": "421ccc697d98273b1d89fdb715814648028b5eaa491a7850440cae7528d292ec",
+    "changed_rendered_pages_since_previous_visual_review": [],
+    "render_dpi": 110,
+    "visual_review": "All 7 final Poppler-rendered pages inspected; architecture, tables, listings, acknowledgment, and final reference columns checked.",
+    "presentation_revision": "Wide architecture figure, compact author block, emphasized technical points, consistent tables, numbered syntax-colored listings."
+  },
+  "mobile": {
+    "pages": 8,
+    "compile": "success",
+    "references": 17,
+    "overfull_boxes": 0,
+    "undefined_references_or_citations": 0,
+    "font_substitution_warnings": 0,
+    "missing_glyph_warnings": 0,
+    "figure_count": 3,
+    "table_count": 4,
+    "pdf_sha256": "0336afe631bad47aca55809661619cfd896c2f59f96f78ced4837d46d1e77034",
+    "changed_rendered_pages_since_previous_visual_review": [],
+    "render_dpi": 110,
+    "visual_review": "All 8 final Poppler-rendered pages inspected; architecture, tables, listings, acknowledgment, and final reference columns checked.",
+    "presentation_revision": "Wide architecture figure, compact author block, emphasized technical points, consistent tables, numbered syntax-colored listings."
+  }
+}

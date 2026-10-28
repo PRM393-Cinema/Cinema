@@ -1,0 +1,24 @@
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=5mm and 8mm]
+\node[box] (room) {rooms};
+\node[box,right=of room] (seat) {seats};
+\node[box,below=of room] (show) {showtimes};
+\node[box,right=of show] (movie) {movies\\separate database};
+\node[box,below=of show] (booking) {bookings};
+\node[box,right=of booking] (bs) {booking\_seats};
+\node[box,below=of booking] (payment) {payments\\separate database};
+\node[box,right=of payment] (refund) {refunds};
+\draw[arr] (room)--node[above,font=\tiny]{1 : N}(seat);
+\draw[arr] (room)--node[left,font=\tiny]{1 : N}(show);
+\draw[arr,dashed] (movie)--node[above,font=\tiny]{ID ref.}(show);
+\draw[arr,dashed] (show)--node[left,font=\tiny]{ID ref.}(booking);
+\draw[arr] (booking)--node[above,font=\tiny]{1 : N}(bs);
+\draw[arr,dashed] (booking)--node[left,font=\tiny]{ID ref.}(payment);
+\draw[arr] (payment)--node[above,font=\tiny]{1 : 0..1}(refund);
+\end{tikzpicture}
+\caption{Selected schema relationships reconstructed from SQL. Solid arrows
+denote parent-to-child SQL foreign keys; dashed arrows denote logical ID
+references. Reservations, identity, and other extension tables are omitted.}
+\label{fig:data}
+\end{figure}

@@ -5,30 +5,50 @@
 \usepackage{cite,amsmath,amssymb,graphicx,booktabs,array,tabularx}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning,fit}
-\usepackage{listings}
+\usepackage{listings,xcolor}
 \usepackage[hyphens]{url}
 \usepackage[hidelinks]{hyperref}
 \urlstyle{same}
 \newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+
+% Restrained visual hierarchy; IEEEtran controls the page geometry and headings.
+\definecolor{ReportInk}{HTML}{24465E}
+\definecolor{ReportMuted}{HTML}{526270}
+\definecolor{ReportRule}{HTML}{9AAAB5}
+\definecolor{ReportTint}{HTML}{F2F5F7}
+\definecolor{CodeString}{HTML}{486650}
+\newenvironment{keypoints}{\begin{itemize}\setlength{\itemsep}{2pt}%
+\setlength{\parsep}{0pt}}{\end{itemize}}
+\renewcommand{\arraystretch}{1.12}
+\setlength{\tabcolsep}{4pt}
+\newcommand{\BIBdecl}{\raggedright}
+\lstdefinelanguage{Dart}{keywords={return,null,final,Future,void,async,await},
+ sensitive=true,morecomment=[l]{//},morestring=[b]'}
 \lstset{basicstyle=\ttfamily\scriptsize,breaklines=true,columns=fullflexible,
- frame=single,aboveskip=6pt,belowskip=6pt,showstringspaces=false}
-\tikzset{box/.style={draw,rounded corners=1pt,align=center,font=\scriptsize,
- minimum height=7mm,inner sep=2pt,text width=22mm},arr/.style={-{Latex[length=1.5mm]},thin}}
+ numbers=left,numberstyle=\tiny\color{ReportMuted},numbersep=6pt,
+ keywordstyle=\color{ReportInk}\bfseries,stringstyle=\color{CodeString},
+ commentstyle=\color{ReportMuted}\itshape,backgroundcolor=\color{ReportTint},
+ frame=single,rulecolor=\color{ReportRule},framerule=0.35pt,
+ xleftmargin=12pt,xrightmargin=2pt,framexleftmargin=3pt,
+ aboveskip=8pt,belowskip=8pt,captionpos=b,showstringspaces=false,
+ keepspaces=true,tabsize=2}
+\tikzset{box/.style={draw=ReportInk,fill=ReportTint,rounded corners=1pt,
+ align=center,font=\scriptsize,minimum height=7mm,inner sep=2pt,text width=22mm},
+ arr/.style={-{Latex[length=1.5mm]},draw=ReportInk,thin}}
+
 \newcommand{\code}[1]{\texttt{#1}}
 \hyphenation{PostgreSQL RabbitMQ PayOS Flutter}
 \begin{document}
-\title{CosmoQ Cinema: A Cross-Platform Flutter Mobile Ticket Booking Application with an ASP.NET Core Backend}
+\title{CosmoQ Cinema: Mobile Ticket Booking\\with Flutter and ASP.NET Core}
 \author{
-\IEEEauthorblockN{Nguyen Nguyen Ngu (QE190064), Dao Thi Thanh Huong (QE190046),\\
-Pham Ngo Bich Tram (QE1900100), Nguyen Hoang Ngoc Chau (QE190088),\\
-Nguyen Xuan Dang Khoa (QE1900126)}
+\IEEEauthorblockN{\small Nguyen Nguyen Ngu (QE190064), Dao Thi Thanh Huong (QE190046), Pham Ngo Bich Tram (QE1900100)\\
+\small Nguyen Hoang Ngoc Chau (QE190088), Nguyen Xuan Dang Khoa (QE1900126)}
 \IEEEauthorblockA{Student Developers, Class: SEK19B.Net\\
 Department of Software Engineering\\
 FPT University Quy Nhon Campus, Binh Dinh, Vietnam}
-\IEEEauthorblockN{Huynh Vang}
-\IEEEauthorblockA{Project Advisor, Lecturer, Department of Software Engineering\\
-FPT University Quy Nhon Campus, Binh Dinh, Vietnam\\
-vangh@fe.edu.vn}}
+\IEEEauthorblockA{\textbf{Huynh Vang} --- Project Advisor, Lecturer\\
+Department of Software Engineering, FPT University Quy Nhon Campus\\
+Binh Dinh, Vietnam \quad\textbar\quad vangh@fe.edu.vn}}
 \maketitle
 \begin{abstract}
 Mobile cinema booking must coordinate local screen state with server-owned
@@ -74,14 +94,18 @@ not evidence that every platform has been built, signed, deployed, or tested.
 The verified source supports discussing a cross-platform implementation while
 retaining those distinctions.
 
-The project's engineering contribution is a coordinated customer workflow:
-remote catalog data, route-driven screens, recoverable authentication,
-server-controlled seat holds, external PayOS checkout, booking history, and QR
-ticket presentation. Notification read state, promotions, loyalty points,
-reviews, ticket sharing, and a staff check-in path extend that workflow.
-The contribution is the integration of these mechanisms in the inspected
-project, rather than a novel mobile framework or a measured improvement over
-existing cinema applications.
+The mobile implementation integrates three principal engineering mechanisms:
+\begin{keypoints}
+\item \textbf{Recoverable client state.} Route-driven screens, remote catalog
+data, secure-storage calls, and coordinated renewal support the customer session.
+\item \textbf{Server-owned booking state.} Seat availability, transactional
+holds, order pricing, and payment reconciliation remain backend responsibilities.
+\item \textbf{Mobile ticket interaction.} External checkout and resumption,
+booking history, QR presentation, sharing, and a staff check-in path complete the flow.
+\end{keypoints}
+Notification read state, promotions, points, and reviews extend these workflows.
+The contribution is their implementation and integration, rather than a novel
+framework or a measured improvement over another cinema application.
 
 \subsection{Inspection Method and Claim Boundaries}
 Source revision \code{55642353331f} and database revision
@@ -129,7 +153,7 @@ CosmoQ's behavior \cite{client}.
 \caption{Verified Mobile Technology Stack}\label{tab:stack}
 \centering\footnotesize
 \begin{tabularx}{\columnwidth}{@{}lYY@{}}\toprule
-Component & Technology & Responsibility\\\midrule
+\textbf{Component} & \textbf{Technology} & \textbf{Responsibility}\\\midrule
 Mobile UI & Flutter, Dart, Material & Customer screens and navigation\\
 Networking & Dart \code{http} & JSON requests and error handling\\
 Session storage & \code{flutter\_secure\_}\allowbreak\code{storage} & Persist tokens and user data\\
@@ -203,7 +227,7 @@ controller. The service records the showtime time received from MovieService;
 movie title retrieval includes a request-title fallback if the remote lookup
 returns no title \cite{booking}.
 
-The reservation transaction locks existing seat/showtime records with
+\textbf{Reservation conflict boundary.} The reservation transaction locks existing seat/showtime records with
 \code{FOR UPDATE}. It rejects booked seats and active holds, creates a pending
 booking with a ten-minute expiry, and associates held seats. The unique
 \code{(showtime\_id, seat\_id)} key handles competing inserts when a reservation
@@ -211,7 +235,7 @@ row has not existed before. A unique-violation exception is translated into a
 conflict response. The phone cannot turn a locally highlighted seat into a
 reservation until this transaction succeeds \cite{booking,db,postgres}.
 
-A background expiry worker changes overdue pending bookings and releases their
+\textbf{Expiry and cancellation.} A background expiry worker changes overdue pending bookings and releases their
 seat holds. Payment confirmation attempts to transition the booking to a paid
 state, while cancellation and refund paths have distinct rules. In particular,
 a paid customer cancellation request can become \code{REFUND\_PENDING}; it
@@ -281,7 +305,7 @@ Table~\ref{tab:routes} lists representative route contracts.
 \caption{Representative Mobile Screens}\label{tab:routes}
 \centering\footnotesize
 \begin{tabularx}{\columnwidth}{@{}lYY@{}}\toprule
-Screen & Named route & Responsibility\\\midrule
+\textbf{Screen} & \textbf{Named route} & \textbf{Responsibility}\\\midrule
 Home & \code{/home} & Catalog and movie filters\\
 Movie details & \code{/movies/\{id\}} & Metadata and showtimes\\
 Seat selection & \code{/showtimes/}\allowbreak\code{\{id\}/seats} & Room layout and local choice\\
@@ -302,20 +326,21 @@ selection, loading, error, and pagination state. The code therefore uses a
 small explicit state arrangement rather than an evidenced application-wide
 Bloc or Redux architecture \cite{client}.
 
-The HTTP client gives requests a default fifteen-second timeout and decodes
+\textbf{Concurrent token renewal.} The HTTP client gives requests a default fifteen-second timeout and decodes
 structured API failures. On a protected 401 it asks \code{TokenManager} to
 renew the token, then retries once. Listing~\ref{lst:refresh} reproduces the
 shared-future mechanism. Since the server rotates refresh tokens, independently
 refreshing concurrent failed requests could otherwise reuse an invalidated
 token. Additional session-version checks stop an in-flight renewal from
 overriding a later account-expiration event \cite{client}.
-\begin{lstlisting}[caption={Concurrent refresh coordination from TokenManager.},label={lst:refresh}]
-return _pendingRefresh ??= _refresh(failedToken).whenComplete(() {
+\begin{lstlisting}[language=Dart,caption={Concurrent refresh coordination from TokenManager.},label={lst:refresh}]
+return _pendingRefresh ??=
+    _refresh(failedToken).whenComplete(() {
   _pendingRefresh = null;
 });
 \end{lstlisting}
 
-Network errors can preserve session data for a retry; rejected refresh
+\textbf{Visible session recovery.} Network errors can preserve session data for a retry; rejected refresh
 credentials clear it. \code{SessionApp} responds to the expiration message by
 opening sign-in and displaying an explanatory notice. This links transport
 errors to navigation and prevents the UI from silently continuing with an
@@ -338,18 +363,20 @@ layouts with fixtures; it is not a general accessibility, device-compatibility,
 or performance certification.
 
 \subsection{Platform-Specific Actions}
-The native trailer implementation launches an external application rather than
-embedding the browser-specific player. PayOS checkout likewise uses
-\code{url\_launcher}. Ticket sharing invokes \code{share\_plus}, with clipboard
-fallback on failure. Calendar support constructs a Google Calendar event URL;
-it is not a synchronized device-calendar database integration \cite{client}.
-
-QR ticket rendering uses \code{qr\_flutter}. A staff-only customer-app route can
-look up a ticket or scan a QR through \code{mobile\_scanner}, then submit
-server check-in. The iOS property list contains a camera-purpose description;
-Android declares Internet access. Those inspected settings establish platform
-intent, while camera permission behavior, release packaging, and physical-device
-scanning remain unverified in this review \cite{client}.
+Platform actions are isolated from the shared booking contract \cite{client}:
+\begin{keypoints}
+\item \textbf{External activities.} Native trailers and PayOS checkout launch
+through \code{url\_launcher}; the native trailer path does not embed the Web player.
+\item \textbf{Sharing and calendar links.} \code{share\_plus} invokes sharing,
+with a clipboard fallback. Calendar support constructs a Google Calendar event URL,
+not a synchronized device-calendar integration.
+\item \textbf{Ticket display and scanning.} \code{qr\_flutter} renders tickets.
+A staff-only route uses ticket lookup or \code{mobile\_scanner} before submitting
+server check-in.
+\end{keypoints}
+The iOS property list declares a camera-purpose description and Android declares
+Internet access. These settings show platform intent; camera permissions,
+release packaging, and physical-device scanning remain unverified.
 
 \section{Core Business Workflows}
 \subsection{Authentication and Account Use}
@@ -368,7 +395,7 @@ actions, reviews, and open showtimes. The catalog repository fetches schedules
 within a seven-day customer window. Once a show is chosen, room seats and
 occupied IDs are combined into \code{ShowtimeSeatsData} \cite{client}.
 
-The selected seat set remains local until order submission. A five-second
+\textbf{Local choice and server hold.} The selected seat set remains local until order submission. A five-second
 timer refreshes the visible map; conflicting local seats are removed, with
 sweetbox partner handling. Failed refreshes retain the last map and retry on a
 later tick. The booking transaction is consequently essential even when the
@@ -402,7 +429,7 @@ state every five seconds, with provider verification every sixth eligible
 poll, and disposes timers when leaving the screen \cite{client}.
 \input{figures/flow}
 
-The displayed countdown is computed from the booking expiry; it does not
+\textbf{Resumption and reconciliation.} The displayed countdown is computed from the booking expiry; it does not
 authorize or extend the hold. A successful provider result is reconciled on
 the backend before a confirmed ticket is shown. If the application is
 terminated, booking history and ID-based detail loading provide a recovery
@@ -428,32 +455,33 @@ and email must therefore be distinguished from native push notifications.
 \caption{Major Mobile Functional Modules}\label{tab:modules}
 \centering\footnotesize
 \begin{tabularx}{\columnwidth}{@{}lYY@{}}\toprule
-Module & Customer interaction & Supporting layer\\\midrule
-Identity & Login, OTP, account recovery & Auth repository/AuthService\\
-Discovery & Search, details, schedules & Catalog repository/MovieService\\
-Reservation & Seats, options, summary & Booking repository/BookingService\\
-Payment & External checkout, resumption & Payment screen/PayOS adapter\\
+\textbf{Module} & \textbf{Customer interaction} & \textbf{Supporting layer}\\\midrule
+Identity & Login, OTP, account recovery & Auth repository / AuthService\\
+Discovery & Search, details, schedules & Catalog repository / MovieService\\
+Reservation & Seats, options, summary & Booking repository / BookingService\\
+Payment & External checkout, resumption & Payment screen / PayOS adapter\\
 Tickets & History, QR, share, calendar URL & Flutter/native plugins\\
-Messages & Lists, detail, read state & Notification APIs/SMTP handlers\\
+Messages & Lists, detail, read state & Notification APIs / SMTP handlers\\
 Membership & Points, discounts, reviews & Booking business services\\\bottomrule
 \end{tabularx}
 \end{table}
 
 \section{Security and Data Protection}
 \subsection{Token and Account Protection}
-The application persists access token, refresh token, expiry, and user data
-using \code{SecureAuthTokenStorage}. It serializes writes and clears unreadable
-storage. The package supplies platform-specific implementations
-\cite{storage}; this review verifies calls to that abstraction, not hardware
-backing or resistance to a compromised phone. No additional biometric gate,
-certificate pinning, or device attestation was established \cite{client}.
-
-Backend password/OTP hashing, input validation, role checks, and resource
-ownership constrain API use. The booking controller replaces a customer's
-submitted identity with claims, and price calculation uses backend data.
-Gateway rate limiting and account-status validation add request controls.
-These mechanisms reduce particular trust assumptions but do not establish
-complete application security \cite{auth,gateway,booking}.
+Protection is divided between client persistence and API enforcement:
+\begin{keypoints}
+\item \textbf{Local credentials.} \code{SecureAuthTokenStorage} persists tokens,
+expiry, and user data using serialized writes and clears unreadable storage.
+Platform-specific package implementations are used \cite{client,storage};
+hardware backing and compromised-device resistance were not tested.
+\item \textbf{Server enforcement.} Password/OTP hashing, input validation,
+role checks, and resource ownership constrain API use. Customer identity comes
+from claims and pricing uses backend data \cite{auth,booking}.
+\item \textbf{Gateway controls.} Rate limiting and current-account validation
+add request checks independently of the mobile screen state \cite{gateway}.
+\end{keypoints}
+No additional biometric gate, certificate pinning, or device attestation was
+established. These mechanisms do not constitute a complete security guarantee.
 
 \subsection{Transport and External Data}
 The default API addresses are HTTP development endpoints. HTTPS operation,
@@ -575,7 +603,8 @@ mobile client with explicit operational verification limits.
 The student developers thank Mr. Huynh Vang, Department of Software Engineering,
 FPT University Quy Nhon Campus, for his guidance as project advisor and for
 supporting the team's software engineering work on CosmoQ Cinema.
-\balance
+% Keep the last bibliography page balanced at an entry boundary.
+\IEEEtriggeratref{10}
 \bibliographystyle{IEEEtran}
 \bibliography{references}
 \end{document}
