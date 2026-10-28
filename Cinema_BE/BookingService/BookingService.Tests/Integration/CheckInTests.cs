@@ -60,6 +60,53 @@ public class CheckInTests
         Assert.True(IsCheckedIn(await _customer.GetFromJsonAsync<JsonElement>($"/api/v1/bookings/{id}")));
     }
 
+    [Theory]
+    [InlineData(2)]
+    [InlineData(10)]
+    [InlineData(25)]
+    public async Task ConcurrentStaffCheckIns_OnlyOneSucceeds(int scanners)
+    {
+        var showtime = _factory.Showtimes.AddShowtime(DateTime.Now.AddHours(1));
+        var id = await CreatePaidBookingAsync(_factory, _customer, showtime.Id, NewSeat());
+        var clients = Enumerable.Range(0, scanners)
+            .Select(i => _factory.ClientFor(TestJwt.Create(60000 + i, $"scanner{i}@test.local", "ROLE_STAFF")))
+            .ToArray();
+        var start = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        try
+        {
+            var requests = clients.Select(async client =>
+            {
+                await start.Task;
+                return await client.PostAsync($"/api/v1/bookings/{id}/check-in", null);
+            }).ToArray();
+            start.SetResult(true);
+            var responses = await Task.WhenAll(requests);
+            try
+            {
+                var success = Assert.Single(responses, r => r.StatusCode == HttpStatusCode.OK);
+                var rejected = responses.Where(r => r.StatusCode == HttpStatusCode.Conflict).ToArray();
+                Assert.Equal(scanners - 1, rejected.Length);
+                foreach (var response in rejected)
+                {
+                    Assert.Contains("already checked in", await response.Content.ReadAsStringAsync());
+                }
+                var accepted = (await success.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("checkedInAt");
+                var stored = await _customer.GetFromJsonAsync<JsonElement>($"/api/v1/bookings/{id}");
+                // PostgreSQL timestamps retain microseconds, not .NET's 100 ns ticks.
+                var difference = accepted.GetDateTime() - stored.GetProperty("checkedInAt").GetDateTime();
+                Assert.InRange(Math.Abs(difference.Ticks), 0L, 9L);
+            }
+            finally
+            {
+                foreach (var response in responses) response.Dispose();
+            }
+        }
+        finally
+        {
+            foreach (var client in clients) client.Dispose();
+        }
+    }
+
     [Fact]
     public async Task UnpaidCancelledOrEarlyBookings_CannotCheckIn()
     {
