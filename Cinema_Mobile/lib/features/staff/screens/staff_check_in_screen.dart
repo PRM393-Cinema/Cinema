@@ -6,6 +6,7 @@ import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_radius.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
+import '../../../core/network/api_exception.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
@@ -123,6 +124,13 @@ class _CheckInPanelState extends State<CheckInPanel> {
     });
     try {
       final booking = await widget.service.bookingByCode(code);
+      if (booking.isCheckedIn) {
+        throw const ApiException(
+          statusCode: 409,
+          message:
+              'This ticket was already checked in and cannot be used again.',
+        );
+      }
       // The room is on the showtime and the age rating on its movie; the
       // ticket is still shown without them.
       Showtime? showtime;
@@ -140,7 +148,10 @@ class _CheckInPanelState extends State<CheckInPanel> {
         _movie = movie;
       });
     } on Object catch (error) {
-      if (mounted) setState(() => _error = staffError(error));
+      if (mounted) {
+        setState(() => _error = staffError(error));
+        if (error is ApiException && error.statusCode == 409) _code.clear();
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -162,7 +173,16 @@ class _CheckInPanelState extends State<CheckInPanel> {
       _code.clear();
       _focus.requestFocus();
     } on Object catch (error) {
-      if (mounted) setState(() => _error = staffError(error));
+      if (mounted) {
+        setState(() {
+          _error = staffError(error);
+          _booking = null;
+          _showtime = null;
+          _movie = null;
+          _justCheckedIn = false;
+        });
+        _code.clear();
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }

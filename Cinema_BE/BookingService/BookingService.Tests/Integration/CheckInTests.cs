@@ -56,6 +56,12 @@ public class CheckInTests
         Assert.Equal(HttpStatusCode.Conflict, again.StatusCode);
         Assert.Contains("already checked in", await again.Content.ReadAsStringAsync());
 
+        var usedLookup = await _staff.GetAsync($"/api/v1/bookings/code/{code}");
+        Assert.Equal(HttpStatusCode.Conflict, usedLookup.StatusCode);
+        var rejectedBody = await usedLookup.Content.ReadAsStringAsync();
+        Assert.DoesNotContain(TestUsers.CustomerA.Email, rejectedBody);
+        Assert.DoesNotContain("checkedInAt", rejectedBody);
+
         Assert.True(IsCheckedIn(Assert.Single((await SeatBookingsAsync(showtime.Id)).EnumerateArray())));
         Assert.True(IsCheckedIn(await _customer.GetFromJsonAsync<JsonElement>($"/api/v1/bookings/{id}")));
     }

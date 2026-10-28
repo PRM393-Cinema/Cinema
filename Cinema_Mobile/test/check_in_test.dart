@@ -63,8 +63,11 @@ void main() {
       await tester.enterText(find.byKey(const Key('checkInCode')), 'BK-PAID');
       await tester.tap(find.text('Find ticket'));
       await pumpRoute(tester);
-      expect(find.textContaining('This ticket was already used'), findsOne);
+      expect(find.textContaining('already checked in'), findsOneWidget);
       expect(find.byKey(const Key('checkInButton')), findsNothing);
+      expect(find.byKey(const Key('checkInTicket')), findsNothing);
+      expect(find.text(inception.title), findsNothing);
+      expect(find.text('khach@test.local'), findsNothing);
     });
 
     testWidgets('Unknown and unpaid tickets cannot be checked in', (
@@ -113,6 +116,72 @@ void main() {
       expect(find.byKey(const Key('checkInButton')), findsOneWidget);
       expect(find.text('BK-PAID'), findsWidgets);
     });
+
+    testWidgets('Scanning a used ticket hides details and skips room lookup', (
+      tester,
+    ) async {
+      final api = _BookingApi();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: CheckInPanel(
+              service: api.service,
+              canScan: true,
+              scanner: (_) async => 'BK-USED',
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Scan QR'));
+      await pumpRoute(tester);
+      expect(find.textContaining('already checked in'), findsOneWidget);
+      expect(find.byKey(const Key('checkInTicket')), findsNothing);
+      expect(find.byKey(const Key('checkInButton')), findsNothing);
+      expect(find.text(inception.title), findsNothing);
+      expect(find.text('khach@test.local'), findsNothing);
+      expect(api.requests, ['/api/v1/bookings/code/BK-USED']);
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const Key('checkInCode')))
+            .controller!
+            .text,
+        isEmpty,
+      );
+
+      await tester.enterText(find.byKey(const Key('checkInCode')), 'BK-PAID');
+      await tester.tap(find.text('Find ticket'));
+      await pumpRoute(tester);
+      expect(find.byKey(const Key('checkInButton')), findsOneWidget);
+    });
+
+    testWidgets(
+      'A concurrent check-in rejection removes previously shown details',
+      (tester) async {
+        final api = _BookingApi();
+        await tester.pumpWidget(
+          buildAdminTestApp(
+            authenticated: true,
+            user: _staff,
+            staffService: api.service,
+            initialRoute: AppRoutes.staffCheckIn,
+          ),
+        );
+        await pumpRoute(tester);
+        await tester.enterText(find.byKey(const Key('checkInCode')), 'BK-PAID');
+        await tester.tap(find.text('Find ticket'));
+        await pumpRoute(tester);
+        expect(find.byKey(const Key('checkInTicket')), findsOneWidget);
+
+        api.bookings.first['checkedInAt'] = DateTime.now().toIso8601String();
+        await tester.tap(find.byKey(const Key('checkInButton')));
+        await pumpRoute(tester);
+        expect(find.textContaining('already checked in'), findsOneWidget);
+        expect(find.byKey(const Key('checkInTicket')), findsNothing);
+        expect(find.byKey(const Key('checkInButton')), findsNothing);
+        expect(find.text(inception.title), findsNothing);
+        expect(find.text('khach@test.local'), findsNothing);
+      },
+    );
 
     testWidgets('Staff check tickets in from the app', (tester) async {
       final api = _BookingApi();
@@ -272,6 +341,7 @@ class _BookingApi {
     },
   ];
   final checkIns = <String>[];
+  final requests = <String>[];
 
   late final service = StaffService(
     client: ApiClient(httpClient: MockClient(_handle)),
@@ -279,6 +349,7 @@ class _BookingApi {
 
   Future<http.Response> _handle(http.Request request) async {
     final path = request.url.path;
+    requests.add(path);
     final segments = request.url.pathSegments;
     if (request.method == 'POST' && path.endsWith('/check-in')) {
       final booking = bookings.firstWhere(
@@ -287,8 +358,7 @@ class _BookingApi {
       if (booking['checkedInAt'] != null) {
         return _problem(
           409,
-          'Booking ${booking['bookingCode']} was already '
-          'checked in.',
+          'This ticket was already checked in and cannot be used again.',
         );
       }
       booking['checkedInAt'] = DateTime.now().toIso8601String();

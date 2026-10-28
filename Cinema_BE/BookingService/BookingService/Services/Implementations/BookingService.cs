@@ -857,6 +857,11 @@ namespace BookingService.Services.Implementations
                     $"No booking has the code {code}.");
             }
 
+            if (booking.CheckedInAt != null)
+            {
+                throw new ConflictException("This ticket was already checked in and cannot be used again.");
+            }
+
             return await MapBookingAsync(booking);
         }
 
@@ -871,10 +876,10 @@ namespace BookingService.Services.Implementations
                 var booking = await GetBookingForUpdateAsync(id);
                 var code = booking.BookingCode;
 
-                if (booking.CheckedInAt is { } checkedInAt)
+                if (booking.CheckedInAt != null)
                 {
                     throw new ConflictException(
-                        $"Booking {code} was already checked in at {checkedInAt:HH:mm dd/MM/yyyy}.");
+                        "This ticket was already checked in and cannot be used again.");
                 }
 
                 var status = NormalizeStatus(booking);
