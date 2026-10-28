@@ -107,16 +107,37 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
             );
           }
           final payment = _payments[index];
-          final (label, color) = switch (payment.status) {
-            PaymentStatus.success => ('Paid', AppColors.success),
-            PaymentStatus.pending => ('Pending', AppColors.warning),
-            PaymentStatus.failed => ('Failed', AppColors.error),
+          final (label, color, icon) = switch (payment.status) {
+            PaymentStatus.success => (
+              'Paid',
+              AppColors.success,
+              Icons.check_circle_outline,
+            ),
+            PaymentStatus.pending => (
+              'Pending',
+              AppColors.warning,
+              Icons.schedule_outlined,
+            ),
+            PaymentStatus.failed => (
+              'Failed',
+              AppColors.error,
+              Icons.error_outline,
+            ),
             PaymentStatus.refundPending => (
               'Refund pending',
               AppColors.warning,
+              Icons.hourglass_top_rounded,
             ),
-            PaymentStatus.refunded => ('Refunded', AppColors.primary),
-            PaymentStatus.unknown => ('Unknown', AppColors.textSecondary),
+            PaymentStatus.refunded => (
+              'Refunded',
+              AppColors.primary,
+              Icons.undo_rounded,
+            ),
+            PaymentStatus.unknown => (
+              'Unknown',
+              AppColors.textSecondary,
+              Icons.help_outline,
+            ),
           };
           return InkWell(
             borderRadius: BorderRadius.circular(20),
@@ -129,43 +150,120 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                  Wrap(
+                    spacing: AppSpacing.md,
+                    runSpacing: AppSpacing.sm,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      Expanded(
-                        child: Text(
-                          payment.paymentCode,
-                          style: AppTextStyles.title,
+                      Container(
+                        padding: const EdgeInsets.all(AppSpacing.sm),
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          Icons.receipt_long_outlined,
+                          color: color,
+                          size: 28,
                         ),
                       ),
-                      Text(
-                        label,
-                        style: AppTextStyles.caption.copyWith(color: color),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                          vertical: AppSpacing.sm,
+                        ),
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: color.withValues(alpha: 0.35),
+                          ),
+                        ),
+                        child: Wrap(
+                          spacing: AppSpacing.sm,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Icon(icon, color: color, size: 20),
+                            Text(
+                              label,
+                              style: AppTextStyles.body.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: AppSpacing.md),
                   Text(
                     formatVnd(payment.amount),
-                    style: AppTextStyles.heading2.copyWith(
+                    style: AppTextStyles.display.copyWith(
                       color: AppColors.primary,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   Text(
-                    'Booking #${payment.bookingId} · ${payment.method ?? 'Payment'}',
-                    style: AppTextStyles.bodySmall,
+                    payment.paymentCode,
+                    style: AppTextStyles.body.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
+                  const SizedBox(height: AppSpacing.sm),
                   Text(
                     formatDateTime(payment.createdAt),
-                    style: AppTextStyles.caption,
+                    style: AppTextStyles.bodySmall,
                   ),
-                  if (payment.transactionRef != null) ...[
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+                    child: Divider(height: 1, color: AppColors.border),
+                  ),
+                  Text('Payment method', style: AppTextStyles.bodySmall),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    payment.method?.trim().isNotEmpty == true
+                        ? payment.method!
+                        : 'Not specified',
+                    style: AppTextStyles.body.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  if (payment.transactionRef?.trim().isNotEmpty == true) ...[
                     const SizedBox(height: AppSpacing.sm),
+                    const Text(
+                      'Transaction reference',
+                      style: AppTextStyles.bodySmall,
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
                     SelectableText(
-                      'Transaction: ${payment.transactionRef}',
-                      style: AppTextStyles.caption,
+                      payment.transactionRef!,
+                      style: AppTextStyles.body,
                     ),
                   ],
+                  const SizedBox(height: AppSpacing.lg),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.confirmation_number_outlined,
+                        color: AppColors.primary,
+                        size: 20,
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: Text(
+                          'View booking #${payment.bookingId}',
+                          style: AppTextStyles.body.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const Icon(
+                        Icons.chevron_right_rounded,
+                        color: AppColors.primary,
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
