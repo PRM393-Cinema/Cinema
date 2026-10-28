@@ -64,6 +64,7 @@ void main() {
       await tester.tap(find.text('Find ticket'));
       await pumpRoute(tester);
       expect(find.textContaining('already checked in'), findsOneWidget);
+      expect(find.byType(Dialog), findsOneWidget);
       expect(find.byKey(const Key('checkInButton')), findsNothing);
       expect(find.byKey(const Key('checkInTicket')), findsNothing);
       expect(find.text(inception.title), findsNothing);
@@ -117,42 +118,60 @@ void main() {
       expect(find.text('BK-PAID'), findsWidgets);
     });
 
-    testWidgets('Scanning a used ticket hides details and skips room lookup', (
-      tester,
-    ) async {
-      final api = _BookingApi();
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: CheckInPanel(
-              service: api.service,
-              canScan: true,
-              scanner: (_) async => 'BK-USED',
+    for (final legacy in [false, true]) {
+      testWidgets('Used ticket popup hides details (legacy API: $legacy)', (
+        tester,
+      ) async {
+        final api = _BookingApi(legacyUsedLookup: legacy);
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: CheckInPanel(
+                service: api.service,
+                canScan: true,
+                scanner: (_) async => 'BK-USED',
+              ),
             ),
           ),
-        ),
-      );
-      await tester.tap(find.text('Scan QR'));
-      await pumpRoute(tester);
-      expect(find.textContaining('already checked in'), findsOneWidget);
-      expect(find.byKey(const Key('checkInTicket')), findsNothing);
-      expect(find.byKey(const Key('checkInButton')), findsNothing);
-      expect(find.text(inception.title), findsNothing);
-      expect(find.text('khach@test.local'), findsNothing);
-      expect(api.requests, ['/api/v1/bookings/code/BK-USED']);
-      expect(
-        tester
-            .widget<TextField>(find.byKey(const Key('checkInCode')))
-            .controller!
-            .text,
-        isEmpty,
-      );
+        );
+        await tester.tap(find.text('Scan QR'));
+        await pumpRoute(tester);
+        expect(find.textContaining('already checked in'), findsOneWidget);
+        expect(find.byType(Dialog), findsOneWidget);
+        expect(find.byKey(const Key('checkInTicket')), findsNothing);
+        expect(find.byKey(const Key('checkInButton')), findsNothing);
+        expect(find.text(inception.title), findsNothing);
+        expect(find.text('khach@test.local'), findsNothing);
+        expect(api.requests, ['/api/v1/bookings/code/BK-USED']);
+        expect(
+          tester
+              .widget<TextField>(find.byKey(const Key('checkInCode')))
+              .controller!
+              .text,
+          isEmpty,
+        );
 
-      await tester.enterText(find.byKey(const Key('checkInCode')), 'BK-PAID');
-      await tester.tap(find.text('Find ticket'));
-      await pumpRoute(tester);
-      expect(find.byKey(const Key('checkInButton')), findsOneWidget);
-    });
+        // The modal requires acknowledgement before another ticket is scanned.
+        await tester.tapAt(const Offset(5, 5));
+        await pumpRoute(tester);
+        expect(find.byType(Dialog), findsOneWidget);
+        await tester.tap(find.text('Back to scanner'));
+        await pumpRoute(tester);
+        expect(find.byType(Dialog), findsNothing);
+        expect(find.textContaining('already checked in'), findsNothing);
+        expect(
+          tester
+              .widget<TextField>(find.byKey(const Key('checkInCode')))
+              .focusNode!
+              .hasFocus,
+          isTrue,
+        );
+        await tester.enterText(find.byKey(const Key('checkInCode')), 'BK-PAID');
+        await tester.tap(find.text('Find ticket'));
+        await pumpRoute(tester);
+        expect(find.byKey(const Key('checkInButton')), findsOneWidget);
+      });
+    }
 
     testWidgets(
       'A concurrent check-in rejection removes previously shown details',
@@ -176,6 +195,7 @@ void main() {
         await tester.tap(find.byKey(const Key('checkInButton')));
         await pumpRoute(tester);
         expect(find.textContaining('already checked in'), findsOneWidget);
+        expect(find.byType(Dialog), findsOneWidget);
         expect(find.byKey(const Key('checkInTicket')), findsNothing);
         expect(find.byKey(const Key('checkInButton')), findsNothing);
         expect(find.text(inception.title), findsNothing);
@@ -332,6 +352,9 @@ Map<String, Object?> _booking(
 // Showtime 11 is in room 1 (A1..A3, B1..B3): BK-PAID holds A1 and A2,
 // BK-UNPAID holds B1 and BK-USED (already checked in) holds B2.
 class _BookingApi {
+  _BookingApi({this.legacyUsedLookup = false});
+
+  final bool legacyUsedLookup;
   final bookings = [
     _booking(1, 'BK-PAID', 'CONFIRMED', [(1, 'A1'), (2, 'A2')]),
     _booking(2, 'BK-UNPAID', 'PENDING', [(4, 'B1')]),
@@ -368,6 +391,14 @@ class _BookingApi {
     if (path.startsWith('/api/v1/bookings/code/')) {
       final code = Uri.decodeComponent(segments.last).toUpperCase();
       final booking = bookings.where((b) => b['bookingCode'] == code);
+      if (!legacyUsedLookup &&
+          booking.isNotEmpty &&
+          booking.first['checkedInAt'] != null) {
+        return _problem(
+          409,
+          'This ticket was already checked in and cannot be used again.',
+        );
+      }
       return booking.isEmpty
           ? _problem(404, 'No booking has the code $code.')
           : _json(booking.first);

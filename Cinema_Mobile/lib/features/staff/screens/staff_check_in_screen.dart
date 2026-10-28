@@ -148,10 +148,7 @@ class _CheckInPanelState extends State<CheckInPanel> {
         _movie = movie;
       });
     } on Object catch (error) {
-      if (mounted) {
-        setState(() => _error = staffError(error));
-        if (error is ApiException && error.statusCode == 409) _code.clear();
-      }
+      if (mounted) await _handleFailure(error);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -173,19 +170,61 @@ class _CheckInPanelState extends State<CheckInPanel> {
       _code.clear();
       _focus.requestFocus();
     } on Object catch (error) {
-      if (mounted) {
-        setState(() {
-          _error = staffError(error);
-          _booking = null;
-          _showtime = null;
-          _movie = null;
-          _justCheckedIn = false;
-        });
-        _code.clear();
-      }
+      if (mounted) await _handleFailure(error);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  Future<void> _handleFailure(Object error) async {
+    final blocked = error is ApiException && error.statusCode == 409;
+    setState(() {
+      _busy = false;
+      _error = blocked ? null : staffError(error);
+      _booking = null;
+      _showtime = null;
+      _movie = null;
+      _justCheckedIn = false;
+    });
+    if (!blocked) return;
+    _code.clear();
+    _focus.unfocus();
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: CinemaPanel(
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Icon(
+                    Icons.block_outlined,
+                    color: AppColors.error,
+                    size: 40,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  const Text('Ticket blocked', style: AppTextStyles.heading2),
+                  const SizedBox(height: AppSpacing.md),
+                  Text(staffError(error), style: AppTextStyles.bodySmall),
+                  const SizedBox(height: AppSpacing.xl),
+                  AppButton(
+                    label: 'Back to scanner',
+                    useGradient: true,
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    if (mounted) _focus.requestFocus();
   }
 
   Future<void> _scan() async {
