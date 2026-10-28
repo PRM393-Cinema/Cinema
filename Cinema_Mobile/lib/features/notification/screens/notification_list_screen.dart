@@ -178,7 +178,7 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Your cinema updates', style: AppTextStyles.heading2),
+                Text('Cinema updates', style: AppTextStyles.heading2),
                 const SizedBox(height: AppSpacing.sm),
                 Row(
                   children: [
@@ -188,7 +188,7 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
                           formatCount(_notifications.length, 'notification'),
                           if (unread > 0) '$unread unread',
                         ].join(' · '),
-                        style: AppTextStyles.caption,
+                        style: AppTextStyles.bodySmall,
                       ),
                     ),
                     if (unread > 0)
@@ -270,10 +270,10 @@ class _NotificationTile extends StatelessWidget {
                         Expanded(
                           child: Text(
                             notification.subject,
-                            style: AppTextStyles.title.copyWith(
+                            style: AppTextStyles.body.copyWith(
                               fontWeight: notification.isRead
                                   ? FontWeight.w500
-                                  : FontWeight.w800,
+                                  : FontWeight.w700,
                             ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
@@ -284,14 +284,14 @@ class _NotificationTile extends StatelessWidget {
                     const SizedBox(height: AppSpacing.xs),
                     Text(
                       notification.plainContent,
-                      style: AppTextStyles.bodySmall,
+                      style: AppTextStyles.bodySmall.copyWith(height: 1.5),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     Text(
                       formatDateTime(notification.createdAt),
-                      style: AppTextStyles.caption,
+                      style: AppTextStyles.bodySmall,
                     ),
                   ],
                 ),

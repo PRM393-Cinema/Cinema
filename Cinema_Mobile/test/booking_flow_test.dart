@@ -26,6 +26,9 @@ void main() {
   });
 
   testWidgets('A movie trailer opens outside the app', (tester) async {
+    tester.view.physicalSize = const Size(375, 812);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     const trailer = 'https://www.youtube.com/watch?v=YoHD9XEInc0';
     await tester.pumpWidget(
       buildTestApp(
@@ -51,6 +54,18 @@ void main() {
     await pumpRoute(tester);
 
     await tester.ensureVisible(find.byKey(const Key('watchTrailer')));
+    expect(
+      tester.widget<AppButton>(find.byKey(const Key('watchTrailer'))).variant,
+      AppButtonVariant.secondary,
+    );
+    expect(
+      tester.getTopLeft(find.byKey(const Key('watchTrailer'))).dx,
+      tester.getTopLeft(find.text('Synopsis')).dx,
+    );
+    expect(
+      tester.getSize(find.byKey(const Key('watchTrailer'))).height,
+      greaterThanOrEqualTo(48),
+    );
     await tester.tap(find.byKey(const Key('watchTrailer')));
     await tester.pump();
     expect(urlLauncher.launchedUrls, [trailer]);

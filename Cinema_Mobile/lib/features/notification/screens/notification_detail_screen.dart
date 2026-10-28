@@ -16,6 +16,7 @@ import '../../../core/widgets/loading_state.dart';
 import '../../../data/models/app_notification.dart';
 import '../../../data/repositories/booking_repository.dart';
 import '../../../core/session/session_state.dart';
+import '../../review/widgets/review_widgets.dart';
 
 class NotificationDetailScreen extends StatefulWidget {
   const NotificationDetailScreen({
@@ -95,32 +96,51 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(
-                  Icons.notifications_active_outlined,
-                  color: AppColors.primary,
-                  size: 32,
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.notifications_outlined,
+                      color: AppColors.primary,
+                      size: 24,
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: Text(
+                        formatDateTime(notification.createdAt),
+                        style: AppTextStyles.bodySmall,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 Text(notification.subject, style: AppTextStyles.heading2),
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  formatDateTime(notification.createdAt),
-                  style: AppTextStyles.caption,
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+                  child: Divider(height: 1, color: AppColors.border),
                 ),
-                const SizedBox(height: AppSpacing.xl),
                 SelectableText(
                   notification.plainContent,
-                  style: AppTextStyles.body,
+                  style: AppTextStyles.body.copyWith(height: 1.6),
                 ),
                 if (notification.bookingId != null) ...[
                   const SizedBox(height: AppSpacing.xl),
-                  AppButton.secondary(
-                    label: 'View booking',
-                    leadingIcon: Icons.confirmation_number_outlined,
-                    onPressed: () => Navigator.pushNamed(
-                      context,
-                      AppRoutes.bookingDetail(notification.bookingId!),
-                    ),
+                  Wrap(
+                    spacing: AppSpacing.sm,
+                    runSpacing: AppSpacing.sm,
+                    children: [
+                      AppButton.secondary(
+                        key: const Key('viewBooking'),
+                        label: 'View booking',
+                        onPressed: () => Navigator.pushNamed(
+                          context,
+                          AppRoutes.bookingDetail(notification.bookingId!),
+                        ),
+                      ),
+                      TicketReviewButton(
+                        bookingId: notification.bookingId!,
+                        repository: widget.bookingRepository,
+                      ),
+                    ],
                   ),
                 ],
               ],

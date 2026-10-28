@@ -1,5 +1,6 @@
 import 'package:cinema_fe/app/routes/app_routes.dart';
 import 'package:cinema_fe/data/models/app_notification.dart';
+import 'package:cinema_fe/data/models/review.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -22,6 +23,43 @@ final _read = notificationFixture.markedRead(DateTime(2026, 10, 6));
 
 void main() {
   setUp(() => FlutterSecureStorage.setMockInitialValues({}));
+
+  for (final eligible in [true, false]) {
+    testWidgets('Notification review eligibility $eligible and booking link', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(375, 812);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final bookings = FakeBookingRepository(notifications: [_reminder])
+        ..bookingReviews[101] = BookingReview(
+          bookingId: 101,
+          movieId: inception.id,
+          canReview: eligible,
+        );
+      await tester.pumpWidget(
+        buildTestApp(
+          authenticated: true,
+          bookingRepository: bookings,
+          initialRoute: AppRoutes.notificationDetail(_reminder.id),
+        ),
+      );
+      await pumpRoute(tester);
+      expect(
+        find.byKey(const Key('writeReview')),
+        eligible ? findsOneWidget : findsNothing,
+      );
+      if (eligible) {
+        expect(tester.getSize(find.byKey(const Key('writeReview'))).height, 48);
+      }
+      await tester.ensureVisible(find.byKey(const Key('viewBooking')));
+      await tester.tap(find.byKey(const Key('viewBooking')));
+      await pumpRoute(tester);
+      expect(find.text('Booking Detail'), findsOneWidget);
+      expect(find.text('Your review'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+  }
 
   test('A notification is unread until it has a read time', () {
     final notification = AppNotification.fromJson({

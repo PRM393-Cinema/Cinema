@@ -19,7 +19,6 @@ import '../../../data/repositories/booking_repository.dart';
 import 'my_bookings_screen.dart';
 import '../widgets/booking_cancellation_dialog.dart';
 import '../widgets/ticket_qr_card.dart';
-import '../../review/widgets/review_widgets.dart';
 import '../widgets/ticket_share_actions.dart';
 import '../../../data/repositories/catalog_repository.dart';
 
@@ -536,13 +535,6 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                     ],
                     const SizedBox(height: AppSpacing.xl),
                     seatsCard,
-                    if (booking.status == BookingStatus.confirmed) ...[
-                      const SizedBox(height: AppSpacing.xl),
-                      TicketReviewCard(
-                        booking: booking,
-                        repository: widget.bookingRepository,
-                      ),
-                    ],
                     const SizedBox(height: AppSpacing.xl),
                     if (desktop) timelineCard,
                   ],

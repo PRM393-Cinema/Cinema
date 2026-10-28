@@ -10,7 +10,6 @@ import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
-import '../../../data/models/booking.dart';
 import '../../../data/models/movie.dart';
 import '../../../data/models/review.dart';
 import '../../../data/repositories/booking_repository.dart';
@@ -48,12 +47,14 @@ class StarPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
+    return Wrap(
+      alignment: WrapAlignment.center,
+      runSpacing: AppSpacing.xs,
       children: [
         for (var star = 1; star <= 5; star++)
           IconButton(
             key: ValueKey('star-$star'),
+            padding: const EdgeInsets.all(AppSpacing.xs),
             tooltip: '$star star${star == 1 ? '' : 's'}',
             onPressed: onChanged == null ? null : () => onChanged!(star),
             icon: Icon(
@@ -327,23 +328,23 @@ class ReviewTile extends StatelessWidget {
   }
 }
 
-// The rating of a ticket's movie on the ticket page: allowed once the ticket
+// The rating of a ticket's movie from a notification: allowed once the ticket
 // was checked in; one review per movie, which can be changed or removed.
-class TicketReviewCard extends StatefulWidget {
-  const TicketReviewCard({
-    required this.booking,
+class TicketReviewButton extends StatefulWidget {
+  const TicketReviewButton({
+    required this.bookingId,
     required this.repository,
     super.key,
   });
 
-  final Booking booking;
+  final int bookingId;
   final BookingRepository repository;
 
   @override
-  State<TicketReviewCard> createState() => _TicketReviewCardState();
+  State<TicketReviewButton> createState() => _TicketReviewButtonState();
 }
 
-class _TicketReviewCardState extends State<TicketReviewCard> {
+class _TicketReviewButtonState extends State<TicketReviewButton> {
   BookingReview? _state;
   bool _busy = false;
   String? _error;
@@ -356,10 +357,10 @@ class _TicketReviewCardState extends State<TicketReviewCard> {
 
   Future<void> _load() async {
     try {
-      final state = await widget.repository.getBookingReview(widget.booking.id);
+      final state = await widget.repository.getBookingReview(widget.bookingId);
       if (mounted) setState(() => _state = state);
     } on Object {
-      // The ticket page works without the review card.
+      // The booking link remains usable if review eligibility cannot be loaded.
     }
   }
 
@@ -368,7 +369,7 @@ class _TicketReviewCardState extends State<TicketReviewCard> {
     final result = await showDialog<(int, String)>(
       context: context,
       builder: (_) => _ReviewDialog(
-        movieTitle: widget.booking.movieTitle ?? 'this movie',
+        movieTitle: 'this movie',
         rating: current?.rating ?? 0,
         comment: current?.comment ?? '',
       ),
@@ -376,14 +377,14 @@ class _TicketReviewCardState extends State<TicketReviewCard> {
     if (result == null || !mounted) return;
     await _run(() async {
       final review = await widget.repository.saveReview(
-        bookingId: widget.booking.id,
+        bookingId: widget.bookingId,
         rating: result.$1,
         comment: result.$2,
       );
       if (mounted) {
         setState(() {
           _state = BookingReview(
-            bookingId: widget.booking.id,
+            bookingId: widget.bookingId,
             movieId: review.movieId,
             canReview: true,
             review: review,
@@ -421,7 +422,7 @@ class _TicketReviewCardState extends State<TicketReviewCard> {
       if (mounted) {
         setState(() {
           _state = BookingReview(
-            bookingId: widget.booking.id,
+            bookingId: widget.bookingId,
             movieId: review.movieId,
             canReview: true,
           );
@@ -446,73 +447,60 @@ class _TicketReviewCardState extends State<TicketReviewCard> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+    if (mounted && _error != null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(_error!)));
+    }
+  }
+
+  Future<void> _open() async {
+    final review = _state?.review;
+    if (review == null) return _write();
+    final edit = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('Movie review'),
+        scrollable: true,
+        content: ReviewTile(review: review),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Close'),
+          ),
+          TextButton(
+            key: const Key('deleteReview'),
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: AppColors.error),
+            ),
+          ),
+          TextButton(
+            key: const Key('editReview'),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Edit'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || edit == null) return;
+    if (edit) {
+      await _write();
+    } else {
+      await _delete(review);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final state = _state;
-    if (state == null) return const SizedBox.shrink();
-    final review = state.review;
-    return CinemaPanel(
-      key: const Key('ticketReview'),
-      surfaceOpacity: 0.8,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Text('Your review', style: AppTextStyles.title),
-          const SizedBox(height: AppSpacing.sm),
-          if (!state.canReview)
-            const Text(
-              'You can rate this movie after watching it, once your ticket '
-              'is checked in at the cinema.',
-              style: AppTextStyles.bodySmall,
-            )
-          else if (review == null) ...[
-            const Text(
-              'How was the movie? Your rating helps other customers.',
-              style: AppTextStyles.bodySmall,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            AppButton(
-              key: const Key('writeReview'),
-              label: 'Write a review',
-              leadingIcon: Icons.star_outline_rounded,
-              isLoading: _busy,
-              onPressed: _busy ? null : _write,
-            ),
-          ] else ...[
-            ReviewTile(review: review),
-            const SizedBox(height: AppSpacing.md),
-            Row(
-              children: [
-                Expanded(
-                  child: AppButton.secondary(
-                    key: const Key('editReview'),
-                    label: 'Edit',
-                    onPressed: _busy ? null : _write,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: AppButton.danger(
-                    key: const Key('deleteReview'),
-                    label: 'Delete',
-                    isLoading: _busy,
-                    onPressed: _busy ? null : () => _delete(review),
-                  ),
-                ),
-              ],
-            ),
-          ],
-          if (_error != null) ...[
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              _error!,
-              style: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
-            ),
-          ],
-        ],
-      ),
+    if (state == null || !state.canReview) return const SizedBox.shrink();
+    return AppButton.secondary(
+      key: const Key('writeReview'),
+      label: 'Review',
+      isLoading: _busy,
+      onPressed: _busy ? null : _open,
     );
   }
 }

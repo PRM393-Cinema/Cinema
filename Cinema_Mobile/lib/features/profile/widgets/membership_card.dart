@@ -50,8 +50,10 @@ class MembershipCard extends StatelessWidget {
     final history = card.history.take(historySize).toList();
     return CinemaPanel(
       key: const Key('membershipCard'),
+      padding: const EdgeInsets.all(AppSpacing.md),
       surfaceOpacity: 0.8,
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -67,19 +69,18 @@ class MembershipCard extends StatelessWidget {
               TierBadge(tier: card.tier),
             ],
           ),
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             '${card.points} points',
             key: const Key('memberPoints'),
-            style: AppTextStyles.heading1.copyWith(color: AppColors.primary),
+            style: AppTextStyles.heading2.copyWith(color: AppColors.primary),
           ),
           Text(
-            'Worth ${formatVnd(card.pointsValue)} on your next tickets · '
-            'earn ${card.earnRatePercent.round()}% back',
+            '${formatVnd(card.pointsValue)} · Earn ${card.earnRatePercent.round()}% back',
             style: AppTextStyles.bodySmall,
           ),
           if (progress != null && next != null) ...[
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: AppSpacing.sm),
             ClipRRect(
               borderRadius: BorderRadius.circular(4),
               child: LinearProgressIndicator(
@@ -91,8 +92,7 @@ class MembershipCard extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.xs),
             Text(
-              'Spend ${formatVnd(card.nextTierSpend! - card.lifetimeSpend)} '
-              'more on tickets to become ${next.label}.',
+              '${formatVnd(card.nextTierSpend! - card.lifetimeSpend)} to ${next.label}',
               style: AppTextStyles.bodySmall,
             ),
           ] else ...[
@@ -102,15 +102,12 @@ class MembershipCard extends StatelessWidget {
               style: AppTextStyles.bodySmall,
             ),
           ],
-          const SizedBox(height: AppSpacing.lg),
-          const Text('Points history', style: AppTextStyles.caption),
-          const SizedBox(height: AppSpacing.xs),
-          if (history.isEmpty)
-            const Text(
-              'Pay for tickets to earn points. 1 point = 1.000 ₫.',
-              style: AppTextStyles.bodySmall,
-            ),
-          for (final line in history) PointsLine(line: line),
+          if (history.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.sm),
+            const Text('Points history', style: AppTextStyles.caption),
+            const SizedBox(height: AppSpacing.xs),
+            for (final line in history) PointsLine(line: line),
+          ],
         ],
       ),
     );

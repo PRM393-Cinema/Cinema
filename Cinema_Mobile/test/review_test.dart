@@ -1,5 +1,6 @@
 import 'package:cinema_fe/app/routes/app_routes.dart';
 import 'package:cinema_fe/data/models/booking.dart';
+import 'package:cinema_fe/data/models/app_notification.dart';
 import 'package:cinema_fe/data/models/movie.dart';
 import 'package:cinema_fe/data/models/paged_result.dart';
 import 'package:cinema_fe/data/models/review.dart';
@@ -120,26 +121,42 @@ void main() {
     expect(find.text('Le Van C'), findsOneWidget);
   });
 
-  testWidgets('A checked-in ticket writes, edits and deletes its review', (
+  testWidgets('A notification writes, edits and deletes a checked-in review', (
     tester,
   ) async {
+    tester.view.physicalSize = const Size(375, 812);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     final watched = bookingFixture(
       id: 401,
       status: BookingStatus.confirmed,
       paymentId: 9,
       checkedInAt: DateTime.now().subtract(const Duration(hours: 3)),
     );
-    final bookings = FakeBookingRepository(bookings: [watched])
-      ..bookingReviews[401] = BookingReview(
-        bookingId: 401,
-        movieId: inception.id,
-        canReview: true,
-      );
+    final notification = AppNotification(
+      id: 4,
+      bookingId: 401,
+      subject: 'Booking update',
+      type: 'BOOKING_CONFIRMED',
+      content: '<p>Your ticket is ready.</p>',
+      status: 'SENT',
+      createdAt: DateTime.now(),
+    );
+    final bookings =
+        FakeBookingRepository(
+            bookings: [watched],
+            notifications: [notification],
+          )
+          ..bookingReviews[401] = BookingReview(
+            bookingId: 401,
+            movieId: inception.id,
+            canReview: true,
+          );
     await tester.pumpWidget(
       buildTestApp(
         authenticated: true,
         bookingRepository: bookings,
-        initialRoute: AppRoutes.bookingDetail(401),
+        initialRoute: AppRoutes.notificationDetail(4),
       ),
     );
     await pumpRoute(tester);
@@ -167,15 +184,25 @@ void main() {
       rating: 4,
       comment: 'Great sound',
     ));
+    await tester.tap(find.byKey(const Key('writeReview')));
+    await pumpRoute(tester);
     expect(find.text('Great sound'), findsOneWidget);
     expect(find.text('Nguyen Van Khach (you)'), findsOneWidget);
 
+    await tester.tap(find.byKey(const Key('editReview')));
+    await pumpRoute(tester);
+    await tester.tap(find.byKey(const ValueKey('star-5')));
+    await tester.tap(find.byKey(const Key('saveReview')));
+    await pumpRoute(tester);
+    expect(bookings.savedReviews.last.rating, 5);
+    await tester.tap(find.byKey(const Key('writeReview')));
+    await pumpRoute(tester);
     await tester.ensureVisible(find.byKey(const Key('deleteReview')));
     await tester.tap(find.byKey(const Key('deleteReview')));
     await pumpRoute(tester);
     await tester.tap(find.byKey(const Key('confirmDeleteReview')));
     await pumpRoute(tester);
-    expect(bookings.deletedReviews, [501]);
+    expect(bookings.deletedReviews, [502]);
     expect(find.byKey(const Key('writeReview')), findsOneWidget);
   });
 
@@ -243,8 +270,8 @@ void main() {
     );
     await pumpRoute(tester);
 
-    await tester.ensureVisible(find.byKey(const Key('ticketReview')));
-    expect(find.textContaining('once your ticket'), findsOneWidget);
+    expect(find.byKey(const Key('ticketReview')), findsNothing);
+    expect(find.text('Your review'), findsNothing);
     expect(find.byKey(const Key('writeReview')), findsNothing);
   });
 }

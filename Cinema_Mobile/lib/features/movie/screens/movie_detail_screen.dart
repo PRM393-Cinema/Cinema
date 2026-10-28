@@ -325,8 +325,16 @@ class _MovieOverview extends StatelessWidget {
   final Movie movie;
   final bool isWide;
 
+  Uri? get _trailer {
+    final uri = Uri.tryParse(movie.trailerUrl.trim());
+    return uri != null && (uri.scheme == 'https' || uri.scheme == 'http')
+        ? uri
+        : null;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final trailer = _trailer;
     final synopsis = movie.description.isEmpty
         ? null
         : _Synopsis(description: movie.description);
@@ -364,6 +372,15 @@ class _MovieOverview extends StatelessWidget {
           const SizedBox(height: AppSpacing.xl),
           synopsis,
         ],
+        if (trailer != null) ...[
+          const SizedBox(height: AppSpacing.lg),
+          AppButton.secondary(
+            key: const Key('watchTrailer'),
+            label: 'Watch trailer',
+            leadingIcon: Icons.play_circle_outline,
+            onPressed: () => showMovieTrailer(context, trailer, movie.title),
+          ),
+        ],
       ],
     );
   }
@@ -375,16 +392,8 @@ class _MovieFacts extends StatelessWidget {
   final Movie movie;
   final bool isWide;
 
-  Uri? get _trailer {
-    final uri = Uri.tryParse(movie.trailerUrl.trim());
-    return uri != null && (uri.scheme == 'https' || uri.scheme == 'http')
-        ? uri
-        : null;
-  }
-
   @override
   Widget build(BuildContext context) {
-    final trailer = _trailer;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -400,25 +409,29 @@ class _MovieFacts extends StatelessWidget {
           children: [
             AgeRatingBadge(rating: movie.ageRating, large: true),
             if (movie.isComingSoon())
-              _InfoPill(
+              Text(
+                'Coming ${formatDate(movie.releaseDate!)}',
                 key: const Key('comingSoonPill'),
-                label: 'Coming ${formatDate(movie.releaseDate!)}',
+                style: AppTextStyles.bodySmall,
               )
             else if (movie.releaseYear.isNotEmpty)
-              _InfoPill(label: movie.releaseYear),
-            _InfoPill(label: movie.durationText),
-            if (movie.language.isNotEmpty) _InfoPill(label: movie.language),
+              Text(movie.releaseYear, style: AppTextStyles.bodySmall),
+            Text(movie.durationText, style: AppTextStyles.bodySmall),
           ],
         ),
         const SizedBox(height: AppSpacing.sm),
         Text(
-          '${movie.ageRating.code}: ${movie.ageRating.meaning}',
+          movie.ageRating.meaning,
           key: const Key('ageRatingMeaning'),
-          style: AppTextStyles.bodySmall.copyWith(color: movie.ageRating.color),
+          style: AppTextStyles.bodySmall,
         ),
         if (movie.genre.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.md),
-          Text(movie.genre, style: AppTextStyles.title),
+          Text(movie.genre, style: AppTextStyles.body),
+        ],
+        if (movie.language.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.xs),
+          Text(movie.language, style: AppTextStyles.bodySmall),
         ],
         if (movie.director.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.sm),
@@ -436,19 +449,6 @@ class _MovieFacts extends StatelessWidget {
             style: AppTextStyles.bodySmall,
           ),
         ],
-        if (trailer != null) ...[
-          const SizedBox(height: AppSpacing.lg),
-          OutlinedButton.icon(
-            key: const Key('watchTrailer'),
-            onPressed: () => showMovieTrailer(context, trailer, movie.title),
-            icon: const Icon(Icons.play_circle_outline),
-            label: const Text('Watch trailer'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.warning,
-              side: const BorderSide(color: AppColors.warning),
-            ),
-          ),
-        ],
       ],
     );
   }
@@ -464,37 +464,13 @@ class _Synopsis extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Synopsis', style: AppTextStyles.caption),
+        const Text('Synopsis', style: AppTextStyles.title),
         const SizedBox(height: AppSpacing.sm),
         ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 680),
           child: Text(description, style: AppTextStyles.body),
         ),
       ],
-    );
-  }
-}
-
-class _InfoPill extends StatelessWidget {
-  const _InfoPill({required this.label, super.key});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AppColors.surface.withValues(alpha: 0.55),
-        borderRadius: AppRadius.borderRadiusSm,
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.sm,
-        ),
-        child: Text(label, style: AppTextStyles.caption),
-      ),
     );
   }
 }

@@ -100,95 +100,88 @@ class _MoviePreviewCardState extends State<MoviePreviewCard> {
         }
       },
       onExit: (_) => _stop(),
-      child: AnimatedScale(
-        scale: _active && !reduceMotion ? 1.12 : 1,
-        duration: reduceMotion
-            ? Duration.zero
-            : const Duration(milliseconds: 120),
-        curve: Curves.easeOutCubic,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            MovieCard(
-              title: widget.movie.title,
-              posterUrl: widget.movie.posterUrl,
-              genre: widget.movie.genre,
-              duration: widget.movie.durationText,
-              ageRating: widget.movie.ageRating,
-              badge: widget.movie.isComingSoon()
-                  ? formatShortDate(widget.movie.releaseDate!)
-                  : null,
-              onTap: _tap,
-            ),
-            if (_active)
-              Material(
-                color: AppColors.surface,
-                borderRadius: AppRadius.borderRadiusMd,
-                clipBehavior: Clip.antiAlias,
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: InkWell(
-                        onTap: _open,
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            TrailerPreview(
-                              key: ValueKey(widget.movie.id),
-                              url: directPreviewUrl(
-                                Uri.parse(widget.movie.previewUrl),
-                              )!,
-                              onPlaying: () {
-                                _deadline?.cancel();
-                                if (mounted && _active) {
-                                  setState(() => _playing = true);
-                                }
-                              },
-                              onDone: _fail,
-                            ),
-                            if (!_playing) ...[
-                              AppNetworkImage(imageUrl: widget.movie.posterUrl),
-                              const Center(
-                                child: SizedBox.square(
-                                  dimension: 24,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          MovieCard(
+            title: widget.movie.title,
+            posterUrl: widget.movie.posterUrl,
+            genre: widget.movie.genre,
+            duration: widget.movie.durationText,
+            ageRating: widget.movie.ageRating,
+            badge: widget.movie.isComingSoon()
+                ? formatShortDate(widget.movie.releaseDate!)
+                : null,
+            onTap: _tap,
+          ),
+          if (_active)
+            Material(
+              color: AppColors.surface,
+              borderRadius: AppRadius.borderRadiusMd,
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: _open,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          TrailerPreview(
+                            key: ValueKey(widget.movie.id),
+                            url: directPreviewUrl(
+                              Uri.parse(widget.movie.previewUrl),
+                            )!,
+                            onPlaying: () {
+                              _deadline?.cancel();
+                              if (mounted && _active) {
+                                setState(() => _playing = true);
+                              }
+                            },
+                            onDone: _fail,
+                          ),
+                          if (!_playing) ...[
+                            AppNetworkImage(imageUrl: widget.movie.posterUrl),
+                            const Center(
+                              child: SizedBox.square(
+                                dimension: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
                                 ),
                               ),
-                            ],
+                            ),
                           ],
-                        ),
+                        ],
                       ),
                     ),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextButton(
-                            onPressed: _open,
-                            child: const Text('View details'),
-                          ),
+                  ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextButton(
+                          onPressed: _open,
+                          child: const Text('View details'),
                         ),
-                        IconButton(
-                          tooltip: 'Stop preview',
-                          onPressed: _stop,
-                          icon: const Icon(Icons.stop_circle_outlined),
-                        ),
-                      ],
-                    ),
-                    const Padding(
-                      padding: EdgeInsets.only(bottom: 8),
-                      child: Text(
-                        'Tap again for details · Muted',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 12),
                       ),
+                      IconButton(
+                        tooltip: 'Stop preview',
+                        onPressed: _stop,
+                        icon: const Icon(Icons.stop_circle_outlined),
+                      ),
+                    ],
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 8),
+                    child: Text(
+                      'Tap again for details · Muted',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 12),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }

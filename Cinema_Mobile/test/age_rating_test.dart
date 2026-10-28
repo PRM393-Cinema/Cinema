@@ -55,7 +55,7 @@ void main() {
     expect(find.byKey(const ValueKey('ageRating-T16')), findsWidgets);
     await tester.tap(find.text(_rated.title).first);
     await pumpRoute(tester);
-    expect(find.text('T16: 16 and over'), findsOneWidget);
+    expect(find.text('16 and over'), findsOneWidget);
 
     await tester.ensureVisible(find.text('Room 1'));
     await tester.pump();

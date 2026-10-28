@@ -8,6 +8,7 @@ import 'package:cinema_fe/data/models/loyalty.dart';
 import 'package:cinema_fe/data/models/paged_result.dart';
 import 'package:cinema_fe/data/models/seat.dart';
 import 'package:cinema_fe/data/services/staff_service.dart';
+import 'package:cinema_fe/features/profile/widgets/membership_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -80,12 +81,41 @@ void main() {
 
     expect(find.text('120 points'), findsOneWidget);
     expect(find.text('Member'), findsOneWidget);
-    expect(
-      find.text('Spend ${formatVnd(1500000)} more on tickets to become VIP.'),
-      findsOneWidget,
-    );
+    expect(find.text('${formatVnd(1500000)} to VIP'), findsOneWidget);
     expect(find.text('Changed by the cinema'), findsOneWidget);
     expect(find.text('+100'), findsOneWidget);
+  });
+
+  testWidgets('An empty membership card stays compact on a narrow screen', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Align(
+            alignment: Alignment.topLeft,
+            child: SizedBox(
+              width: 300,
+              child: MembershipCard(
+                card: LoyaltyCard.fromJson({
+                  ..._cardJson(points: 0, spend: 0),
+                  'transactions': <Object?>[],
+                }),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('0 points'), findsOneWidget);
+    expect(find.text('${formatVnd(2000000)} to VIP'), findsOneWidget);
+    expect(find.text('Points history'), findsNothing);
+    expect(
+      tester.getSize(find.byKey(const Key('membershipCard'))).height,
+      lessThan(180),
+    );
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('A member pays part of the tickets with points', (tester) async {
