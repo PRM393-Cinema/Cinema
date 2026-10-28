@@ -55,7 +55,7 @@ class _TrailerPreviewState extends State<TrailerPreview> {
         ..defaultMuted = true
         ..autoplay = true
         ..controls = false
-        ..loop = false
+        ..loop = true
         ..preload = 'auto'
         ..setAttribute('playsinline', '')
         ..setAttribute('aria-label', '10 second muted movie preview');
@@ -74,10 +74,9 @@ class _TrailerPreviewState extends State<TrailerPreview> {
       );
       _events.add(
         video.onTimeUpdate.listen((_) {
-          if (video.currentTime >= 10) _finish();
+          if (video.currentTime >= 10) video.currentTime = 0;
         }),
       );
-      _events.add(video.onEnded.listen((_) => _finish()));
       _events.add(video.onError.listen((_) => _finish()));
       video.src = widget.url.toString();
       video.play().toDart.catchError((Object _) {

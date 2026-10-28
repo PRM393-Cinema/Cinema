@@ -23,40 +23,44 @@ const movie = Movie(
 );
 
 void main() {
-  testWidgets('Hover waits, plays once for ten seconds, and exits cleanly', (
-    tester,
-  ) async {
-    final active = ValueNotifier<int?>(null);
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: SizedBox(
-            width: 240,
-            height: 340,
-            child: MoviePreviewCard(
-              movie: movie,
-              active: active,
-              onOpen: () {},
+  testWidgets(
+    'Hover waits, keeps playing beyond ten seconds, and stops on exit',
+    (tester) async {
+      final active = ValueNotifier<int?>(null);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 240,
+              height: 340,
+              child: MoviePreviewCard(
+                movie: movie,
+                active: active,
+                onOpen: () {},
+              ),
             ),
           ),
         ),
-      ),
-    );
-    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
-    await mouse.addPointer(location: const Offset(600, 500));
-    await mouse.moveTo(const Offset(100, 100));
-    await tester.pump(const Duration(milliseconds: 400));
-    expect(active.value, isNull);
-    await tester.pump(const Duration(milliseconds: 100));
-    expect(active.value, movie.id);
-    tester.widget<TrailerPreview>(find.byType(TrailerPreview)).onPlaying();
-    await tester.pump(const Duration(seconds: 10));
-    expect(active.value, isNull);
-    await tester.pumpWidget(const SizedBox());
-    await mouse.removePointer();
-    active.dispose();
-    expect(tester.takeException(), isNull);
-  });
+      );
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await mouse.addPointer(location: const Offset(600, 500));
+      await mouse.moveTo(const Offset(100, 100));
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(active.value, isNull);
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(active.value, movie.id);
+      tester.widget<TrailerPreview>(find.byType(TrailerPreview)).onPlaying();
+      await tester.pump(const Duration(seconds: 30));
+      expect(active.value, movie.id);
+      await mouse.moveTo(const Offset(600, 500));
+      await tester.pump();
+      expect(active.value, isNull);
+      await tester.pumpWidget(const SizedBox());
+      await mouse.removePointer();
+      active.dispose();
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('Phone tap previews and details remains a separate action', (
     tester,

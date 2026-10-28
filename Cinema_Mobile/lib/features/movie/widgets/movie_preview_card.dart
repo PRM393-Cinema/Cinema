@@ -115,10 +115,11 @@ class _MoviePreviewCardState extends State<MoviePreviewCard> {
                     Expanded(
                       child: TrailerPreview(
                         key: ValueKey(widget.movie.id),
-                        url: directPreviewUrl(Uri.parse(widget.movie.previewUrl))!,
+                        url: directPreviewUrl(
+                          Uri.parse(widget.movie.previewUrl),
+                        )!,
                         onPlaying: () {
                           _deadline?.cancel();
-                          _deadline = Timer(const Duration(seconds: 10), _stop);
                         },
                         onDone: _stop,
                       ),
@@ -141,7 +142,7 @@ class _MoviePreviewCardState extends State<MoviePreviewCard> {
                     const Padding(
                       padding: EdgeInsets.only(bottom: 8),
                       child: Text(
-                        '10s preview · Muted',
+                        '10s loop · Muted',
                         style: TextStyle(fontSize: 12),
                       ),
                     ),
