@@ -1,4 +1,5 @@
 import 'package:cinema_fe/app/routes/app_routes.dart';
+import 'package:cinema_fe/core/session/session_state.dart';
 import 'package:cinema_fe/core/widgets/cinema_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -83,5 +84,63 @@ void main() {
     await pumpRoute(tester);
     expect(find.text('Select Seats'), findsOneWidget);
     expect(find.textContaining('A3'), findsOneWidget);
+  });
+
+  testWidgets('Authentication pages have a working Back button', (
+    tester,
+  ) async {
+    for (final route in [
+      AppRoutes.login,
+      AppRoutes.register,
+      AppRoutes.forgotPassword,
+      AppRoutes.resetPassword,
+      AppRoutes.verifyEmail,
+    ]) {
+      await tester.pumpWidget(buildTestApp(initialRoute: route));
+      await pumpRoute(tester);
+      await tester.tap(find.byTooltip('Back'));
+      await pumpRoute(tester);
+      expect(find.text('Step Into CosmoQ Cinema'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
+    }
+  });
+
+  testWidgets('Login Back returns to the movie instead of jumping home', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      buildTestApp(initialRoute: AppRoutes.movieDetail(inception.id)),
+    );
+    await pumpRoute(tester);
+    Navigator.of(tester.element(find.text('Showtimes')))
+        .pushNamed(AppRoutes.login);
+    await pumpRoute(tester);
+
+    await tester.tap(find.byTooltip('Back'));
+    await pumpRoute(tester);
+    expect(find.text('Showtimes'), findsOneWidget);
+    expect(find.text('Step Into CosmoQ Cinema'), findsNothing);
+  });
+
+  testWidgets('Login Back after session expiry goes to the public home', (
+    tester,
+  ) async {
+    final session = SessionState();
+    await tester.pumpWidget(
+      buildTestApp(
+        authenticated: true,
+        session: session,
+        initialRoute: AppRoutes.profile,
+      ),
+    );
+    await pumpRoute(tester);
+    session.clear(message: 'Session expired.');
+    await pumpRoute(tester);
+
+    await tester.tap(find.byTooltip('Back'));
+    await pumpRoute(tester);
+    expect(find.text('Step Into CosmoQ Cinema'), findsOneWidget);
+    expect(find.text('Account settings'), findsNothing);
+    expect(session.isAuthenticated, isFalse);
   });
 }

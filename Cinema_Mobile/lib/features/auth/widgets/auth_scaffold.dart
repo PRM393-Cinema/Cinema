@@ -156,13 +156,13 @@ class AuthScaffold extends StatelessWidget {
                         top: 8,
                         left: gutter - 8,
                         child: Tooltip(
-                          message: backToHome ? 'Back to home' : 'Back',
+                          message: 'Back',
                           child: TextButton.icon(
                             icon: const Icon(
                               Icons.arrow_back_rounded,
                               size: 20,
                             ),
-                            label: Text(backToHome ? 'Home' : 'Back'),
+                            label: const Text('Back'),
                             style: TextButton.styleFrom(
                               foregroundColor: AppColors.textPrimary,
                               minimumSize: const Size(48, 48),
@@ -171,27 +171,12 @@ class AuthScaffold extends StatelessWidget {
                               ),
                             ),
                             onPressed: () {
-                              if (backToHome) {
-                                final navigator = Navigator.of(context);
-                                var foundHome = false;
-                                navigator.popUntil((route) {
-                                  foundHome =
-                                      route.settings.name == AppRoutes.home;
-                                  return foundHome || route.isFirst;
-                                });
-                                if (!foundHome) {
-                                  navigator.pushReplacementNamed(
-                                    AppRoutes.home,
-                                  );
-                                }
-                                return;
-                              }
                               if (Navigator.canPop(context)) {
-                                Navigator.pop(context);
+                                Navigator.maybePop(context);
                               } else {
                                 Navigator.pushReplacementNamed(
                                   context,
-                                  AppRoutes.login,
+                                  backToHome ? AppRoutes.home : AppRoutes.login,
                                 );
                               }
                             },

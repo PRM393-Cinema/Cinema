@@ -109,7 +109,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return AuthScaffold(
-      showBack: false,
+      showBack: true,
       title: 'Create your account',
       titleKey: const Key('registerTitle'),
       subtitle: 'Book tickets and enjoy your favorite movies.',

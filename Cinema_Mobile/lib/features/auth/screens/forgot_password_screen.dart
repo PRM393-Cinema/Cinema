@@ -90,7 +90,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     final changingPassword =
         ModalRoute.of(context)?.settings.arguments is String;
     return AuthScaffold(
-      showBack: false,
+      showBack: true,
       title: changingPassword ? 'Change password' : 'Forgot password?',
       subtitle: 'We will send a verification code to your email to keep your account secure.',
       child: Form(

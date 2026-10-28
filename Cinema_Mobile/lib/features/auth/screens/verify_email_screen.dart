@@ -216,7 +216,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     final remainingSeconds = _remainingResendSeconds;
 
     return AuthScaffold(
-      showBack: false,
+      showBack: true,
       title: 'Verify your email',
       subtitle: 'Enter the verification code sent to your email.',
       child: Form(

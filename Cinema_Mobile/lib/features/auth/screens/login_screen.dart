@@ -173,7 +173,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return AuthScaffold(
-      showBack: false,
+      showBack: widget.allowRegister || Navigator.canPop(context),
       title: 'Welcome back',
       titleKey: const Key('loginTitle'),
       subtitle: 'Sign in to continue your cinema experience.',

@@ -127,7 +127,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     }
 
     return AuthScaffold(
-      showBack: false,
+      showBack: true,
       title: 'Set a new password',
       subtitle: 'Enter the verification code sent to $email.',
       child: Form(
