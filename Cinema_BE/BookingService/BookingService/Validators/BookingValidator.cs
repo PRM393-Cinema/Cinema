@@ -17,6 +17,11 @@ namespace BookingService.Validators
                 throw new ArgumentException("User id must be greater than 0.");
             }
 
+            if (request.Concessions == null || request.UsePoints is < 0)
+            {
+                throw new ArgumentException("Concessions are required and points must not be negative.");
+            }
+
             if (request.Concessions.Count > 10)
             {
                 throw new ArgumentException("At most 10 different snack items per booking.");

@@ -152,7 +152,7 @@ void main() {
     await tester.ensureVisible(find.text('Confirm Booking'));
     await tester.tap(find.text('Confirm Booking'));
     await pumpFrames(tester);
-    expect(bookings.createCalls.single.usePoints, 45);
+    expect(bookings.updateCalls.single.usePoints, 45);
   });
 
   testWidgets('The counter finds a member by phone and uses their points', (

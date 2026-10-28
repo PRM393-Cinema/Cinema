@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../app/routes/app_routes.dart';
@@ -15,6 +17,9 @@ import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/cinema_background.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
 import '../../../data/models/booking_draft.dart';
+import '../../../data/models/booking.dart';
+import '../../../data/models/create_booking_request.dart';
+import '../widgets/seat_hold_timer.dart';
 import '../../../data/repositories/booking_repository.dart';
 import '../../seat/widgets/seat_type_style.dart';
 import '../../../core/widgets/age_rating_badge.dart';
@@ -36,7 +41,94 @@ class BookingSummaryScreen extends StatefulWidget {
 
 class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
   bool _isSubmitting = false;
+  bool _confirmingAge = false;
   String? _errorMessage;
+  Booking? _heldBooking;
+  bool _holdStarted = false;
+  bool _isHolding = true;
+  bool _openingPayment = false;
+  bool _isLeaving = false;
+  Timer? _holdTimer;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final draft = ModalRoute.of(context)?.settings.arguments;
+    if (!_holdStarted && draft is BookingDraft) {
+      _holdStarted = true;
+      _startHold(draft);
+    }
+  }
+
+  Future<void> _releaseHold(Booking booking) async {
+    try {
+      await widget.bookingRepository.cancelBooking(booking.id);
+    } on Object {
+      // Offline or app closed: the server still releases the hold at expiresAt.
+    }
+  }
+
+  Future<void> _leaveSummary() async {
+    if (_isLeaving || _isSubmitting) return;
+    setState(() => _isLeaving = true);
+    final held = _heldBooking;
+    if (held != null) await _releaseHold(held);
+    if (!mounted) return;
+    setState(() => _heldBooking = null);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Navigator.pop(context, true);
+    });
+  }
+
+  @override
+  void dispose() {
+    _holdTimer?.cancel();
+    final booking = _heldBooking;
+    if (booking != null && !_openingPayment) unawaited(_releaseHold(booking));
+    super.dispose();
+  }
+
+  Future<void> _startHold(BookingDraft draft) async {
+    setState(() {
+      _isHolding = true;
+      _errorMessage = null;
+    });
+    try {
+      final booking = await widget.bookingRepository.createBooking(
+        showtimeId: draft.showtime.id,
+        seatIds: draft.seats.map((s) => s.id).toList(),
+      );
+      if (!mounted) {
+        await _releaseHold(booking);
+        return;
+      }
+      if (booking.expiresAt == null) {
+        await _releaseHold(booking);
+        throw const FormatException('Missing seat hold deadline.');
+      }
+      setState(() {
+        _heldBooking = booking;
+        _isHolding = false;
+      });
+      _holdTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (mounted) setState(() {});
+        if (booking.isHoldExpired()) _holdTimer?.cancel();
+      });
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      setState(() => _isHolding = false);
+      if (error.statusCode == 409) {
+        await _showSeatsTakenDialog(error.message);
+      } else {
+        _showError(error.message);
+      }
+    } on Object {
+      if (mounted) {
+        setState(() => _isHolding = false);
+        _showError('Unable to hold your seats. Please try again.');
+      }
+    }
+  }
 
   // The snacks menu; empty when it cannot load (tickets still sell).
   List<ConcessionItem> _snacks = const [];
@@ -87,31 +179,86 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: Row(
+        surfaceTintColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(AppSpacing.xl),
+        shape: RoundedRectangleBorder(
+          borderRadius: AppRadius.borderRadiusXl,
+          side: const BorderSide(color: AppColors.border),
+        ),
+        scrollable: true,
+        titlePadding: const EdgeInsets.all(AppSpacing.xl),
+        contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+        actionsPadding: const EdgeInsets.all(AppSpacing.xl),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            AgeRatingBadge(rating: rating, large: true),
-            const SizedBox(width: AppSpacing.sm),
-            const Expanded(child: Text('Age rating')),
+            Row(
+              children: [
+                AgeRatingBadge(rating: rating, large: true),
+                const SizedBox(width: AppSpacing.md),
+                const Expanded(
+                  child: Text('AGE RATING', style: AppTextStyles.caption),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            const Text('Before you book', style: AppTextStyles.heading2),
           ],
         ),
-        content: Text(
-          rating == AgeRating.k
-              ? 'This movie is rated K: viewers under 13 must watch with a '
-                    'parent or guardian.'
-              : 'This movie is rated ${rating.code}: only for viewers '
-                    '${rating.meaning.toLowerCase()}. Staff may ask for ID at '
-                    'the entrance, and tickets of underage viewers are not '
-                    'refunded.',
+        content: SizedBox(
+          width: 360,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                rating == AgeRating.k
+                    ? 'Viewers under 13 must watch with a parent or guardian.'
+                    : 'This movie is only for viewers '
+                          '${rating.meaning.toLowerCase()}.',
+                style: AppTextStyles.body.copyWith(height: 1.5),
+              ),
+              if (rating != AgeRating.k) ...[
+                const SizedBox(height: AppSpacing.lg),
+                Container(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceSoft,
+                    borderRadius: AppRadius.borderRadiusMd,
+                  ),
+                  child: Text(
+                    'Please bring your ID. Staff may check it at the entrance. '
+                    'Tickets for underage viewers are non-refundable.',
+                    style: AppTextStyles.bodySmall.copyWith(height: 1.5),
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Back'),
-          ),
-          TextButton(
-            key: const Key('confirmAgeRating'),
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('I understand'),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ElevatedButton(
+                key: const Key('confirmAgeRating'),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(AppSpacing.xxxl),
+                ),
+                onPressed: () => Navigator.pop(dialogContext, true),
+                child: const Text('I understand', textAlign: TextAlign.center),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              TextButton(
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.textSecondary,
+                  minimumSize: const Size.fromHeight(AppSpacing.xxxl),
+                ),
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text('Back'),
+              ),
+            ],
           ),
         ],
       ),
@@ -120,29 +267,42 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
   }
 
   Future<void> _confirmBooking(BookingDraft draft, int usePoints) async {
-    if (!await _confirmAgeRating(draft.movie.ageRating) || !mounted) return;
+    final held = _heldBooking;
+    if (_isSubmitting ||
+        _confirmingAge ||
+        held == null ||
+        held.isHoldExpired()) {
+      return;
+    }
+    _confirmingAge = true;
     setState(() {
-      _isSubmitting = true;
       _errorMessage = null;
     });
 
     try {
-      final booking = await widget.bookingRepository.createBooking(
-        showtimeId: draft.showtime.id,
-        seatIds: draft.seats.map((seat) => seat.id).toList(),
-        concessions: {
-          for (final MapEntry(key: id, value: quantity)
-              in _snackQuantities.entries)
-            if (quantity > 0) id: quantity,
-        },
-        promotionCode: _promoCode,
-        usePoints: usePoints,
+      if (!await _confirmAgeRating(draft.movie.ageRating) || !mounted) return;
+      if (held.isHoldExpired()) return;
+      setState(() => _isSubmitting = true);
+      final booking = await widget.bookingRepository.updateBooking(
+        held.id,
+        CreateBookingRequest(
+          showtimeId: draft.showtime.id,
+          seatIds: draft.seats.map((seat) => seat.id).toList(),
+          concessions: {
+            for (final MapEntry(key: id, value: quantity)
+                in _snackQuantities.entries)
+              if (quantity > 0) id: quantity,
+          },
+          promotionCode: _promoCode,
+          usePoints: usePoints,
+        ),
       );
 
       if (!mounted) return;
 
       // The seats are now held for this booking: leave the selection flow so
       // going back cannot create a second booking for the same seats.
+      _openingPayment = true;
       Navigator.pushNamedAndRemoveUntil(
         context,
         AppRoutes.payment(booking.id),
@@ -159,6 +319,9 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
       _showError('The server returned an invalid response.');
     } on Object {
       _showError('Something went wrong. Please try again.');
+    } finally {
+      _confirmingAge = false;
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
@@ -177,7 +340,7 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
           style: AppTextStyles.title,
         ),
         content: Text(
-          'Some of your seats were just taken by another customer. Please choose your seats again.\n\n$message',
+          'Your selected seats could not be reserved. Please choose your seats again.\n\n$message',
           style: AppTextStyles.body,
         ),
         actions: [
@@ -190,7 +353,7 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
     );
 
     if (mounted) {
-      Navigator.pop(context, true);
+      await _leaveSummary();
     }
   }
 
@@ -425,74 +588,106 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
       ),
     );
     const holdNote = Text(
-      'Your seats will be held for 10 minutes while you pay with PayOS.',
+      'The same seat hold continues through payment. Confirming does not restart the timer.',
       style: AppTextStyles.bodySmall,
     );
     final error = _errorMessage;
+    final held = _heldBooking;
+    final expired = held?.isHoldExpired() ?? false;
     final confirmButton = AppButton(
-      label: 'Confirm Booking',
+      label: expired
+          ? 'Choose seats again'
+          : held == null && !_isHolding
+          ? 'Retry seat hold'
+          : 'Confirm Booking',
       useGradient: true,
       trailingIcon: Icons.arrow_forward_rounded,
-      isLoading: _isSubmitting,
-      onPressed: _isSubmitting ? null : () => _confirmBooking(draft, usePoints),
+      isLoading: _isSubmitting || _isHolding || _isLeaving,
+      onPressed: _isSubmitting || _isHolding || _isLeaving
+          ? null
+          : expired
+          ? _leaveSummary
+          : held == null
+          ? () => _startHold(draft)
+          : () => _confirmBooking(draft, usePoints),
     );
     final desktop = isDesktopLayout(context);
 
-    return Scaffold(
-      body: CinemaBackground(
-        child: SafeArea(
-          child: Column(
-            children: [
-              Padding(
-                padding: pagePadding(context, AppSpacing.lg),
-                child: const CinemaPageHeader(title: 'Booking Summary'),
-              ),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: pagePadding(context, AppSpacing.xl),
-                  // Website: the order with the price and Confirm next to it.
-                  child: ResponsiveColumns(
-                    main: [
-                      movieCard,
-                      const SizedBox(height: AppSpacing.xl),
-                      seatsCard,
-                      if (_snacks.isNotEmpty) ...[
+    return PopScope(
+      canPop: _heldBooking == null && !_isSubmitting,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) unawaited(_leaveSummary());
+      },
+      child: Scaffold(
+        body: CinemaBackground(
+          child: SafeArea(
+            child: Column(
+              children: [
+                Padding(
+                  padding: pagePadding(context, AppSpacing.lg),
+                  child: const CinemaPageHeader(title: 'Booking Summary'),
+                ),
+                Padding(
+                  padding: pagePadding(context, AppSpacing.sm),
+                  child: held == null
+                      ? Text(
+                          _isHolding
+                              ? 'Holding your seats…'
+                              : 'Your seats are not held.',
+                          style: AppTextStyles.bodySmall,
+                        )
+                      : SeatHoldTimer(
+                          remaining: held.expiresAt!.difference(DateTime.now()),
+                          expired: expired,
+                        ),
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: pagePadding(context, AppSpacing.xl),
+                    // Website: the order with the price and Confirm next to it.
+                    child: ResponsiveColumns(
+                      main: [
+                        movieCard,
                         const SizedBox(height: AppSpacing.xl),
-                        snacksCard,
-                      ],
-                      const SizedBox(height: AppSpacing.xl),
-                      promotionCard,
-                      if (pointsCard != null) ...[
+                        seatsCard,
+                        if (_snacks.isNotEmpty) ...[
+                          const SizedBox(height: AppSpacing.xl),
+                          snacksCard,
+                        ],
                         const SizedBox(height: AppSpacing.xl),
-                        pointsCard,
+                        promotionCard,
+                        if (pointsCard != null) ...[
+                          const SizedBox(height: AppSpacing.xl),
+                          pointsCard,
+                        ],
+                        if (!desktop) const SizedBox(height: AppSpacing.xl),
                       ],
-                      if (!desktop) const SizedBox(height: AppSpacing.xl),
-                    ],
-                    side: [
-                      priceCard,
-                      const SizedBox(height: AppSpacing.lg),
-                      holdNote,
-                      if (error != null) ...[
+                      side: [
+                        priceCard,
                         const SizedBox(height: AppSpacing.lg),
-                        _ErrorBanner(message: error),
+                        holdNote,
+                        if (error != null) ...[
+                          const SizedBox(height: AppSpacing.lg),
+                          _ErrorBanner(message: error),
+                        ],
+                        if (desktop) ...[
+                          const SizedBox(height: AppSpacing.xl),
+                          confirmButton,
+                        ],
                       ],
-                      if (desktop) ...[
-                        const SizedBox(height: AppSpacing.xl),
-                        confirmButton,
-                      ],
-                    ],
+                    ),
                   ),
                 ),
-              ),
-              if (!desktop)
-                Padding(
-                  padding: centeredPadding(
-                    context,
-                    AppSpacing.lg,
-                  ).copyWith(top: AppSpacing.sm),
-                  child: confirmButton,
-                ),
-            ],
+                if (!desktop)
+                  Padding(
+                    padding: centeredPadding(
+                      context,
+                      AppSpacing.lg,
+                    ).copyWith(top: AppSpacing.sm),
+                    child: confirmButton,
+                  ),
+              ],
+            ),
           ),
         ),
       ),

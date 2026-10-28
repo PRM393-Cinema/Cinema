@@ -24,6 +24,7 @@ import '../../../data/models/payment.dart';
 import '../../../data/repositories/booking_repository.dart';
 import '../payment_args.dart';
 import '../../booking/widgets/booking_cancellation_dialog.dart';
+import '../../booking/widgets/seat_hold_timer.dart';
 
 class PaymentScreen extends StatefulWidget {
   const PaymentScreen({
@@ -406,7 +407,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                       const _PaymentSteps(),
                     ],
                     side: [
-                      _HoldTimer(remaining: remaining, expired: holdExpired),
+                      SeatHoldTimer(remaining: remaining, expired: holdExpired),
                       if (message != null) ...[
                         const SizedBox(height: AppSpacing.lg),
                         message,
@@ -441,7 +442,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          _HoldTimer(
+                          SeatHoldTimer(
                             remaining: remaining,
                             expired: holdExpired,
                           ),
@@ -512,53 +513,6 @@ class _PaymentSteps extends StatelessWidget {
             ),
           ),
       ],
-    );
-  }
-}
-
-class _HoldTimer extends StatelessWidget {
-  const _HoldTimer({required this.remaining, required this.expired});
-
-  final Duration? remaining;
-  final bool expired;
-
-  @override
-  Widget build(BuildContext context) {
-    final isUrgent =
-        expired ||
-        (remaining != null && remaining! < const Duration(minutes: 2));
-    final color = expired
-        ? AppColors.error
-        : (isUrgent ? AppColors.warning : AppColors.primary);
-
-    final text = expired
-        ? 'Your seat hold has expired. Please book again.'
-        : remaining == null
-        ? 'Your seats are held while you pay.'
-        : 'Seats held for ${formatCountdown(remaining!)}';
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: AppRadius.borderRadiusMd,
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Row(
-          children: [
-            Icon(Icons.timer_outlined, color: color),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Text(
-                text,
-                key: const Key('holdTimerText'),
-                style: AppTextStyles.title.copyWith(color: color),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

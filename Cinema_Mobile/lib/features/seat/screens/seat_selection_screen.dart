@@ -247,7 +247,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
   Future<void> _continue(SeatSelectionArgs args, ShowtimeSeatsData data) async {
     final seats = _selectedSeats(data);
 
-    final seatsTaken = await Navigator.pushNamed(
+    await Navigator.pushNamed(
       context,
       AppRoutes.bookingSummary(args.showtime.id),
       arguments: BookingDraft(
@@ -257,9 +257,8 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
       ),
     );
 
-    // The summary returns true when some seats were taken before the booking
-    // was created: reload the map so the customer can pick again.
-    if (seatsTaken == true && mounted) {
+    // A summary may release its hold or lose seats to another customer.
+    if (mounted) {
       await _loadSeatMap();
     }
   }

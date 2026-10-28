@@ -89,7 +89,7 @@ void main() {
     await tester.ensureVisible(find.text('Confirm Booking'));
     await tester.tap(find.text('Confirm Booking'));
     await pumpFrames(tester);
-    expect(bookings.createCalls.single.concessions, {1: 1, 2: 1});
+    expect(bookings.updateCalls.single.concessions, {1: 1, 2: 1});
   });
 
   testWidgets('Admin adds a snack to the menu', (tester) async {

@@ -120,6 +120,19 @@ class BookingService {
     return Booking.fromJson(readMap(response));
   }
 
+  Future<Booking> updateBooking(
+    int bookingId,
+    CreateBookingRequest request,
+  ) async => Booking.fromJson(
+    readMap(
+      await _apiClient.put(
+        '/api/v1/bookings/$bookingId/details',
+        body: request.toJson(),
+        authenticated: true,
+      ),
+    ),
+  );
+
   Future<Booking> getBooking(int bookingId) async {
     final response = await _apiClient.get(
       '/api/v1/bookings/$bookingId',

@@ -196,6 +196,15 @@ namespace BookingService.Controllers
             return Ok(result);
         }
 
+        [HttpPut("{id:long}/details")]
+        public async Task<ActionResult<BookingResponse>> UpdateDetails(long id, [FromBody] BookingRequest request)
+        {
+            var existing = await _bookingService.GetBookingByIdAsync(id);
+            if (existing.UserId != User.GetCurrentUserId()) return Forbid();
+            request.UserId = User.GetCurrentUserId();
+            return Ok(await _bookingService.UpdatePendingBookingAsync(id, request));
+        }
+
         // Khách: huỷ vé chưa trả tiền; vé đã trả tiền chuyển REFUND_PENDING và giữ ghế đến khi hoàn tất.
         // Staff/Admin vẫn huỷ trực tiếp. Yêu cầu hoàn tiền được tạo qua outbox.
         [HttpPost("{id:long}/cancel")]

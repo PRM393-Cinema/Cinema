@@ -176,6 +176,31 @@ public class LoyaltyTests
         Assert.Equal(60_000m, spend);
     }
 
+    [Fact]
+    public async Task HeldOrder_ChangingPointsAndRetrying_DoesNotRedeemTwice_AndCancelReturnsThem()
+    {
+        var (memberId, member) = NewMember();
+        Assert.Equal(HttpStatusCode.OK, (await _admin.PostAsJsonAsync($"/api/v1/loyalty/users/{memberId}/adjust",
+            new { points = 100, note = "Hold test" })).StatusCode);
+        var showtime = _factory.Showtimes.AddShowtime(DateTime.Now.AddDays(2));
+        var seat = NewSeat();
+        var held = await CreateBookingAsync(member, showtime.Id, seat);
+        var id = held.GetProperty("id").GetInt64();
+        foreach (var points in new[] { 40, 40, 20, 0, 30 })
+        {
+            var response = await member.PutAsJsonAsync($"/api/v1/bookings/{id}/details", new {
+                showtimeId = showtime.Id, seats = new[] { new { seatId = seat } }, usePoints = points });
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            var updated = await response.Content.ReadFromJsonAsync<JsonElement>();
+            Assert.True(Math.Abs((held.GetProperty("expiresAt").GetDateTime() - updated.GetProperty("expiresAt").GetDateTime()).TotalMilliseconds) < 1);
+            Assert.Equal(held.GetProperty("totalAmount").GetDecimal() - points * 1000m,
+                updated.GetProperty("totalAmount").GetDecimal());
+            Assert.Equal(100 - points, await PointsAsync(member));
+        }
+        Assert.Equal(HttpStatusCode.OK, (await member.PostAsync($"/api/v1/bookings/{id}/cancel", null)).StatusCode);
+        Assert.Equal(100, await PointsAsync(member));
+    }
+
     private (long Id, HttpClient Client) NewMember()
     {
         var id = Interlocked.Increment(ref _nextMember);

@@ -39,6 +39,8 @@ namespace BookingService.Services.Interfaces
         Task<BookingResponse> CreateBookingAsync(
             BookingRequest request);
 
+        Task<BookingResponse> UpdatePendingBookingAsync(long id, BookingRequest request);
+
         Task<BookingResponse> ConfirmBookingAsync(
             long id,
             string paymentMethod,

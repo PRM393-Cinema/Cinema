@@ -380,33 +380,84 @@ void main() {
       expect(catalog.seatMapLoads, 2);
     });
 
-    testWidgets('Confirm Booking creates the booking and opens payment', (
-      WidgetTester tester,
+    testWidgets(
+      'Summary holds seats and confirmation keeps the same deadline',
+      (WidgetTester tester) async {
+        final bookings = FakeBookingRepository();
+        await _openSeatSelection(tester, bookingRepository: bookings);
+
+        // B1 and B2 (ids 5 and 6).
+        await tester.tap(find.text('1').last);
+        await tester.tap(find.text('2').last);
+        await tester.pump();
+        await tester.tap(find.text('Continue'));
+        await pumpRoute(tester);
+
+        expect(find.text('Booking Summary'), findsWidgets);
+        expect(find.text('B1, B2'), findsOneWidget);
+        expect(find.text('2 Ticket(s)'), findsOneWidget);
+        expect(find.text(formatVnd(180000)), findsWidgets);
+        expect(bookings.createCalls, hasLength(1));
+        expect(bookings.updateCalls, isEmpty);
+        expect(find.textContaining('Seats held for'), findsOneWidget);
+        final held = bookings.bookings.single;
+
+        await tester.tap(find.text('Confirm Booking'));
+        await pumpFrames(tester);
+
+        expect(bookings.createCalls, hasLength(1));
+        expect(bookings.createCalls.single.showtimeId, 11);
+        expect(bookings.createCalls.single.seatIds, [5, 6]);
+        expect(bookings.updateCalls, hasLength(1));
+        expect(bookings.bookings.single.expiresAt, held.expiresAt);
+        expect(bookings.cancelledIds, isEmpty);
+
+        expect(find.text('Pay with PayOS'), findsOneWidget);
+        expect(find.textContaining('Seats held for'), findsOneWidget);
+      },
+    );
+
+    testWidgets('Leaving summary cancels its hold and refreshes the seats', (
+      tester,
     ) async {
       final bookings = FakeBookingRepository();
-      await _openSeatSelection(tester, bookingRepository: bookings);
-
-      // B1 and B2 (ids 5 and 6).
+      final catalog = FakeCatalogRepository();
+      await _openSeatSelection(
+        tester,
+        bookingRepository: bookings,
+        catalogRepository: catalog,
+      );
       await tester.tap(find.text('1').last);
-      await tester.tap(find.text('2').last);
       await tester.pump();
       await tester.tap(find.text('Continue'));
       await pumpRoute(tester);
+      final heldId = bookings.bookings.single.id;
+      await tester.tap(find.byType(BackButton));
+      await pumpRoute(tester);
+      expect(bookings.cancelledIds, [heldId]);
+      expect(bookings.updateCalls, isEmpty);
+      expect(find.text('Booking Summary'), findsNothing);
+      expect(catalog.seatMapLoads, 2);
+    });
 
-      expect(find.text('Booking Summary'), findsWidgets);
-      expect(find.text('B1, B2'), findsOneWidget);
-      expect(find.text('2 Ticket(s)'), findsOneWidget);
-      expect(find.text(formatVnd(180000)), findsWidgets);
-
-      await tester.tap(find.text('Confirm Booking'));
-      await pumpFrames(tester);
-
+    testWidgets('An expired summary cannot confirm or restart the hold', (
+      tester,
+    ) async {
+      final bookings = FakeBookingRepository()
+        ..holdExpiresAt = DateTime.now().subtract(const Duration(seconds: 1));
+      await _openSeatSelection(tester, bookingRepository: bookings);
+      await tester.tap(find.text('1').last);
+      await tester.pump();
+      await tester.tap(find.text('Continue'));
+      await pumpRoute(tester);
+      expect(find.textContaining('Your seat hold has expired'), findsOneWidget);
+      expect(find.text('Confirm Booking'), findsNothing);
       expect(bookings.createCalls, hasLength(1));
-      expect(bookings.createCalls.single.showtimeId, 11);
-      expect(bookings.createCalls.single.seatIds, [5, 6]);
-
-      expect(find.text('Pay with PayOS'), findsOneWidget);
-      expect(find.textContaining('Seats held for'), findsOneWidget);
+      await tester.tap(find.text('Choose seats again'));
+      await pumpRoute(tester);
+      expect(bookings.cancelledIds, [bookings.bookings.single.id]);
+      expect(bookings.updateCalls, isEmpty);
+      expect(find.text('Pay with PayOS'), findsNothing);
     });
 
     testWidgets('Seats taken meanwhile send the customer back to choose', (
@@ -428,8 +479,6 @@ void main() {
       await tester.tap(find.text('1').last);
       await tester.pump();
       await tester.tap(find.text('Continue'));
-      await pumpRoute(tester);
-      await tester.tap(find.text('Confirm Booking'));
       await pumpRoute(tester);
 
       expect(find.text('Seats no longer available'), findsOneWidget);

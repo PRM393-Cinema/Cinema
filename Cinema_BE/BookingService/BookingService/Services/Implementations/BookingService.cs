@@ -373,6 +373,55 @@ namespace BookingService.Services.Implementations
             }
         }
 
+        // Editing an order never restarts its seat hold or changes a payment's amount.
+        public async Task<BookingResponse> UpdatePendingBookingAsync(long id, BookingRequest request)
+        {
+            BookingValidator.ValidateCreateBooking(request);
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            var booking = await _bookingRepository.GetBookingByIdForUpdateAsync(id)
+                ?? throw new KeyNotFoundException($"Booking with id {id} was not found.");
+            await _context.Entry(booking).ReloadAsync();
+            if (booking.UserId != request.UserId)
+                throw new BusinessException("Booking user does not match the current user.");
+            if (NormalizeStatus(booking) != "PENDING" || booking.ExpiresAt is not { } expiresAt || expiresAt <= DateTime.Now)
+                throw new ConflictException("Your seat hold has expired or is no longer active. Please choose your seats again.");
+            if (booking.PaymentId.HasValue)
+                throw new ConflictException("This booking already has a payment and cannot be edited.");
+
+            var seats = await _bookingSeatRepository.GetByBookingIdAsync(id);
+            if (booking.ShowtimeId != request.ShowtimeId ||
+                !seats.Select(s => s.SeatId).Order().SequenceEqual(request.Seats.Select(s => s.SeatId).Order()))
+                throw new BusinessException("The held showtime and seats cannot be changed.");
+
+            var concessions = await PriceConcessionsAsync(request.Concessions);
+            var seatsAmount = seats.Sum(s => s.Price);
+            var (promotion, discount) = await _promotionService.ResolveAsync(
+                request.PromotionCode, seatsAmount, seats.Count, booking.ShowTime!.Value);
+
+            // Return any previous redemption before applying the revised order (also safe on retries).
+            await _loyaltyService.OnReleasedAsync(booking);
+            // Redeem reloads the locked account; persist the return inside this transaction first.
+            await _context.SaveChangesAsync();
+            booking.PointsUsed = 0;
+            booking.PointsDiscount = 0;
+            booking.ConcessionsAmount = concessions.Sum(c => c.UnitPrice * c.Quantity);
+            booking.DiscountAmount = discount;
+            booking.PromotionId = promotion?.Id;
+            booking.PromotionCode = promotion?.Code;
+            booking.PromotionName = promotion?.Name;
+            booking.TotalAmount = seatsAmount - discount + booking.ConcessionsAmount;
+            var previousConcessions = await _concessionRepository.GetByBookingIdAsync(id);
+            _context.BookingConcessions.RemoveRange(previousConcessions);
+            booking.Concessions = concessions;
+            await _loyaltyService.RedeemAsync(booking, request.UsePoints ?? 0);
+            // Pricing/network work may have consumed the last seconds of the hold.
+            if (expiresAt <= DateTime.Now)
+                throw new ConflictException("Your seat hold has expired. Please choose your seats again.");
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+            return await MapBookingAsync(booking);
+        }
+
         // Staff/Admin xác nhận tay tại quầy (vd: khách trả tiền mặt).
         // Không truyền email thì gửi vé về email lưu trên booking.
         public async Task<BookingResponse> ConfirmBookingAsync(

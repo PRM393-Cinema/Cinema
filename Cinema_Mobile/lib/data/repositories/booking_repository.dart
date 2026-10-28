@@ -23,6 +23,9 @@ abstract interface class BookingRepository {
     int usePoints = 0,
   });
 
+  // Updates extras on the held order without extending its deadline.
+  Future<Booking> updateBooking(int bookingId, CreateBookingRequest request);
+
   // The signed-in member's points, tier and history.
   Future<LoyaltyCard> getMyLoyalty();
 
@@ -80,6 +83,10 @@ class RemoteBookingRepository implements BookingRepository {
     : _bookingService = service;
 
   final BookingService _bookingService;
+
+  @override
+  Future<Booking> updateBooking(int bookingId, CreateBookingRequest request) =>
+      _bookingService.updateBooking(bookingId, request);
 
   @override
   Future<Booking> createBooking({

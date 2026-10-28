@@ -206,6 +206,60 @@ public class BookingFlowTests
         Assert.Equal(HttpStatusCode.OK, (await CheckoutAsync(_customerA, id, amount)).StatusCode);
     }
 
+    [Fact]
+    public async Task HeldBooking_ExtrasCanChange_WithoutRestartingHold_AndCannotChangeAfterCheckout()
+    {
+        var showtime = _factory.Showtimes.AddShowtime(DateTime.Now.AddDays(2));
+        var seat = NewSeat();
+        var booking = await CreateBookingAsync(_customerA, showtime.Id, seat);
+        var id = booking.GetProperty("id").GetInt64();
+        var deadline = booking.GetProperty("expiresAt").GetDateTime();
+        var admin = _factory.ClientFor(TestUsers.AdminToken);
+        var itemResponse = await admin.PostAsJsonAsync("/api/v1/concessions", new { name = "Hold test popcorn", price = 55000 });
+        Assert.Equal(HttpStatusCode.OK, itemResponse.StatusCode);
+        var item = (await itemResponse.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt64();
+        var details = new { showtimeId = showtime.Id, seats = new[] { new { seatId = seat } },
+            concessions = new[] { new { itemId = item, quantity = 2 } } };
+
+        Assert.Equal(HttpStatusCode.Forbidden, (await _customerB.PutAsJsonAsync($"/api/v1/bookings/{id}/details", details)).StatusCode);
+        // Retrying replaces the extras instead of duplicating them or resetting the clock.
+        for (var retry = 0; retry < 2; retry++)
+        {
+            var response = await _customerA.PutAsJsonAsync($"/api/v1/bookings/{id}/details", details);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            var updated = await response.Content.ReadFromJsonAsync<JsonElement>();
+            Assert.True(Math.Abs((deadline - updated.GetProperty("expiresAt").GetDateTime()).TotalMilliseconds) < 1);
+            Assert.Equal(110000m, updated.GetProperty("concessionsAmount").GetDecimal());
+            Assert.Equal(booking.GetProperty("totalAmount").GetDecimal() + 110000m, updated.GetProperty("totalAmount").GetDecimal());
+            Assert.Single(updated.GetProperty("concessions").EnumerateArray());
+        }
+        var read = await _customerA.GetFromJsonAsync<JsonElement>($"/api/v1/bookings/{id}");
+        await CheckoutOrderCodeAsync(_customerA, id, read.GetProperty("totalAmount").GetDecimal());
+        Assert.Equal(HttpStatusCode.Conflict, (await _customerA.PutAsJsonAsync($"/api/v1/bookings/{id}/details", details)).StatusCode);
+    }
+
+    [Fact]
+    public async Task HeldBooking_RejectsExpiredHold_SeatChanges_AndInvalidExtras()
+    {
+        var showtime = _factory.Showtimes.AddShowtime(DateTime.Now.AddDays(2));
+        var seat = NewSeat();
+        var booking = await CreateBookingAsync(_customerA, showtime.Id, seat);
+        var id = booking.GetProperty("id").GetInt64();
+        var path = $"/api/v1/bookings/{id}/details";
+        Assert.Equal(HttpStatusCode.BadRequest, (await _customerA.PutAsJsonAsync(path,
+            new { showtimeId = showtime.Id, seats = new[] { new { seatId = NewSeat() } } })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await _customerA.PutAsJsonAsync(path,
+            new { showtimeId = showtime.Id, seats = new[] { new { seatId = seat } }, usePoints = -1 })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await _customerA.PutAsJsonAsync(path,
+            new { showtimeId = showtime.Id, seats = new[] { new { seatId = seat } },
+                concessions = new[] { new { itemId = 1, quantity = 0 } } })).StatusCode);
+        await ExpireHoldAsync(id);
+        Assert.Equal(HttpStatusCode.Conflict, (await _customerA.PutAsJsonAsync(path,
+            new { showtimeId = showtime.Id, seats = new[] { new { seatId = seat } } })).StatusCode);
+        await _factory.ExecuteAsync<IBookingService>(service => service.ExpireOverdueBookingsAsync(100));
+        await CreateBookingAsync(_customerB, showtime.Id, seat);
+    }
+
     private Task<string> BookingStatusAsync(long id)
     {
         return _factory.QueryAsync<BookingDbContext, string>(db =>

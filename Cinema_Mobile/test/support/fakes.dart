@@ -2,6 +2,7 @@ import 'package:cinema_fe/core/network/api_exception.dart';
 import 'package:cinema_fe/data/models/app_notification.dart';
 import 'package:cinema_fe/data/models/auth_response.dart';
 import 'package:cinema_fe/data/models/booking.dart';
+import 'package:cinema_fe/data/models/create_booking_request.dart';
 import 'package:cinema_fe/data/models/movie.dart';
 import 'package:cinema_fe/data/models/otp_sent_response.dart';
 import 'package:cinema_fe/data/models/payment.dart';
@@ -336,12 +337,32 @@ class FakeBookingRepository implements BookingRepository {
 
   List<Booking> bookings;
   ApiException? createError;
+  DateTime? holdExpiresAt;
   PaymentInfo verifyResult;
   String? checkoutUrl;
   List<AppNotification> notifications;
   Refund? refund;
 
   final createCalls = <CreateBookingCall>[];
+  final updateCalls = <CreateBookingCall>[];
+
+  @override
+  Future<Booking> updateBooking(
+    int bookingId,
+    CreateBookingRequest request,
+  ) async {
+    updateCalls.add(
+      CreateBookingCall(
+        request.showtimeId,
+        request.seatIds,
+        request.concessions,
+        request.promotionCode,
+        request.usePoints,
+      ),
+    );
+    return getBooking(bookingId);
+  }
+
   final cancelledIds = <int>[];
   final verifiedIds = <int>[];
   final checkoutBookingIds = <int>[];
@@ -449,6 +470,7 @@ class FakeBookingRepository implements BookingRepository {
     }
     final booking = bookingFixture(
       id: 200 + createCalls.length,
+      expiresAt: holdExpiresAt,
       seatLabels: [for (final id in seatIds) 'S$id'],
     );
     _store(booking);

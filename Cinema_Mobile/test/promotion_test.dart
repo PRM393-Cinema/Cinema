@@ -118,7 +118,7 @@ void main() {
     await tester.ensureVisible(find.text('Confirm Booking'));
     await tester.tap(find.text('Confirm Booking'));
     await pumpFrames(tester);
-    expect(bookings.createCalls.single.promotionCode, 'WELCOME10');
+    expect(bookings.updateCalls.single.promotionCode, 'WELCOME10');
   });
 
   testWidgets('Without a deal or a code the booking has no promotion', (
@@ -150,7 +150,7 @@ void main() {
     await tester.ensureVisible(find.text('Confirm Booking'));
     await tester.tap(find.text('Confirm Booking'));
     await pumpFrames(tester);
-    expect(bookings.createCalls.single.promotionCode, isNull);
+    expect(bookings.updateCalls.single.promotionCode, isNull);
   });
 
   testWidgets('Admin adds a promo code', (tester) async {

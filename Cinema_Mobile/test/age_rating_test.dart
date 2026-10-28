@@ -1,5 +1,8 @@
 import 'package:cinema_fe/core/widgets/age_rating_badge.dart';
+import 'package:cinema_fe/app/theme/app_theme.dart';
+import 'package:cinema_fe/data/models/booking_draft.dart';
 import 'package:cinema_fe/data/models/movie.dart';
+import 'package:cinema_fe/features/booking/screens/booking_summary_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -70,19 +73,21 @@ void main() {
     await tester.tap(find.text('Continue'));
     await pumpRoute(tester);
 
-    // Going back from the age notice books nothing.
+    // Seats are already held; dismissing the age notice never starts payment.
     await tester.tap(find.text('Confirm Booking'));
     await pumpRoute(tester);
     expect(find.textContaining('only for viewers 16 and over'), findsOneWidget);
     await tester.tap(find.text('Back'));
     await pumpRoute(tester);
-    expect(bookings.createCalls, isEmpty);
+    expect(bookings.createCalls, hasLength(1));
+    expect(bookings.updateCalls, isEmpty);
 
     await tester.tap(find.text('Confirm Booking'));
     await pumpRoute(tester);
     await tester.tap(find.byKey(const Key('confirmAgeRating')));
     await pumpFrames(tester);
     expect(bookings.createCalls, hasLength(1));
+    expect(bookings.updateCalls, hasLength(1));
   });
 
   testWidgets('A movie for all ages books without the notice', (tester) async {
@@ -111,5 +116,66 @@ void main() {
     await pumpFrames(tester);
     expect(find.byKey(const Key('confirmAgeRating')), findsNothing);
     expect(bookings.createCalls, hasLength(1));
+  });
+
+  testWidgets('Age notice fits small, landscape and large-text layouts', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.darkTheme,
+        onGenerateRoute: (_) => MaterialPageRoute<void>(
+          settings: RouteSettings(
+            arguments: BookingDraft(
+              movie: _rated,
+              showtime: showtimeFixture(),
+              seats: [seatMapFixture.seats.first],
+            ),
+          ),
+          builder: (_) =>
+              BookingSummaryScreen(bookingRepository: FakeBookingRepository()),
+        ),
+      ),
+    );
+    await pumpRoute(tester);
+    await tester.tap(find.text('Confirm Booking'));
+    await pumpRoute(tester);
+    final notice = tester.widget<AlertDialog>(find.byType(AlertDialog));
+
+    // Isolate the notice from the booking page's own responsive layout.
+    addTearDown(() => tester.view.resetPhysicalSize());
+    addTearDown(() => tester.view.resetDevicePixelRatio());
+    tester.view.devicePixelRatio = 1;
+    for (final size in [
+      const Size(375, 667),
+      const Size(667, 375),
+      const Size(1024, 768),
+    ]) {
+      tester.view.physicalSize = size;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.darkTheme,
+          home: MediaQuery(
+            data: MediaQueryData(size: size, textScaler: TextScaler.linear(2)),
+            child: Scaffold(body: notice),
+          ),
+        ),
+      );
+      await pumpRoute(tester);
+      expect(tester.takeException(), isNull);
+      for (final label in ['I understand', 'Back']) {
+        final button = find.ancestor(
+          of: find.text(label),
+          matching: find.byWidgetPredicate(
+            (widget) => widget is ButtonStyleButton,
+          ),
+        );
+        final rect = tester.getRect(button);
+        expect(rect.height, greaterThanOrEqualTo(48));
+        expect(rect.top, greaterThanOrEqualTo(0));
+        expect(rect.bottom, lessThanOrEqualTo(size.height));
+        expect(button.hitTestable(), findsOneWidget);
+      }
+    }
   });
 }
