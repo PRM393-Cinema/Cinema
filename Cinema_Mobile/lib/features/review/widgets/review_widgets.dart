@@ -3,12 +3,15 @@ import 'package:flutter/material.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
+import '../../../app/routes/app_routes.dart';
+import '../../../core/session/session_state.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
 import '../../../data/models/booking.dart';
+import '../../../data/models/movie.dart';
 import '../../../data/models/review.dart';
 import '../../../data/repositories/booking_repository.dart';
 
@@ -67,9 +70,16 @@ class StarPicker extends StatelessWidget {
 // Ratings on the movie page: the average, how many gave each star and the
 // newest reviews.
 class MovieReviewsSection extends StatefulWidget {
-  const MovieReviewsSection({required this.load, super.key});
+  const MovieReviewsSection({
+    required this.load,
+    required this.movie,
+    required this.repository,
+    super.key,
+  });
 
   final Future<MovieReviews> Function() load;
+  final Movie movie;
+  final BookingRepository repository;
 
   @override
   State<MovieReviewsSection> createState() => _MovieReviewsSectionState();
@@ -78,6 +88,8 @@ class MovieReviewsSection extends StatefulWidget {
 class _MovieReviewsSectionState extends State<MovieReviewsSection> {
   MovieReviews? _reviews;
   bool _failed = false;
+  bool _writing = false;
+  String? _writeError;
 
   @override
   void initState() {
@@ -94,6 +106,66 @@ class _MovieReviewsSectionState extends State<MovieReviewsSection> {
     }
   }
 
+  Future<void> _rate() async {
+    final session = SessionProvider.of(context);
+    if (!session.isAuthenticated) {
+      await Navigator.pushNamed(
+        context,
+        AppRoutes.login,
+        arguments: {'pendingRoute': AppRoutes.movieDetail(widget.movie.id)},
+      );
+      if (mounted) await _load();
+      return;
+    }
+    setState(() {
+      _writing = true;
+      _writeError = null;
+    });
+    try {
+      final bookings = await widget.repository.getMyBookings(
+        session.user!.userId,
+      );
+      for (final booking in bookings.where((b) => b.checkedInAt != null)) {
+        final state = await widget.repository.getBookingReview(booking.id);
+        if (!mounted) return;
+        if (state.movieId != widget.movie.id || !state.canReview) continue;
+        setState(() => _writing = false);
+        final result = await showDialog<(int, String)>(
+          context: context,
+          builder: (_) => _ReviewDialog(
+            movieTitle: widget.movie.title,
+            rating: state.review?.rating ?? 0,
+            comment: state.review?.comment ?? '',
+          ),
+        );
+        if (result == null || !mounted) return;
+        setState(() => _writing = true);
+        await widget.repository.saveReview(
+          bookingId: booking.id,
+          rating: result.$1,
+          comment: result.$2,
+        );
+        await _load();
+        return;
+      }
+      if (mounted) {
+        setState(
+          () => _writeError = 'You can rate this movie after your ticket has been checked in at the cinema.',
+        );
+      }
+    } on ApiException catch (error) {
+      if (mounted) setState(() => _writeError = error.message);
+    } on Object {
+      if (mounted) {
+        setState(
+          () => _writeError = 'Unable to save your review. Please try again.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _writing = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final reviews = _reviews;
@@ -101,7 +173,21 @@ class _MovieReviewsSectionState extends State<MovieReviewsSection> {
       key: const Key('movieReviews'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Ratings & reviews', style: AppTextStyles.caption),
+        const Text('Ratings & reviews', style: AppTextStyles.title),
+        const SizedBox(height: AppSpacing.md),
+        AppButton.secondary(
+          key: const Key('rateMovie'),
+          label: SessionProvider.of(context).isAuthenticated
+              ? 'Rate this movie'
+              : 'Sign in to rate this movie',
+          leadingIcon: Icons.star_outline_rounded,
+          isLoading: _writing,
+          onPressed: _writing ? null : _rate,
+        ),
+        if (_writeError != null) ...[
+          const SizedBox(height: AppSpacing.sm),
+          Text(_writeError!, style: AppTextStyles.bodySmall),
+        ],
         const SizedBox(height: AppSpacing.sm),
         if (reviews == null)
           Text(

@@ -179,6 +179,55 @@ void main() {
     expect(find.byKey(const Key('writeReview')), findsOneWidget);
   });
 
+  testWidgets('A customer can rate directly from the movie page', (
+    tester,
+  ) async {
+    final watched = bookingFixture(id: 401, checkedInAt: DateTime.now());
+    final bookings = FakeBookingRepository(bookings: [watched])
+      ..bookingReviews[401] = BookingReview(
+        bookingId: 401,
+        movieId: inception.id,
+        canReview: true,
+      );
+    await tester.pumpWidget(
+      buildTestApp(
+        authenticated: true,
+        bookingRepository: bookings,
+        initialRoute: AppRoutes.movieDetail(inception.id),
+      ),
+    );
+    await pumpRoute(tester);
+    await tester.ensureVisible(find.byKey(const Key('rateMovie')));
+    await tester.tap(find.byKey(const Key('rateMovie')));
+    await pumpRoute(tester);
+    await tester.tap(find.byKey(const ValueKey('star-5')));
+    await tester.tap(find.byKey(const Key('saveReview')));
+    await pumpRoute(tester);
+    expect(bookings.savedReviews.single.rating, 5);
+    expect(bookings.savedReviews.single.bookingId, 401);
+  });
+
+  testWidgets(
+    'The movie page explains why an unwatched movie cannot be rated',
+    (tester) async {
+      await tester.pumpWidget(
+        buildTestApp(
+          authenticated: true,
+          initialRoute: AppRoutes.movieDetail(inception.id),
+        ),
+      );
+      await pumpRoute(tester);
+      await tester.ensureVisible(find.byKey(const Key('rateMovie')));
+      await tester.tap(find.byKey(const Key('rateMovie')));
+      await pumpRoute(tester);
+      expect(
+        find.textContaining('after your ticket has been checked in'),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('saveReview')), findsNothing);
+    },
+  );
+
   testWidgets('A ticket not checked in yet cannot be reviewed', (tester) async {
     final paid = bookingFixture(
       id: 402,

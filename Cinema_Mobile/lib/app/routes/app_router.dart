@@ -200,6 +200,7 @@ class AppRouter {
           settings,
           (_) => MovieDetailScreen(
             catalogRepository: catalogRepository,
+            bookingRepository: bookingRepository,
             movieId: id,
           ),
         );

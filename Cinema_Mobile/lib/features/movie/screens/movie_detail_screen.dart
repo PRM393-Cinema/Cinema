@@ -22,6 +22,7 @@ import '../../../data/models/booking_draft.dart';
 import '../../../data/models/movie.dart';
 import '../../../data/models/showtime.dart';
 import '../../../data/repositories/catalog_repository.dart';
+import '../../../data/repositories/booking_repository.dart';
 import '../../seat/widgets/seat_type_style.dart';
 import '../../showtime/widgets/showtime_section.dart';
 import '../../../core/widgets/age_rating_badge.dart';
@@ -32,11 +33,13 @@ import '../../review/widgets/review_widgets.dart';
 class MovieDetailScreen extends StatefulWidget {
   const MovieDetailScreen({
     required this.catalogRepository,
+    required this.bookingRepository,
     this.movieId,
     super.key,
   });
 
   final CatalogRepository catalogRepository;
+  final BookingRepository bookingRepository;
 
   // Set when the screen is opened from its URL: the movie is loaded by id.
   final int? movieId;
@@ -249,6 +252,8 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                             _buildShowtimes(),
                             const SizedBox(height: AppSpacing.xxl),
                             MovieReviewsSection(
+                              movie: movie,
+                              repository: widget.bookingRepository,
                               load: () => widget.catalogRepository
                                   .getMovieReviews(movie.id),
                             ),
