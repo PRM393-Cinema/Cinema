@@ -110,7 +110,16 @@ Vé chỉ check-in được từ 3 giờ trước đến 2 giờ sau giờ chi�
 | RabbitMQ (event giữa các service) | `http://localhost:15672`, tài khoản `cinema` / `cinema` |
 | Swagger AuthService / MovieService / BookingService | `http://localhost:5100/swagger` / `:5168/swagger` / `:5063/swagger` |
 
-## 4. Lưu ý
+## 4. Tài khoản và đánh giá demo
+
+- Chạy thủ công: `python Cinema_BE/docker/postgres/seed_demo_reviews.py` từ thư mục Cinema khi Docker đang chạy.
+- Có 10 customer: `review.customer01@example.com` đến `review.customer10@example.com`, mật khẩu demo `123456`.
+- Mỗi tài khoản có một review ngẫu nhiên 1–5 sao cho mỗi phim; tên `Demo Reviewer` và bình luận `[Demo]` phân biệt với đánh giá thật.
+- Script tạo suất chiếu đã đóng và vé demo giá 0 trong năm 2000 để khách có thể sửa review theo đúng điều kiện vé đã check-in. Không tạo thanh toán, email hoặc chiếm ghế các suất hiện tại. Vé demo vẫn được tính trong thống kê tổng vé/đơn toàn thời gian.
+- Chạy lại không nhân đôi tài khoản, vé hoặc review và không ghi đè dữ liệu đang có.
+- Trên trang phim, chọn **Rate this movie** để viết/sửa rating; khách chưa đăng nhập sẽ được chuyển đến đăng nhập. Khách chưa có vé đã check-in thấy hướng dẫn điều kiện đánh giá.
+
+## 5. Lưu ý
 
 - Gateway giới hạn 100 request mỗi phút cho một IP. Gặp lỗi "quá nhiều yêu cầu" thì chờ một phút.
 - App chỉ hiện suất chưa bắt đầu trong 7 ngày tới. Không thấy suất nào thì chạy lại lệnh lịch chiếu demo.
