@@ -88,6 +88,8 @@ void main() {
     await tester.pump();
     await tester.tap(find.byKey(const Key('genreFilter')));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Drama').last);
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Drama').last);
     await pumpRoute(tester);
     expect(catalog.browseCalls.last.genre, 'Drama');

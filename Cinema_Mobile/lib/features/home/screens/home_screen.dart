@@ -333,45 +333,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                       AppSpacing.md) /
                                   2
                             : 220,
-                        child: InputDecorator(
-                          decoration: const InputDecoration(
-                            labelText: 'Showing',
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: AppSpacing.sm,
-                              vertical: AppSpacing.md,
-                            ),
-                            prefixIconConstraints: BoxConstraints(minWidth: 32),
-                            prefixIcon: Icon(Icons.movie_outlined, size: 20),
-                          ),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<bool>(
-                              key: const Key('showingFilter'),
-                              value: _comingSoon,
-                              isExpanded: true,
-                              isDense: true,
-                              items: const [
-                                DropdownMenuItem(
-                                  value: false,
-                                  child: Text(
-                                    'Now showing',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                DropdownMenuItem(
-                                  value: true,
-                                  child: Text(
-                                    'Coming soon',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                              onChanged: (value) {
-                                if (value != null) _showTab(value);
-                              },
-                            ),
-                          ),
+                        child: _HomeFilter<bool>(
+                          key: const Key('showingFilter'),
+                          label: 'Showing',
+                          icon: Icons.movie_outlined,
+                          value: _comingSoon,
+                          options: const [
+                            (false, 'Now showing'),
+                            (true, 'Coming soon'),
+                          ],
+                          onSelected: _showTab,
                         ),
                       ),
                       if (_genres.isNotEmpty)
@@ -382,50 +353,17 @@ class _HomeScreenState extends State<HomeScreen> {
                                         AppSpacing.md) /
                                     2
                               : 280,
-                          child: InputDecorator(
-                            decoration: const InputDecoration(
-                              labelText: 'Genre',
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: AppSpacing.sm,
-                                vertical: AppSpacing.md,
-                              ),
-                              prefixIconConstraints: BoxConstraints(
-                                minWidth: 32,
-                              ),
-                              prefixIcon: Icon(
-                                Icons.filter_list_rounded,
-                                size: 20,
-                              ),
-                            ),
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
-                                key: const Key('genreFilter'),
-                                value: _genre ?? '',
-                                isExpanded: true,
-                                isDense: true,
-                                items: [
-                                  const DropdownMenuItem(
-                                    value: '',
-                                    child: Text(
-                                      'All genres',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  for (final genre in _genres)
-                                    DropdownMenuItem(
-                                      value: genre,
-                                      child: Text(
-                                        genre,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                ],
-                                onChanged: (value) =>
-                                    _filterGenre(value == '' ? null : value),
-                              ),
-                            ),
+                          child: _HomeFilter<String>(
+                            key: const Key('genreFilter'),
+                            label: 'Genre',
+                            icon: Icons.filter_list_rounded,
+                            value: _genre ?? '',
+                            options: [
+                              ('', 'All genres'),
+                              for (final genre in _genres) (genre, genre),
+                            ],
+                            onSelected: (value) =>
+                                _filterGenre(value.isEmpty ? null : value),
                           ),
                         ),
                     ],
@@ -488,6 +426,112 @@ class _HomeScreenState extends State<HomeScreen> {
       arguments: movie,
     );
   }
+}
+
+class _HomeFilter<T> extends StatelessWidget {
+  const _HomeFilter({
+    required this.label,
+    required this.icon,
+    required this.value,
+    required this.options,
+    required this.onSelected,
+    super.key,
+  });
+  final String label;
+  final IconData icon;
+  final T value;
+  final List<(T, String)> options;
+  final ValueChanged<T> onSelected;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final selectedLabel = options
+          .firstWhere((option) => option.$1 == value)
+          .$2;
+      return Theme(
+        data: Theme.of(context).copyWith(
+          focusColor: AppColors.primary.withValues(alpha: 0.1),
+          hoverColor: AppColors.primary.withValues(alpha: 0.06),
+        ),
+        child: PopupMenuButton<T>(
+          tooltip: 'Filter by ${label.toLowerCase()}',
+          position: PopupMenuPosition.under,
+          offset: const Offset(0, 6),
+          color: AppColors.surfaceSoft,
+          surfaceTintColor: Colors.transparent,
+          constraints: BoxConstraints(
+            minWidth: constraints.maxWidth,
+            maxWidth: constraints.maxWidth,
+            maxHeight: MediaQuery.sizeOf(context).height * 0.45,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: AppRadius.borderRadiusMd,
+            side: const BorderSide(color: AppColors.border),
+          ),
+          onSelected: onSelected,
+          itemBuilder: (_) => [
+            for (final (option, text) in options)
+              PopupMenuItem<T>(
+                value: option,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.sm,
+                ),
+                child: Semantics(
+                  selected: option == value,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          text,
+                          style: AppTextStyles.body.copyWith(
+                            color: option == value
+                                ? AppColors.primary
+                                : AppColors.textPrimary,
+                            fontWeight: option == value
+                                ? FontWeight.w600
+                                : FontWeight.w400,
+                          ),
+                        ),
+                      ),
+                      if (option == value) ...[
+                        const SizedBox(width: AppSpacing.xs),
+                        const Icon(
+                          Icons.check_rounded,
+                          color: AppColors.primary,
+                          size: 20,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+          ],
+          child: InputDecorator(
+            decoration: InputDecoration(
+              labelText: label,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm,
+                vertical: AppSpacing.md,
+              ),
+              prefixIconConstraints: const BoxConstraints(minWidth: 32),
+              prefixIcon: Icon(icon, size: 20),
+              suffixIconConstraints: const BoxConstraints(minWidth: 28),
+              suffixIcon: const Icon(Icons.expand_more_rounded, size: 20),
+            ),
+            child: Text(
+              selectedLabel,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyles.body,
+              semanticsLabel: '$label: $selectedLabel',
+            ),
+          ),
+        ),
+      );
+    },
+  );
 }
 
 class _HomeHeader extends StatelessWidget {
