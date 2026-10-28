@@ -34,6 +34,27 @@ void main() {
     expect(inception.isComingSoon(), isFalse); // No release date.
   });
 
+  testWidgets('Home filters stay on one row on narrow screens', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    for (final width in [320.0, 375.0, 500.0, 599.0, 600.0]) {
+      tester.view.physicalSize = Size(width, 844);
+      await tester.pumpWidget(buildTestApp());
+      await pumpRoute(tester);
+      await scrollHomeTo(tester, find.byKey(const Key('showingFilter')));
+
+      final showing = tester.getRect(find.byKey(const Key('showingFilter')));
+      final genre = tester.getRect(find.byKey(const Key('genreFilter')));
+      expect(showing.top, closeTo(genre.top, 1), reason: 'width: $width');
+      expect(showing.right, lessThan(genre.left));
+      expect(genre.right, lessThanOrEqualTo(width - 16));
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+    }
+  });
+
   testWidgets('Home splits now showing and coming soon, and filters genres', (
     tester,
   ) async {

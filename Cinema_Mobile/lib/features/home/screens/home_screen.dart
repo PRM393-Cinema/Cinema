@@ -329,13 +329,21 @@ class _HomeScreenState extends State<HomeScreen> {
                     runSpacing: AppSpacing.md,
                     children: [
                       SizedBox(
-                        width: constraints.maxWidth < 500
-                            ? constraints.maxWidth - 2 * AppSpacing.lg
+                        width: constraints.maxWidth < 600
+                            ? (constraints.maxWidth -
+                                      2 * AppSpacing.lg -
+                                      AppSpacing.md) /
+                                  2
                             : 220,
                         child: InputDecorator(
                           decoration: const InputDecoration(
                             labelText: 'Showing',
-                            prefixIcon: Icon(Icons.movie_outlined),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: AppSpacing.sm,
+                              vertical: AppSpacing.md,
+                            ),
+                            prefixIconConstraints: BoxConstraints(minWidth: 32),
+                            prefixIcon: Icon(Icons.movie_outlined, size: 20),
                           ),
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<bool>(
@@ -346,11 +354,19 @@ class _HomeScreenState extends State<HomeScreen> {
                               items: const [
                                 DropdownMenuItem(
                                   value: false,
-                                  child: Text('Now showing'),
+                                  child: Text(
+                                    'Now showing',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
                                 DropdownMenuItem(
                                   value: true,
-                                  child: Text('Coming soon'),
+                                  child: Text(
+                                    'Coming soon',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
                               ],
                               onChanged: (value) {
@@ -362,13 +378,26 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       if (_genres.isNotEmpty)
                         SizedBox(
-                          width: constraints.maxWidth < 500
-                              ? constraints.maxWidth - 2 * AppSpacing.lg
+                          width: constraints.maxWidth < 600
+                              ? (constraints.maxWidth -
+                                        2 * AppSpacing.lg -
+                                        AppSpacing.md) /
+                                    2
                               : 280,
                           child: InputDecorator(
                             decoration: const InputDecoration(
                               labelText: 'Genre',
-                              prefixIcon: Icon(Icons.filter_list_rounded),
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: AppSpacing.sm,
+                                vertical: AppSpacing.md,
+                              ),
+                              prefixIconConstraints: BoxConstraints(
+                                minWidth: 32,
+                              ),
+                              prefixIcon: Icon(
+                                Icons.filter_list_rounded,
+                                size: 20,
+                              ),
                             ),
                             child: DropdownButtonHideUnderline(
                               child: DropdownButton<String>(
@@ -379,12 +408,20 @@ class _HomeScreenState extends State<HomeScreen> {
                                 items: [
                                   const DropdownMenuItem(
                                     value: '',
-                                    child: Text('All genres'),
+                                    child: Text(
+                                      'All genres',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
                                   for (final genre in _genres)
                                     DropdownMenuItem(
                                       value: genre,
-                                      child: Text(genre),
+                                      child: Text(
+                                        genre,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
                                 ],
                                 onChanged: (value) =>
@@ -761,6 +798,7 @@ class _MovieGridState extends State<_MovieGrid> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return GridView.builder(
+      clipBehavior: Clip.none,
       padding: EdgeInsets.zero,
       itemCount: widget.movies.length,
       shrinkWrap: true,
@@ -769,7 +807,7 @@ class _MovieGridState extends State<_MovieGrid> with WidgetsBindingObserver {
         maxCrossAxisExtent: 260,
         mainAxisExtent: 340,
         crossAxisSpacing: AppSpacing.lg,
-        mainAxisSpacing: AppSpacing.lg,
+        mainAxisSpacing: AppSpacing.xl,
       ),
       itemBuilder: (context, index) {
         final movie = widget.movies[index];

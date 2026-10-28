@@ -80,7 +80,7 @@ class _MoviePreviewCardState extends State<MoviePreviewCard> {
       },
       onExit: (_) => _stop(),
       child: AnimatedScale(
-        scale: _active && !reduceMotion ? 1.04 : 1,
+        scale: _active && !reduceMotion ? 1.12 : 1,
         duration: reduceMotion
             ? Duration.zero
             : const Duration(milliseconds: 180),
