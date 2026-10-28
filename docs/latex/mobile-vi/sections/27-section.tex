@@ -1,0 +1,120 @@
+\clearpage
+\section{Đối chiếu yêu cầu và triển khai}\label{sec:srs-27}
+Từ vựng trạng thái: Đã triển khai; Triển khai một phần; Chỉ giao diện; Dữ liệu giả; Chờ backend; Chưa triển khai; Cần xác nhận. Chỉ dùng trạng thái áp dụng. Phụ thuộc sản phẩm dùng \texttt{App\allowbreak{}Dependen\allowbreak{}cies}.remote; giả lập test không phải dữ liệu giả sản phẩm.
+
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-8\tabcolsep\relax}
+\begin{longtable}{@{}P{0.19000\SRSWidth}P{0.18000\SRSWidth}P{0.15000\SRSWidth}P{0.20000\SRSWidth}P{0.28000\SRSWidth}@{}}
+\caption{27. Đối chiếu yêu cầu và triển khai}\label{tab:srs-119}\\
+\toprule
+\textbf{Chức năng} & \textbf{Yêu cầu \texttt{SRS}} & \textbf{Trạng thái code} & \textbf{Trạng thái \texttt{API}} & \textbf{Ghi chú} \\
+\midrule
+\endfirsthead
+\multicolumn{5}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{Chức năng} & \textbf{Yêu cầu \texttt{SRS}} & \textbf{Trạng thái code} & \textbf{Trạng thái \texttt{API}} & \textbf{Ghi chú} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{5}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Đăng ký & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}01} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Đăng nhập & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}02} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Thông tin \texttt{JWT} & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}03} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Kiểm tra \texttt{JWT} & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}04} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Phân quyền vai trò & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}05} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Phản hồi chưa xác thực và thiếu quyền & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}06} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Xác thực \texttt{OTP} email & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}07} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Đăng ký lại email chưa xác thực & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}08} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Khôi phục mật khẩu & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}09} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Làm mới và đăng xuất & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}10} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Tài khoản hiện tại & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}11} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Áp dụng khoá và đổi quyền & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}12} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Kiểm tra trường tài khoản & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}13} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Giới hạn tần suất xác thực & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}14} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Sửa hồ sơ & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}16} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Đổi mật khẩu hiện tại & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}17} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Chi tiết phim & \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}02} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Tìm theo tên & \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}03} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Danh mục đang hoạt động & \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}04} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Mở trailer & \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}08} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Phân loại tuổi & \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}09} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Đang chiếu và sắp chiếu & \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}10} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Đạo diễn và diễn viên & \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}11} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Đánh giá phim & \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}12} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Xem sơ đồ phòng & \texttt{MOB-\allowbreak{}FR-\allowbreak{}SEAT-\allowbreak{}03} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Suất và giá & \texttt{MOB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}03} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Suất mở chưa bắt đầu & \texttt{MOB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}06} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Suất theo phim & \texttt{MOB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}07} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Suất phim còn đặt được & \texttt{MOB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}08} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Định dạng chiếu & \texttt{MOB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}13} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Giữ chỗ đặt vé & \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}01} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Chi tiết vé & \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}02} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Lịch sử vé của mình & \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}04} & Triển khai một phần & Có controller; chưa kiểm chứng chạy & Chỉ tải 50 vé đầu; \texttt{UI} thiếu vé cũ hơn. \\[3pt]
+Xác nhận vé đã trả & \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}05} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Huỷ vé & \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}06} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+\texttt{ID} ghế đã chiếm & \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}07} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Xung đột ghế đồng thời & \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}08} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Cặp sweetbox & \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}09} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Hết hạn giữ chỗ chưa trả & \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}10} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Làm mới sơ đồ khách & \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}11} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Bắp nước kèm vé & \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}13} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Khuyến mãi và mã giảm giá & \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}15} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Điểm thành viên & \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}17} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Chia sẻ và lịch & \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}19} & Triển khai một phần & Có controller; chưa kiểm chứng chạy & Lịch dùng giờ kết thúc thật hoặc dự phòng 150 phút; chia sẻ dự phòng clipboard. \\[3pt]
+Tạo/\allowbreak{}dùng lại link \texttt{Pay\allowbreak{}OS} & \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}01} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Xác minh \texttt{Pay\allowbreak{}OS} & \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}02} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Chi tiết thanh toán & \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}03} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Lịch sử thanh toán của mình & \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}04} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Truy cập hoàn tiền & \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}06} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Webhook có chữ ký & \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}07} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Thanh toán muộn & \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}08} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Tự kiểm tra thanh toán & \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}11} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Tạo yêu cầu hoàn tiền & \texttt{MOB-\allowbreak{}FR-\allowbreak{}REF-\allowbreak{}01} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Mở lại hoàn tiền đã từ chối & \texttt{MOB-\allowbreak{}FR-\allowbreak{}REF-\allowbreak{}05} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Trạng thái hoàn tiền của mình & \texttt{MOB-\allowbreak{}FR-\allowbreak{}REF-\allowbreak{}06} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Một hoàn tiền mỗi thanh toán & \texttt{MOB-\allowbreak{}FR-\allowbreak{}REF-\allowbreak{}07} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+\texttt{QR} vé & \texttt{MOB-\allowbreak{}FR-\allowbreak{}CHK-\allowbreak{}01} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Tra mã vé & \texttt{MOB-\allowbreak{}FR-\allowbreak{}CHK-\allowbreak{}02} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Kiểm tra check-in & \texttt{MOB-\allowbreak{}FR-\allowbreak{}CHK-\allowbreak{}03} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Camera/\allowbreak{}nhập mã & \texttt{MOB-\allowbreak{}FR-\allowbreak{}CHK-\allowbreak{}04} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Hiện giờ check-in & \texttt{MOB-\allowbreak{}FR-\allowbreak{}CHK-\allowbreak{}05} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Lịch sử thông báo & \texttt{MOB-\allowbreak{}FR-\allowbreak{}NOTI-\allowbreak{}01} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Chi tiết thông báo & \texttt{MOB-\allowbreak{}FR-\allowbreak{}NOTI-\allowbreak{}04} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Email sự kiện & \texttt{MOB-\allowbreak{}FR-\allowbreak{}NOTI-\allowbreak{}06} & Triển khai một phần & Có controller; chưa kiểm chứng chạy & Có chống lặp sự kiện; khoảng sự cố \texttt{SMTP}/\allowbreak{}\texttt{DB} không bảo đảm gửi đúng một lần tuyệt đối. \\[3pt]
+Email \texttt{OTP} và chào mừng & \texttt{MOB-\allowbreak{}FR-\allowbreak{}NOTI-\allowbreak{}07} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Nhắc giờ chiếu & \texttt{MOB-\allowbreak{}FR-\allowbreak{}NOTI-\allowbreak{}08} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Thông báo đã/\allowbreak{}chưa đọc & \texttt{MOB-\allowbreak{}FR-\allowbreak{}NOTI-\allowbreak{}09} & Đã triển khai & Có controller; chưa kiểm chứng chạy & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Bảo vệ và khôi phục route & \texttt{MOB-\allowbreak{}FR-\allowbreak{}NAV-\allowbreak{}01} & Đã triển khai & Client/\allowbreak{}nền tảng; không \texttt{API} riêng & Có bằng chứng triển khai tĩnh; chưa chạy nghiệm thu thực tế. \\[3pt]
+Trạng thái tải, lỗi và rỗng & \texttt{MOB-\allowbreak{}FR-\allowbreak{}STATE-\allowbreak{}01} & Triển khai một phần & Client/\allowbreak{}nền tảng; không \texttt{API} riêng & Có widget trạng thái; chưa chạy kiểm tra toàn bộ thiết bị/\allowbreak{}nhánh lỗi. \\[3pt]
+Media phim theo nền tảng & \texttt{MOB-\allowbreak{}FR-\allowbreak{}MEDIA-\allowbreak{}01} & Triển khai một phần & Có controller; chưa kiểm chứng chạy & Trailer native mở ngoài; preview web có stub native rỗng. \\[3pt]
+\end{longtable}
+\endgroup
+
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-8\tabcolsep\relax}
+\begin{longtable}{@{}P{0.19000\SRSWidth}P{0.18000\SRSWidth}P{0.15000\SRSWidth}P{0.20000\SRSWidth}P{0.28000\SRSWidth}@{}}
+\caption{27. Đối chiếu yêu cầu và triển khai}\label{tab:srs-120}\\
+\toprule
+\textbf{Chức năng} & \textbf{Yêu cầu \texttt{SRS}} & \textbf{Trạng thái code} & \textbf{Trạng thái \texttt{API}} & \textbf{Ghi chú} \\
+\midrule
+\endfirsthead
+\multicolumn{5}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{Chức năng} & \textbf{Yêu cầu \texttt{SRS}} & \textbf{Trạng thái code} & \textbf{Trạng thái \texttt{API}} & \textbf{Ghi chú} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{5}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+\texttt{UI} do .\texttt{NET} dựng & \texttt{MOB-\allowbreak{}CON-\allowbreak{}01} & Chưa triển khai & Có \texttt{API} \texttt{ASP}.\texttt{NET} & Chỉ \texttt{UI} Flutter Web; yêu cầu môn [CẦN XÁC NHẬN] \\[3pt]
+Thông báo đẩy \texttt{FCM} & \texttt{MOB-\allowbreak{}FUT-\allowbreak{}02} & Chưa triển khai & — & Tương lai, không phải \texttt{FR} hiện tại \\[3pt]
+Kiểm chứng \texttt{SQL} submodule \texttt{DB} & \texttt{MOB-\allowbreak{}CON-\allowbreak{}02} & Cần xác nhận & Có mapping \texttt{EF} cục bộ & Submodule chưa khởi tạo; chưa kiểm tra \texttt{DB} thật \\[3pt]
+\end{longtable}
+\endgroup

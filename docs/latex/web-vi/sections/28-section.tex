@@ -1,0 +1,35 @@
+\clearpage
+\section{Bằng chứng và đối chiếu nguồn}\label{sec:srs-28}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.23000\SRSWidth}P{0.77000\SRSWidth}@{}}
+\caption{28. Bằng chứng và đối chiếu nguồn}\label{tab:srs-203}\\
+\toprule
+\textbf{Bằng chứng} & \textbf{Cách dùng /\allowbreak{} đối chiếu} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{Bằng chứng} & \textbf{Cách dùng /\allowbreak{} đối chiếu} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+\href{../../../docs/SRS\_EN.md}{\texttt{docs/\allowbreak{}SRS\_\allowbreak{}EN.\allowbreak{}md}}; \href{../../../docs/SRS\_VI.md}{\texttt{docs/\allowbreak{}SRS\_\allowbreak{}VI.\allowbreak{}md}} & 125 \texttt{FR} cũ mỗi ngôn ngữ, tách phạm vi giữ hậu tố mã; \texttt{NAV}/\allowbreak{}\texttt{STATE}/\allowbreak{}\texttt{MEDIA} chi tiết hành vi code \\[3pt]
+\href{../../../Cinema\_BE/Cinema\_Microservice\_SRS\_Complete.md}{\texttt{Cinema\_\allowbreak{}BE/\allowbreak{}Cinema\_\allowbreak{}Microser\allowbreak{}vice\_\allowbreak{}SRS\_\allowbreak{}Complete\allowbreak{}.\allowbreak{}md}} & Ý định sáu service lịch sử; ba service hiện ưu tiên \\[3pt]
+\href{../../../README.md}{\texttt{README.\allowbreak{}md}}; \href{../../../Cinema\_Mobile/README.md}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}README.\allowbreak{}md}}; \href{../../../DEMO.md}{\texttt{DEMO.\allowbreak{}md}} & Điểm vào/\allowbreak{}cài đặt thật, không \texttt{UI} .\texttt{NET} riêng \\[3pt]
+\href{../../../Cinema\_Mobile/lib/app/routes/app\_router.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}app/\allowbreak{}routes/\allowbreak{}app\_\allowbreak{}router.\allowbreak{}dart}}; \href{../../../Cinema\_Mobile/lib/admin/admin\_router.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}admin/\allowbreak{}admin\_\allowbreak{}router.\allowbreak{}dart}} & Route kênh/\allowbreak{}bảo vệ vai trò; quản lý native chỉ check-in \\[3pt]
+\href{../../../Cinema\_Mobile/lib/app/app\_dependencies.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}app/\allowbreak{}app\_\allowbreak{}dependen\allowbreak{}cies.\allowbreak{}dart}}; \href{../../../Cinema\_Mobile/lib/core/network/api\_client.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}core/\allowbreak{}network/\allowbreak{}api\_\allowbreak{}client.\allowbreak{}dart}} & Phụ thuộc thật, timeout 15 giây, gia hạn và thăm phiên công khai \\[3pt]
+\href{../../../Cinema\_BE/ApiGateway/ApiGateway/appsettings.json}{\texttt{Cinema\_\allowbreak{}BE/\allowbreak{}Api\allowbreak{}Gateway/\allowbreak{}Api\allowbreak{}Gateway/\allowbreak{}appsetti\allowbreak{}ngs.\allowbreak{}json}} & Policy/\allowbreak{}tần suất/\allowbreak{}health thật; số route mô tả cũ đã cũ \\[3pt]
+\href{../../../.github/workflows/ci.yml}{\texttt{.\allowbreak{}github/\allowbreak{}workflow\allowbreak{}s/\allowbreak{}ci.\allowbreak{}yml}}; \href{../../../.github/workflows/flutter.yml}{\texttt{.\allowbreak{}github/\allowbreak{}workflow\allowbreak{}s/\allowbreak{}flutter.\allowbreak{}yml}} & \texttt{CI} khai báo; ghim Flutter 3.47.4 thay mô tả cũ; số test cũ chưa xác minh là tổng hiện tại \\[3pt]
+\href{../../../Cinema\_Mobile/lib/core/widgets/trailer\_preview\_stub.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}core/\allowbreak{}widgets/\allowbreak{}trailer\_\allowbreak{}preview\_\allowbreak{}stub.\allowbreak{}dart}}; \href{../../../Cinema\_Mobile/lib/core/widgets/trailer\_player\_native.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}core/\allowbreak{}widgets/\allowbreak{}trailer\_\allowbreak{}player\_\allowbreak{}native.\allowbreak{}dart}} & Stub preview native rỗng; trailer đầy đủ mở ngoài \\[3pt]
+\href{../../../Cinema\_Mobile/lib/features/booking/widgets/ticket\_share\_actions.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}features\allowbreak{}/\allowbreak{}booking/\allowbreak{}widgets/\allowbreak{}ticket\_\allowbreak{}share\_\allowbreak{}actions.\allowbreak{}dart}} & Giờ kết thúc lịch dự phòng 150 phút, không luôn đúng giờ kết thúc suất \\[3pt]
+\href{../../../Cinema\_BE/BookingService/BookingService/Services/Implementations/NotificationService.cs}{\texttt{Cinema\_\allowbreak{}BE/\allowbreak{}Booking\allowbreak{}Service/\allowbreak{}Booking\allowbreak{}Service/\allowbreak{}Services\allowbreak{}/\allowbreak{}Implemen\allowbreak{}tations/\allowbreak{}Notifica\allowbreak{}tion\allowbreak{}Service.\allowbreak{}cs}} & Chống lặp sự kiện và gửi \texttt{SMTP}/\allowbreak{}\texttt{DB} không nguyên tử; không khẳng định đúng một lần tuyệt đối \\[3pt]
+\end{longtable}
+\endgroup
+
+Kiểm kê rà soát: liệt kê 763 tệp; lập chỉ mục 594 tệp văn bản/\allowbreak{}code/\allowbreak{}cấu hình liên quan, gồm khoảng 64.397 dòng C\#/\allowbreak{}Dart. Build/\allowbreak{}cache/\allowbreak{}vendor sinh tự động, media nhị phân, nội dung secret mã hoá và submodule \texttt{DB} thiếu không được dùng làm bằng chứng chức năng. Không chép giá trị secret.

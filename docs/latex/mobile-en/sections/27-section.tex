@@ -1,0 +1,120 @@
+\clearpage
+\section{Implemented vs Requirement}\label{sec:srs-27}
+Status vocabulary: Implemented; Partially Implemented; \texttt{UI} Only; Mock Data; Backend Pending; Not Implemented; To Be Confirmed. Only applicable statuses are used. Production dependencies use \texttt{App\allowbreak{}Dependen\allowbreak{}cies}.remote; test fakes are not production mock data.
+
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-8\tabcolsep\relax}
+\begin{longtable}{@{}P{0.19000\SRSWidth}P{0.18000\SRSWidth}P{0.15000\SRSWidth}P{0.20000\SRSWidth}P{0.28000\SRSWidth}@{}}
+\caption{27. Implemented vs Requirement}\label{tab:srs-119}\\
+\toprule
+\textbf{Feature} & \textbf{\texttt{SRS} Requirement} & \textbf{Code Status} & \textbf{\texttt{API} Status} & \textbf{Notes} \\
+\midrule
+\endfirsthead
+\multicolumn{5}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{Feature} & \textbf{\texttt{SRS} Requirement} & \textbf{Code Status} & \textbf{\texttt{API} Status} & \textbf{Notes} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{5}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Register & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}01} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Sign in & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}02} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+\texttt{JWT} claims & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}03} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Validate \texttt{JWT} & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}04} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Authorize roles & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}05} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Unauthenticated and forbidden responses & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}06} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Verify email \texttt{OTP} & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}07} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Repeat unverified registration & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}08} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Recover password & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}09} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Refresh and sign out & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}10} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Current account & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}11} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Lock and role-change enforcement & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}12} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Account field validation & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}13} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Authentication rate limits & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}14} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Edit profile & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}16} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Change current password & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}17} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Movie details & \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}02} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Title search & \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}03} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Active catalogue & \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}04} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Open trailer & \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}08} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Age rating & \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}09} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Now showing and coming soon & \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}10} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Director and cast & \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}11} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Movie reviews & \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}12} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Read room map & \texttt{MOB-\allowbreak{}FR-\allowbreak{}SEAT-\allowbreak{}03} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Showtime and prices & \texttt{MOB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}03} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Open future showtimes & \texttt{MOB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}06} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Showtimes by movie & \texttt{MOB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}07} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Bookable movie showtimes & \texttt{MOB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}08} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Screening format & \texttt{MOB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}13} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Hold booking & \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}01} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Booking details & \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}02} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Own ticket history & \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}04} & Partially Implemented & Controller exists; runtime unverified & Only the first 50 tickets are loaded; older tickets are missing from the \texttt{UI}. \\[3pt]
+Confirm paid booking & \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}05} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Cancel booking & \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}06} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Occupied seat IDs & \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}07} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Concurrent seat conflict & \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}08} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Sweetbox pair & \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}09} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Expire unpaid hold & \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}10} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Refresh customer map & \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}11} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Concessions with tickets & \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}13} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Promotion and voucher & \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}15} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Membership points & \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}17} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Share and calendar & \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}19} & Partially Implemented & Controller exists; runtime unverified & Calendar uses actual show end or a 150-minute fallback; sharing falls back to clipboard. \\[3pt]
+Create/\allowbreak{}reuse \texttt{Pay\allowbreak{}OS} link & \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}01} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Verify \texttt{Pay\allowbreak{}OS} & \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}02} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Payment details & \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}03} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Own payment history & \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}04} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Refund access & \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}06} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Signed webhook & \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}07} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Late payment & \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}08} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Automatic payment polling & \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}11} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Create refund request & \texttt{MOB-\allowbreak{}FR-\allowbreak{}REF-\allowbreak{}01} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Reopen rejected refund & \texttt{MOB-\allowbreak{}FR-\allowbreak{}REF-\allowbreak{}05} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Own refund status & \texttt{MOB-\allowbreak{}FR-\allowbreak{}REF-\allowbreak{}06} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Unique refund per payment & \texttt{MOB-\allowbreak{}FR-\allowbreak{}REF-\allowbreak{}07} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Ticket \texttt{QR} & \texttt{MOB-\allowbreak{}FR-\allowbreak{}CHK-\allowbreak{}01} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Lookup ticket code & \texttt{MOB-\allowbreak{}FR-\allowbreak{}CHK-\allowbreak{}02} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Check-in validation & \texttt{MOB-\allowbreak{}FR-\allowbreak{}CHK-\allowbreak{}03} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Camera/\allowbreak{}manual scanner & \texttt{MOB-\allowbreak{}FR-\allowbreak{}CHK-\allowbreak{}04} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Display check-in time & \texttt{MOB-\allowbreak{}FR-\allowbreak{}CHK-\allowbreak{}05} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Notification history & \texttt{MOB-\allowbreak{}FR-\allowbreak{}NOTI-\allowbreak{}01} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Notification details & \texttt{MOB-\allowbreak{}FR-\allowbreak{}NOTI-\allowbreak{}04} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Event emails & \texttt{MOB-\allowbreak{}FR-\allowbreak{}NOTI-\allowbreak{}06} & Partially Implemented & Controller exists; runtime unverified & Event deduplication exists; \texttt{SMTP}/\allowbreak{}\texttt{DB} crash window prevents absolute exactly-once delivery. \\[3pt]
+\texttt{OTP} and welcome email & \texttt{MOB-\allowbreak{}FR-\allowbreak{}NOTI-\allowbreak{}07} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Showtime reminder & \texttt{MOB-\allowbreak{}FR-\allowbreak{}NOTI-\allowbreak{}08} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Read/\allowbreak{}unread notifications & \texttt{MOB-\allowbreak{}FR-\allowbreak{}NOTI-\allowbreak{}09} & Implemented & Controller exists; runtime unverified & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Route guards and recovery & \texttt{MOB-\allowbreak{}FR-\allowbreak{}NAV-\allowbreak{}01} & Implemented & Client/\allowbreak{}platform; no dedicated \texttt{API} & Static implementation evidence; runtime acceptance not executed. \\[3pt]
+Loading, error and empty states & \texttt{MOB-\allowbreak{}FR-\allowbreak{}STATE-\allowbreak{}01} & Partially Implemented & Client/\allowbreak{}platform; no dedicated \texttt{API} & State widgets exist; exhaustive device/\allowbreak{}error-path verification was not run. \\[3pt]
+Platform-specific movie media & \texttt{MOB-\allowbreak{}FR-\allowbreak{}MEDIA-\allowbreak{}01} & Partially Implemented & Controller exists; runtime unverified & Native trailer opens externally; web preview has an empty native stub. \\[3pt]
+\end{longtable}
+\endgroup
+
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-8\tabcolsep\relax}
+\begin{longtable}{@{}P{0.19000\SRSWidth}P{0.18000\SRSWidth}P{0.15000\SRSWidth}P{0.20000\SRSWidth}P{0.28000\SRSWidth}@{}}
+\caption{27. Implemented vs Requirement}\label{tab:srs-120}\\
+\toprule
+\textbf{Feature} & \textbf{\texttt{SRS} Requirement} & \textbf{Code Status} & \textbf{\texttt{API} Status} & \textbf{Notes} \\
+\midrule
+\endfirsthead
+\multicolumn{5}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{Feature} & \textbf{\texttt{SRS} Requirement} & \textbf{Code Status} & \textbf{\texttt{API} Status} & \textbf{Notes} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{5}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+.\texttt{NET}-rendered \texttt{UI} & \texttt{MOB-\allowbreak{}CON-\allowbreak{}01} & Not Implemented & Existing \texttt{ASP}.\texttt{NET} \texttt{API} & Flutter Web \texttt{UI} only; course necessity [\texttt{TO} \texttt{BE} \texttt{CONFIRME\allowbreak{}D}] \\[3pt]
+\texttt{FCM} push & \texttt{MOB-\allowbreak{}FUT-\allowbreak{}02} & Not Implemented & — & Future work, not accepted current \texttt{FR} \\[3pt]
+\texttt{DB} submodule \texttt{SQL} verification & \texttt{MOB-\allowbreak{}CON-\allowbreak{}02} & To Be Confirmed & Local \texttt{EF} mappings exist & Submodule uninitialized; no live \texttt{DB} check \\[3pt]
+\end{longtable}
+\endgroup

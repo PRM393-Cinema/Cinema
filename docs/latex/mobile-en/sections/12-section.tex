@@ -1,0 +1,632 @@
+\clearpage
+\section{\texttt{UI} /\allowbreak{} Screen Requirements}\label{sec:srs-12}
+Screen IDs represent routed pages or role landings. Scanner overlays, review editors, profile/\allowbreak{}password dialogs and seat-type painters are components, not invented routes. Related \texttt{FR}/\allowbreak{}\texttt{API} lists are functional-area associations; §13 gives exact endpoint contracts.
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}LOGIN} — Sign in}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}LOGIN} — Sign in}\label{tab:srs-86}\\
+\toprule
+\textbf{Field} & \textbf{Screen requirement} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{Field} & \textbf{Screen requirement} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Route & \texttt{/\allowbreak{}login} \\[3pt]
+Actor & Guest/\allowbreak{}all account roles \\[3pt]
+Purpose & Sign in \\[3pt]
+Main components & Email, password, field errors, recovery/\allowbreak{}register links \\[3pt]
+Actions & Sign in; recover password; register on customer site \\[3pt]
+Navigation & Role landing or pending destination; /\allowbreak{}forgot-password; /\allowbreak{}register (customer only) \\[3pt]
+Related FRs & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}02}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}03}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}06}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}12}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}13}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}NAV-\allowbreak{}01} \\[3pt]
+Related \texttt{API} area & \texttt{MOB-\allowbreak{}API-\allowbreak{}006}, \texttt{MOB-\allowbreak{}API-\allowbreak{}008}, \texttt{MOB-\allowbreak{}API-\allowbreak{}010}, \texttt{MOB-\allowbreak{}API-\allowbreak{}011}, \texttt{MOB-\allowbreak{}API-\allowbreak{}013} \\[3pt]
+Source & \href{../../../Cinema\_Mobile/lib/features/auth/screens/login\_screen.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}features\allowbreak{}/\allowbreak{}auth/\allowbreak{}screens/\allowbreak{}login\_\allowbreak{}screen.\allowbreak{}dart}} \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}REGISTER\allowbreak{}} — Registration}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}REGISTER\allowbreak{}} — Registration}\label{tab:srs-87}\\
+\toprule
+\textbf{Field} & \textbf{Screen requirement} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{Field} & \textbf{Screen requirement} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Route & \texttt{/\allowbreak{}register\allowbreak{}} \\[3pt]
+Actor & Guest \\[3pt]
+Purpose & Registration \\[3pt]
+Main components & Name, email, phone, password and confirmation \\[3pt]
+Actions & Validate and register \\[3pt]
+Navigation & /\allowbreak{}login \ensuremath{\rightarrow} /\allowbreak{}register \ensuremath{\rightarrow} /\allowbreak{}verify-email \\[3pt]
+Related FRs & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}01}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}08}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}13} \\[3pt]
+Related \texttt{API} area & \texttt{MOB-\allowbreak{}API-\allowbreak{}006}, \texttt{MOB-\allowbreak{}API-\allowbreak{}011}, \texttt{MOB-\allowbreak{}API-\allowbreak{}013} \\[3pt]
+Source & \href{../../../Cinema\_Mobile/lib/features/auth/screens/register\_screen.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}features\allowbreak{}/\allowbreak{}auth/\allowbreak{}screens/\allowbreak{}register\allowbreak{}\_\allowbreak{}screen.\allowbreak{}dart}} \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}VERIFY} — Verify email}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}VERIFY} — Verify email}\label{tab:srs-88}\\
+\toprule
+\textbf{Field} & \textbf{Screen requirement} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{Field} & \textbf{Screen requirement} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Route & \texttt{/\allowbreak{}verify-\allowbreak{}email} \\[3pt]
+Actor & Guest \\[3pt]
+Purpose & Verify email \\[3pt]
+Main components & \texttt{OTP} input; resend countdown; registered password context \\[3pt]
+Actions & Verify or resend \\[3pt]
+Navigation & Registration/\allowbreak{}login \ensuremath{\rightarrow} \texttt{OTP} \ensuremath{\rightarrow} role landing \\[3pt]
+Related FRs & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}07}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}08}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}14} \\[3pt]
+Related \texttt{API} area & \texttt{MOB-\allowbreak{}API-\allowbreak{}006}, \texttt{MOB-\allowbreak{}API-\allowbreak{}010}, \texttt{MOB-\allowbreak{}API-\allowbreak{}011}, \texttt{MOB-\allowbreak{}API-\allowbreak{}012}, \texttt{MOB-\allowbreak{}API-\allowbreak{}014} \\[3pt]
+Source & \href{../../../Cinema\_Mobile/lib/features/auth/screens/verify\_email\_screen.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}features\allowbreak{}/\allowbreak{}auth/\allowbreak{}screens/\allowbreak{}verify\_\allowbreak{}email\_\allowbreak{}screen.\allowbreak{}dart}} \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}FORGOT} — Forgot password}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}FORGOT} — Forgot password}\label{tab:srs-89}\\
+\toprule
+\textbf{Field} & \textbf{Screen requirement} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{Field} & \textbf{Screen requirement} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Route & \texttt{/\allowbreak{}forgot-\allowbreak{}password\allowbreak{}} \\[3pt]
+Actor & Guest/\allowbreak{}account owner \\[3pt]
+Purpose & Forgot password \\[3pt]
+Main components & Email field and submission status \\[3pt]
+Actions & Request reset \texttt{OTP} \\[3pt]
+Navigation & Login/\allowbreak{}Profile \ensuremath{\rightarrow} reset request \ensuremath{\rightarrow} /\allowbreak{}reset-password \\[3pt]
+Related FRs & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}09}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}13}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}14} \\[3pt]
+Related \texttt{API} area & \texttt{MOB-\allowbreak{}API-\allowbreak{}005}, \texttt{MOB-\allowbreak{}API-\allowbreak{}006}, \texttt{MOB-\allowbreak{}API-\allowbreak{}010}, \texttt{MOB-\allowbreak{}API-\allowbreak{}011}, \texttt{MOB-\allowbreak{}API-\allowbreak{}012}, \texttt{MOB-\allowbreak{}API-\allowbreak{}013} \\[3pt]
+Source & \href{../../../Cinema\_Mobile/lib/features/auth/screens/forgot\_password\_screen.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}features\allowbreak{}/\allowbreak{}auth/\allowbreak{}screens/\allowbreak{}forgot\_\allowbreak{}password\allowbreak{}\_\allowbreak{}screen.\allowbreak{}dart}} \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}RESET} — Reset password}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}RESET} — Reset password}\label{tab:srs-90}\\
+\toprule
+\textbf{Field} & \textbf{Screen requirement} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{Field} & \textbf{Screen requirement} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Route & \texttt{/\allowbreak{}reset-\allowbreak{}password\allowbreak{}} \\[3pt]
+Actor & \texttt{OTP} recipient \\[3pt]
+Purpose & Reset password \\[3pt]
+Main components & \texttt{OTP}, new password and confirmation \\[3pt]
+Actions & Reset using emailed code \\[3pt]
+Navigation & Forgot-password \ensuremath{\rightarrow} reset \ensuremath{\rightarrow} sign-in \\[3pt]
+Related FRs & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}09}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}13}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}14} \\[3pt]
+Related \texttt{API} area & \texttt{MOB-\allowbreak{}API-\allowbreak{}005}, \texttt{MOB-\allowbreak{}API-\allowbreak{}006}, \texttt{MOB-\allowbreak{}API-\allowbreak{}010}, \texttt{MOB-\allowbreak{}API-\allowbreak{}011}, \texttt{MOB-\allowbreak{}API-\allowbreak{}012}, \texttt{MOB-\allowbreak{}API-\allowbreak{}013} \\[3pt]
+Source & \href{../../../Cinema\_Mobile/lib/features/auth/screens/reset\_password\_screen.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}features\allowbreak{}/\allowbreak{}auth/\allowbreak{}screens/\allowbreak{}reset\_\allowbreak{}password\allowbreak{}\_\allowbreak{}screen.\allowbreak{}dart}} \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}HOME} — Customer home}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}HOME} — Customer home}\label{tab:srs-91}\\
+\toprule
+\textbf{Field} & \textbf{Screen requirement} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{Field} & \textbf{Screen requirement} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Route & \texttt{/\allowbreak{}home} \\[3pt]
+Actor & Guest/\allowbreak{}Customer \\[3pt]
+Purpose & Customer home \\[3pt]
+Main components & Now/\allowbreak{}soon tabs; search; genre chips; movie cards; account/\allowbreak{}notification navigation \\[3pt]
+Actions & Search/\allowbreak{}filter; open movie \\[3pt]
+Navigation & /\allowbreak{}home \ensuremath{\rightarrow} /\allowbreak{}movies/\allowbreak{}\{id\}; customer navigation to bookings, payments, notifications, profile \\[3pt]
+Related FRs & \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}03}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}04}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}10}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}NOTI-\allowbreak{}09}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}MEDIA-\allowbreak{}01} \\[3pt]
+Related \texttt{API} area & \texttt{MOB-\allowbreak{}API-\allowbreak{}024}, \texttt{MOB-\allowbreak{}API-\allowbreak{}025}, \texttt{MOB-\allowbreak{}API-\allowbreak{}026}, \texttt{MOB-\allowbreak{}API-\allowbreak{}027}, \texttt{MOB-\allowbreak{}API-\allowbreak{}028}, \texttt{MOB-\allowbreak{}API-\allowbreak{}030}, \texttt{MOB-\allowbreak{}API-\allowbreak{}031} \\[3pt]
+Source & \href{../../../Cinema\_Mobile/lib/features/home/screens/home\_screen.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}features\allowbreak{}/\allowbreak{}home/\allowbreak{}screens/\allowbreak{}home\_\allowbreak{}screen.\allowbreak{}dart}} \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}MOVIE} — Movie details}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}MOVIE} — Movie details}\label{tab:srs-92}\\
+\toprule
+\textbf{Field} & \textbf{Screen requirement} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{Field} & \textbf{Screen requirement} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Route & \texttt{/\allowbreak{}movies/\allowbreak{}\{id\}} \\[3pt]
+Actor & Guest/\allowbreak{}Customer \\[3pt]
+Purpose & Movie details \\[3pt]
+Main components & Poster, rating, metadata, cast/\allowbreak{}director, trailer, review summary, seven-day showtimes \\[3pt]
+Actions & Play trailer; select showtime; read reviews \\[3pt]
+Navigation & Home \ensuremath{\rightarrow} movie \ensuremath{\rightarrow} /\allowbreak{}showtimes/\allowbreak{}\{id\}/\allowbreak{}seats \\[3pt]
+Related FRs & \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}02}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}08}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}09}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}11}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}12}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}03}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}06}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}07}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}08}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}13} \\[3pt]
+Related \texttt{API} area & \texttt{MOB-\allowbreak{}API-\allowbreak{}002}, \texttt{MOB-\allowbreak{}API-\allowbreak{}003}, \texttt{MOB-\allowbreak{}API-\allowbreak{}024}, \texttt{MOB-\allowbreak{}API-\allowbreak{}039}, \texttt{MOB-\allowbreak{}API-\allowbreak{}040}, \texttt{MOB-\allowbreak{}API-\allowbreak{}041}, \texttt{MOB-\allowbreak{}API-\allowbreak{}042} \\[3pt]
+Source & \href{../../../Cinema\_Mobile/lib/features/movie/screens/movie\_detail\_screen.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}features\allowbreak{}/\allowbreak{}movie/\allowbreak{}screens/\allowbreak{}movie\_\allowbreak{}detail\_\allowbreak{}screen.\allowbreak{}dart}} \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}SEATS} — Seat selection}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}SEATS} — Seat selection}\label{tab:srs-93}\\
+\toprule
+\textbf{Field} & \textbf{Screen requirement} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{Field} & \textbf{Screen requirement} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Route & \texttt{/\allowbreak{}showtime\allowbreak{}s/\allowbreak{}\{id\}/\allowbreak{}seats} \\[3pt]
+Actor & Customer \\[3pt]
+Purpose & Seat selection \\[3pt]
+Main components & Rows, type/\allowbreak{}occupied legend, selection, pair pricing, total \\[3pt]
+Actions & Select/\allowbreak{}unselect free seats; refresh \\[3pt]
+Navigation & Movie \ensuremath{\rightarrow} seats \ensuremath{\rightarrow} /\allowbreak{}showtimes/\allowbreak{}\{id\}/\allowbreak{}summary \\[3pt]
+Related FRs & \texttt{MOB-\allowbreak{}FR-\allowbreak{}SEAT-\allowbreak{}03}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}03}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}13}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}07}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}08}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}09}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}11} \\[3pt]
+Related \texttt{API} area & \texttt{MOB-\allowbreak{}API-\allowbreak{}001}, \texttt{MOB-\allowbreak{}API-\allowbreak{}002}, \texttt{MOB-\allowbreak{}API-\allowbreak{}019}, \texttt{MOB-\allowbreak{}API-\allowbreak{}021} \\[3pt]
+Source & \href{../../../Cinema\_Mobile/lib/features/seat/screens/seat\_selection\_screen.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}features\allowbreak{}/\allowbreak{}seat/\allowbreak{}screens/\allowbreak{}seat\_\allowbreak{}selectio\allowbreak{}n\_\allowbreak{}screen.\allowbreak{}dart}} \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}SUMMARY} — Booking summary}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}SUMMARY} — Booking summary}\label{tab:srs-94}\\
+\toprule
+\textbf{Field} & \textbf{Screen requirement} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{Field} & \textbf{Screen requirement} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Route & \texttt{/\allowbreak{}showtime\allowbreak{}s/\allowbreak{}\{id\}/\allowbreak{}summary} \\[3pt]
+Actor & Customer \\[3pt]
+Purpose & Booking summary \\[3pt]
+Main components & \texttt{Booking\allowbreak{}Draft}, seats, concessions picker, promotion quote, points, age acknowledgement \\[3pt]
+Actions & Adjust extras; hold seats \\[3pt]
+Navigation & Seats \ensuremath{\rightarrow} summary \ensuremath{\rightarrow} booking payment; missing draft \ensuremath{\rightarrow} seats \\[3pt]
+Related FRs & \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}09}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}01}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}09}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}13}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}15}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}17} \\[3pt]
+Related \texttt{API} area & \texttt{MOB-\allowbreak{}API-\allowbreak{}021}, \texttt{MOB-\allowbreak{}API-\allowbreak{}022}, \texttt{MOB-\allowbreak{}API-\allowbreak{}023}, \texttt{MOB-\allowbreak{}API-\allowbreak{}024}, \texttt{MOB-\allowbreak{}API-\allowbreak{}038} \\[3pt]
+Source & \href{../../../Cinema\_Mobile/lib/features/booking/screens/booking\_summary\_screen.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}features\allowbreak{}/\allowbreak{}booking/\allowbreak{}screens/\allowbreak{}booking\_\allowbreak{}summary\_\allowbreak{}screen.\allowbreak{}dart}} \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}PAYMENT} — Payment}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}PAYMENT} — Payment}\label{tab:srs-95}\\
+\toprule
+\textbf{Field} & \textbf{Screen requirement} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{Field} & \textbf{Screen requirement} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Route & \texttt{/\allowbreak{}bookings\allowbreak{}/\allowbreak{}\{id\}/\allowbreak{}payment} \\[3pt]
+Actor & Customer \\[3pt]
+Purpose & Payment \\[3pt]
+Main components & Booking/\allowbreak{}price breakdown; expiry countdown; \texttt{Pay\allowbreak{}OS} link; automatic polling \\[3pt]
+Actions & Open/\allowbreak{}continue \texttt{Pay\allowbreak{}OS}; return and reconcile \\[3pt]
+Navigation & Summary/\allowbreak{}ticket \ensuremath{\rightarrow} payment \ensuremath{\rightarrow} external \texttt{Pay\allowbreak{}OS} \ensuremath{\rightarrow} result \\[3pt]
+Related FRs & \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}05}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}10}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}01}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}02}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}11} \\[3pt]
+Related \texttt{API} area & \texttt{MOB-\allowbreak{}API-\allowbreak{}017}, \texttt{MOB-\allowbreak{}API-\allowbreak{}034}, \texttt{MOB-\allowbreak{}API-\allowbreak{}035} \\[3pt]
+Source & \href{../../../Cinema\_Mobile/lib/features/payment/screens/payment\_screen.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}features\allowbreak{}/\allowbreak{}payment/\allowbreak{}screens/\allowbreak{}payment\_\allowbreak{}screen.\allowbreak{}dart}} \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}RESULT} — Payment result}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}RESULT} — Payment result}\label{tab:srs-96}\\
+\toprule
+\textbf{Field} & \textbf{Screen requirement} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{Field} & \textbf{Screen requirement} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Route & \texttt{/\allowbreak{}bookings\allowbreak{}/\allowbreak{}\{id\}/\allowbreak{}result} \\[3pt]
+Actor & Customer \\[3pt]
+Purpose & Payment result \\[3pt]
+Main components & Verification/\allowbreak{}loading, successful/\allowbreak{}pending/\allowbreak{}failed result \\[3pt]
+Actions & Reload server result; open ticket \\[3pt]
+Navigation & \texttt{Pay\allowbreak{}OS}/\allowbreak{}payment \ensuremath{\rightarrow} result \ensuremath{\rightarrow} /\allowbreak{}bookings/\allowbreak{}\{id\} \\[3pt]
+Related FRs & \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}02}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}05}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}02}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}08} \\[3pt]
+Related \texttt{API} area & \texttt{MOB-\allowbreak{}API-\allowbreak{}017}, \texttt{MOB-\allowbreak{}API-\allowbreak{}034} \\[3pt]
+Source & \href{../../../Cinema\_Mobile/lib/features/payment/screens/payment\_result\_screen.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}features\allowbreak{}/\allowbreak{}payment/\allowbreak{}screens/\allowbreak{}payment\_\allowbreak{}result\_\allowbreak{}screen.\allowbreak{}dart}} \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}TICKETS} — My tickets}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}TICKETS} — My tickets}\label{tab:srs-97}\\
+\toprule
+\textbf{Field} & \textbf{Screen requirement} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{Field} & \textbf{Screen requirement} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Route & \texttt{/\allowbreak{}bookings\allowbreak{}} \\[3pt]
+Actor & Customer \\[3pt]
+Purpose & My tickets \\[3pt]
+Main components & Active/\allowbreak{}History tabs, ticket cards, refresh and empty/\allowbreak{}error states \\[3pt]
+Actions & Open ticket; refresh \\[3pt]
+Navigation & Customer navigation \ensuremath{\rightarrow} tickets \ensuremath{\rightarrow} /\allowbreak{}bookings/\allowbreak{}\{id\} \\[3pt]
+Related FRs & \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}04} \\[3pt]
+Related \texttt{API} area & \texttt{MOB-\allowbreak{}API-\allowbreak{}020} \\[3pt]
+Source & \href{../../../Cinema\_Mobile/lib/features/booking/screens/my\_bookings\_screen.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}features\allowbreak{}/\allowbreak{}booking/\allowbreak{}screens/\allowbreak{}my\_\allowbreak{}bookings\allowbreak{}\_\allowbreak{}screen.\allowbreak{}dart}} \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}TICKET} — Ticket details}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}TICKET} — Ticket details}\label{tab:srs-98}\\
+\toprule
+\textbf{Field} & \textbf{Screen requirement} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{Field} & \textbf{Screen requirement} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Route & \texttt{/\allowbreak{}bookings\allowbreak{}/\allowbreak{}\{id\}} \\[3pt]
+Actor & Customer \\[3pt]
+Purpose & Ticket details \\[3pt]
+Main components & Seats, extras, totals, \texttt{QR}, \texttt{checked\allowbreak{}In\allowbreak{}At}, cancel/\allowbreak{}refund, review and share/\allowbreak{}calendar \\[3pt]
+Actions & Pay pending ticket; cancel/\allowbreak{}request refund; review after check-in; share/\allowbreak{}calendar \\[3pt]
+Navigation & Tickets/\allowbreak{}notification \ensuremath{\rightarrow} ticket \ensuremath{\rightarrow} payment or return \\[3pt]
+Related FRs & \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}12}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}02}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}05}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}06}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}13}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}15}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}17}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}19}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}03}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}06}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}REF-\allowbreak{}01}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}REF-\allowbreak{}05}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}REF-\allowbreak{}06}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}CHK-\allowbreak{}01}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}CHK-\allowbreak{}05} \\[3pt]
+Related \texttt{API} area & \texttt{MOB-\allowbreak{}API-\allowbreak{}002}, \texttt{MOB-\allowbreak{}API-\allowbreak{}015}, \texttt{MOB-\allowbreak{}API-\allowbreak{}017}, \texttt{MOB-\allowbreak{}API-\allowbreak{}018}, \texttt{MOB-\allowbreak{}API-\allowbreak{}021}, \texttt{MOB-\allowbreak{}API-\allowbreak{}022}, \texttt{MOB-\allowbreak{}API-\allowbreak{}023}, \texttt{MOB-\allowbreak{}API-\allowbreak{}033}, \texttt{MOB-\allowbreak{}API-\allowbreak{}034}, \texttt{MOB-\allowbreak{}API-\allowbreak{}037}, \texttt{MOB-\allowbreak{}API-\allowbreak{}038}, \texttt{MOB-\allowbreak{}API-\allowbreak{}039}, \texttt{MOB-\allowbreak{}API-\allowbreak{}040}, \texttt{MOB-\allowbreak{}API-\allowbreak{}041}, \texttt{MOB-\allowbreak{}API-\allowbreak{}042} \\[3pt]
+Source & \href{../../../Cinema\_Mobile/lib/features/booking/screens/booking\_detail\_screen.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}features\allowbreak{}/\allowbreak{}booking/\allowbreak{}screens/\allowbreak{}booking\_\allowbreak{}detail\_\allowbreak{}screen.\allowbreak{}dart}} \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}PAYHISTO\allowbreak{}RY} — Payment history}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}PAYHISTO\allowbreak{}RY} — Payment history}\label{tab:srs-99}\\
+\toprule
+\textbf{Field} & \textbf{Screen requirement} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{Field} & \textbf{Screen requirement} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Route & \texttt{/\allowbreak{}payments\allowbreak{}} \\[3pt]
+Actor & Customer \\[3pt]
+Purpose & Payment history \\[3pt]
+Main components & Owned transaction rows, amounts, statuses \\[3pt]
+Actions & Refresh; inspect related booking where provided \\[3pt]
+Navigation & Customer navigation \ensuremath{\rightarrow} payments \ensuremath{\rightarrow} related ticket \\[3pt]
+Related FRs & \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}03}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}04} \\[3pt]
+Related \texttt{API} area & \texttt{MOB-\allowbreak{}API-\allowbreak{}037} \\[3pt]
+Source & \href{../../../Cinema\_Mobile/lib/features/payment/screens/payment\_history\_screen.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}features\allowbreak{}/\allowbreak{}payment/\allowbreak{}screens/\allowbreak{}payment\_\allowbreak{}history\_\allowbreak{}screen.\allowbreak{}dart}} \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}NOTIFICA\allowbreak{}TIONS} — Notifications}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}NOTIFICA\allowbreak{}TIONS} — Notifications}\label{tab:srs-100}\\
+\toprule
+\textbf{Field} & \textbf{Screen requirement} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{Field} & \textbf{Screen requirement} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Route & \texttt{/\allowbreak{}notifica\allowbreak{}tions} \\[3pt]
+Actor & Customer \\[3pt]
+Purpose & Notifications \\[3pt]
+Main components & Notification list, unread badge, mark-all-read \\[3pt]
+Actions & Open notification; mark all read \\[3pt]
+Navigation & Customer bell/\allowbreak{}navigation \ensuremath{\rightarrow} /\allowbreak{}notifications/\allowbreak{}\{id\} \\[3pt]
+Related FRs & \texttt{MOB-\allowbreak{}FR-\allowbreak{}NOTI-\allowbreak{}01}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}NOTI-\allowbreak{}09} \\[3pt]
+Related \texttt{API} area & \texttt{MOB-\allowbreak{}API-\allowbreak{}028}, \texttt{MOB-\allowbreak{}API-\allowbreak{}030}, \texttt{MOB-\allowbreak{}API-\allowbreak{}031}, \texttt{MOB-\allowbreak{}API-\allowbreak{}032} \\[3pt]
+Source & \href{../../../Cinema\_Mobile/lib/features/notification/screens/notification\_list\_screen.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}features\allowbreak{}/\allowbreak{}notifica\allowbreak{}tion/\allowbreak{}screens/\allowbreak{}notifica\allowbreak{}tion\_\allowbreak{}list\_\allowbreak{}screen.\allowbreak{}dart}} \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}NOTIFICA\allowbreak{}TION} — Notification details}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}NOTIFICA\allowbreak{}TION} — Notification details}\label{tab:srs-101}\\
+\toprule
+\textbf{Field} & \textbf{Screen requirement} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{Field} & \textbf{Screen requirement} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Route & \texttt{/\allowbreak{}notifica\allowbreak{}tions/\allowbreak{}\{id\}} \\[3pt]
+Actor & Customer \\[3pt]
+Purpose & Notification details \\[3pt]
+Main components & Subject, content, read state, related booking \\[3pt]
+Actions & Mark read on open; open ticket \\[3pt]
+Navigation & Notifications \ensuremath{\rightarrow} detail \ensuremath{\rightarrow} /\allowbreak{}bookings/\allowbreak{}\{id\} \\[3pt]
+Related FRs & \texttt{MOB-\allowbreak{}FR-\allowbreak{}NOTI-\allowbreak{}04}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}NOTI-\allowbreak{}09} \\[3pt]
+Related \texttt{API} area & \texttt{MOB-\allowbreak{}API-\allowbreak{}028}, \texttt{MOB-\allowbreak{}API-\allowbreak{}029}, \texttt{MOB-\allowbreak{}API-\allowbreak{}030}, \texttt{MOB-\allowbreak{}API-\allowbreak{}031} \\[3pt]
+Source & \href{../../../Cinema\_Mobile/lib/features/notification/screens/notification\_detail\_screen.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}features\allowbreak{}/\allowbreak{}notifica\allowbreak{}tion/\allowbreak{}screens/\allowbreak{}notifica\allowbreak{}tion\_\allowbreak{}detail\_\allowbreak{}screen.\allowbreak{}dart}} \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}PROFILE} — Account and membership}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}PROFILE} — Account and membership}\label{tab:srs-102}\\
+\toprule
+\textbf{Field} & \textbf{Screen requirement} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{Field} & \textbf{Screen requirement} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Route & \texttt{/\allowbreak{}profile} \\[3pt]
+Actor & Customer \\[3pt]
+Purpose & Account and membership \\[3pt]
+Main components & Identity, edit-profile/\allowbreak{}password dialogs, membership card/\allowbreak{}history, logout \\[3pt]
+Actions & Edit name/\allowbreak{}phone; change/\allowbreak{}recover password; sign out \\[3pt]
+Navigation & Customer navigation \ensuremath{\rightarrow} profile; password recovery \ensuremath{\rightarrow} forgot/\allowbreak{}reset \\[3pt]
+Related FRs & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}10}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}11}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}16}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}17}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}17} \\[3pt]
+Related \texttt{API} area & \texttt{MOB-\allowbreak{}API-\allowbreak{}004}, \texttt{MOB-\allowbreak{}API-\allowbreak{}007}, \texttt{MOB-\allowbreak{}API-\allowbreak{}008}, \texttt{MOB-\allowbreak{}API-\allowbreak{}009}, \texttt{MOB-\allowbreak{}API-\allowbreak{}010}, \texttt{MOB-\allowbreak{}API-\allowbreak{}021}, \texttt{MOB-\allowbreak{}API-\allowbreak{}023} \\[3pt]
+Source & \href{../../../Cinema\_Mobile/lib/features/profile/screens/profile\_screen.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}features\allowbreak{}/\allowbreak{}profile/\allowbreak{}screens/\allowbreak{}profile\_\allowbreak{}screen.\allowbreak{}dart}} \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}MGT-\allowbreak{}LANDING} — Management-account landing}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}MGT-\allowbreak{}LANDING} — Management-account landing}\label{tab:srs-103}\\
+\toprule
+\textbf{Field} & \textbf{Screen requirement} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{Field} & \textbf{Screen requirement} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Route & \texttt{/\allowbreak{}home (manageme\allowbreak{}nt account)} \\[3pt]
+Actor & Staff/\allowbreak{}Admin \\[3pt]
+Purpose & Management-account landing \\[3pt]
+Main components & Role explanation; configured admin website link; ticket check-in; logout \\[3pt]
+Actions & Open configured website or mobile check-in \\[3pt]
+Navigation & Management sign-in \ensuremath{\rightarrow} landing \ensuremath{\rightarrow} /\allowbreak{}staff/\allowbreak{}check-in \\[3pt]
+Related FRs & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}05}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}10}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}CHK-\allowbreak{}04} \\[3pt]
+Related \texttt{API} area & \texttt{MOB-\allowbreak{}API-\allowbreak{}007}, \texttt{MOB-\allowbreak{}API-\allowbreak{}008}, \texttt{MOB-\allowbreak{}API-\allowbreak{}010}, \texttt{MOB-\allowbreak{}API-\allowbreak{}016}, \texttt{MOB-\allowbreak{}API-\allowbreak{}018} \\[3pt]
+Source & \href{../../../Cinema\_Mobile/lib/features/profile/screens/management\_account\_screen.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}features\allowbreak{}/\allowbreak{}profile/\allowbreak{}screens/\allowbreak{}manageme\allowbreak{}nt\_\allowbreak{}account\_\allowbreak{}screen.\allowbreak{}dart}} \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}CHECKIN} — Ticket check-in}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}CHECKIN} — Ticket check-in}\label{tab:srs-104}\\
+\toprule
+\textbf{Field} & \textbf{Screen requirement} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{Field} & \textbf{Screen requirement} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Route & \texttt{/\allowbreak{}staff/\allowbreak{}check-\allowbreak{}in} \\[3pt]
+Actor & Staff/\allowbreak{}Admin \\[3pt]
+Purpose & Ticket check-in \\[3pt]
+Main components & Code field; camera scanner overlay; ticket details; age reminder; admission button \\[3pt]
+Actions & Scan/\allowbreak{}type; lookup; check in once \\[3pt]
+Navigation & Management landing/\allowbreak{}navigation \ensuremath{\rightarrow} check-in \ensuremath{\rightarrow} next ticket \\[3pt]
+Related FRs & \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}09}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}CHK-\allowbreak{}02}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}CHK-\allowbreak{}03}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}CHK-\allowbreak{}04}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}CHK-\allowbreak{}05} \\[3pt]
+Related \texttt{API} area & \texttt{MOB-\allowbreak{}API-\allowbreak{}016}, \texttt{MOB-\allowbreak{}API-\allowbreak{}017}, \texttt{MOB-\allowbreak{}API-\allowbreak{}018}, \texttt{MOB-\allowbreak{}API-\allowbreak{}024} \\[3pt]
+Source & \href{../../../Cinema\_Mobile/lib/features/staff/screens/staff\_check\_in\_screen.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}features\allowbreak{}/\allowbreak{}staff/\allowbreak{}screens/\allowbreak{}staff\_\allowbreak{}check\_\allowbreak{}in\_\allowbreak{}screen.\allowbreak{}dart}} \\[3pt]
+\end{longtable}
+\endgroup
+
+Web authentication screens are reused between entry points, but admin login disables registration. Profile editing/\allowbreak{}password changes are dialogs. The phone management landing is selected by role, not a separate administrative \texttt{URL}.

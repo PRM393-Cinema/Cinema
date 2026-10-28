@@ -1,0 +1,632 @@
+\clearpage
+\section{Yêu cầu giao diện /\allowbreak{} Màn hình}\label{sec:srs-12}
+Mã màn đại diện trang có route hoặc trang đầu vai trò. Lớp quét, sửa đánh giá, hộp hồ sơ/\allowbreak{}mật khẩu và đổi loại ghế là thành phần, không phải route tự thêm. Danh sách \texttt{FR}/\allowbreak{}\texttt{API} liên kết theo khu chức năng; mục 13 cung cấp hợp đồng endpoint chính xác.
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}LOGIN} — Đăng nhập}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}LOGIN} — Đăng nhập}\label{tab:srs-86}\\
+\toprule
+\textbf{Trường} & \textbf{Yêu cầu màn hình} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{Trường} & \textbf{Yêu cầu màn hình} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Route & \texttt{/\allowbreak{}login} \\[3pt]
+Tác nhân & Khách chưa đăng nhập/\allowbreak{}mọi vai trò \\[3pt]
+Mục đích & Đăng nhập \\[3pt]
+Thành phần chính & Email, mật khẩu, lỗi trường, liên kết khôi phục/\allowbreak{}đăng ký \\[3pt]
+Thao tác & Đăng nhập; khôi phục mật khẩu; đăng ký trên trang khách \\[3pt]
+Điều hướng & Trang đầu theo vai trò hoặc đích chờ; /\allowbreak{}forgot-password; /\allowbreak{}register (chỉ trang khách) \\[3pt]
+\texttt{FR} liên quan & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}02}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}03}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}06}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}12}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}13}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}NAV-\allowbreak{}01} \\[3pt]
+Khu \texttt{API} liên quan & \texttt{MOB-\allowbreak{}API-\allowbreak{}006}, \texttt{MOB-\allowbreak{}API-\allowbreak{}008}, \texttt{MOB-\allowbreak{}API-\allowbreak{}010}, \texttt{MOB-\allowbreak{}API-\allowbreak{}011}, \texttt{MOB-\allowbreak{}API-\allowbreak{}013} \\[3pt]
+Nguồn & \href{../../../Cinema\_Mobile/lib/features/auth/screens/login\_screen.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}features\allowbreak{}/\allowbreak{}auth/\allowbreak{}screens/\allowbreak{}login\_\allowbreak{}screen.\allowbreak{}dart}} \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}REGISTER\allowbreak{}} — Đăng ký}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}REGISTER\allowbreak{}} — Đăng ký}\label{tab:srs-87}\\
+\toprule
+\textbf{Trường} & \textbf{Yêu cầu màn hình} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{Trường} & \textbf{Yêu cầu màn hình} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Route & \texttt{/\allowbreak{}register\allowbreak{}} \\[3pt]
+Tác nhân & Khách chưa đăng nhập \\[3pt]
+Mục đích & Đăng ký \\[3pt]
+Thành phần chính & Tên, email, điện thoại, mật khẩu và xác nhận \\[3pt]
+Thao tác & Kiểm tra và đăng ký \\[3pt]
+Điều hướng & /\allowbreak{}login \ensuremath{\rightarrow} /\allowbreak{}register \ensuremath{\rightarrow} /\allowbreak{}verify-email \\[3pt]
+\texttt{FR} liên quan & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}01}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}08}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}13} \\[3pt]
+Khu \texttt{API} liên quan & \texttt{MOB-\allowbreak{}API-\allowbreak{}006}, \texttt{MOB-\allowbreak{}API-\allowbreak{}011}, \texttt{MOB-\allowbreak{}API-\allowbreak{}013} \\[3pt]
+Nguồn & \href{../../../Cinema\_Mobile/lib/features/auth/screens/register\_screen.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}features\allowbreak{}/\allowbreak{}auth/\allowbreak{}screens/\allowbreak{}register\allowbreak{}\_\allowbreak{}screen.\allowbreak{}dart}} \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}VERIFY} — Xác thực email}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}VERIFY} — Xác thực email}\label{tab:srs-88}\\
+\toprule
+\textbf{Trường} & \textbf{Yêu cầu màn hình} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{Trường} & \textbf{Yêu cầu màn hình} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Route & \texttt{/\allowbreak{}verify-\allowbreak{}email} \\[3pt]
+Tác nhân & Khách chưa đăng nhập \\[3pt]
+Mục đích & Xác thực email \\[3pt]
+Thành phần chính & Ô \texttt{OTP}; đếm ngược gửi lại; ngữ cảnh mật khẩu đã đăng ký \\[3pt]
+Thao tác & Xác thực hoặc gửi lại \\[3pt]
+Điều hướng & Đăng ký/\allowbreak{}đăng nhập \ensuremath{\rightarrow} \texttt{OTP} \ensuremath{\rightarrow} trang đầu theo vai trò \\[3pt]
+\texttt{FR} liên quan & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}07}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}08}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}14} \\[3pt]
+Khu \texttt{API} liên quan & \texttt{MOB-\allowbreak{}API-\allowbreak{}006}, \texttt{MOB-\allowbreak{}API-\allowbreak{}010}, \texttt{MOB-\allowbreak{}API-\allowbreak{}011}, \texttt{MOB-\allowbreak{}API-\allowbreak{}012}, \texttt{MOB-\allowbreak{}API-\allowbreak{}014} \\[3pt]
+Nguồn & \href{../../../Cinema\_Mobile/lib/features/auth/screens/verify\_email\_screen.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}features\allowbreak{}/\allowbreak{}auth/\allowbreak{}screens/\allowbreak{}verify\_\allowbreak{}email\_\allowbreak{}screen.\allowbreak{}dart}} \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}FORGOT} — Quên mật khẩu}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}FORGOT} — Quên mật khẩu}\label{tab:srs-89}\\
+\toprule
+\textbf{Trường} & \textbf{Yêu cầu màn hình} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{Trường} & \textbf{Yêu cầu màn hình} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Route & \texttt{/\allowbreak{}forgot-\allowbreak{}password\allowbreak{}} \\[3pt]
+Tác nhân & Khách chưa đăng nhập/\allowbreak{}chủ tài khoản \\[3pt]
+Mục đích & Quên mật khẩu \\[3pt]
+Thành phần chính & Ô email và trạng thái gửi \\[3pt]
+Thao tác & Yêu cầu \texttt{OTP} đặt lại \\[3pt]
+Điều hướng & Đăng nhập/\allowbreak{}Hồ sơ \ensuremath{\rightarrow} yêu cầu đặt lại \ensuremath{\rightarrow} /\allowbreak{}reset-password \\[3pt]
+\texttt{FR} liên quan & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}09}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}13}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}14} \\[3pt]
+Khu \texttt{API} liên quan & \texttt{MOB-\allowbreak{}API-\allowbreak{}005}, \texttt{MOB-\allowbreak{}API-\allowbreak{}006}, \texttt{MOB-\allowbreak{}API-\allowbreak{}010}, \texttt{MOB-\allowbreak{}API-\allowbreak{}011}, \texttt{MOB-\allowbreak{}API-\allowbreak{}012}, \texttt{MOB-\allowbreak{}API-\allowbreak{}013} \\[3pt]
+Nguồn & \href{../../../Cinema\_Mobile/lib/features/auth/screens/forgot\_password\_screen.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}features\allowbreak{}/\allowbreak{}auth/\allowbreak{}screens/\allowbreak{}forgot\_\allowbreak{}password\allowbreak{}\_\allowbreak{}screen.\allowbreak{}dart}} \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}RESET} — Đặt lại mật khẩu}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}RESET} — Đặt lại mật khẩu}\label{tab:srs-90}\\
+\toprule
+\textbf{Trường} & \textbf{Yêu cầu màn hình} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{Trường} & \textbf{Yêu cầu màn hình} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Route & \texttt{/\allowbreak{}reset-\allowbreak{}password\allowbreak{}} \\[3pt]
+Tác nhân & Người nhận \texttt{OTP} \\[3pt]
+Mục đích & Đặt lại mật khẩu \\[3pt]
+Thành phần chính & \texttt{OTP}, mật khẩu mới và xác nhận \\[3pt]
+Thao tác & Đặt lại bằng mã email \\[3pt]
+Điều hướng & Quên mật khẩu \ensuremath{\rightarrow} đặt lại \ensuremath{\rightarrow} đăng nhập \\[3pt]
+\texttt{FR} liên quan & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}09}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}13}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}14} \\[3pt]
+Khu \texttt{API} liên quan & \texttt{MOB-\allowbreak{}API-\allowbreak{}005}, \texttt{MOB-\allowbreak{}API-\allowbreak{}006}, \texttt{MOB-\allowbreak{}API-\allowbreak{}010}, \texttt{MOB-\allowbreak{}API-\allowbreak{}011}, \texttt{MOB-\allowbreak{}API-\allowbreak{}012}, \texttt{MOB-\allowbreak{}API-\allowbreak{}013} \\[3pt]
+Nguồn & \href{../../../Cinema\_Mobile/lib/features/auth/screens/reset\_password\_screen.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}features\allowbreak{}/\allowbreak{}auth/\allowbreak{}screens/\allowbreak{}reset\_\allowbreak{}password\allowbreak{}\_\allowbreak{}screen.\allowbreak{}dart}} \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}HOME} — Trang chủ khách}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}HOME} — Trang chủ khách}\label{tab:srs-91}\\
+\toprule
+\textbf{Trường} & \textbf{Yêu cầu màn hình} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{Trường} & \textbf{Yêu cầu màn hình} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Route & \texttt{/\allowbreak{}home} \\[3pt]
+Tác nhân & Khách chưa đăng nhập/\allowbreak{}khách hàng \\[3pt]
+Mục đích & Trang chủ khách \\[3pt]
+Thành phần chính & Tab đang/\allowbreak{}sắp chiếu; tìm kiếm; lọc thể loại; thẻ phim; điều hướng tài khoản/\allowbreak{}thông báo \\[3pt]
+Thao tác & Tìm/\allowbreak{}lọc; mở phim \\[3pt]
+Điều hướng & /\allowbreak{}home \ensuremath{\rightarrow} /\allowbreak{}movies/\allowbreak{}\{id\}; điều hướng khách tới vé, thanh toán, thông báo, hồ sơ \\[3pt]
+\texttt{FR} liên quan & \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}03}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}04}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}10}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}NOTI-\allowbreak{}09}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}MEDIA-\allowbreak{}01} \\[3pt]
+Khu \texttt{API} liên quan & \texttt{MOB-\allowbreak{}API-\allowbreak{}024}, \texttt{MOB-\allowbreak{}API-\allowbreak{}025}, \texttt{MOB-\allowbreak{}API-\allowbreak{}026}, \texttt{MOB-\allowbreak{}API-\allowbreak{}027}, \texttt{MOB-\allowbreak{}API-\allowbreak{}028}, \texttt{MOB-\allowbreak{}API-\allowbreak{}030}, \texttt{MOB-\allowbreak{}API-\allowbreak{}031} \\[3pt]
+Nguồn & \href{../../../Cinema\_Mobile/lib/features/home/screens/home\_screen.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}features\allowbreak{}/\allowbreak{}home/\allowbreak{}screens/\allowbreak{}home\_\allowbreak{}screen.\allowbreak{}dart}} \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}MOVIE} — Chi tiết phim}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}MOVIE} — Chi tiết phim}\label{tab:srs-92}\\
+\toprule
+\textbf{Trường} & \textbf{Yêu cầu màn hình} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{Trường} & \textbf{Yêu cầu màn hình} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Route & \texttt{/\allowbreak{}movies/\allowbreak{}\{id\}} \\[3pt]
+Tác nhân & Khách chưa đăng nhập/\allowbreak{}khách hàng \\[3pt]
+Mục đích & Chi tiết phim \\[3pt]
+Thành phần chính & Ảnh, tuổi, thông tin phim, diễn viên/\allowbreak{}đạo diễn, trailer, tổng hợp đánh giá, suất bảy ngày \\[3pt]
+Thao tác & Mở trailer; chọn suất; đọc đánh giá \\[3pt]
+Điều hướng & Trang chủ \ensuremath{\rightarrow} phim \ensuremath{\rightarrow} /\allowbreak{}showtimes/\allowbreak{}\{id\}/\allowbreak{}seats \\[3pt]
+\texttt{FR} liên quan & \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}02}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}08}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}09}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}11}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}12}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}03}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}06}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}07}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}08}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}13} \\[3pt]
+Khu \texttt{API} liên quan & \texttt{MOB-\allowbreak{}API-\allowbreak{}002}, \texttt{MOB-\allowbreak{}API-\allowbreak{}003}, \texttt{MOB-\allowbreak{}API-\allowbreak{}024}, \texttt{MOB-\allowbreak{}API-\allowbreak{}039}, \texttt{MOB-\allowbreak{}API-\allowbreak{}040}, \texttt{MOB-\allowbreak{}API-\allowbreak{}041}, \texttt{MOB-\allowbreak{}API-\allowbreak{}042} \\[3pt]
+Nguồn & \href{../../../Cinema\_Mobile/lib/features/movie/screens/movie\_detail\_screen.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}features\allowbreak{}/\allowbreak{}movie/\allowbreak{}screens/\allowbreak{}movie\_\allowbreak{}detail\_\allowbreak{}screen.\allowbreak{}dart}} \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}SEATS} — Chọn ghế}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}SEATS} — Chọn ghế}\label{tab:srs-93}\\
+\toprule
+\textbf{Trường} & \textbf{Yêu cầu màn hình} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{Trường} & \textbf{Yêu cầu màn hình} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Route & \texttt{/\allowbreak{}showtime\allowbreak{}s/\allowbreak{}\{id\}/\allowbreak{}seats} \\[3pt]
+Tác nhân & Khách hàng \\[3pt]
+Mục đích & Chọn ghế \\[3pt]
+Thành phần chính & Hàng, chú giải loại/\allowbreak{}đã chiếm, ghế chọn, giá cặp, tổng \\[3pt]
+Thao tác & Chọn/\allowbreak{}bỏ chọn ghế trống; làm mới \\[3pt]
+Điều hướng & Phim \ensuremath{\rightarrow} ghế \ensuremath{\rightarrow} /\allowbreak{}showtimes/\allowbreak{}\{id\}/\allowbreak{}summary \\[3pt]
+\texttt{FR} liên quan & \texttt{MOB-\allowbreak{}FR-\allowbreak{}SEAT-\allowbreak{}03}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}03}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}13}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}07}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}08}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}09}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}11} \\[3pt]
+Khu \texttt{API} liên quan & \texttt{MOB-\allowbreak{}API-\allowbreak{}001}, \texttt{MOB-\allowbreak{}API-\allowbreak{}002}, \texttt{MOB-\allowbreak{}API-\allowbreak{}019}, \texttt{MOB-\allowbreak{}API-\allowbreak{}021} \\[3pt]
+Nguồn & \href{../../../Cinema\_Mobile/lib/features/seat/screens/seat\_selection\_screen.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}features\allowbreak{}/\allowbreak{}seat/\allowbreak{}screens/\allowbreak{}seat\_\allowbreak{}selectio\allowbreak{}n\_\allowbreak{}screen.\allowbreak{}dart}} \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}SUMMARY} — Xác nhận đặt vé}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}SUMMARY} — Xác nhận đặt vé}\label{tab:srs-94}\\
+\toprule
+\textbf{Trường} & \textbf{Yêu cầu màn hình} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{Trường} & \textbf{Yêu cầu màn hình} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Route & \texttt{/\allowbreak{}showtime\allowbreak{}s/\allowbreak{}\{id\}/\allowbreak{}summary} \\[3pt]
+Tác nhân & Khách hàng \\[3pt]
+Mục đích & Xác nhận đặt vé \\[3pt]
+Thành phần chính & \texttt{Booking\allowbreak{}Draft}, ghế, chọn bắp nước, báo giá khuyến mãi, điểm, xác nhận tuổi \\[3pt]
+Thao tác & Đổi phần thêm; giữ ghế \\[3pt]
+Điều hướng & Ghế \ensuremath{\rightarrow} xác nhận \ensuremath{\rightarrow} thanh toán vé; thiếu dữ liệu tạm \ensuremath{\rightarrow} ghế \\[3pt]
+\texttt{FR} liên quan & \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}09}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}01}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}09}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}13}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}15}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}17} \\[3pt]
+Khu \texttt{API} liên quan & \texttt{MOB-\allowbreak{}API-\allowbreak{}021}, \texttt{MOB-\allowbreak{}API-\allowbreak{}022}, \texttt{MOB-\allowbreak{}API-\allowbreak{}023}, \texttt{MOB-\allowbreak{}API-\allowbreak{}024}, \texttt{MOB-\allowbreak{}API-\allowbreak{}038} \\[3pt]
+Nguồn & \href{../../../Cinema\_Mobile/lib/features/booking/screens/booking\_summary\_screen.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}features\allowbreak{}/\allowbreak{}booking/\allowbreak{}screens/\allowbreak{}booking\_\allowbreak{}summary\_\allowbreak{}screen.\allowbreak{}dart}} \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}PAYMENT} — Thanh toán}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}PAYMENT} — Thanh toán}\label{tab:srs-95}\\
+\toprule
+\textbf{Trường} & \textbf{Yêu cầu màn hình} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{Trường} & \textbf{Yêu cầu màn hình} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Route & \texttt{/\allowbreak{}bookings\allowbreak{}/\allowbreak{}\{id\}/\allowbreak{}payment} \\[3pt]
+Tác nhân & Khách hàng \\[3pt]
+Mục đích & Thanh toán \\[3pt]
+Thành phần chính & Vé/\allowbreak{}chi tiết tiền; đếm ngược; link \texttt{Pay\allowbreak{}OS}; tự kiểm tra \\[3pt]
+Thao tác & Mở/\allowbreak{}tiếp tục \texttt{Pay\allowbreak{}OS}; trở về và đối soát \\[3pt]
+Điều hướng & Xác nhận/\allowbreak{}vé \ensuremath{\rightarrow} thanh toán \ensuremath{\rightarrow} \texttt{Pay\allowbreak{}OS} ngoài \ensuremath{\rightarrow} kết quả \\[3pt]
+\texttt{FR} liên quan & \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}05}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}10}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}01}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}02}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}11} \\[3pt]
+Khu \texttt{API} liên quan & \texttt{MOB-\allowbreak{}API-\allowbreak{}017}, \texttt{MOB-\allowbreak{}API-\allowbreak{}034}, \texttt{MOB-\allowbreak{}API-\allowbreak{}035} \\[3pt]
+Nguồn & \href{../../../Cinema\_Mobile/lib/features/payment/screens/payment\_screen.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}features\allowbreak{}/\allowbreak{}payment/\allowbreak{}screens/\allowbreak{}payment\_\allowbreak{}screen.\allowbreak{}dart}} \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}RESULT} — Kết quả thanh toán}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}RESULT} — Kết quả thanh toán}\label{tab:srs-96}\\
+\toprule
+\textbf{Trường} & \textbf{Yêu cầu màn hình} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{Trường} & \textbf{Yêu cầu màn hình} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Route & \texttt{/\allowbreak{}bookings\allowbreak{}/\allowbreak{}\{id\}/\allowbreak{}result} \\[3pt]
+Tác nhân & Khách hàng \\[3pt]
+Mục đích & Kết quả thanh toán \\[3pt]
+Thành phần chính & Xác minh/\allowbreak{}đang tải, kết quả thành công/\allowbreak{}chờ/\allowbreak{}thất bại \\[3pt]
+Thao tác & Tải lại kết quả server; mở vé \\[3pt]
+Điều hướng & \texttt{Pay\allowbreak{}OS}/\allowbreak{}thanh toán \ensuremath{\rightarrow} kết quả \ensuremath{\rightarrow} /\allowbreak{}bookings/\allowbreak{}\{id\} \\[3pt]
+\texttt{FR} liên quan & \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}02}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}05}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}02}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}08} \\[3pt]
+Khu \texttt{API} liên quan & \texttt{MOB-\allowbreak{}API-\allowbreak{}017}, \texttt{MOB-\allowbreak{}API-\allowbreak{}034} \\[3pt]
+Nguồn & \href{../../../Cinema\_Mobile/lib/features/payment/screens/payment\_result\_screen.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}features\allowbreak{}/\allowbreak{}payment/\allowbreak{}screens/\allowbreak{}payment\_\allowbreak{}result\_\allowbreak{}screen.\allowbreak{}dart}} \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}TICKETS} — Vé của tôi}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}TICKETS} — Vé của tôi}\label{tab:srs-97}\\
+\toprule
+\textbf{Trường} & \textbf{Yêu cầu màn hình} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{Trường} & \textbf{Yêu cầu màn hình} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Route & \texttt{/\allowbreak{}bookings\allowbreak{}} \\[3pt]
+Tác nhân & Khách hàng \\[3pt]
+Mục đích & Vé của tôi \\[3pt]
+Thành phần chính & Tab vé hiện tại/\allowbreak{}lịch sử, thẻ vé, làm mới và trạng thái rỗng/\allowbreak{}lỗi \\[3pt]
+Thao tác & Mở vé; làm mới \\[3pt]
+Điều hướng & Điều hướng khách \ensuremath{\rightarrow} vé \ensuremath{\rightarrow} /\allowbreak{}bookings/\allowbreak{}\{id\} \\[3pt]
+\texttt{FR} liên quan & \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}04} \\[3pt]
+Khu \texttt{API} liên quan & \texttt{MOB-\allowbreak{}API-\allowbreak{}020} \\[3pt]
+Nguồn & \href{../../../Cinema\_Mobile/lib/features/booking/screens/my\_bookings\_screen.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}features\allowbreak{}/\allowbreak{}booking/\allowbreak{}screens/\allowbreak{}my\_\allowbreak{}bookings\allowbreak{}\_\allowbreak{}screen.\allowbreak{}dart}} \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}TICKET} — Chi tiết vé}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}TICKET} — Chi tiết vé}\label{tab:srs-98}\\
+\toprule
+\textbf{Trường} & \textbf{Yêu cầu màn hình} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{Trường} & \textbf{Yêu cầu màn hình} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Route & \texttt{/\allowbreak{}bookings\allowbreak{}/\allowbreak{}\{id\}} \\[3pt]
+Tác nhân & Khách hàng \\[3pt]
+Mục đích & Chi tiết vé \\[3pt]
+Thành phần chính & Ghế, phần thêm, tiền, \texttt{QR}, \texttt{checked\allowbreak{}In\allowbreak{}At}, huỷ/\allowbreak{}hoàn, đánh giá và chia sẻ/\allowbreak{}lịch \\[3pt]
+Thao tác & Trả vé chờ; huỷ/\allowbreak{}yêu cầu hoàn; đánh giá sau check-in; chia sẻ/\allowbreak{}lịch \\[3pt]
+Điều hướng & Vé/\allowbreak{}thông báo \ensuremath{\rightarrow} chi tiết \ensuremath{\rightarrow} thanh toán hoặc quay lại \\[3pt]
+\texttt{FR} liên quan & \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}12}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}02}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}05}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}06}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}13}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}15}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}17}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}19}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}03}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}06}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}REF-\allowbreak{}01}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}REF-\allowbreak{}05}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}REF-\allowbreak{}06}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}CHK-\allowbreak{}01}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}CHK-\allowbreak{}05} \\[3pt]
+Khu \texttt{API} liên quan & \texttt{MOB-\allowbreak{}API-\allowbreak{}002}, \texttt{MOB-\allowbreak{}API-\allowbreak{}015}, \texttt{MOB-\allowbreak{}API-\allowbreak{}017}, \texttt{MOB-\allowbreak{}API-\allowbreak{}018}, \texttt{MOB-\allowbreak{}API-\allowbreak{}021}, \texttt{MOB-\allowbreak{}API-\allowbreak{}022}, \texttt{MOB-\allowbreak{}API-\allowbreak{}023}, \texttt{MOB-\allowbreak{}API-\allowbreak{}033}, \texttt{MOB-\allowbreak{}API-\allowbreak{}034}, \texttt{MOB-\allowbreak{}API-\allowbreak{}037}, \texttt{MOB-\allowbreak{}API-\allowbreak{}038}, \texttt{MOB-\allowbreak{}API-\allowbreak{}039}, \texttt{MOB-\allowbreak{}API-\allowbreak{}040}, \texttt{MOB-\allowbreak{}API-\allowbreak{}041}, \texttt{MOB-\allowbreak{}API-\allowbreak{}042} \\[3pt]
+Nguồn & \href{../../../Cinema\_Mobile/lib/features/booking/screens/booking\_detail\_screen.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}features\allowbreak{}/\allowbreak{}booking/\allowbreak{}screens/\allowbreak{}booking\_\allowbreak{}detail\_\allowbreak{}screen.\allowbreak{}dart}} \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}PAYHISTO\allowbreak{}RY} — Lịch sử thanh toán}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}PAYHISTO\allowbreak{}RY} — Lịch sử thanh toán}\label{tab:srs-99}\\
+\toprule
+\textbf{Trường} & \textbf{Yêu cầu màn hình} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{Trường} & \textbf{Yêu cầu màn hình} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Route & \texttt{/\allowbreak{}payments\allowbreak{}} \\[3pt]
+Tác nhân & Khách hàng \\[3pt]
+Mục đích & Lịch sử thanh toán \\[3pt]
+Thành phần chính & Dòng giao dịch của mình, số tiền, trạng thái \\[3pt]
+Thao tác & Làm mới; xem vé liên quan khi có \\[3pt]
+Điều hướng & Điều hướng khách \ensuremath{\rightarrow} thanh toán \ensuremath{\rightarrow} vé liên quan \\[3pt]
+\texttt{FR} liên quan & \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}03}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}04} \\[3pt]
+Khu \texttt{API} liên quan & \texttt{MOB-\allowbreak{}API-\allowbreak{}037} \\[3pt]
+Nguồn & \href{../../../Cinema\_Mobile/lib/features/payment/screens/payment\_history\_screen.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}features\allowbreak{}/\allowbreak{}payment/\allowbreak{}screens/\allowbreak{}payment\_\allowbreak{}history\_\allowbreak{}screen.\allowbreak{}dart}} \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}NOTIFICA\allowbreak{}TIONS} — Thông báo}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}NOTIFICA\allowbreak{}TIONS} — Thông báo}\label{tab:srs-100}\\
+\toprule
+\textbf{Trường} & \textbf{Yêu cầu màn hình} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{Trường} & \textbf{Yêu cầu màn hình} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Route & \texttt{/\allowbreak{}notifica\allowbreak{}tions} \\[3pt]
+Tác nhân & Khách hàng \\[3pt]
+Mục đích & Thông báo \\[3pt]
+Thành phần chính & Danh sách thông báo, số chưa đọc, đánh dấu tất cả \\[3pt]
+Thao tác & Mở thông báo; đánh dấu tất cả \\[3pt]
+Điều hướng & Chuông/\allowbreak{}điều hướng khách \ensuremath{\rightarrow} /\allowbreak{}notifications/\allowbreak{}\{id\} \\[3pt]
+\texttt{FR} liên quan & \texttt{MOB-\allowbreak{}FR-\allowbreak{}NOTI-\allowbreak{}01}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}NOTI-\allowbreak{}09} \\[3pt]
+Khu \texttt{API} liên quan & \texttt{MOB-\allowbreak{}API-\allowbreak{}028}, \texttt{MOB-\allowbreak{}API-\allowbreak{}030}, \texttt{MOB-\allowbreak{}API-\allowbreak{}031}, \texttt{MOB-\allowbreak{}API-\allowbreak{}032} \\[3pt]
+Nguồn & \href{../../../Cinema\_Mobile/lib/features/notification/screens/notification\_list\_screen.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}features\allowbreak{}/\allowbreak{}notifica\allowbreak{}tion/\allowbreak{}screens/\allowbreak{}notifica\allowbreak{}tion\_\allowbreak{}list\_\allowbreak{}screen.\allowbreak{}dart}} \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}NOTIFICA\allowbreak{}TION} — Chi tiết thông báo}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}NOTIFICA\allowbreak{}TION} — Chi tiết thông báo}\label{tab:srs-101}\\
+\toprule
+\textbf{Trường} & \textbf{Yêu cầu màn hình} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{Trường} & \textbf{Yêu cầu màn hình} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Route & \texttt{/\allowbreak{}notifica\allowbreak{}tions/\allowbreak{}\{id\}} \\[3pt]
+Tác nhân & Khách hàng \\[3pt]
+Mục đích & Chi tiết thông báo \\[3pt]
+Thành phần chính & Tiêu đề, nội dung, trạng thái đọc, vé liên quan \\[3pt]
+Thao tác & Đánh dấu khi mở; mở vé \\[3pt]
+Điều hướng & Thông báo \ensuremath{\rightarrow} chi tiết \ensuremath{\rightarrow} /\allowbreak{}bookings/\allowbreak{}\{id\} \\[3pt]
+\texttt{FR} liên quan & \texttt{MOB-\allowbreak{}FR-\allowbreak{}NOTI-\allowbreak{}04}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}NOTI-\allowbreak{}09} \\[3pt]
+Khu \texttt{API} liên quan & \texttt{MOB-\allowbreak{}API-\allowbreak{}028}, \texttt{MOB-\allowbreak{}API-\allowbreak{}029}, \texttt{MOB-\allowbreak{}API-\allowbreak{}030}, \texttt{MOB-\allowbreak{}API-\allowbreak{}031} \\[3pt]
+Nguồn & \href{../../../Cinema\_Mobile/lib/features/notification/screens/notification\_detail\_screen.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}features\allowbreak{}/\allowbreak{}notifica\allowbreak{}tion/\allowbreak{}screens/\allowbreak{}notifica\allowbreak{}tion\_\allowbreak{}detail\_\allowbreak{}screen.\allowbreak{}dart}} \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}PROFILE} — Tài khoản và thành viên}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}PROFILE} — Tài khoản và thành viên}\label{tab:srs-102}\\
+\toprule
+\textbf{Trường} & \textbf{Yêu cầu màn hình} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{Trường} & \textbf{Yêu cầu màn hình} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Route & \texttt{/\allowbreak{}profile} \\[3pt]
+Tác nhân & Khách hàng \\[3pt]
+Mục đích & Tài khoản và thành viên \\[3pt]
+Thành phần chính & Danh tính, hộp sửa hồ sơ/\allowbreak{}mật khẩu, thẻ/\allowbreak{}lịch sử thành viên, đăng xuất \\[3pt]
+Thao tác & Sửa tên/\allowbreak{}điện thoại; đổi/\allowbreak{}khôi phục mật khẩu; đăng xuất \\[3pt]
+Điều hướng & Điều hướng khách \ensuremath{\rightarrow} hồ sơ; khôi phục mật khẩu \ensuremath{\rightarrow} quên/\allowbreak{}đặt lại \\[3pt]
+\texttt{FR} liên quan & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}10}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}11}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}16}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}17}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}17} \\[3pt]
+Khu \texttt{API} liên quan & \texttt{MOB-\allowbreak{}API-\allowbreak{}004}, \texttt{MOB-\allowbreak{}API-\allowbreak{}007}, \texttt{MOB-\allowbreak{}API-\allowbreak{}008}, \texttt{MOB-\allowbreak{}API-\allowbreak{}009}, \texttt{MOB-\allowbreak{}API-\allowbreak{}010}, \texttt{MOB-\allowbreak{}API-\allowbreak{}021}, \texttt{MOB-\allowbreak{}API-\allowbreak{}023} \\[3pt]
+Nguồn & \href{../../../Cinema\_Mobile/lib/features/profile/screens/profile\_screen.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}features\allowbreak{}/\allowbreak{}profile/\allowbreak{}screens/\allowbreak{}profile\_\allowbreak{}screen.\allowbreak{}dart}} \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}MGT-\allowbreak{}LANDING} — Trang đầu tài khoản quản lý}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}MGT-\allowbreak{}LANDING} — Trang đầu tài khoản quản lý}\label{tab:srs-103}\\
+\toprule
+\textbf{Trường} & \textbf{Yêu cầu màn hình} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{Trường} & \textbf{Yêu cầu màn hình} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Route & \texttt{/\allowbreak{}home (manageme\allowbreak{}nt account)} \\[3pt]
+Tác nhân & Nhân viên/\allowbreak{}quản trị viên \\[3pt]
+Mục đích & Trang đầu tài khoản quản lý \\[3pt]
+Thành phần chính & Giải thích vai trò; liên kết web quản trị đã cấu hình; check-in vé; đăng xuất \\[3pt]
+Thao tác & Mở web đã cấu hình hoặc check-in điện thoại \\[3pt]
+Điều hướng & Đăng nhập quản lý \ensuremath{\rightarrow} trang đầu \ensuremath{\rightarrow} /\allowbreak{}staff/\allowbreak{}check-in \\[3pt]
+\texttt{FR} liên quan & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}05}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}10}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}CHK-\allowbreak{}04} \\[3pt]
+Khu \texttt{API} liên quan & \texttt{MOB-\allowbreak{}API-\allowbreak{}007}, \texttt{MOB-\allowbreak{}API-\allowbreak{}008}, \texttt{MOB-\allowbreak{}API-\allowbreak{}010}, \texttt{MOB-\allowbreak{}API-\allowbreak{}016}, \texttt{MOB-\allowbreak{}API-\allowbreak{}018} \\[3pt]
+Nguồn & \href{../../../Cinema\_Mobile/lib/features/profile/screens/management\_account\_screen.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}features\allowbreak{}/\allowbreak{}profile/\allowbreak{}screens/\allowbreak{}manageme\allowbreak{}nt\_\allowbreak{}account\_\allowbreak{}screen.\allowbreak{}dart}} \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}CHECKIN} — Check-in vé}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{MOB-\allowbreak{}SCR-\allowbreak{}CHECKIN} — Check-in vé}\label{tab:srs-104}\\
+\toprule
+\textbf{Trường} & \textbf{Yêu cầu màn hình} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{Trường} & \textbf{Yêu cầu màn hình} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Route & \texttt{/\allowbreak{}staff/\allowbreak{}check-\allowbreak{}in} \\[3pt]
+Tác nhân & Nhân viên/\allowbreak{}quản trị viên \\[3pt]
+Mục đích & Check-in vé \\[3pt]
+Thành phần chính & Ô mã; lớp quét camera; chi tiết vé; nhắc tuổi; nút cho vào \\[3pt]
+Thao tác & Quét/\allowbreak{}nhập; tra vé; check-in một lần \\[3pt]
+Điều hướng & Trang đầu/\allowbreak{}điều hướng quản lý \ensuremath{\rightarrow} check-in \ensuremath{\rightarrow} vé kế tiếp \\[3pt]
+\texttt{FR} liên quan & \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}09}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}CHK-\allowbreak{}02}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}CHK-\allowbreak{}03}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}CHK-\allowbreak{}04}, \texttt{MOB-\allowbreak{}FR-\allowbreak{}CHK-\allowbreak{}05} \\[3pt]
+Khu \texttt{API} liên quan & \texttt{MOB-\allowbreak{}API-\allowbreak{}016}, \texttt{MOB-\allowbreak{}API-\allowbreak{}017}, \texttt{MOB-\allowbreak{}API-\allowbreak{}018}, \texttt{MOB-\allowbreak{}API-\allowbreak{}024} \\[3pt]
+Nguồn & \href{../../../Cinema\_Mobile/lib/features/staff/screens/staff\_check\_in\_screen.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}features\allowbreak{}/\allowbreak{}staff/\allowbreak{}screens/\allowbreak{}staff\_\allowbreak{}check\_\allowbreak{}in\_\allowbreak{}screen.\allowbreak{}dart}} \\[3pt]
+\end{longtable}
+\endgroup
+
+Màn xác thực web dùng lại giữa hai điểm vào nhưng đăng nhập quản trị tắt đăng ký. Sửa hồ sơ/\allowbreak{}đổi mật khẩu là hộp thoại. Trang đầu quản lý điện thoại chọn theo vai trò, không phải \texttt{URL} quản trị riêng.

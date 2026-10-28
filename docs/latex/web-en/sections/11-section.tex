@@ -1,0 +1,27 @@
+\clearpage
+\section{External Interface Requirements}\label{sec:srs-11}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{11. External Interface Requirements}\label{tab:srs-147}\\
+\toprule
+\textbf{Interface} & \textbf{Contract} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{Interface} & \textbf{Contract} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Client/\allowbreak{}gateway & \texttt{REST}/\allowbreak{}\texttt{JSON} \texttt{UTF}-8; Accept application/\allowbreak{}json; Content-Type application/\allowbreak{}json for request bodies; Bearer \texttt{JWT} on protected calls. Clients never connect to \texttt{Postgre\allowbreak{}SQL} or private service ports. \\[3pt]
+\texttt{Pay\allowbreak{}OS} & Checkout \texttt{URL}/\allowbreak{}\texttt{Viet\allowbreak{}QR} through backend; signed webhook; client verifies server state rather than trusting a redirect. No client card-data collection. \\[3pt]
+\texttt{SMTP} /\allowbreak{} \texttt{Rabbit\allowbreak{}MQ} & Server-only \texttt{OTP}, ticket/\allowbreak{}refund delivery and committed events; clients read notification APIs, not the broker. \\[3pt]
+Device/\allowbreak{}browser & Hash/\allowbreak{}\texttt{URL} routes; \texttt{HTTPS}/\allowbreak{}localhost camera; share/\allowbreak{}clipboard/\allowbreak{}calendar; 80 mm browser printing; \texttt{HTML} preview with poster fallback. \\[3pt]
+\end{longtable}
+\endgroup

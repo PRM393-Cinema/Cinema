@@ -1,0 +1,29 @@
+\clearpage
+\section{Acceptance Criteria}\label{sec:srs-21}
+All H requirements must meet both criteria; security, ownership, financial and concurrency tests must pass. Disclose every M/\allowbreak{}L omission and current implementation gap. This document does not certify a passing run.
+
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{21. Acceptance Criteria}\label{tab:srs-197}\\
+\toprule
+\textbf{\texttt{ID}} & \textbf{Acceptance gate} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{\texttt{ID}} & \textbf{Acceptance gate} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+\texttt{WEB-\allowbreak{}ACC-\allowbreak{}01} & Demonstrate account \ensuremath{\rightarrow} movie \ensuremath{\rightarrow} showtime \ensuremath{\rightarrow} seats \ensuremath{\rightarrow} booking \ensuremath{\rightarrow} payment \ensuremath{\rightarrow} ticket/\allowbreak{}notification with real backend or documented fixtures. \\[3pt]
+\texttt{WEB-\allowbreak{}ACC-\allowbreak{}02} & Reject cross-account unauthorized access and duplicate concurrent seat sale/\allowbreak{}check-in/\allowbreak{}payment effects. \\[3pt]
+\texttt{WEB-\allowbreak{}ACC-\allowbreak{}03} & Demonstrate refund and late-payment outcomes with correct seats/\allowbreak{}points and no false confirmed ticket. \\[3pt]
+\texttt{WEB-\allowbreak{}ACC-\allowbreak{}04} & Verify navigation, loading/\allowbreak{}error/\allowbreak{}empty and device fallbacks; disclose §27 limitations. \\[3pt]
+\end{longtable}
+\endgroup

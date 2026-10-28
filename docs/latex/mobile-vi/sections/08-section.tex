@@ -1,0 +1,53 @@
+\clearpage
+\section{Quy tắc nghiệp vụ}\label{sec:srs-8}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.23000\SRSWidth}P{0.77000\SRSWidth}@{}}
+\caption{8. Quy tắc nghiệp vụ}\label{tab:srs-5}\\
+\toprule
+\textbf{\texttt{ID}} & \textbf{Quy tắc} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{\texttt{ID}} & \textbf{Quy tắc} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}01} & Tài khoản khách phải xác thực email bằng \texttt{OTP} trước khi đăng nhập. Tài khoản do Admin tạo không cần \texttt{OTP}. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}02} & Mọi \texttt{API} cần đăng nhập dùng \texttt{JWT}; gateway và service đều kiểm tra. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}03} & Quyền truy cập theo vai trò; Customer không dùng được \texttt{API} quản trị. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}04} & Mỗi ghế thuộc một phòng, không trùng vị trí (hàng + số) trong phòng. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}05} & Một suất chiếu thuộc một phim và một phòng, giờ bắt đầu phải trước giờ kết thúc. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}06} & Một phòng không có hai suất chiếu trùng thời gian (\texttt{409}). \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}07} & Một ghế của một suất chiếu chỉ thuộc một booking còn hiệu lực (đang giữ hoặc đã bán). \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}08} & Booking gắn với một suất chiếu và các ghế; gắn với tài khoản khách, trừ vé khách vãng lai bán tại quầy. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}09} & Một thanh toán thuộc một vé; chuyển trạng thái vé/\allowbreak{}thanh toán/\allowbreak{}hoàn tiền phải theo hợp đồng trạng thái ở mục 15. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}10} & Webhook \texttt{Pay\allowbreak{}OS} phải đúng chữ ký \texttt{HMAC}-\texttt{SHA256} trước khi dùng dữ liệu. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}11} & Event được ghi vào outbox trong cùng transaction với dữ liệu và chỉ gửi sau khi commit. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}12} & Lời gọi tới service khác hoặc \texttt{Pay\allowbreak{}OS} có retry giới hạn và circuit breaker. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}13} & Lỗi gửi email hoặc \texttt{Rabbit\allowbreak{}MQ} tạm dừng không làm hỏng giao dịch đặt vé /\allowbreak{} thanh toán. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}14} & Ghế được giữ 10 phút; quá hạn chưa thanh toán thì booking \texttt{EXPIRED} và ghế được nhả. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}15} & Giá ghế: giá suất chiếu là giá ghế thường; \texttt{VIP} +20\%, sweetbox +30\% mỗi ghế; phụ thu làm tròn tới 1.000đ. Server tự tính giá, không nhận giá từ client. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}16} & Sweetbox luôn được đặt, đổi loại và bán theo cặp. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}17} & Khách tự huỷ vé đã thanh toán khi còn ít nhất 2 giờ trước giờ chiếu và được hoàn 100\%; muộn hơn phải liên hệ rạp. Staff/\allowbreak{}Admin huỷ được mọi lúc. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}18} & Mỗi payment có tối đa một yêu cầu hoàn tiền. Hoàn tiền được thực hiện bằng chuyển khoản thủ công và ghi nhận mã giao dịch. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}19} & Suất chiếu bị huỷ thì mọi vé còn hiệu lực của suất đó bị huỷ; vé đã thanh toán được tạo yêu cầu hoàn tiền. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}20} & Trả tiền muộn (booking đã hết hạn): ghế còn trống thì vẫn xác nhận vé; ghế đã bán cho người khác thì tự tạo yêu cầu hoàn 100\%. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}21} & Check-in chỉ cho vé \texttt{CONFIRME\allowbreak{}D}, mỗi vé một lần, từ 3 giờ trước đến 2 giờ sau giờ chiếu. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}24} & Khoá tài khoản hoặc đổi vai trò có hiệu lực ngay ở request tiếp theo, kể cả khi token cũ còn hạn. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}25} & Quên mật khẩu trả 200 dù email tồn tại hay không; email/\allowbreak{}mật khẩu đăng nhập sai có chung thông báo. Đăng ký/\allowbreak{}gửi lại có thể lộ trạng thái tài khoản nên không khẳng định chống dò trên toàn hệ thống. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}26} & Phim ngừng chiếu không hiện khi duyệt nhưng giữ vé cũ. Client điện thoại không sửa sơ đồ phòng. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}27} & Khuyến mãi chỉ giảm tiền vé, tối đa 90\%, làm tròn xuống 1.000đ; dùng một ưu đãi tự động tốt nhất hoặc mã nhập đủ điều kiện. Đếm lượt khi thanh toán thành công. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}28} & Một điểm bằng 1.000đ; dùng tối đa 50\% sau khuyến mãi; ngưỡng chi tiêu \texttt{MEMBER}/\allowbreak{}\texttt{VIP}/\allowbreak{}\texttt{VVIP} là 0/\allowbreak{}2.000.000/\allowbreak{}5.000.000đ và tỷ lệ tích 5/\allowbreak{}7/\allowbreak{}10\%. Thu hồi/\allowbreak{}hoàn tác động điểm theo huỷ/\allowbreak{}hết hạn/\allowbreak{}hoàn vé. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}29} & Mỗi vé tối đa mười món bắp nước đang bán khác nhau, mỗi món 1–20; lưu tên và đơn giá lúc mua, tính vào tổng thanh toán và hoàn tiền. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}30} & Giá định dạng cộng 0/\allowbreak{}20.000/\allowbreak{}40.000đ cho 2D/\allowbreak{}3D/\allowbreak{}\texttt{IMAX} trước phụ thu loại ghế; giá \texttt{NORMAL}/\allowbreak{}\texttt{VIP}/\allowbreak{}\texttt{SWEETBOX\allowbreak{}} do server trả. \\[3pt]
+\end{longtable}
+\endgroup
+
+Quy tắc người vận hành ngoài quy định tác động backend chung, không bổ sung màn điện thoại. Giới hạn giờ là mặc định hiện tại và có thể đổi cấu hình triển khai.

@@ -1,0 +1,2702 @@
+{
+  "source": "../../Cinema_Web_NET_SRS_EN.md",
+  "source_sha256": "5a3fd07c2064bbdf44fca79d4220cd40b58d5751ad39784f1e2a1b86296750fd",
+  "sections": 28,
+  "headings": [
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "SOFTWARE REQUIREMENTS SPECIFICATION"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "Cinema — Web .NET"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "1. Introduction"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "2. Purpose"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "3. Scope"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "4. Overall Description"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "5. Product Perspective"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "6. User Classes / Actors"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "7. Role & Permission"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "8. Business Rules"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "9. Functional Requirements"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-AUTH-01 — Register"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-AUTH-02 — Sign in"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-AUTH-03 — JWT claims"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-AUTH-04 — Validate JWT"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-AUTH-05 — Authorize roles"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-AUTH-06 — Unauthenticated and forbidden responses"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-AUTH-07 — Verify email OTP"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-AUTH-08 — Repeat unverified registration"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-AUTH-09 — Recover password"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-AUTH-10 — Refresh and sign out"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-AUTH-11 — Current account"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-AUTH-12 — Lock and role-change enforcement"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-AUTH-13 — Account field validation"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-AUTH-14 — Authentication rate limits"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-AUTH-15 — Find member by phone"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-AUTH-16 — Edit profile"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-AUTH-17 — Change current password"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-USER-01 — List accounts"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-USER-02 — Account details"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-USER-03 — Create account"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-USER-04 — Change account roles"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-USER-05 — Lock and unlock"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-USER-06 — List roles"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-MOV-01 — Paged catalogue"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-MOV-02 — Movie details"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-MOV-03 — Title search"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-MOV-04 — Active catalogue"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-MOV-05 — Create movie"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-MOV-06 — Edit and reactivate movie"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-MOV-07 — Deactivate movie"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-MOV-08 — Open trailer"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-MOV-09 — Age rating"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-MOV-10 — Now showing and coming soon"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-MOV-11 — Director and cast"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-MOV-12 — Movie reviews"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-ROOM-01 — Find rooms"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-ROOM-02 — Room details"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-ROOM-03 — Create room and seats"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-ROOM-04 — Rename room"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-ROOM-05 — Delete eligible room"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SEAT-01 — Generate seats"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SEAT-02 — Seat details"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SEAT-03 — Read room map"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SEAT-04 — Delete seat API"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SEAT-05 — Change seat type"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SEAT-06 — Paint seat types"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SEAT-07 — Change capacity"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SEAT-08 — Protect scheduled rooms"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SEAT-09 — Refresh management maps"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SHOW-01 — List showtimes"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SHOW-02 — Create showtime"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SHOW-03 — Showtime and prices"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SHOW-04 — Edit showtime"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SHOW-05 — Cancel showtime"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SHOW-06 — Open future showtimes"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SHOW-07 — Showtimes by movie"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SHOW-08 — Bookable movie showtimes"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SHOW-09 — Date range search"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SHOW-10 — Open and close sales"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SHOW-11 — Reject overlap"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SHOW-12 — Showtime seat/customer map"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SHOW-13 — Screening format"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-BOOK-01 — Hold booking"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-BOOK-02 — Booking details"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-BOOK-03 — Management booking search"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-BOOK-04 — Own ticket history"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-BOOK-05 — Confirm paid booking"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-BOOK-06 — Cancel booking"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-BOOK-07 — Occupied seat IDs"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-BOOK-08 — Concurrent seat conflict"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-BOOK-09 — Sweetbox pair"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-BOOK-10 — Expire unpaid hold"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-BOOK-11 — Refresh customer map"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-BOOK-12 — Showtime booking statistics"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-BOOK-13 — Concessions with tickets"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-BOOK-14 — Concessions administration"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-BOOK-15 — Promotion and voucher"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-BOOK-16 — Promotion administration"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-BOOK-17 — Membership points"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-BOOK-18 — Member administration"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-BOOK-19 — Share and calendar"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-PAY-01 — Create/reuse PayOS link"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-PAY-02 — Verify PayOS"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-PAY-03 — Payment details"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-PAY-04 — Own payment history"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-PAY-05 — Payments by booking"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-PAY-06 — Refund access"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-PAY-07 — Signed webhook"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-PAY-08 — Late payment"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-PAY-09 — Management payments"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-PAY-10 — Revenue summary"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-PAY-11 — Automatic payment polling"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-REF-01 — Create refund request"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-REF-02 — Management refund list"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-REF-03 — Record completed transfer"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-REF-04 — Reject refund"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-REF-05 — Reopen rejected refund"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-REF-06 — Own refund status"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-REF-07 — Unique refund per payment"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-POS-01 — Create counter sale"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-POS-02 — Counter checkout"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-POS-03 — Cash and change"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-POS-04 — Bank-transfer QR"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-POS-05 — Switch transfer to cash"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-POS-06 — Retain counter email"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-POS-07 — Print and admit"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-POS-08 — Reopen paid ticket"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-CHK-01 — Ticket QR"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-CHK-02 — Lookup ticket code"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-CHK-03 — Check-in validation"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-CHK-04 — Camera/manual scanner"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-CHK-05 — Display check-in time"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-NOTI-01 — Notification history"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-NOTI-02 — Compose booking message"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-NOTI-03 — Send/retry message"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-NOTI-04 — Notification details"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-NOTI-05 — Delete notification API"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-NOTI-06 — Event emails"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-NOTI-07 — OTP and welcome email"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-NOTI-08 — Showtime reminder"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-NOTI-09 — Read/unread notifications"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-DASH-01 — Today totals"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-DASH-02 — Live showtime board"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-DASH-03 — Staff attention queue"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-DASH-04 — Admin monthly overview"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-NAV-01 — Route guards and recovery"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-STATE-01 — Loading, error and empty states"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-MEDIA-01 — Platform-specific movie media"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "10. Use Case Specifications"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "UC-WEB-01 — Authentication and account session"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "UC-WEB-02 — Account administration"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "UC-WEB-03 — Movie catalogue and reviews"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "UC-WEB-04 — Room management"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "UC-WEB-05 — Seat map and availability"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "UC-WEB-06 — Showtimes and prices"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "UC-WEB-07 — Booking, concessions, promotions and loyalty"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "UC-WEB-08 — Online payment and reconciliation"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "UC-WEB-09 — Cancellation and manual refund"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "UC-WEB-10 — Counter ticket sale"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "UC-WEB-11 — Ticket lookup and check-in"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "UC-WEB-12 — Notifications and transactional email"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "UC-WEB-13 — Operations dashboards"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "11. External Interface Requirements"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "12. UI / Screen Requirements"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-LOGIN — Sign in"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-REGISTER — Registration"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-VERIFY — Verify email"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-FORGOT — Forgot password"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-RESET — Reset password"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-HOME — Customer home"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-MOVIE — Movie details"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-SEATS — Seat selection"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-SUMMARY — Booking summary"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-PAYMENT — Payment"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-RESULT — Payment result"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-TICKETS — My tickets"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-TICKET — Ticket details"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-PAYHISTORY — Payment history"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-NOTIFICATIONS — Notifications"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-NOTIFICATION — Notification details"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-PROFILE — Account and membership"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-CHECKIN — Ticket check-in"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-STAFF-DASH — Staff dashboard"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-ADMIN-DASH — Admin dashboard"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-OPERATIONS — Operations workspace"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-COUNTER — Counter booking"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-CHECKOUT — Counter checkout"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-RECORD-BOOKINGS — Booking record"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-RECORD-PAYMENTS — Payment record"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-RECORD-REFUNDS — Refund record"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-RECORD-SHOWTIMES — Showtime record"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-RECORD-ROOMS — Room record"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-SHOW-EDITOR — Showtime editor"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-COMPOSE — Compose booking email"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-ADMIN-MOVIES — Movies"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-ADMIN-ROOMS — Rooms"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-ADMIN-SNACKS — Snacks"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-ADMIN-PROMOTIONS — Promotions"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-ADMIN-MEMBERS — Members"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-ADMIN-USERS — Accounts"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-USER-EDITOR — Account create/details"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-MGT-PROFILE — Management profile"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-STAFF-ONLY — Management access notice"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "13. API Requirements"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "Request field definitions"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "14. Data Requirements"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "15. Business Workflows"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "State contract"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "16. Authentication & Authorization"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "17. Error Handling"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "18. Non-Functional Requirements"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "19. Security Requirements"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "20. Testing Requirements"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "Existing test evidence"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "21. Acceptance Criteria"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "22. Requirements Traceability Matrix"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "23. Constraints"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "24. Out of Scope"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "25. Future Enhancements"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "26. Conclusion"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "27. Implemented vs Requirement"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "28. Evidence and source reconciliation"
+    }
+  ],
+  "blocks": 445,
+  "tables": [
+    {
+      "table": 1,
+      "section": 0,
+      "heading": "Document metadata",
+      "columns": 2,
+      "rows": 5,
+      "cells_sha256": "da3663d67867a9428844749d7ed70745beeb14de093f67a3e91d981a01b32ad0"
+    },
+    {
+      "table": 2,
+      "section": 5,
+      "heading": "5. Product Perspective",
+      "columns": 2,
+      "rows": 4,
+      "cells_sha256": "7db8fe49cfd286d638fe18f5483dda9f535739a2faa67635b9bf89cd1a8f078a"
+    },
+    {
+      "table": 3,
+      "section": 6,
+      "heading": "6. User Classes / Actors",
+      "columns": 2,
+      "rows": 5,
+      "cells_sha256": "faefce49fe08820939a474dec9897e6d509117ad41321998b878c95c5a4fa9d0"
+    },
+    {
+      "table": 4,
+      "section": 7,
+      "heading": "7. Role & Permission",
+      "columns": 5,
+      "rows": 5,
+      "cells_sha256": "0d0df545516097aa4da28161abe1137643df1334c62a0d3be9dc67508ba72906"
+    },
+    {
+      "table": 5,
+      "section": 8,
+      "heading": "8. Business Rules",
+      "columns": 2,
+      "rows": 30,
+      "cells_sha256": "55d681d2d5707c95b92c2e33e2dd8d1c18a4ad23e6bd1bef8b1cc4470c7ad4f0"
+    },
+    {
+      "table": 6,
+      "section": 9,
+      "heading": "WEB-FR-AUTH-01 — Register",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "392eb01e832d057549038da0e555be8485cae306094c6fbbe41f2ac480130201"
+    },
+    {
+      "table": 7,
+      "section": 9,
+      "heading": "WEB-FR-AUTH-02 — Sign in",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "521f12d41ce0e31d0fe100ed3d8c48b1f04d64eadc2d74177e381b86912ffe92"
+    },
+    {
+      "table": 8,
+      "section": 9,
+      "heading": "WEB-FR-AUTH-03 — JWT claims",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "f7c3a6f04165562161555eeb2dce015a4e9cd5462ae2c44b17e09520dc1ccaee"
+    },
+    {
+      "table": 9,
+      "section": 9,
+      "heading": "WEB-FR-AUTH-04 — Validate JWT",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "17a521f9f9f3c7d363f5a250b0e25c21612b421ed026101d6ba3592ef83a8d9f"
+    },
+    {
+      "table": 10,
+      "section": 9,
+      "heading": "WEB-FR-AUTH-05 — Authorize roles",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "9d04ad78e537bde427bb55c18fdb366d549e90b17156faba97922db790fb98ec"
+    },
+    {
+      "table": 11,
+      "section": 9,
+      "heading": "WEB-FR-AUTH-06 — Unauthenticated and forbidden responses",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "c41857e7525011c779b1a9a3327adc141e8d2b61919d603f5709f4d373f0b95e"
+    },
+    {
+      "table": 12,
+      "section": 9,
+      "heading": "WEB-FR-AUTH-07 — Verify email OTP",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "bb43bd26bdb54160c67c17c76580761a5483ca36ced71047c96af65425d15c11"
+    },
+    {
+      "table": 13,
+      "section": 9,
+      "heading": "WEB-FR-AUTH-08 — Repeat unverified registration",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "dabb5c3fa74bc92b428bfdf61f6f6ae9a902d72b18febf43ceb57a6070b18b46"
+    },
+    {
+      "table": 14,
+      "section": 9,
+      "heading": "WEB-FR-AUTH-09 — Recover password",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "9dcf9b3a0d531e4a3542544b3d21a0d004b51890512c8b2bad815234c59bd31c"
+    },
+    {
+      "table": 15,
+      "section": 9,
+      "heading": "WEB-FR-AUTH-10 — Refresh and sign out",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "9c7b5381e94c0bbaa8c193e33c6ae365eaba4cd27d207003061adc8270706dd3"
+    },
+    {
+      "table": 16,
+      "section": 9,
+      "heading": "WEB-FR-AUTH-11 — Current account",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "632a574e48869f06c1fe3373769e70fdd39f488e48c6adde5c465dd58ae8fb5c"
+    },
+    {
+      "table": 17,
+      "section": 9,
+      "heading": "WEB-FR-AUTH-12 — Lock and role-change enforcement",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "76664ad006ef55e37a026f26cae3f594fa4fcc2c86ca5ed7c0efc830d9978557"
+    },
+    {
+      "table": 18,
+      "section": 9,
+      "heading": "WEB-FR-AUTH-13 — Account field validation",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "271ddcb1642a19e04524bf42b18e85c729cbef8a9869c483212c4921c51310ba"
+    },
+    {
+      "table": 19,
+      "section": 9,
+      "heading": "WEB-FR-AUTH-14 — Authentication rate limits",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "1fe3498dcc99c92ad562a8259e7405bf8c4151e1ac971701ed93a90e4fdb573d"
+    },
+    {
+      "table": 20,
+      "section": 9,
+      "heading": "WEB-FR-AUTH-15 — Find member by phone",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "9290285dd8bcbf27f9fc14e3544679244ad3628fa03efafd28c52f1648886fa5"
+    },
+    {
+      "table": 21,
+      "section": 9,
+      "heading": "WEB-FR-AUTH-16 — Edit profile",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "288181fe07a3de3f0a491915d94698051faa249a226b55d5c92d8744f6a95c16"
+    },
+    {
+      "table": 22,
+      "section": 9,
+      "heading": "WEB-FR-AUTH-17 — Change current password",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "ddd19ad83dfcd0efb90d3b777b9e8c5c735a057054feef612712bf0fa43c0368"
+    },
+    {
+      "table": 23,
+      "section": 9,
+      "heading": "WEB-FR-USER-01 — List accounts",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "d82d758ef19a834c9a593e0ffacccaa8c538b38c6eab7d678877efc357cb6229"
+    },
+    {
+      "table": 24,
+      "section": 9,
+      "heading": "WEB-FR-USER-02 — Account details",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "e7504336f9207ec8c292eede048693d30544db88c824f13aad537d6ee76a551d"
+    },
+    {
+      "table": 25,
+      "section": 9,
+      "heading": "WEB-FR-USER-03 — Create account",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "b7a470810c1496a80cd01d559cefe461d2a42ce640c6f7c1ec7176e49b8d1b26"
+    },
+    {
+      "table": 26,
+      "section": 9,
+      "heading": "WEB-FR-USER-04 — Change account roles",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "fe4f8f961ea92385ba1a51d33e0bc5694462a74259e18f52c236db7037f7f860"
+    },
+    {
+      "table": 27,
+      "section": 9,
+      "heading": "WEB-FR-USER-05 — Lock and unlock",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "cb0e94b7c2f5300862628f9a22e13548e3a6adcec5491621a33c848a5658219b"
+    },
+    {
+      "table": 28,
+      "section": 9,
+      "heading": "WEB-FR-USER-06 — List roles",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "92ce46ce56aca2b23c053d6535cec42dfa969a2fffa041b489ed352c3f836a57"
+    },
+    {
+      "table": 29,
+      "section": 9,
+      "heading": "WEB-FR-MOV-01 — Paged catalogue",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "3e15a73f1eceb7132d52bc94b40c4c9581155e21118377174bccf3b2e7a03447"
+    },
+    {
+      "table": 30,
+      "section": 9,
+      "heading": "WEB-FR-MOV-02 — Movie details",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "eb0c0f85c9c4f461ef552457de11efafffc154c84001757451d685e75087e23c"
+    },
+    {
+      "table": 31,
+      "section": 9,
+      "heading": "WEB-FR-MOV-03 — Title search",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "9dc1ec55ca472a3bb96c01c5ba352d5ba62cc7984d6809c852dcc173c350179d"
+    },
+    {
+      "table": 32,
+      "section": 9,
+      "heading": "WEB-FR-MOV-04 — Active catalogue",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "f3114b527bfee87daf2bccb825d6e0318625944eee64f3d7b8ed5b92d5b57335"
+    },
+    {
+      "table": 33,
+      "section": 9,
+      "heading": "WEB-FR-MOV-05 — Create movie",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "deddcfd7766d7868c7895441755f6b404f7657b609850ed9918395dd89c02d40"
+    },
+    {
+      "table": 34,
+      "section": 9,
+      "heading": "WEB-FR-MOV-06 — Edit and reactivate movie",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "8c6ce585be5edd50c3bd5737e54eaa576109b20abffafbb7bf96418df6fd255b"
+    },
+    {
+      "table": 35,
+      "section": 9,
+      "heading": "WEB-FR-MOV-07 — Deactivate movie",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "8996e37a195c98c168bffd2f52720b96a7b06477ab4479b031b40ce4a7b5be13"
+    },
+    {
+      "table": 36,
+      "section": 9,
+      "heading": "WEB-FR-MOV-08 — Open trailer",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "17cb456cd298eada4b599b0e17497bf92e313fcf44a77e1263fad6597e7162ce"
+    },
+    {
+      "table": 37,
+      "section": 9,
+      "heading": "WEB-FR-MOV-09 — Age rating",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "507d2423898f17e4d08966fb3c436703259f56584fbf4c10ec1ea42cc7bc5f5d"
+    },
+    {
+      "table": 38,
+      "section": 9,
+      "heading": "WEB-FR-MOV-10 — Now showing and coming soon",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "0a13f6cbf226c7b99970c3999d131bbeb063ee6e7a04b850330d919ddb979129"
+    },
+    {
+      "table": 39,
+      "section": 9,
+      "heading": "WEB-FR-MOV-11 — Director and cast",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "db1d1a086ebf07eca2d89a9feb8f64594262bc5b53a8f243e2e20ebbd2004292"
+    },
+    {
+      "table": 40,
+      "section": 9,
+      "heading": "WEB-FR-MOV-12 — Movie reviews",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "da5dfabbedd1acb10927433d3389026b7006e79830cd5d71f36e45ce63493e0e"
+    },
+    {
+      "table": 41,
+      "section": 9,
+      "heading": "WEB-FR-ROOM-01 — Find rooms",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "e5dd5dd0c2f06d2a75d38c48c2bf480342e074d8af96ae0db36bfc867f72f8a2"
+    },
+    {
+      "table": 42,
+      "section": 9,
+      "heading": "WEB-FR-ROOM-02 — Room details",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "5ba427c553abc9cf67ce28e51f103149846fb500f1a10ad8363edd1dc4cc7b42"
+    },
+    {
+      "table": 43,
+      "section": 9,
+      "heading": "WEB-FR-ROOM-03 — Create room and seats",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "5340f39f6c245ac82c6a3fd3076854af97bac326de490ca99030acde4b05b9c3"
+    },
+    {
+      "table": 44,
+      "section": 9,
+      "heading": "WEB-FR-ROOM-04 — Rename room",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "26afc494d1e9192b5e881d1d8faed93e9794036edeb13a82afc5efba6978d26e"
+    },
+    {
+      "table": 45,
+      "section": 9,
+      "heading": "WEB-FR-ROOM-05 — Delete eligible room",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "65c0516cd16e8f5d98cce790189e4317ec57f435c716b7cc0cb1757433e0cf07"
+    },
+    {
+      "table": 46,
+      "section": 9,
+      "heading": "WEB-FR-SEAT-01 — Generate seats",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "b85b00758bfdf370f0e7b764c80385e531c466ca6f3dc89a7406f1db60cab84e"
+    },
+    {
+      "table": 47,
+      "section": 9,
+      "heading": "WEB-FR-SEAT-02 — Seat details",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "eb8d5db3fc831f477a3d938ae41b5da7a3f2a0d865883681af24e05b99b6ec98"
+    },
+    {
+      "table": 48,
+      "section": 9,
+      "heading": "WEB-FR-SEAT-03 — Read room map",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "595ddaefc0a7e80b9237e6d88f830c1d244087a0dc2a27135e30ab594e12c661"
+    },
+    {
+      "table": 49,
+      "section": 9,
+      "heading": "WEB-FR-SEAT-04 — Delete seat API",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "869f0c30af13afbceabc4bb45a51d90a10a6fe226197f8463ca1f935966fd07f"
+    },
+    {
+      "table": 50,
+      "section": 9,
+      "heading": "WEB-FR-SEAT-05 — Change seat type",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "14c5bb9e38e94b3f238e54529d5f48aaf20e6f420b208a1bcc028b79e1be8a22"
+    },
+    {
+      "table": 51,
+      "section": 9,
+      "heading": "WEB-FR-SEAT-06 — Paint seat types",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "8dcdbb7368f8085cda02f17bd3781a245b71263879688eea2cf4268dfe67b7bc"
+    },
+    {
+      "table": 52,
+      "section": 9,
+      "heading": "WEB-FR-SEAT-07 — Change capacity",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "aa76fcc95cc9f8041ae85bf3d18b00a4e51a8fa055124f9fbd4a0c6c31d6b31b"
+    },
+    {
+      "table": 53,
+      "section": 9,
+      "heading": "WEB-FR-SEAT-08 — Protect scheduled rooms",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "fef88b25722858bc3bfcf8fc03bfe4efc8f7bed996a11c17873476a8a891862c"
+    },
+    {
+      "table": 54,
+      "section": 9,
+      "heading": "WEB-FR-SEAT-09 — Refresh management maps",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "89e0707a7a8a8208c7b70ee792c0bbbbbacbbb25a3792df7a56bee68aca6588f"
+    },
+    {
+      "table": 55,
+      "section": 9,
+      "heading": "WEB-FR-SHOW-01 — List showtimes",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "919ae17161b9ab59ac6e9795ff6c040a68a5b02063d7bd86145656bbb92a9525"
+    },
+    {
+      "table": 56,
+      "section": 9,
+      "heading": "WEB-FR-SHOW-02 — Create showtime",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "2b0a8224913022bb70f78a6f1898efa54dfc75f4f9e1655546c3b0897e67acd5"
+    },
+    {
+      "table": 57,
+      "section": 9,
+      "heading": "WEB-FR-SHOW-03 — Showtime and prices",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "7323fcad69ec15b088bba54b21297fc79bfa903e75b71ef7efab58a73a64aba5"
+    },
+    {
+      "table": 58,
+      "section": 9,
+      "heading": "WEB-FR-SHOW-04 — Edit showtime",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "0601b5a3671c6b28c8276432dfb4d66449a2fd1387684cd1961f2d9eb097d89f"
+    },
+    {
+      "table": 59,
+      "section": 9,
+      "heading": "WEB-FR-SHOW-05 — Cancel showtime",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "54bd670511cb524f26f1b682a9e3bca8f9439835f931c34376348a70e3627c67"
+    },
+    {
+      "table": 60,
+      "section": 9,
+      "heading": "WEB-FR-SHOW-06 — Open future showtimes",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "2cf8e26942230c2b24558c52143dbc899480734934081ed7b0d3b64361adc7c2"
+    },
+    {
+      "table": 61,
+      "section": 9,
+      "heading": "WEB-FR-SHOW-07 — Showtimes by movie",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "00b62d1a468f9547bfa0771e5434151889b349a8a14d3b39c08da2a1a2202f06"
+    },
+    {
+      "table": 62,
+      "section": 9,
+      "heading": "WEB-FR-SHOW-08 — Bookable movie showtimes",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "d8ce3490e50dcfc9fec5d42485555d477b7c4316dedbae5a493fd3daf2bd95ed"
+    },
+    {
+      "table": 63,
+      "section": 9,
+      "heading": "WEB-FR-SHOW-09 — Date range search",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "67f7424ebe61997d7fec5ba5802a52122cfddfa932e46bab47c27182a3b6d92b"
+    },
+    {
+      "table": 64,
+      "section": 9,
+      "heading": "WEB-FR-SHOW-10 — Open and close sales",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "5cad940c68615fa4f8981c85b484ab29075bf31ffb299510d926f119776aa6af"
+    },
+    {
+      "table": 65,
+      "section": 9,
+      "heading": "WEB-FR-SHOW-11 — Reject overlap",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "f4fdc38dab9c81e7b40808d28d7dafe0f5f01609a19a258486b3a869d6d41c3c"
+    },
+    {
+      "table": 66,
+      "section": 9,
+      "heading": "WEB-FR-SHOW-12 — Showtime seat/customer map",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "c52a355c0a4a4cad6f5a388099f4935433d5bbbfbeb1a2f7dc95910ec5c841a8"
+    },
+    {
+      "table": 67,
+      "section": 9,
+      "heading": "WEB-FR-SHOW-13 — Screening format",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "b5e92212a234fe5b25c64dc1b4d9b679d70106c8a70c60e38c46d2f37dee15a4"
+    },
+    {
+      "table": 68,
+      "section": 9,
+      "heading": "WEB-FR-BOOK-01 — Hold booking",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "0539b6007ec228b4947926e486273a9f0efb85810ebd506a876f59c740cd2678"
+    },
+    {
+      "table": 69,
+      "section": 9,
+      "heading": "WEB-FR-BOOK-02 — Booking details",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "97e88e882e1196167c8b939dc1edaae855aa5dcea459b325d83cb2f10efb1db4"
+    },
+    {
+      "table": 70,
+      "section": 9,
+      "heading": "WEB-FR-BOOK-03 — Management booking search",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "ca6821c5241376985eeec39ed63438f34de1c1e55d2568ebc8e576ac3e0a1bb0"
+    },
+    {
+      "table": 71,
+      "section": 9,
+      "heading": "WEB-FR-BOOK-04 — Own ticket history",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "28a86951d854587eb4101327ca89e2296c51214ff1b9572427700c707510da53"
+    },
+    {
+      "table": 72,
+      "section": 9,
+      "heading": "WEB-FR-BOOK-05 — Confirm paid booking",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "5daf2724c04014411c09e7a084a618c3afcc60d8f92eb3a22f8752a8752fc232"
+    },
+    {
+      "table": 73,
+      "section": 9,
+      "heading": "WEB-FR-BOOK-06 — Cancel booking",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "60967a2745acdbcca0da000a8267be5adb8498f04379b0d0d56448625944cb40"
+    },
+    {
+      "table": 74,
+      "section": 9,
+      "heading": "WEB-FR-BOOK-07 — Occupied seat IDs",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "a1b6fdf1a4e7b86eaa97ef615bec603d64f0bce28cc07a32981fdc54860e0f33"
+    },
+    {
+      "table": 75,
+      "section": 9,
+      "heading": "WEB-FR-BOOK-08 — Concurrent seat conflict",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "2ab89e3d6a1b2cfea2a9d70a0209c472548be5988d7fa84c171dc017357384e0"
+    },
+    {
+      "table": 76,
+      "section": 9,
+      "heading": "WEB-FR-BOOK-09 — Sweetbox pair",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "f27f9eb0160d55f04f9b7fcf8b4913dd79609a6524e9584694b4333ea6248477"
+    },
+    {
+      "table": 77,
+      "section": 9,
+      "heading": "WEB-FR-BOOK-10 — Expire unpaid hold",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "215a31e461f62b6e0f945b54308ccecd761b3e62fc8d6b8fb7528473f55b72f3"
+    },
+    {
+      "table": 78,
+      "section": 9,
+      "heading": "WEB-FR-BOOK-11 — Refresh customer map",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "7f02901f192ecae0171442965957545544499842e7d779b41843f36c431eb2a8"
+    },
+    {
+      "table": 79,
+      "section": 9,
+      "heading": "WEB-FR-BOOK-12 — Showtime booking statistics",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "d80068db6a2940425cbc1b15805ea02c07087bfb01e3dff2bd234391217786b7"
+    },
+    {
+      "table": 80,
+      "section": 9,
+      "heading": "WEB-FR-BOOK-13 — Concessions with tickets",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "a7fdc0b62ca478f580e4bf00bbf92f2c06b81b1905e3d34038b978610e048f08"
+    },
+    {
+      "table": 81,
+      "section": 9,
+      "heading": "WEB-FR-BOOK-14 — Concessions administration",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "5f03f51860eb17570c3eb49a517e3e2c0ee290d96f37e71158bf3952845aa754"
+    },
+    {
+      "table": 82,
+      "section": 9,
+      "heading": "WEB-FR-BOOK-15 — Promotion and voucher",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "80347ec7a2504d73105a3f5400cbd67d51b4e19c1a129bec3d5dbf864ff0bc7a"
+    },
+    {
+      "table": 83,
+      "section": 9,
+      "heading": "WEB-FR-BOOK-16 — Promotion administration",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "5691cbbb642fbb5e244dc779ca1a4c77d2618eaa58da01c513f4e38bc45be22b"
+    },
+    {
+      "table": 84,
+      "section": 9,
+      "heading": "WEB-FR-BOOK-17 — Membership points",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "82a418aa1f1f0907737f3ebedf4481ed9485b4d210c5c88888f8f7072cdea3ad"
+    },
+    {
+      "table": 85,
+      "section": 9,
+      "heading": "WEB-FR-BOOK-18 — Member administration",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "b142cfad28e99392b222ea42a4003158eb307445064f379dead71a00a35c7703"
+    },
+    {
+      "table": 86,
+      "section": 9,
+      "heading": "WEB-FR-BOOK-19 — Share and calendar",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "5adcf9f85b877f384de19063c80824f5dea2e3ff7376f5ff7641807dd2e3f88d"
+    },
+    {
+      "table": 87,
+      "section": 9,
+      "heading": "WEB-FR-PAY-01 — Create/reuse PayOS link",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "0242ec9d35d69156f18a49b9259d0ad7c32c234034c5662ebd00eed5a65f0dca"
+    },
+    {
+      "table": 88,
+      "section": 9,
+      "heading": "WEB-FR-PAY-02 — Verify PayOS",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "62d3c42d77a6b08d6f76c9bff470379176a8f56732af138b16d314bc374e91df"
+    },
+    {
+      "table": 89,
+      "section": 9,
+      "heading": "WEB-FR-PAY-03 — Payment details",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "d6fcbe5ebd2dfe7b70be9f7a91d15cada6bd4b32435f083b365fe6332aab289e"
+    },
+    {
+      "table": 90,
+      "section": 9,
+      "heading": "WEB-FR-PAY-04 — Own payment history",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "8b6e34d79469b8dd0ef983520ae8b87d0d78fe41cf03f9b72efdbe13a8572e94"
+    },
+    {
+      "table": 91,
+      "section": 9,
+      "heading": "WEB-FR-PAY-05 — Payments by booking",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "1ac7eedf7a887d3f02850981a9e3a243ed3eeaf27f70dfd33ecaddd50418210c"
+    },
+    {
+      "table": 92,
+      "section": 9,
+      "heading": "WEB-FR-PAY-06 — Refund access",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "99a6441e3d0eb58ef9b50d465668a7464016c71eb9cb544e61f806d2cb3dcbd4"
+    },
+    {
+      "table": 93,
+      "section": 9,
+      "heading": "WEB-FR-PAY-07 — Signed webhook",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "d2cc43547f1795f95524cdddca85acc62af6d709e54777c94253134f74e1ef1d"
+    },
+    {
+      "table": 94,
+      "section": 9,
+      "heading": "WEB-FR-PAY-08 — Late payment",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "d83ff9f2a11420dce6cc06cac96940430320187996ace24e334eb507096405e7"
+    },
+    {
+      "table": 95,
+      "section": 9,
+      "heading": "WEB-FR-PAY-09 — Management payments",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "85e9042458b9577231885aca44b34346b5f2d07cba5a92e9546656acf9e3a40c"
+    },
+    {
+      "table": 96,
+      "section": 9,
+      "heading": "WEB-FR-PAY-10 — Revenue summary",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "45e1173f1b165ff7f81e854553fb209ca05b42a4104f58dc3e0e2bff0fa62135"
+    },
+    {
+      "table": 97,
+      "section": 9,
+      "heading": "WEB-FR-PAY-11 — Automatic payment polling",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "56e2cad8635c299330f1e06ec167ccfaf90abb9614e7f96e0d3a8bf336210e61"
+    },
+    {
+      "table": 98,
+      "section": 9,
+      "heading": "WEB-FR-REF-01 — Create refund request",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "2d74a790a786d741c2270cff57c28b9cbca38ba281d188b5ef9d0f983887692c"
+    },
+    {
+      "table": 99,
+      "section": 9,
+      "heading": "WEB-FR-REF-02 — Management refund list",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "5d91c6b848d16e2ea744177b31ed6c14c85bf0d64ad23d16222069abd504f9e1"
+    },
+    {
+      "table": 100,
+      "section": 9,
+      "heading": "WEB-FR-REF-03 — Record completed transfer",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "29b041f41994da8c9c51c23dd475ed6f74e51fef78463211eda4915175d76fd9"
+    },
+    {
+      "table": 101,
+      "section": 9,
+      "heading": "WEB-FR-REF-04 — Reject refund",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "10a0e8f376bef660af24b6be3313abc91648b64088c0deb17c28e550e03cd42d"
+    },
+    {
+      "table": 102,
+      "section": 9,
+      "heading": "WEB-FR-REF-05 — Reopen rejected refund",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "0b50b2519daa19a8bd9db8a3d9b424d49d240f80955322f43902d5a6e3ce7986"
+    },
+    {
+      "table": 103,
+      "section": 9,
+      "heading": "WEB-FR-REF-06 — Own refund status",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "a3167e6b2e16fbcd18af19efd3888d68c38181dfb9937eeda521fca5480335b9"
+    },
+    {
+      "table": 104,
+      "section": 9,
+      "heading": "WEB-FR-REF-07 — Unique refund per payment",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "7151636e2cc80ac9bbf8ae9e0d3793b153421f38ff7e79b123ff8026b1007756"
+    },
+    {
+      "table": 105,
+      "section": 9,
+      "heading": "WEB-FR-POS-01 — Create counter sale",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "60971ea900897690e09531032ecae1299e318a902a464c529ebe9df3198ab3ed"
+    },
+    {
+      "table": 106,
+      "section": 9,
+      "heading": "WEB-FR-POS-02 — Counter checkout",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "f5f75afa628daa17bf1367acc68e9d80096cbe85c5475a54d34bc31d8ee7a622"
+    },
+    {
+      "table": 107,
+      "section": 9,
+      "heading": "WEB-FR-POS-03 — Cash and change",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "d5242a5125902122e735aabb0ebdbbff6a3cb859891dc1d2fc0bb1e22d3aeae4"
+    },
+    {
+      "table": 108,
+      "section": 9,
+      "heading": "WEB-FR-POS-04 — Bank-transfer QR",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "5fe92f1e3ffa4f5e01bfcb3952144874dada2906fc9fd50deddc2c95d4d1ca26"
+    },
+    {
+      "table": 109,
+      "section": 9,
+      "heading": "WEB-FR-POS-05 — Switch transfer to cash",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "202da788f3601a9fb5bf3b79d634ed1d9b4a715ec73356d51e0cb8fdc2f84c03"
+    },
+    {
+      "table": 110,
+      "section": 9,
+      "heading": "WEB-FR-POS-06 — Retain counter email",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "bfdf8186480ce9a007699f425fcb519771e6fc538a277733d101cb975be7e059"
+    },
+    {
+      "table": 111,
+      "section": 9,
+      "heading": "WEB-FR-POS-07 — Print and admit",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "2707136d68972e0199e899e5d009f2320e120d4373718a79cccacea22817dca3"
+    },
+    {
+      "table": 112,
+      "section": 9,
+      "heading": "WEB-FR-POS-08 — Reopen paid ticket",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "1e892174640d9d9202b3e72fc03788bc7bff0001a7c0cfdee26bfda18e505fdd"
+    },
+    {
+      "table": 113,
+      "section": 9,
+      "heading": "WEB-FR-CHK-01 — Ticket QR",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "62fcd4e70f255e16a659c03c9849fe169c3c2afe402a583cbb9a90aae34821c8"
+    },
+    {
+      "table": 114,
+      "section": 9,
+      "heading": "WEB-FR-CHK-02 — Lookup ticket code",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "d571ff92e1cc63d2e20bd56c3a4e9903270bbf5db42628a48c4f5868c5849919"
+    },
+    {
+      "table": 115,
+      "section": 9,
+      "heading": "WEB-FR-CHK-03 — Check-in validation",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "a58317974be5b38fbcb38481d2c7879e0c8e78e262f6fad333057ae7ccd049c2"
+    },
+    {
+      "table": 116,
+      "section": 9,
+      "heading": "WEB-FR-CHK-04 — Camera/manual scanner",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "72608c8359267b1caa32701b95c3bb3d14cde75b221b2b9ed0996e9dfdc383c0"
+    },
+    {
+      "table": 117,
+      "section": 9,
+      "heading": "WEB-FR-CHK-05 — Display check-in time",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "8c556299a23fcd8b8c9890bcb36919cae1c7fdea21b05eff9ab3fea0201dc94e"
+    },
+    {
+      "table": 118,
+      "section": 9,
+      "heading": "WEB-FR-NOTI-01 — Notification history",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "ce0eda2a8f90607f100073bc51682ba6f7d82042855dcfbb17706a853d57aa76"
+    },
+    {
+      "table": 119,
+      "section": 9,
+      "heading": "WEB-FR-NOTI-02 — Compose booking message",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "9ee5aa49cc557b33f2076848870b514767caf7a9aea4694b15cda5823908c632"
+    },
+    {
+      "table": 120,
+      "section": 9,
+      "heading": "WEB-FR-NOTI-03 — Send/retry message",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "6857ccd5a4b19757250174fe70d728002fcc154e72dd0e9e680a1d5319f083ae"
+    },
+    {
+      "table": 121,
+      "section": 9,
+      "heading": "WEB-FR-NOTI-04 — Notification details",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "e0af0e5f3e451b130b7a4b348eb5e0af788b9f66c85018a2d235402cfd27218f"
+    },
+    {
+      "table": 122,
+      "section": 9,
+      "heading": "WEB-FR-NOTI-05 — Delete notification API",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "a88aacbe71f9d27e7a376610a37b9b41372cfe478733ca3fd26e36efcd484aeb"
+    },
+    {
+      "table": 123,
+      "section": 9,
+      "heading": "WEB-FR-NOTI-06 — Event emails",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "e39c05b508cae22608bce6e8b422c833d7e21f520f3bcdd647c954d31e601e1c"
+    },
+    {
+      "table": 124,
+      "section": 9,
+      "heading": "WEB-FR-NOTI-07 — OTP and welcome email",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "2e3e8368eab91c0f253c925c90cfe0a55b11acf05fbe7cd988970b7883b1ef7e"
+    },
+    {
+      "table": 125,
+      "section": 9,
+      "heading": "WEB-FR-NOTI-08 — Showtime reminder",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "7b4a098e04be2592237828319c36ef7f392185949a14608981985846e8e6fcd2"
+    },
+    {
+      "table": 126,
+      "section": 9,
+      "heading": "WEB-FR-NOTI-09 — Read/unread notifications",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "32cc57b6f4e09ece043d05607f7111e533099cc0745b7f8ebc3787336aad9503"
+    },
+    {
+      "table": 127,
+      "section": 9,
+      "heading": "WEB-FR-DASH-01 — Today totals",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "d34296991c961e6680e8e5a446f0f5033849e2ca3f7a19e6a63b7d0760c72d03"
+    },
+    {
+      "table": 128,
+      "section": 9,
+      "heading": "WEB-FR-DASH-02 — Live showtime board",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "48f3ea1cda72e4d4097543f47816b5bbc5de80a70d37da90b5a07d7d3f3c9747"
+    },
+    {
+      "table": 129,
+      "section": 9,
+      "heading": "WEB-FR-DASH-03 — Staff attention queue",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "3e5206dfddf4cf871fced2f77cce3403848c8228d1137d75db2bed7fff80781f"
+    },
+    {
+      "table": 130,
+      "section": 9,
+      "heading": "WEB-FR-DASH-04 — Admin monthly overview",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "90e668a6d3299ab5c6ffcb1c8f3e682873e07618e9bf0da8868a3a0328717904"
+    },
+    {
+      "table": 131,
+      "section": 9,
+      "heading": "WEB-FR-NAV-01 — Route guards and recovery",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "ebe49f81ac75406880339ea2da8eca5ec16d6f1225a67ecb3ebbc180be972757"
+    },
+    {
+      "table": 132,
+      "section": 9,
+      "heading": "WEB-FR-STATE-01 — Loading, error and empty states",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "e494fb627640c3a0f782a4bc891fc6eb2048f219621d5554d1222d536ec68086"
+    },
+    {
+      "table": 133,
+      "section": 9,
+      "heading": "WEB-FR-MEDIA-01 — Platform-specific movie media",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "1b5698b1fa2ec55b8fad8c979054923cd6859c8c1b7832601e8a03f681fd5b9e"
+    },
+    {
+      "table": 134,
+      "section": 10,
+      "heading": "UC-WEB-01 — Authentication and account session",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "2b101c532188258b2b3122efaac5deb5405a4f2e70205754cad09cacd263c6bb"
+    },
+    {
+      "table": 135,
+      "section": 10,
+      "heading": "UC-WEB-02 — Account administration",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "592708c0c5ba34512b834ee02f83180f1f0a29765228efdc95b96ab0b066390c"
+    },
+    {
+      "table": 136,
+      "section": 10,
+      "heading": "UC-WEB-03 — Movie catalogue and reviews",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "f90079882b7e5326f7cd8305859e2dd609301a143b1e4e50645c1f20cf6f7ce9"
+    },
+    {
+      "table": 137,
+      "section": 10,
+      "heading": "UC-WEB-04 — Room management",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "b163f40a394e04f5e653e05b703dd0ec788f05e3bfa76daed44a783c29bd6dd1"
+    },
+    {
+      "table": 138,
+      "section": 10,
+      "heading": "UC-WEB-05 — Seat map and availability",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "d68ce2761e564cc5b47c66ae59a09c1936ae2f90c0ee883a246fe1c437b77b4b"
+    },
+    {
+      "table": 139,
+      "section": 10,
+      "heading": "UC-WEB-06 — Showtimes and prices",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "c8b05477d662874b684137742d671013e80551c38ef0c70c556cd74ac4eaad3e"
+    },
+    {
+      "table": 140,
+      "section": 10,
+      "heading": "UC-WEB-07 — Booking, concessions, promotions and loyalty",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "c5194f2f5f7d6b8db3b5d37c547d829fc75803c7f60cfdcce3278487a35b0755"
+    },
+    {
+      "table": 141,
+      "section": 10,
+      "heading": "UC-WEB-08 — Online payment and reconciliation",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "6754719aa061c4b1d5530b584d992c3e278f1135cec97f3a3e3eee6752da29c7"
+    },
+    {
+      "table": 142,
+      "section": 10,
+      "heading": "UC-WEB-09 — Cancellation and manual refund",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "7e441f4ac71c8c682bf3f814395b0afe3b7fc1c609bf7bb50b78db8814093d07"
+    },
+    {
+      "table": 143,
+      "section": 10,
+      "heading": "UC-WEB-10 — Counter ticket sale",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "9886823f6d9e3a598c0b7700ccd4aaf7a3d1336019de98f3998f08e01cea0f6b"
+    },
+    {
+      "table": 144,
+      "section": 10,
+      "heading": "UC-WEB-11 — Ticket lookup and check-in",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "516d8f9980b17c0d14cfed69a82e3bc9e96fe91326f6e88b5ff1671c2e709eaf"
+    },
+    {
+      "table": 145,
+      "section": 10,
+      "heading": "UC-WEB-12 — Notifications and transactional email",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "91eb31874944941ff6f8c1bba6ebb9cbb962d2855c75290337c189a5f2c853e7"
+    },
+    {
+      "table": 146,
+      "section": 10,
+      "heading": "UC-WEB-13 — Operations dashboards",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "d23451e1d974c402a861d46eaebc9c62d4ce08f5619bf2296baa3801602f58de"
+    },
+    {
+      "table": 147,
+      "section": 11,
+      "heading": "11. External Interface Requirements",
+      "columns": 2,
+      "rows": 4,
+      "cells_sha256": "c778074f889854e1b9eb4311d5afb9209c0ca624c7882a11a786767c93e8adde"
+    },
+    {
+      "table": 148,
+      "section": 12,
+      "heading": "WEB-SCR-LOGIN — Sign in",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "a9abe5a02b6670043ad8491a88eeafd4a23a7f7d90a18004bcdf7069aad68d4d"
+    },
+    {
+      "table": 149,
+      "section": 12,
+      "heading": "WEB-SCR-REGISTER — Registration",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "720109b10814c209fc2cca1189fa68b5b518caf89646bf989c22993c1f2bf5e3"
+    },
+    {
+      "table": 150,
+      "section": 12,
+      "heading": "WEB-SCR-VERIFY — Verify email",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "97e5e29b24efc9a71f3631afdf14b6a9d756eec1fc253954a7e66678bb8aa673"
+    },
+    {
+      "table": 151,
+      "section": 12,
+      "heading": "WEB-SCR-FORGOT — Forgot password",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "14faccd6d8e670f95c31359feb24db00995492b1aae0d9bbaac617d52cb9d6fd"
+    },
+    {
+      "table": 152,
+      "section": 12,
+      "heading": "WEB-SCR-RESET — Reset password",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "68d94adc4b96f3689127eec07aa1eb7f4d072d195a51bdc90150a71ab6bdd5b4"
+    },
+    {
+      "table": 153,
+      "section": 12,
+      "heading": "WEB-SCR-HOME — Customer home",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "255d7eb717802367d4380d89f2c91219fa53dbf5999677761e31e96f8e0e0663"
+    },
+    {
+      "table": 154,
+      "section": 12,
+      "heading": "WEB-SCR-MOVIE — Movie details",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "88b4f9617b9a93945dd88462b0ae84153268abfa27683c425d83a4f3cf2186d1"
+    },
+    {
+      "table": 155,
+      "section": 12,
+      "heading": "WEB-SCR-SEATS — Seat selection",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "ab8556c77c869559b2ba659cb1b020784f80717e9b3920b036c1526f93e2df20"
+    },
+    {
+      "table": 156,
+      "section": 12,
+      "heading": "WEB-SCR-SUMMARY — Booking summary",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "7fa2bf5ca32ced82c9bdcbc9aed5573d85ff978f1134ce33d68f4c1851f70c87"
+    },
+    {
+      "table": 157,
+      "section": 12,
+      "heading": "WEB-SCR-PAYMENT — Payment",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "3b8482fd2bde69c78bb7419e112fc4ea5e3f1cbc78ac73a824f38ea43783efb9"
+    },
+    {
+      "table": 158,
+      "section": 12,
+      "heading": "WEB-SCR-RESULT — Payment result",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "a648e3319a217e95da440cd26c5ae6266a63190b08db2cd0108ca98ab0d96e6a"
+    },
+    {
+      "table": 159,
+      "section": 12,
+      "heading": "WEB-SCR-TICKETS — My tickets",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "3c31691cfa63ca3145a9a3f8a6f4cdc97849a23d59f9849042d0a4d924a7144e"
+    },
+    {
+      "table": 160,
+      "section": 12,
+      "heading": "WEB-SCR-TICKET — Ticket details",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "bc3ee96ee17edd923240007874bab5253b4f59d1a5284a6939f46c0e1f8a3779"
+    },
+    {
+      "table": 161,
+      "section": 12,
+      "heading": "WEB-SCR-PAYHISTORY — Payment history",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "26f1952633758587718b35837099becf02d489bed12f0f5523575ae9267424bd"
+    },
+    {
+      "table": 162,
+      "section": 12,
+      "heading": "WEB-SCR-NOTIFICATIONS — Notifications",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "a5e72179c0d6f374c6696952f277efcd3ffc3cb5501889b097e5d257e37d3d1c"
+    },
+    {
+      "table": 163,
+      "section": 12,
+      "heading": "WEB-SCR-NOTIFICATION — Notification details",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "6f3a58379d065937ae36e0618f7ea630818288667eda714fea8bb199b898a17c"
+    },
+    {
+      "table": 164,
+      "section": 12,
+      "heading": "WEB-SCR-PROFILE — Account and membership",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "8221c6a71986a707a2d0e243948bf7839032360fde77b3d677594a354b700976"
+    },
+    {
+      "table": 165,
+      "section": 12,
+      "heading": "WEB-SCR-CHECKIN — Ticket check-in",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "2ed39e7eabc364406265211a1635146670f96c5abe469498cf0cd04209ae6ef0"
+    },
+    {
+      "table": 166,
+      "section": 12,
+      "heading": "WEB-SCR-STAFF-DASH — Staff dashboard",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "e8f713208fb10a02874489e4636da4f667820d7a1c786bc226855b9af89624e7"
+    },
+    {
+      "table": 167,
+      "section": 12,
+      "heading": "WEB-SCR-ADMIN-DASH — Admin dashboard",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "c52f2d1da6760ae9a1a8dbdbc5064e1a4f9c0c7021fea30c1841da27f2bd0cf1"
+    },
+    {
+      "table": 168,
+      "section": 12,
+      "heading": "WEB-SCR-OPERATIONS — Operations workspace",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "5ea97de54338e10ff90d88f34396a9ed0c05a4a93c837d0dacf27cb081a80467"
+    },
+    {
+      "table": 169,
+      "section": 12,
+      "heading": "WEB-SCR-COUNTER — Counter booking",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "264249c70ac17e52b1a8bc42f2191429ad1887ae15a1a7e488a8d5d0459c16c7"
+    },
+    {
+      "table": 170,
+      "section": 12,
+      "heading": "WEB-SCR-CHECKOUT — Counter checkout",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "bd6a48e8e5f1b7376fbae5c21a426e6698de0b65a6d096f055659c97815a3459"
+    },
+    {
+      "table": 171,
+      "section": 12,
+      "heading": "WEB-SCR-RECORD-BOOKINGS — Booking record",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "d62aeb663b8d408d97fe0e01d9bea0d47114c644aa6656e1ce21efdb8b9b6c2e"
+    },
+    {
+      "table": 172,
+      "section": 12,
+      "heading": "WEB-SCR-RECORD-PAYMENTS — Payment record",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "a3e482dc7a8bb548f1be2fea567c03efcb3f572d8fa2bbc218475120e46a4802"
+    },
+    {
+      "table": 173,
+      "section": 12,
+      "heading": "WEB-SCR-RECORD-REFUNDS — Refund record",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "222528d3f58ee3eb0900ae166827c42fc59af05b3bd5277c2dffd93c62cd3a84"
+    },
+    {
+      "table": 174,
+      "section": 12,
+      "heading": "WEB-SCR-RECORD-SHOWTIMES — Showtime record",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "90559077a59f453b0f960c8bf3f478ec713d2a76a61a9b409e6c57c83998ee03"
+    },
+    {
+      "table": 175,
+      "section": 12,
+      "heading": "WEB-SCR-RECORD-ROOMS — Room record",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "c34c1469446b4341fecad1f78e7d12dcfcb195a49a810be4908723d401206118"
+    },
+    {
+      "table": 176,
+      "section": 12,
+      "heading": "WEB-SCR-SHOW-EDITOR — Showtime editor",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "7fbbd6bb006310c2208fd203365f04b74a27f12dcc048a4af64e3ed6bd037de8"
+    },
+    {
+      "table": 177,
+      "section": 12,
+      "heading": "WEB-SCR-COMPOSE — Compose booking email",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "7ab9382e82908faed3d26cd653170478a61250906d149b3c988ab146a6f6a452"
+    },
+    {
+      "table": 178,
+      "section": 12,
+      "heading": "WEB-SCR-ADMIN-MOVIES — Movies",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "9ed7ecedbd73cbb3e1d980f19137500844b4665a4add575dbfec0e29d9b30bad"
+    },
+    {
+      "table": 179,
+      "section": 12,
+      "heading": "WEB-SCR-ADMIN-ROOMS — Rooms",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "05033e19c7576cd301ea351454b8bcfb77e115c177745b7bfb20f67733767bd4"
+    },
+    {
+      "table": 180,
+      "section": 12,
+      "heading": "WEB-SCR-ADMIN-SNACKS — Snacks",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "9a036a1b1347eb982554152904ba6abff9e4dca3ef5ce5aa5c6ed3858f1a3de2"
+    },
+    {
+      "table": 181,
+      "section": 12,
+      "heading": "WEB-SCR-ADMIN-PROMOTIONS — Promotions",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "21781c6f574a9424e3171405bfa2ef403e19138bf704950133763fa52f6d4c62"
+    },
+    {
+      "table": 182,
+      "section": 12,
+      "heading": "WEB-SCR-ADMIN-MEMBERS — Members",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "94ed73ad347232aa3cb5cbd7703836e3dc1a5d994771d07feb18162c872c1871"
+    },
+    {
+      "table": 183,
+      "section": 12,
+      "heading": "WEB-SCR-ADMIN-USERS — Accounts",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "9109562f63abc99be136e1b3d581e8cb1039ea59c8f3712465a407c3fbf4a572"
+    },
+    {
+      "table": 184,
+      "section": 12,
+      "heading": "WEB-SCR-USER-EDITOR — Account create/details",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "9ea6ea47b7b6a29edf6c363edc722cd48a1e45abd4de96b38d4313f787111a32"
+    },
+    {
+      "table": 185,
+      "section": 12,
+      "heading": "WEB-SCR-MGT-PROFILE — Management profile",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "8cb91d5e0246ea8e2b8626bfa396f5ca0303a860414d302c890728c77052e12c"
+    },
+    {
+      "table": 186,
+      "section": 12,
+      "heading": "WEB-SCR-STAFF-ONLY — Management access notice",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "d21cdcf4bdeb1acb71f9abc1e987ab27e0f615224a9256f55bf9f607282d5b98"
+    },
+    {
+      "table": 187,
+      "section": 13,
+      "heading": "13. API Requirements",
+      "columns": 6,
+      "rows": 106,
+      "cells_sha256": "8f85288ddfa01f797d21f22f61904490a4916a7f43132b14ee01e5a792534c67"
+    },
+    {
+      "table": 188,
+      "section": 13,
+      "heading": "Request field definitions",
+      "columns": 3,
+      "rows": 30,
+      "cells_sha256": "d053e2880d064d1effe650c8da87ce70639bb09b0b8f36d06bb9a4018c364d6c"
+    },
+    {
+      "table": 189,
+      "section": 14,
+      "heading": "14. Data Requirements",
+      "columns": 3,
+      "rows": 6,
+      "cells_sha256": "66a21cae4bc74a85c475639fc6ee8af62b3ddc8f5f227f018c1fabc4e2afc4e0"
+    },
+    {
+      "table": 190,
+      "section": 15,
+      "heading": "15. Business Workflows",
+      "columns": 2,
+      "rows": 7,
+      "cells_sha256": "8373ff4b638bcb92c33a72b74d8cf65412fe69a4d5ff52be8ec7a6470c702df0"
+    },
+    {
+      "table": 191,
+      "section": 15,
+      "heading": "State contract",
+      "columns": 2,
+      "rows": 5,
+      "cells_sha256": "a5f0ba3a2fb3f1d96c989f3532d7b6a4d3ed5e03c7a27858fd3defb2d73359f5"
+    },
+    {
+      "table": 192,
+      "section": 17,
+      "heading": "17. Error Handling",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "685b554178a7b6c1343952846884b880a2391e133beb1debe444b988dbe29e0e"
+    },
+    {
+      "table": 193,
+      "section": 18,
+      "heading": "18. Non-Functional Requirements",
+      "columns": 3,
+      "rows": 21,
+      "cells_sha256": "c64f235c8f92acaa0cb3048fc24800aaebf658db8b586aad372f03bd9b33123f"
+    },
+    {
+      "table": 194,
+      "section": 19,
+      "heading": "19. Security Requirements",
+      "columns": 2,
+      "rows": 6,
+      "cells_sha256": "e7358e4fca3b29a017efb37c8f5e54b51cdcba9e6632d1d0e6dffb74a4685185"
+    },
+    {
+      "table": 195,
+      "section": 20,
+      "heading": "20. Testing Requirements",
+      "columns": 2,
+      "rows": 7,
+      "cells_sha256": "c320332e19b66debf17c57d222f2b06ef89740b2f09fb05ae086c44357d00ca1"
+    },
+    {
+      "table": 196,
+      "section": 20,
+      "heading": "Existing test evidence",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "7212e1e0d0a745832793c093db7342f1a6ed5db09e4722bef6b89de3eea867ba"
+    },
+    {
+      "table": 197,
+      "section": 21,
+      "heading": "21. Acceptance Criteria",
+      "columns": 2,
+      "rows": 4,
+      "cells_sha256": "93ed233a35514c9939561895cd02295d78b7a65c08f1651cda443067f87b18ac"
+    },
+    {
+      "table": 198,
+      "section": 22,
+      "heading": "22. Requirements Traceability Matrix",
+      "columns": 6,
+      "rows": 128,
+      "cells_sha256": "383e646f1aecb72eb59bb8d29ffdd4d722a7df171ab670ac2a2141c904661698"
+    },
+    {
+      "table": 199,
+      "section": 23,
+      "heading": "23. Constraints",
+      "columns": 2,
+      "rows": 5,
+      "cells_sha256": "c33aae70b61b17fb056cc13b897d6835ccbe8e938cd6eda133a60d50babbca5b"
+    },
+    {
+      "table": 200,
+      "section": 25,
+      "heading": "25. Future Enhancements",
+      "columns": 3,
+      "rows": 3,
+      "cells_sha256": "a426675fdb0423ad1908bed4725a09e8ed742adb1ffa9d58fd8ae052e669d06b"
+    },
+    {
+      "table": 201,
+      "section": 27,
+      "heading": "27. Implemented vs Requirement",
+      "columns": 5,
+      "rows": 128,
+      "cells_sha256": "84c5617eb23b3931a98d5d622c2526ecbae5f1ac9a394e427aabd32382b4594d"
+    },
+    {
+      "table": 202,
+      "section": 27,
+      "heading": "27. Implemented vs Requirement",
+      "columns": 5,
+      "rows": 3,
+      "cells_sha256": "ddf3773ea5a2c51b90a0b506b79b6a6df9162ac763dca97dfd9a49138513483d"
+    },
+    {
+      "table": 203,
+      "section": 28,
+      "heading": "28. Evidence and source reconciliation",
+      "columns": 2,
+      "rows": 10,
+      "cells_sha256": "6b2a6ebff753339d990e80ad7292b34dbb755cfef440d18cb3f69294474741bb"
+    }
+  ],
+  "images": 0,
+  "source_content_sha256": "d9ab7ad758f3447bbdf88349a02139c195c0cabe977a2e1030be00697d9653f9",
+  "output_pdf": "Cinema_Web_NET_SRS_EN.pdf"
+}

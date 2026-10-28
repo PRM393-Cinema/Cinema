@@ -1,0 +1,35 @@
+\clearpage
+\section{Evidence and source reconciliation}\label{sec:srs-28}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.23000\SRSWidth}P{0.77000\SRSWidth}@{}}
+\caption{28. Evidence and source reconciliation}\label{tab:srs-203}\\
+\toprule
+\textbf{Evidence} & \textbf{Use /\allowbreak{} reconciliation} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{Evidence} & \textbf{Use /\allowbreak{} reconciliation} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+\href{../../../docs/SRS\_EN.md}{\texttt{docs/\allowbreak{}SRS\_\allowbreak{}EN.\allowbreak{}md}}; \href{../../../docs/SRS\_VI.md}{\texttt{docs/\allowbreak{}SRS\_\allowbreak{}VI.\allowbreak{}md}} & 125 legacy \texttt{FR} rows per language, scoped with suffix IDs; \texttt{NAV}/\allowbreak{}\texttt{STATE}/\allowbreak{}\texttt{MEDIA} refine code behaviour \\[3pt]
+\href{../../../Cinema\_BE/Cinema\_Microservice\_SRS\_Complete.md}{\texttt{Cinema\_\allowbreak{}BE/\allowbreak{}Cinema\_\allowbreak{}Microser\allowbreak{}vice\_\allowbreak{}SRS\_\allowbreak{}Complete\allowbreak{}.\allowbreak{}md}} & Historical six-service intent; current three services take precedence \\[3pt]
+\href{../../../README.md}{\texttt{README.\allowbreak{}md}}; \href{../../../Cinema\_Mobile/README.md}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}README.\allowbreak{}md}}; \href{../../../DEMO.md}{\texttt{DEMO.\allowbreak{}md}} & Actual entry points/\allowbreak{}setup, no separate .\texttt{NET} \texttt{UI} \\[3pt]
+\href{../../../Cinema\_Mobile/lib/app/routes/app\_router.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}app/\allowbreak{}routes/\allowbreak{}app\_\allowbreak{}router.\allowbreak{}dart}}; \href{../../../Cinema\_Mobile/lib/admin/admin\_router.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}admin/\allowbreak{}admin\_\allowbreak{}router.\allowbreak{}dart}} & Channel routes/\allowbreak{}role guards; native management only check-in \\[3pt]
+\href{../../../Cinema\_Mobile/lib/app/app\_dependencies.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}app/\allowbreak{}app\_\allowbreak{}dependen\allowbreak{}cies.\allowbreak{}dart}}; \href{../../../Cinema\_Mobile/lib/core/network/api\_client.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}core/\allowbreak{}network/\allowbreak{}api\_\allowbreak{}client.\allowbreak{}dart}} & Remote dependencies, 15-second timeout, refresh and public-session probe \\[3pt]
+\href{../../../Cinema\_BE/ApiGateway/ApiGateway/appsettings.json}{\texttt{Cinema\_\allowbreak{}BE/\allowbreak{}Api\allowbreak{}Gateway/\allowbreak{}Api\allowbreak{}Gateway/\allowbreak{}appsetti\allowbreak{}ngs.\allowbreak{}json}} & Actual route policies/\allowbreak{}rates/\allowbreak{}health; old prose route count is stale \\[3pt]
+\href{../../../.github/workflows/ci.yml}{\texttt{.\allowbreak{}github/\allowbreak{}workflow\allowbreak{}s/\allowbreak{}ci.\allowbreak{}yml}}; \href{../../../.github/workflows/flutter.yml}{\texttt{.\allowbreak{}github/\allowbreak{}workflow\allowbreak{}s/\allowbreak{}flutter.\allowbreak{}yml}} & Declared \texttt{CI}; Flutter pin 3.47.4 supersedes older environment prose; old test counts are unverified current totals \\[3pt]
+\href{../../../Cinema\_Mobile/lib/core/widgets/trailer\_preview\_stub.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}core/\allowbreak{}widgets/\allowbreak{}trailer\_\allowbreak{}preview\_\allowbreak{}stub.\allowbreak{}dart}}; \href{../../../Cinema\_Mobile/lib/core/widgets/trailer\_player\_native.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}core/\allowbreak{}widgets/\allowbreak{}trailer\_\allowbreak{}player\_\allowbreak{}native.\allowbreak{}dart}} & Native preview stub is empty; full trailer opens externally \\[3pt]
+\href{../../../Cinema\_Mobile/lib/features/booking/widgets/ticket\_share\_actions.dart}{\texttt{Cinema\_\allowbreak{}Mobile/\allowbreak{}lib/\allowbreak{}features\allowbreak{}/\allowbreak{}booking/\allowbreak{}widgets/\allowbreak{}ticket\_\allowbreak{}share\_\allowbreak{}actions.\allowbreak{}dart}} & Calendar end fallback 150 minutes, not unconditional exact show end \\[3pt]
+\href{../../../Cinema\_BE/BookingService/BookingService/Services/Implementations/NotificationService.cs}{\texttt{Cinema\_\allowbreak{}BE/\allowbreak{}Booking\allowbreak{}Service/\allowbreak{}Booking\allowbreak{}Service/\allowbreak{}Services\allowbreak{}/\allowbreak{}Implemen\allowbreak{}tations/\allowbreak{}Notifica\allowbreak{}tion\allowbreak{}Service.\allowbreak{}cs}} & Event deduplication and non-atomic \texttt{SMTP}/\allowbreak{}\texttt{DB} delivery; no absolute exactly-once claim \\[3pt]
+\end{longtable}
+\endgroup
+
+Review inventory: 763 files enumerated; 594 relevant text/\allowbreak{}code/\allowbreak{}configuration files indexed, including approximately 64,397 C\#/\allowbreak{}Dart lines. Generated build/\allowbreak{}cache/\allowbreak{}vendor folders, binary media, encrypted secret payloads and missing \texttt{DB}-submodule contents are excluded from functional evidence. No secret values are reproduced.

@@ -1,0 +1,59 @@
+\clearpage
+\section{Business Workflows}\label{sec:srs-15}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{15. Business Workflows}\label{tab:srs-108}\\
+\toprule
+\textbf{\texttt{ID}} & \textbf{Workflow} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{\texttt{ID}} & \textbf{Workflow} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+\texttt{MOB-\allowbreak{}WF-\allowbreak{}01} & Register \ensuremath{\rightarrow} verify \texttt{OTP} \ensuremath{\rightarrow} role landing; unverified login goes to \texttt{OTP}. A failed recovery never authenticates an account. \\[3pt]
+\texttt{MOB-\allowbreak{}WF-\allowbreak{}02} & Browse \ensuremath{\rightarrow} movie \ensuremath{\rightarrow} open showtime \ensuremath{\rightarrow} seats \ensuremath{\rightarrow} summary with extras/\allowbreak{}code/\allowbreak{}points/\allowbreak{}age \ensuremath{\rightarrow} create \texttt{PENDING} hold \ensuremath{\rightarrow} \texttt{Pay\allowbreak{}OS} \ensuremath{\rightarrow} server verify \ensuremath{\rightarrow} \texttt{CONFIRME\allowbreak{}D} + ticket notification. \\[3pt]
+\texttt{MOB-\allowbreak{}WF-\allowbreak{}03} & \texttt{expires\allowbreak{}At} reached \ensuremath{\rightarrow} expiry worker (default every 30 seconds) \ensuremath{\rightarrow} \texttt{EXPIRED} and release seats/\allowbreak{}points. Late payment reclaims seats and confirms, or creates full refund. \\[3pt]
+\texttt{MOB-\allowbreak{}WF-\allowbreak{}04} & Paid customer cancellation \ensuremath{\geq}2 hours before show \ensuremath{\rightarrow} \texttt{REFUND\_\allowbreak{}PENDING} with seats retained \ensuremath{\rightarrow} web staff manual transfer/\allowbreak{}record \ensuremath{\rightarrow} \texttt{REFUNDED\allowbreak{}}/\allowbreak{}\texttt{CANCELLE\allowbreak{}D}. Eligible rejection restores \texttt{SUCCESS}/\allowbreak{}\texttt{CONFIRME\allowbreak{}D}. \\[3pt]
+\texttt{MOB-\allowbreak{}WF-\allowbreak{}05} & 1. Scan \texttt{QR} or type the booking code and press Enter. 2. Lookup ticket; enrich room and age rating when catalogue calls succeed. 3. Check identity/\allowbreak{}rating as prompted, then explicitly check in. 4. Store \texttt{checked\allowbreak{}In\allowbreak{}At}, show confirmation and prepare for the next code. \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{State contract}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{State contract}\label{tab:srs-109}\\
+\toprule
+\textbf{Object} & \textbf{Transitions} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{Object} & \textbf{Transitions} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Booking & \texttt{PENDING} \ensuremath{\rightarrow} \texttt{CONFIRME\allowbreak{}D} /\allowbreak{} \texttt{CANCELLE\allowbreak{}D} /\allowbreak{} \texttt{EXPIRED}; \texttt{EXPIRED} \ensuremath{\rightarrow} \texttt{CONFIRME\allowbreak{}D} (verified late payment and available seats); \texttt{CONFIRME\allowbreak{}D} \ensuremath{\rightarrow} \texttt{REFUND\_\allowbreak{}PENDING} /\allowbreak{} \texttt{CANCELLE\allowbreak{}D}; \texttt{REFUND\_\allowbreak{}PENDING} \ensuremath{\rightarrow} \texttt{CONFIRME\allowbreak{}D} /\allowbreak{} \texttt{CANCELLE\allowbreak{}D} \\[3pt]
+Payment & \texttt{PENDING} \ensuremath{\rightarrow} \texttt{SUCCESS} /\allowbreak{} \texttt{FAILED}; \texttt{FAILED} \ensuremath{\rightarrow} \texttt{SUCCESS} (verified late payment); \texttt{SUCCESS} \ensuremath{\rightarrow} \texttt{REFUND\_\allowbreak{}PENDING} \ensuremath{\rightarrow} \texttt{REFUNDED\allowbreak{}}; \texttt{REFUND\_\allowbreak{}PENDING} \ensuremath{\rightarrow} \texttt{SUCCESS} \\[3pt]
+Refund & \texttt{PENDING} \ensuremath{\rightarrow} \texttt{COMPLETE\allowbreak{}D} /\allowbreak{} \texttt{REJECTED\allowbreak{}}; \texttt{REJECTED\allowbreak{}} \ensuremath{\rightarrow} \texttt{PENDING} (cinema cancels later) \\[3pt]
+Showtime & \texttt{OPEN} \ensuremath{\leftrightarrow} \texttt{CLOSED}; \texttt{OPEN}/\allowbreak{}\texttt{CLOSED} \ensuremath{\rightarrow} \texttt{CANCELLE\allowbreak{}D} \\[3pt]
+Notification & \texttt{PENDING} \ensuremath{\rightarrow} \texttt{SENT}/\allowbreak{}\texttt{FAILED}; \texttt{FAILED} \ensuremath{\rightarrow} \texttt{SENT}; \texttt{read\allowbreak{}At} independent of send state \\[3pt]
+\end{longtable}
+\endgroup
+
+\texttt{checked\allowbreak{}In\allowbreak{}At} is an attribute of a confirmed booking, not a separate booking status.

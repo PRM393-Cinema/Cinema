@@ -1,0 +1,28 @@
+\clearpage
+\section{Constraints}\label{sec:srs-23}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{23. Constraints}\label{tab:srs-117}\\
+\toprule
+\textbf{\texttt{ID}} & \textbf{Constraint /\allowbreak{} open item} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{\texttt{ID}} & \textbf{Constraint /\allowbreak{} open item} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+\texttt{MOB-\allowbreak{}CON-\allowbreak{}01} & The .\texttt{NET} implementation is an \texttt{API} backend. A separate \texttt{MVC}/\allowbreak{}Razor/\allowbreak{}Blazor course \texttt{UI} is [\texttt{TO} \texttt{BE} \texttt{CONFIRME\allowbreak{}D}]. \\[3pt]
+\texttt{MOB-\allowbreak{}CON-\allowbreak{}02} & \texttt{DB} submodule absent/\allowbreak{}uninitialized; exact \texttt{SQL} \texttt{DDL}/\allowbreak{}seed and live migration state [\texttt{TO} \texttt{BE} \texttt{CONFIRME\allowbreak{}D}]. Local \texttt{EF}/\allowbreak{}migrations are the available evidence. \\[3pt]
+\texttt{MOB-\allowbreak{}CON-\allowbreak{}03} & Live merchant keys, public webhook, \texttt{SMTP} and deployment URLs are environment dependencies. No financial transaction or email was initiated for documentation. \\[3pt]
+\texttt{MOB-\allowbreak{}CON-\allowbreak{}04} & Physical \texttt{OS}/\allowbreak{}device acceptance, signing/\allowbreak{}store release, \texttt{SLA}, backup retention and load targets [\texttt{TO} \texttt{BE} \texttt{CONFIRME\allowbreak{}D}]. Platform scaffolding is not a compatibility certificate. \\[3pt]
+\texttt{MOB-\allowbreak{}CON-\allowbreak{}05} & Android emulator gateway defaults to http:/\allowbreak{}/\allowbreak{}10.0.2.2:5000; other local targets http:/\allowbreak{}/\allowbreak{}localhost:5000. Phones need reachable \texttt{API\_\allowbreak{}BASE\_\allowbreak{}URL}; \texttt{ADMIN\_\allowbreak{}URL}/\allowbreak{}\texttt{CUSTOMER\allowbreak{}\_\allowbreak{}URL}/\allowbreak{}\texttt{PAYMENT\_\allowbreak{}RETURN\_\allowbreak{}URL} depend on deployment. \\[3pt]
+\end{longtable}
+\endgroup

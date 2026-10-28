@@ -1,0 +1,33 @@
+\clearpage
+\section{Yêu cầu dữ liệu}\label{sec:srs-14}
+Project-Cinema-\texttt{DB} chưa được khởi tạo trong checkout (git submodule status bắt đầu bằng “-”). Không có dump/\allowbreak{}seed/\allowbreak{}migration \texttt{SQL} của submodule; \texttt{DDL} chính xác và trạng thái migrate thật là [CẦN XÁC NHẬN]. Hợp đồng dùng model/\allowbreak{}\texttt{Db\allowbreak{}Context} \texttt{EF} cục bộ và migration \texttt{SQL} backend sẵn có. Mapping không chứng minh \texttt{DB} thật đã migrate.
+
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-4\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.58000\SRSWidth}P{0.22000\SRSWidth}@{}}
+\caption{14. Yêu cầu dữ liệu}\label{tab:srs-107}\\
+\toprule
+\textbf{Cơ sở dữ liệu} & \textbf{Thực thể /\allowbreak{} bảng} & \textbf{Toàn vẹn và trường} \\
+\midrule
+\endfirsthead
+\multicolumn{3}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{Cơ sở dữ liệu} & \textbf{Thực thể /\allowbreak{} bảng} & \textbf{Toàn vẹn và trường} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{3}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+cinema\_auth\_db & User/\allowbreak{}Role; users, roles, users\_roles, refresh\_tokens, otp\_codes & Email/\allowbreak{}token duy nhất; băm BCrypt; liên kết vai trò; hạn \texttt{OTP} và thu hồi token \\[3pt]
+cinema\_movie\_db & Movie; movies & Tên/\allowbreak{}thời lượng/\allowbreak{}thể loại/\allowbreak{}ngôn ngữ/\allowbreak{}tuổi/\allowbreak{}đạo diễn/\allowbreak{}diễn viên; ảnh/\allowbreak{}trailer/\allowbreak{}preview; \texttt{ACTIVE}/\allowbreak{}\texttt{INACTIVE\allowbreak{}} \\[3pt]
+cinema\_showtime\_db & Room/\allowbreak{}Seat/\allowbreak{}Showtime; rooms, seats, showtimes, outbox\_messages & Duy nhất phòng/\allowbreak{}hàng/\allowbreak{}số; định dạng, giờ, giá; khoá ngoại nội bộ phòng \\[3pt]
+cinema\_booking\_db & Booking, \texttt{Booking\allowbreak{}Seat}, \texttt{Seat\allowbreak{}Reservat\allowbreak{}ion}, \texttt{Concessi\allowbreak{}on\allowbreak{}Item}, \texttt{Booking\allowbreak{}Concessi\allowbreak{}on}, Promotion, \texttt{Loyalty\allowbreak{}Account}, \texttt{Loyalty\allowbreak{}Transact\allowbreak{}ion}, \texttt{Movie\allowbreak{}Review}; bookings, booking\_seats, seat\_reservations, concession\_items, booking\_concessions, promotions, loyalty\_accounts, loyalty\_transactions, movie\_reviews, outbox\_messages & Mã vé duy nhất; giữ chỗ suất/\allowbreak{}ghế duy nhất; đánh giá người/\allowbreak{}phim duy nhất; bản chụp tiền; \texttt{user\allowbreak{}Id} quầy có thể rỗng; \texttt{checked\allowbreak{}In\allowbreak{}At}/\allowbreak{}\texttt{expires\allowbreak{}At}/\allowbreak{}\texttt{reminded\allowbreak{}At} \\[3pt]
+cinema\_payment\_db & Payment/\allowbreak{}Refund; payments, refunds, outbox\_messages & Vé, tiền, phương thức/\allowbreak{}trạng thái, tham chiếu \texttt{Pay\allowbreak{}OS} và ngân hàng trả; một hoàn mỗi thanh toán \\[3pt]
+cinema\_notification\_db & Notification; notifications & Người nhận/\allowbreak{}vé/\allowbreak{}sự kiện; chống lặp sự kiện; \texttt{sent\allowbreak{}At}/\allowbreak{}\texttt{read\allowbreak{}At}; trạng thái và lỗi \\[3pt]
+\end{longtable}
+\endgroup
+
+Client lưu token/\allowbreak{}thông tin người qua flutter\_secure\_storage và dữ liệu vé tạm trong bộ nhớ, không có sáu \texttt{DB} cục bộ. Tiền decimal server lưu bản chụp ghế/\allowbreak{}bắp nước/\allowbreak{}giảm giá/\allowbreak{}điểm. Thời gian rạp dùng giờ Việt Nam và mapping timestamp without time zone. \texttt{ID} xuyên service là tham chiếu logic được ứng dụng/\allowbreak{}sự kiện kiểm tra.

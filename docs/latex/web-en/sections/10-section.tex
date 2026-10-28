@@ -1,0 +1,430 @@
+\clearpage
+\section{Use Case Specifications}\label{sec:srs-10}
+\Needspace{10\baselineskip}
+\subsection{\texttt{UC-\allowbreak{}WEB-\allowbreak{}01} — Authentication and account session}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{UC-\allowbreak{}WEB-\allowbreak{}01} — Authentication and account session}\label{tab:srs-134}\\
+\toprule
+\textbf{Field} & \textbf{Use-case specification} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{Field} & \textbf{Use-case specification} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Actor & Guest; signed-in account; system \\[3pt]
+Goal & Authentication and account session \\[3pt]
+Preconditions & The gateway is configured. Registration/\allowbreak{}recovery needs \texttt{SMTP}; protected operations require a valid account session. \\[3pt]
+Trigger & Open the relevant screen or invoke the stated operation/\allowbreak{}event. \\[3pt]
+Main flow & 1. Enter account fields or request the session operation. 2. Validate fields; submit to \texttt{Auth\allowbreak{}Service} through the gateway. 3. For verification/\allowbreak{}recovery, enter the emailed \texttt{OTP}; for sign-in/\allowbreak{}refresh, store returned tokens and user. 4. Route by role and resume an allowed pending destination. \\[3pt]
+Alternative /\allowbreak{} exception flow & Reject invalid fields (\texttt{400}), bad credentials (\texttt{401}), unverified email (\texttt{403}), stale/\allowbreak{}incorrect \texttt{OTP}, or resend/\allowbreak{}rate limits (\texttt{429}). Clear the session for account-lock/\allowbreak{}role-change responses; show \texttt{SMTP}/\allowbreak{}dependency failure (\texttt{503}). \\[3pt]
+Postconditions & Only a successful token-issuing operation authenticates the account; rejected requests do not grant access. \\[3pt]
+Requirements /\allowbreak{} priority & \texttt{WEB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}01} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}02} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}03} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}04} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}05} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}06} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}07} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}08} (M), \texttt{WEB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}09} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}10} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}11} (M), \texttt{WEB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}12} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}13} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}14} (M), \texttt{WEB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}15} (M), \texttt{WEB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}16} (M), \texttt{WEB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}17} (M), \texttt{WEB-\allowbreak{}FR-\allowbreak{}NAV-\allowbreak{}01} (H) \\[3pt]
+Acceptance & Execute \texttt{AC}-01/\allowbreak{}\texttt{AC}-02 for every included \texttt{FR} with permitted actors. \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{UC-\allowbreak{}WEB-\allowbreak{}02} — Account administration}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{UC-\allowbreak{}WEB-\allowbreak{}02} — Account administration}\label{tab:srs-135}\\
+\toprule
+\textbf{Field} & \textbf{Use-case specification} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{Field} & \textbf{Use-case specification} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Actor & Admin \\[3pt]
+Goal & Account administration \\[3pt]
+Preconditions & An Admin session is active; the target user exists for changes. \\[3pt]
+Trigger & Open the relevant screen or invoke the stated operation/\allowbreak{}event. \\[3pt]
+Main flow & 1. Search/\allowbreak{}filter the paged accounts or open a record. 2. Create an account, select roles, or change enabled status. 3. Validate and confirm the change. 4. Reload the account and apply session revocation where required. \\[3pt]
+Alternative /\allowbreak{} exception flow & Reject non-Admin callers; reject invalid fields, duplicate email and self-locking. Saving unchanged roles must not force reauthentication. \\[3pt]
+Postconditions & The saved account/\allowbreak{}roles/\allowbreak{}status is visible; locked or changed-role tokens cannot retain previous privileges. \\[3pt]
+Requirements /\allowbreak{} priority & \texttt{WEB-\allowbreak{}FR-\allowbreak{}USER-\allowbreak{}01} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}USER-\allowbreak{}02} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}USER-\allowbreak{}03} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}USER-\allowbreak{}04} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}USER-\allowbreak{}05} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}USER-\allowbreak{}06} (M) \\[3pt]
+Acceptance & Execute \texttt{AC}-01/\allowbreak{}\texttt{AC}-02 for every included \texttt{FR} with permitted actors. \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{UC-\allowbreak{}WEB-\allowbreak{}03} — Movie catalogue and reviews}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{UC-\allowbreak{}WEB-\allowbreak{}03} — Movie catalogue and reviews}\label{tab:srs-136}\\
+\toprule
+\textbf{Field} & \textbf{Use-case specification} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{Field} & \textbf{Use-case specification} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Actor & Guest/\allowbreak{}Customer for browsing; Admin for catalogue changes and moderation \\[3pt]
+Goal & Movie catalogue and reviews \\[3pt]
+Preconditions & A movie is available; changes need Admin; a review needs the owner’s checked-in ticket. \\[3pt]
+Trigger & Open the relevant screen or invoke the stated operation/\allowbreak{}event. \\[3pt]
+Main flow & 1. Browse/\allowbreak{}search/\allowbreak{}filter movies or open their details. 2. Load metadata, trailer, reviews and open showtimes; Admin may save metadata or deactivate a film. 3. For a review, load eligibility from the ticket, submit 1–5 stars and at most 1,000 characters, or delete the existing review. 4. Refresh the affected view. \\[3pt]
+Alternative /\allowbreak{} exception flow & Show empty results for no matching films/\allowbreak{}showtimes. Review of another user’s ticket returns \texttt{404}; a ticket not checked in returns \texttt{400}. Failed media must retain a poster/\allowbreak{}fallback. \\[3pt]
+Postconditions & The catalogue/\allowbreak{}review reflects the authoritative response; deactivation preserves existing tickets. \\[3pt]
+Requirements /\allowbreak{} priority & \texttt{WEB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}01} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}02} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}03} (M), \texttt{WEB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}04} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}05} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}06} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}07} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}08} (L), \texttt{WEB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}09} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}10} (M), \texttt{WEB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}11} (L), \texttt{WEB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}12} (M), \texttt{WEB-\allowbreak{}FR-\allowbreak{}MEDIA-\allowbreak{}01} (L) \\[3pt]
+Acceptance & Execute \texttt{AC}-01/\allowbreak{}\texttt{AC}-02 for every included \texttt{FR} with permitted actors. \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{UC-\allowbreak{}WEB-\allowbreak{}04} — Room management}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{UC-\allowbreak{}WEB-\allowbreak{}04} — Room management}\label{tab:srs-137}\\
+\toprule
+\textbf{Field} & \textbf{Use-case specification} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{Field} & \textbf{Use-case specification} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Actor & Staff/\allowbreak{}Admin read; Admin writes \\[3pt]
+Goal & Room management \\[3pt]
+Preconditions & A management session is active; layout changes require no showtimes in that room. \\[3pt]
+Trigger & Open the relevant screen or invoke the stated operation/\allowbreak{}event. \\[3pt]
+Main flow & 1. Search/\allowbreak{}list rooms and open the map. 2. Admin enters name and dimensions when creating, or renames/\allowbreak{}deletes the selected room. 3. Create the room then generate seats; refresh room and seat counts. \\[3pt]
+Alternative /\allowbreak{} exception flow & Reject invalid capacity, unknown room, forbidden role, and deletion/\allowbreak{}layout changes when showtimes reference the room. Room creation and seat generation are separate \texttt{HTTP} calls; report failure of the second call. \\[3pt]
+Postconditions & Room data is saved or a permitted room is deleted; existing seat labels survive rename. \\[3pt]
+Requirements /\allowbreak{} priority & \texttt{WEB-\allowbreak{}FR-\allowbreak{}ROOM-\allowbreak{}01} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}ROOM-\allowbreak{}02} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}ROOM-\allowbreak{}03} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}ROOM-\allowbreak{}04} (M), \texttt{WEB-\allowbreak{}FR-\allowbreak{}ROOM-\allowbreak{}05} (M) \\[3pt]
+Acceptance & Execute \texttt{AC}-01/\allowbreak{}\texttt{AC}-02 for every included \texttt{FR} with permitted actors. \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{UC-\allowbreak{}WEB-\allowbreak{}05} — Seat map and availability}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{UC-\allowbreak{}WEB-\allowbreak{}05} — Seat map and availability}\label{tab:srs-138}\\
+\toprule
+\textbf{Field} & \textbf{Use-case specification} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{Field} & \textbf{Use-case specification} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Actor & Signed-in Customer reads/\allowbreak{}selects; Staff/\allowbreak{}Admin manage types; Admin manages capacity/\allowbreak{}deletion \\[3pt]
+Goal & Seat map and availability \\[3pt]
+Preconditions & The room/\allowbreak{}showtime exists. Selecting seats requires sign-in; modifying layout requires management rights and no showtimes. \\[3pt]
+Trigger & Open the relevant screen or invoke the stated operation/\allowbreak{}event. \\[3pt]
+Main flow & 1. Load room seats and occupied IDs separately. 2. Display rows, type legend and authoritative prices; select free seats with sweetbox partners. 3. Refresh availability every five seconds; management changes types/\allowbreak{}capacity only through authorized APIs. \\[3pt]
+Alternative /\allowbreak{} exception flow & Remove selections newly occupied by another booking and notify the customer. Reject half sweetboxes, invalid room seats and prohibited layout edits. \\[3pt]
+Postconditions & The client shows the refreshed map; selecting seats alone does not reserve them. \\[3pt]
+Requirements /\allowbreak{} priority & \texttt{WEB-\allowbreak{}FR-\allowbreak{}SEAT-\allowbreak{}01} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}SEAT-\allowbreak{}02} (L), \texttt{WEB-\allowbreak{}FR-\allowbreak{}SEAT-\allowbreak{}03} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}SEAT-\allowbreak{}04} (L), \texttt{WEB-\allowbreak{}FR-\allowbreak{}SEAT-\allowbreak{}05} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}SEAT-\allowbreak{}06} (M), \texttt{WEB-\allowbreak{}FR-\allowbreak{}SEAT-\allowbreak{}07} (M), \texttt{WEB-\allowbreak{}FR-\allowbreak{}SEAT-\allowbreak{}08} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}SEAT-\allowbreak{}09} (L) \\[3pt]
+Acceptance & Execute \texttt{AC}-01/\allowbreak{}\texttt{AC}-02 for every included \texttt{FR} with permitted actors. \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{UC-\allowbreak{}WEB-\allowbreak{}06} — Showtimes and prices}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{UC-\allowbreak{}WEB-\allowbreak{}06} — Showtimes and prices}\label{tab:srs-139}\\
+\toprule
+\textbf{Field} & \textbf{Use-case specification} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{Field} & \textbf{Use-case specification} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Actor & Guest/\allowbreak{}Customer read public showtimes; Staff/\allowbreak{}Admin manage \\[3pt]
+Goal & Showtimes and prices \\[3pt]
+Preconditions & Movie and room exist; management changes need Staff/\allowbreak{}Admin. \\[3pt]
+Trigger & Open the relevant screen or invoke the stated operation/\allowbreak{}event. \\[3pt]
+Main flow & 1. Load showtimes by movie/\allowbreak{}date and select a day. 2. Show room, format, start/\allowbreak{}end and seat prices. 3. Management saves the schedule or opens/\allowbreak{}closes/\allowbreak{}cancels sales. 4. Validate overlap and persist; cancellation publishes an outbox event for affected bookings. \\[3pt]
+Alternative /\allowbreak{} exception flow & Reject overlap with \texttt{409} and invalid time/\allowbreak{}format with \texttt{400}; cancelled showtimes are final. Customer selection excludes closed or started shows. \\[3pt]
+Postconditions & The schedule and computed seat prices are authoritative; cancellations propagate asynchronously. \\[3pt]
+Requirements /\allowbreak{} priority & \texttt{WEB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}01} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}02} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}03} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}04} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}05} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}06} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}07} (M), \texttt{WEB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}08} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}09} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}10} (M), \texttt{WEB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}11} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}12} (M), \texttt{WEB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}13} (M) \\[3pt]
+Acceptance & Execute \texttt{AC}-01/\allowbreak{}\texttt{AC}-02 for every included \texttt{FR} with permitted actors. \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{UC-\allowbreak{}WEB-\allowbreak{}07} — Booking, concessions, promotions and loyalty}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{UC-\allowbreak{}WEB-\allowbreak{}07} — Booking, concessions, promotions and loyalty}\label{tab:srs-140}\\
+\toprule
+\textbf{Field} & \textbf{Use-case specification} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{Field} & \textbf{Use-case specification} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Actor & Customer owns online bookings; Staff/\allowbreak{}Admin operate counter and administration \\[3pt]
+Goal & Booking, concessions, promotions and loyalty \\[3pt]
+Preconditions & A signed-in customer has selected an \texttt{OPEN} future showtime and seats; counter guests are represented by Staff/\allowbreak{}Admin. \\[3pt]
+Trigger & Open the relevant screen or invoke the stated operation/\allowbreak{}event. \\[3pt]
+Main flow & 1. Review seats; optionally select active concessions, a promotion code and redeemable points. 2. Confirm age-rating acknowledgement where required. 3. Submit IDs/\allowbreak{}quantities; the server recalculates all prices, validates pairs, locks reservations and creates a \texttt{PENDING} booking with a ten-minute expiry. 4. Open payment or read/\allowbreak{}cancel an owned booking according to its state. \\[3pt]
+Alternative /\allowbreak{} exception flow & A concurrent hold returns \texttt{409} and must not charge money or leave partial seats/\allowbreak{}points. Invalid concessions/\allowbreak{}code/\allowbreak{}points return validation errors. Expiry releases seats and restores reserved points. \\[3pt]
+Postconditions & Successful creation returns the persisted booking, breakdown and expiry; unsuccessful creation rolls back its transaction. \\[3pt]
+Requirements /\allowbreak{} priority & \texttt{WEB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}01} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}02} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}03} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}04} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}05} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}06} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}07} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}08} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}09} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}10} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}11} (M), \texttt{WEB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}12} (M), \texttt{WEB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}13} (M), \texttt{WEB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}14} (M), \texttt{WEB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}15} (M), \texttt{WEB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}16} (M), \texttt{WEB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}17} (M), \texttt{WEB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}18} (M), \texttt{WEB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}19} (L), \texttt{WEB-\allowbreak{}FR-\allowbreak{}STATE-\allowbreak{}01} (M) \\[3pt]
+Acceptance & Execute \texttt{AC}-01/\allowbreak{}\texttt{AC}-02 for every included \texttt{FR} with permitted actors. \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{UC-\allowbreak{}WEB-\allowbreak{}08} — Online payment and reconciliation}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{UC-\allowbreak{}WEB-\allowbreak{}08} — Online payment and reconciliation}\label{tab:srs-141}\\
+\toprule
+\textbf{Field} & \textbf{Use-case specification} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{Field} & \textbf{Use-case specification} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Actor & Booking owner; Staff/\allowbreak{}Admin for permitted operations; \texttt{Pay\allowbreak{}OS}/\allowbreak{}system \\[3pt]
+Goal & Online payment and reconciliation \\[3pt]
+Preconditions & A payable booking exists; \texttt{Pay\allowbreak{}OS} credentials and callback/\allowbreak{}return settings are configured for live payment. \\[3pt]
+Trigger & Open the relevant screen or invoke the stated operation/\allowbreak{}event. \\[3pt]
+Main flow & 1. Request/\allowbreak{}reuse a \texttt{Pay\allowbreak{}OS} checkout for the booking. 2. Open checkout and display the hold countdown. 3. Query booking every five seconds and verify \texttt{Pay\allowbreak{}OS} every thirty seconds while the customer payment page is active; also reconcile when returning to the app. 4. Signed webhook or verified \texttt{Pay\allowbreak{}OS} data updates payment and booking; load the result from the server. \\[3pt]
+Alternative /\allowbreak{} exception flow & Never trust redirect query parameters as proof of payment. Handle cancellation, timeout and \texttt{503} without showing false success; late payment confirms only if seats can be reclaimed, otherwise creates a refund. \\[3pt]
+Postconditions & Payment status is authoritative; \texttt{SUCCESS} confirms the booking and schedules ticket notification without duplicate business effects. \\[3pt]
+Requirements /\allowbreak{} priority & \texttt{WEB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}01} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}02} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}03} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}04} (M), \texttt{WEB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}05} (M), \texttt{WEB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}06} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}07} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}08} (M), \texttt{WEB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}09} (M), \texttt{WEB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}10} (M), \texttt{WEB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}11} (M) \\[3pt]
+Acceptance & Execute \texttt{AC}-01/\allowbreak{}\texttt{AC}-02 for every included \texttt{FR} with permitted actors. \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{UC-\allowbreak{}WEB-\allowbreak{}09} — Cancellation and manual refund}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{UC-\allowbreak{}WEB-\allowbreak{}09} — Cancellation and manual refund}\label{tab:srs-142}\\
+\toprule
+\textbf{Field} & \textbf{Use-case specification} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{Field} & \textbf{Use-case specification} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Actor & Customer requests/\allowbreak{}reads own refund; Staff/\allowbreak{}Admin process; system creates requests \\[3pt]
+Goal & Cancellation and manual refund \\[3pt]
+Preconditions & A paid booking/\allowbreak{}payment exists; customer cancellation is at least two hours before start; staff processing requires a pending request. \\[3pt]
+Trigger & Open the relevant screen or invoke the stated operation/\allowbreak{}event. \\[3pt]
+Main flow & 1. Confirm cancellation and send reason. 2. The backend creates/\allowbreak{}reuses one refund per payment and notifies the customer. 3. Staff transfer money outside the application then record transfer reference, or reject an eligible request with a reason. 4. Customer reloads the ticket/\allowbreak{}refund status and reason. \\[3pt]
+Alternative /\allowbreak{} exception flow & Reject too-late customer cancellation (\texttt{409}), completion without transfer reference and rejection without reason; cinema-cancelled refunds cannot be rejected. Duplicate events must not create another refund. \\[3pt]
+Postconditions & Completion yields \texttt{COMPLETE\allowbreak{}D}/\allowbreak{}\texttt{REFUNDED\allowbreak{}} and releases cancelled seats; allowed rejection restores \texttt{SUCCESS}/\allowbreak{}\texttt{CONFIRME\allowbreak{}D}; customer-requested pending refunds retain seats. \\[3pt]
+Requirements /\allowbreak{} priority & \texttt{WEB-\allowbreak{}FR-\allowbreak{}REF-\allowbreak{}01} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}REF-\allowbreak{}02} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}REF-\allowbreak{}03} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}REF-\allowbreak{}04} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}REF-\allowbreak{}05} (M), \texttt{WEB-\allowbreak{}FR-\allowbreak{}REF-\allowbreak{}06} (M), \texttt{WEB-\allowbreak{}FR-\allowbreak{}REF-\allowbreak{}07} (H) \\[3pt]
+Acceptance & Execute \texttt{AC}-01/\allowbreak{}\texttt{AC}-02 for every included \texttt{FR} with permitted actors. \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{UC-\allowbreak{}WEB-\allowbreak{}10} — Counter ticket sale}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{UC-\allowbreak{}WEB-\allowbreak{}10} — Counter ticket sale}\label{tab:srs-143}\\
+\toprule
+\textbf{Field} & \textbf{Use-case specification} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{Field} & \textbf{Use-case specification} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Actor & Staff/\allowbreak{}Admin; walk-in guest or member as beneficiary \\[3pt]
+Goal & Counter ticket sale \\[3pt]
+Preconditions & A management session is active; an \texttt{OPEN} future showtime has free seats. \\[3pt]
+Trigger & Open the relevant screen or invoke the stated operation/\allowbreak{}event. \\[3pt]
+Main flow & 1. Select walk-in or find a member by phone; choose showtime, seats and optional concessions/\allowbreak{}promotion/\allowbreak{}points. 2. Hold seats and open counter checkout. 3. Take sufficient cash and display change, or show \texttt{Viet\allowbreak{}QR} and verify every three seconds. 4. After server confirmation show/\allowbreak{}print the \texttt{QR} ticket, optionally email it and check in within the permitted window. \\[3pt]
+Alternative /\allowbreak{} exception flow & Reject insufficient cash; cancel an unpaid \texttt{Pay\allowbreak{}OS} link before switching to cash; if transfer already succeeded return \texttt{409}. Without email provide print/\allowbreak{}on-screen \texttt{QR}. \\[3pt]
+Postconditions & A single confirmed ticket and successful payment are recorded and included in reporting. \\[3pt]
+Requirements /\allowbreak{} priority & \texttt{WEB-\allowbreak{}FR-\allowbreak{}POS-\allowbreak{}01} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}POS-\allowbreak{}02} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}POS-\allowbreak{}03} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}POS-\allowbreak{}04} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}POS-\allowbreak{}05} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}POS-\allowbreak{}06} (M), \texttt{WEB-\allowbreak{}FR-\allowbreak{}POS-\allowbreak{}07} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}POS-\allowbreak{}08} (M) \\[3pt]
+Acceptance & Execute \texttt{AC}-01/\allowbreak{}\texttt{AC}-02 for every included \texttt{FR} with permitted actors. \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{UC-\allowbreak{}WEB-\allowbreak{}11} — Ticket lookup and check-in}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{UC-\allowbreak{}WEB-\allowbreak{}11} — Ticket lookup and check-in}\label{tab:srs-144}\\
+\toprule
+\textbf{Field} & \textbf{Use-case specification} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{Field} & \textbf{Use-case specification} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Actor & Staff/\allowbreak{}Admin scan and admit; Customer displays their ticket \\[3pt]
+Goal & Ticket lookup and check-in \\[3pt]
+Preconditions & Staff/\allowbreak{}Admin is signed in; the ticket is \texttt{CONFIRME\allowbreak{}D}, unused and within 180 minutes before to 120 minutes after start. \\[3pt]
+Trigger & Open the relevant screen or invoke the stated operation/\allowbreak{}event. \\[3pt]
+Main flow & 1. Scan \texttt{QR} or type the booking code and press Enter. 2. Lookup ticket; enrich room and age rating when catalogue calls succeed. 3. Check identity/\allowbreak{}rating as prompted, then explicitly check in. 4. Store \texttt{checked\allowbreak{}In\allowbreak{}At}, show confirmation and prepare for the next code. \\[3pt]
+Alternative /\allowbreak{} exception flow & Keep manual entry available if camera is unavailable/\allowbreak{}denied. Unknown code returns \texttt{404}; unpaid, cancelled, pending refund, out-of-window or already-used ticket returns \texttt{409}. Concurrent second check-in fails. Optional metadata failure must not hide the ticket. \\[3pt]
+Postconditions & Only one check-in timestamp is stored; check-in is an attribute, not another booking status. \\[3pt]
+Requirements /\allowbreak{} priority & \texttt{WEB-\allowbreak{}FR-\allowbreak{}CHK-\allowbreak{}01} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}CHK-\allowbreak{}02} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}CHK-\allowbreak{}03} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}CHK-\allowbreak{}04} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}CHK-\allowbreak{}05} (M) \\[3pt]
+Acceptance & Execute \texttt{AC}-01/\allowbreak{}\texttt{AC}-02 for every included \texttt{FR} with permitted actors. \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{UC-\allowbreak{}WEB-\allowbreak{}12} — Notifications and transactional email}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{UC-\allowbreak{}WEB-\allowbreak{}12} — Notifications and transactional email}\label{tab:srs-145}\\
+\toprule
+\textbf{Field} & \textbf{Use-case specification} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{Field} & \textbf{Use-case specification} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Actor & Customer reads own; Staff/\allowbreak{}Admin send permitted messages; system dispatches events \\[3pt]
+Goal & Notifications and transactional email \\[3pt]
+Preconditions & An account session exists for in-app history; \texttt{SMTP}/\allowbreak{}event processing is configured for actual delivery. \\[3pt]
+Trigger & Open the relevant screen or invoke the stated operation/\allowbreak{}event. \\[3pt]
+Main flow & 1. Load notifications and unread count, or create a management message for a booking. 2. Open detail and mark as read, mark all read, or follow the related ticket. 3. The server sends transactional email from committed events and reminder jobs; records \texttt{SENT}/\allowbreak{}\texttt{FAILED} and delivery error. \\[3pt]
+Alternative /\allowbreak{} exception flow & Owner checks reject another user’s data; show loading/\allowbreak{}empty/\allowbreak{}error-retry states. Sending failure retains \texttt{FAILED} for retry and must not undo payment. Event deduplication reduces duplicates but \texttt{SMTP} plus database commit is not a guaranteed exactly-once transaction. \\[3pt]
+Postconditions & Read state/\allowbreak{}badge matches the response; successful delivery is recorded separately from booking/\allowbreak{}payment state. \\[3pt]
+Requirements /\allowbreak{} priority & \texttt{WEB-\allowbreak{}FR-\allowbreak{}NOTI-\allowbreak{}01} (M), \texttt{WEB-\allowbreak{}FR-\allowbreak{}NOTI-\allowbreak{}02} (M), \texttt{WEB-\allowbreak{}FR-\allowbreak{}NOTI-\allowbreak{}03} (M), \texttt{WEB-\allowbreak{}FR-\allowbreak{}NOTI-\allowbreak{}04} (M), \texttt{WEB-\allowbreak{}FR-\allowbreak{}NOTI-\allowbreak{}05} (L), \texttt{WEB-\allowbreak{}FR-\allowbreak{}NOTI-\allowbreak{}06} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}NOTI-\allowbreak{}07} (H), \texttt{WEB-\allowbreak{}FR-\allowbreak{}NOTI-\allowbreak{}08} (M), \texttt{WEB-\allowbreak{}FR-\allowbreak{}NOTI-\allowbreak{}09} (M) \\[3pt]
+Acceptance & Execute \texttt{AC}-01/\allowbreak{}\texttt{AC}-02 for every included \texttt{FR} with permitted actors. \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{UC-\allowbreak{}WEB-\allowbreak{}13} — Operations dashboards}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{UC-\allowbreak{}WEB-\allowbreak{}13} — Operations dashboards}\label{tab:srs-146}\\
+\toprule
+\textbf{Field} & \textbf{Use-case specification} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{Field} & \textbf{Use-case specification} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Actor & Staff/\allowbreak{}Admin; revenue and account statistics require Admin \\[3pt]
+Goal & Operations dashboards \\[3pt]
+Preconditions & Management session and source records exist; date ranges use cinema local time. \\[3pt]
+Trigger & Open the relevant screen or invoke the stated operation/\allowbreak{}event. \\[3pt]
+Main flow & 1. Load today’s bookings, showtimes and check-in statistics. 2. Group now-playing, next three and last three shows; refresh each minute. 3. Open a show to inspect seat/\allowbreak{}customer details. 4. Admin loads monthly revenue/\allowbreak{}refunds/\allowbreak{}accounts independently so one failed card does not erase others. \\[3pt]
+Alternative /\allowbreak{} exception flow & Show zero/\allowbreak{}empty periods accurately; a card can show its own error and retry. Staff must not acquire revenue/\allowbreak{}account APIs by changing the \texttt{URL}. \\[3pt]
+Postconditions & Displayed totals use the documented date and state definitions and link to operational records. \\[3pt]
+Requirements /\allowbreak{} priority & \texttt{WEB-\allowbreak{}FR-\allowbreak{}DASH-\allowbreak{}01} (M), \texttt{WEB-\allowbreak{}FR-\allowbreak{}DASH-\allowbreak{}02} (M), \texttt{WEB-\allowbreak{}FR-\allowbreak{}DASH-\allowbreak{}03} (M), \texttt{WEB-\allowbreak{}FR-\allowbreak{}DASH-\allowbreak{}04} (M) \\[3pt]
+Acceptance & Execute \texttt{AC}-01/\allowbreak{}\texttt{AC}-02 for every included \texttt{FR} with permitted actors. \\[3pt]
+\end{longtable}
+\endgroup
