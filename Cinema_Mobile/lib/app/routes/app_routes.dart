@@ -34,6 +34,7 @@ abstract final class AppRoutes {
   static const notifications = '/notifications';
   static const profile = '/profile';
   static const paymentHistory = '/payments';
+  static const pointHistory = '/points/history';
 
   static String movieDetail(int movieId) => '/movies/$movieId';
 

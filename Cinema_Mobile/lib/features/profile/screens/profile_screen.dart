@@ -274,7 +274,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final card = _card;
     final details = <Widget>[
       if (card != null) ...[
-        MembershipCard(card: card),
+        MembershipCard(
+          card: card,
+          onHistory: () => Navigator.pushNamed(context, AppRoutes.pointHistory),
+        ),
         const SizedBox(height: AppSpacing.xl),
       ],
       _InfoCard(

@@ -82,6 +82,11 @@ void main() {
     expect(find.text('120 points'), findsOneWidget);
     expect(find.text('Member'), findsOneWidget);
     expect(find.text('${formatVnd(1500000)} to VIP'), findsOneWidget);
+    expect(find.text('Changed by the cinema'), findsNothing);
+    await tester.ensureVisible(find.byKey(const Key('pointHistory')));
+    await tester.tap(find.byKey(const Key('pointHistory')));
+    await pumpRoute(tester);
+    expect(find.text('Point history'), findsOneWidget);
     expect(find.text('Changed by the cinema'), findsOneWidget);
     expect(find.text('+100'), findsOneWidget);
   });

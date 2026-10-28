@@ -25,6 +25,7 @@ import '../../features/payment/screens/payment_screen.dart';
 import '../../features/payment/screens/payment_history_screen.dart';
 import '../../features/profile/screens/management_account_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
+import '../../features/profile/screens/point_history_screen.dart';
 import '../../features/seat/screens/seat_selection_screen.dart';
 import '../../features/staff/screens/staff_check_in_screen.dart';
 import 'app_routes.dart';
@@ -164,6 +165,12 @@ class AppRouter {
         return _RouteMatch(
           settings,
           (_) => PaymentHistoryScreen(bookingRepository: bookingRepository),
+          signInRequired: true,
+        );
+      case AppRoutes.pointHistory:
+        return _RouteMatch(
+          settings,
+          (_) => PointHistoryScreen(bookingRepository: bookingRepository),
           signInRequired: true,
         );
       case AppRoutes.profile:

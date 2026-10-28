@@ -5,6 +5,7 @@ import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
+import '../../../core/widgets/app_button.dart';
 import '../../../data/models/loyalty.dart';
 
 // The member's tier as a small coloured label.
@@ -38,10 +39,16 @@ class TierBadge extends StatelessWidget {
 // The member card on the profile: points and what they are worth, the tier,
 // how far the next tier is, and the latest changes of the points.
 class MembershipCard extends StatelessWidget {
-  const MembershipCard({required this.card, this.historySize = 10, super.key});
+  const MembershipCard({
+    required this.card,
+    this.historySize = 10,
+    this.onHistory,
+    super.key,
+  });
 
   final LoyaltyCard card;
   final int historySize;
+  final VoidCallback? onHistory;
 
   @override
   Widget build(BuildContext context) {
@@ -102,7 +109,19 @@ class MembershipCard extends StatelessWidget {
               style: AppTextStyles.bodySmall,
             ),
           ],
-          if (history.isNotEmpty) ...[
+          if (onHistory != null) ...[
+            const SizedBox(height: AppSpacing.md),
+            SizedBox(
+              width: double.infinity,
+              child: AppButton.secondary(
+                key: const Key('pointHistory'),
+                label: 'Point history',
+                leadingIcon: Icons.history_rounded,
+                trailingIcon: Icons.chevron_right_rounded,
+                onPressed: onHistory,
+              ),
+            ),
+          ] else if (history.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.sm),
             const Text('Points history', style: AppTextStyles.caption),
             const SizedBox(height: AppSpacing.xs),
