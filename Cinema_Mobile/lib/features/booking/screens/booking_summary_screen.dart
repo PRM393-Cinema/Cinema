@@ -237,26 +237,36 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
           ),
         ),
         actions: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
+          Row(
             children: [
-              ElevatedButton(
-                key: const Key('confirmAgeRating'),
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(AppSpacing.xxxl),
+              Expanded(
+                child: TextButton(
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.textSecondary,
+                    minimumSize: const Size(0, AppSpacing.xxxl),
+                  ),
+                  onPressed: () => Navigator.pop(dialogContext, false),
+                  child: const Text('Back'),
                 ),
-                onPressed: () => Navigator.pop(dialogContext, true),
-                child: const Text('I understand', textAlign: TextAlign.center),
               ),
-              const SizedBox(height: AppSpacing.sm),
-              TextButton(
-                style: TextButton.styleFrom(
-                  foregroundColor: AppColors.textSecondary,
-                  minimumSize: const Size.fromHeight(AppSpacing.xxxl),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                flex: 2,
+                child: ElevatedButton(
+                  key: const Key('confirmAgeRating'),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(0, AppSpacing.xxxl),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.sm,
+                      vertical: AppSpacing.sm,
+                    ),
+                  ),
+                  onPressed: () => Navigator.pop(dialogContext, true),
+                  child: const Text(
+                    'I understand',
+                    textAlign: TextAlign.center,
+                  ),
                 ),
-                onPressed: () => Navigator.pop(dialogContext, false),
-                child: const Text('Back'),
               ),
             ],
           ),

@@ -77,6 +77,10 @@ void main() {
     await tester.tap(find.text('Confirm Booking'));
     await pumpRoute(tester);
     expect(find.textContaining('only for viewers 16 and over'), findsOneWidget);
+    final back = tester.getRect(find.widgetWithText(TextButton, 'Back'));
+    final agree = tester.getRect(find.byKey(const Key('confirmAgeRating')));
+    expect(back.center.dy, agree.center.dy);
+    expect(back.right, lessThan(agree.left));
     await tester.tap(find.text('Back'));
     await pumpRoute(tester);
     expect(bookings.createCalls, hasLength(1));
