@@ -20,8 +20,6 @@ import '../../../core/widgets/loading_state.dart';
 import '../../../data/models/movie.dart';
 import '../../../data/repositories/catalog_repository.dart';
 import '../../movie/widgets/movie_preview_card.dart';
-import '../../../core/widgets/trailer_preview.dart';
-import '../../../core/utils/trailer_url.dart';
 import '../../../core/session/session_state.dart';
 import '../../../core/widgets/age_rating_badge.dart';
 import '../../../data/repositories/booking_repository.dart';
@@ -715,9 +713,7 @@ class _MovieGrid extends StatefulWidget {
 
 class _MovieGridState extends State<_MovieGrid> with WidgetsBindingObserver {
   final _active = ValueNotifier<int?>(null);
-  final _keys = <int, GlobalKey>{};
   ScrollPosition? _scroll;
-  Timer? _settle;
 
   @override
   void initState() {
@@ -739,49 +735,16 @@ class _MovieGridState extends State<_MovieGrid> with WidgetsBindingObserver {
   @override
   void didUpdateWidget(covariant _MovieGrid oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _settle?.cancel();
     _active.value = null;
-    _keys.removeWhere((id, _) => !widget.movies.any((movie) => movie.id == id));
   }
 
   void _onScroll() {
     _active.value = null;
-    _settle?.cancel();
-    if (supportsTrailerPreview &&
-        MediaQuery.sizeOf(context).width < 600 &&
-        !MediaQuery.disableAnimationsOf(context)) {
-      _settle = Timer(const Duration(milliseconds: 500), _previewVisible);
-    }
-  }
-
-  void _previewVisible() {
-    if (!mounted || ModalRoute.of(context)?.isCurrent != true) return;
-    final height = MediaQuery.sizeOf(context).height;
-    double nearest = double.infinity;
-    int? selected;
-    for (final movie in widget.movies) {
-      if (directPreviewUrl(Uri.tryParse(movie.previewUrl) ?? Uri()) == null) {
-        continue;
-      }
-      final box = _keys[movie.id]?.currentContext?.findRenderObject();
-      if (box is! RenderBox || !box.hasSize || !box.attached) continue;
-      final top = box.localToGlobal(Offset.zero).dy;
-      final bottom = top + box.size.height;
-      final visible =
-          (bottom.clamp(0, height) - top.clamp(0, height)) / box.size.height;
-      final distance = (top + box.size.height / 2 - height / 2).abs();
-      if (visible >= 0.75 && distance < nearest) {
-        selected = movie.id;
-        nearest = distance;
-      }
-    }
-    _active.value = selected;
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state != AppLifecycleState.resumed) {
-      _settle?.cancel();
       _active.value = null;
     }
   }
@@ -790,7 +753,6 @@ class _MovieGridState extends State<_MovieGrid> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _scroll?.removeListener(_onScroll);
-    _settle?.cancel();
     _active.dispose();
     super.dispose();
   }
@@ -812,7 +774,7 @@ class _MovieGridState extends State<_MovieGrid> with WidgetsBindingObserver {
       itemBuilder: (context, index) {
         final movie = widget.movies[index];
         return MoviePreviewCard(
-          key: _keys.putIfAbsent(movie.id, GlobalKey.new),
+          key: ValueKey(movie.id),
           movie: movie,
           active: _active,
           onOpen: () => widget.onMovieTap(movie),

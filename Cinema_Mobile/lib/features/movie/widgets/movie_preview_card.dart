@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/theme/app_colors.dart';
@@ -9,6 +10,7 @@ import '../../../core/utils/trailer_url.dart';
 import '../../../core/widgets/trailer_preview.dart';
 import '../../../data/models/movie.dart';
 import 'movie_card.dart';
+import 'movie_preview_sheet.dart';
 
 class MoviePreviewCard extends StatefulWidget {
   const MoviePreviewCard({
@@ -61,6 +63,11 @@ class _MoviePreviewCardState extends State<MoviePreviewCard> {
     widget.onOpen();
   }
 
+  void _preview() {
+    _stop();
+    showMoviePreview(context, widget.movie, _open);
+  }
+
   @override
   void dispose() {
     _hover?.cancel();
@@ -73,8 +80,8 @@ class _MoviePreviewCardState extends State<MoviePreviewCard> {
   Widget build(BuildContext context) {
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     return MouseRegion(
-      onEnter: (_) {
-        if (!reduceMotion) {
+      onEnter: (event) {
+        if (event.kind == PointerDeviceKind.mouse && !reduceMotion) {
           _hover = Timer(const Duration(milliseconds: 450), _start);
         }
       },
@@ -97,13 +104,8 @@ class _MoviePreviewCardState extends State<MoviePreviewCard> {
               badge: widget.movie.isComingSoon()
                   ? formatShortDate(widget.movie.releaseDate!)
                   : null,
-              onTap: () {
-                if (_available && MediaQuery.sizeOf(context).width < 600) {
-                  _start();
-                } else {
-                  _open();
-                }
-              },
+              onTap: _open,
+              onPreview: _available ? _preview : null,
             ),
             if (_active)
               Material(

@@ -16,6 +16,7 @@ class MovieCard extends StatelessWidget {
     this.ageRating,
     this.badge,
     this.onTap,
+    this.onPreview,
     super.key,
   });
 
@@ -28,6 +29,7 @@ class MovieCard extends StatelessWidget {
   // A note on the poster, e.g. the release date of a movie coming soon.
   final String? badge;
   final VoidCallback? onTap;
+  final VoidCallback? onPreview;
 
   @override
   Widget build(BuildContext context) {
@@ -84,6 +86,23 @@ class MovieCard extends StatelessWidget {
                             ),
                           ),
                         ),
+                      ),
+                    ),
+                  if (onPreview != null)
+                    Positioned(
+                      right: AppSpacing.sm,
+                      bottom: AppSpacing.sm,
+                      child: IconButton.filledTonal(
+                        tooltip: 'Preview $title',
+                        onPressed: onPreview,
+                        style: IconButton.styleFrom(
+                          minimumSize: const Size(48, 48),
+                          backgroundColor: AppColors.background.withValues(
+                            alpha: 0.85,
+                          ),
+                          foregroundColor: AppColors.textPrimary,
+                        ),
+                        icon: const Icon(Icons.play_arrow_rounded),
                       ),
                     ),
                 ],

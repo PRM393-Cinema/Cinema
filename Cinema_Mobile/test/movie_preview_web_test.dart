@@ -62,9 +62,7 @@ void main() {
     },
   );
 
-  testWidgets('Phone tap previews and details remains a separate action', (
-    tester,
-  ) async {
+  testWidgets('Phone has separate details and preview actions', (tester) async {
     tester.view.physicalSize = const Size(375, 812);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -88,8 +86,16 @@ void main() {
     );
     await tester.tap(find.text(movie.title));
     await tester.pump();
-    expect(active.value, movie.id);
+    expect(active.value, isNull);
+    expect(opened, isTrue);
+    opened = false;
+    await tester.tap(find.byTooltip('Preview ${movie.title}'));
+    await tester.pump();
+    expect(find.byType(TrailerPreview), findsOneWidget);
+    expect(active.value, isNull);
     expect(opened, isFalse);
+    tester.widget<TrailerPreview>(find.byType(TrailerPreview)).onPlaying();
+    await tester.pumpAndSettle();
     await tester.tap(find.text('View details'));
     await tester.pump();
     expect(opened, isTrue);
