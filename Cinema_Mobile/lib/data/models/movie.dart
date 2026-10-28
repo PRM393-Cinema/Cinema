@@ -16,6 +16,7 @@ class Movie {
     required this.trailerUrl,
     required this.status,
     this.ageRating = AgeRating.p,
+    this.previewUrl = '',
     this.director = '',
     this.cast = '',
   });
@@ -36,6 +37,7 @@ class Movie {
           : null,
       posterUrl: readString(json['posterUrl']),
       trailerUrl: readString(json['trailerUrl']),
+      previewUrl: readString(json['previewUrl']),
       status: readString(json['status']),
       ageRating: AgeRating.parse(readOptionalString(json['ageRating'])),
       director: readString(json['director']),
@@ -52,6 +54,7 @@ class Movie {
   final DateTime? releaseDate;
   final String posterUrl;
   final String trailerUrl;
+  final String previewUrl;
   final String status; // 'ACTIVE', 'INACTIVE'
   final AgeRating ageRating;
 

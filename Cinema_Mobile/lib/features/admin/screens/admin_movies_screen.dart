@@ -1,3 +1,5 @@
+import '../../../core/utils/trailer_url.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../../app/theme/app_colors.dart';
@@ -450,6 +452,7 @@ class _MovieFormDialogState extends State<_MovieFormDialog> {
     text: widget.movie?.description,
   );
   late final _poster = TextEditingController(text: widget.movie?.posterUrl);
+  late final _preview = TextEditingController(text: widget.movie?.previewUrl);
   late final _trailer = TextEditingController(text: widget.movie?.trailerUrl);
   late final _director = TextEditingController(text: widget.movie?.director);
   late final _cast = TextEditingController(text: widget.movie?.cast);
@@ -469,6 +472,7 @@ class _MovieFormDialogState extends State<_MovieFormDialog> {
       _description,
       _poster,
       _trailer,
+      _preview,
       _director,
       _cast,
     ]) {
@@ -509,6 +513,7 @@ class _MovieFormDialogState extends State<_MovieFormDialog> {
       language: _language.text,
       posterUrl: _poster.text,
       trailerUrl: _trailer.text,
+      previewUrl: _preview.text,
       ageRating: _ageRating,
       director: _director.text,
       cast: _cast.text,
@@ -668,6 +673,23 @@ class _MovieFormDialogState extends State<_MovieFormDialog> {
                     enabled: !_saving,
                     keyboardType: TextInputType.url,
                     validator: _link,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  AppTextField(
+                    key: const Key('moviePreviewField'),
+                    label: 'Preview clip URL (.mp4 / .webm, optional)',
+                    controller: _preview,
+                    enabled: !_saving,
+                    keyboardType: TextInputType.url,
+                    validator: (value) =>
+                        value == null ||
+                            value.trim().isEmpty ||
+                            directPreviewUrl(
+                                  Uri.tryParse(value.trim()) ?? Uri(),
+                                ) !=
+                                null
+                        ? null
+                        : 'Use an MP4/WebM URL or /previews/clip.mp4',
                   ),
                   const SizedBox(height: AppSpacing.md),
                   AppTextField(

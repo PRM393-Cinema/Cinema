@@ -1,4 +1,4 @@
-﻿using MovieService.DTOs.Request;
+using MovieService.DTOs.Request;
 using MovieService.DTOs.Response;
 using MovieService.Exception;
 using MovieService.Extensions;
@@ -146,6 +146,19 @@ namespace MovieService.Service.Impl
                 : throw new BusinessException("Age rating must be P, K, T13, T16 or T18.");
         }
 
+        private static string? NormalizePreviewUrl(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return null;
+            var url = value.Trim();
+            if (url.StartsWith("/previews/", StringComparison.Ordinal) && !url.Contains("..") && !url.Contains("\\") && (url.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase) || url.EndsWith(".webm", StringComparison.OrdinalIgnoreCase))) return url;
+            if (url.Length > 500 || !Uri.TryCreate(url, UriKind.Absolute, out var uri)
+                || (uri.Scheme != "https" && uri.Scheme != "http")
+                || !(uri.AbsolutePath.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase)
+                    || uri.AbsolutePath.EndsWith(".webm", StringComparison.OrdinalIgnoreCase)))
+                throw new BusinessException("Preview must be a direct HTTP(S) MP4 or WebM URL (max 500 characters).");
+            return url;
+        }
+
         // ======= CREATE MOVIE =======
         public async Task<MovieResponse> CreateMovieAsync(MovieRequest request)
         {
@@ -166,6 +179,7 @@ namespace MovieService.Service.Impl
                 ReleaseDate = DateOnly.FromDateTime(request.ReleaseDate), // FIX: Convert DateTime to DateOnly
                 PosterUrl = request.PosterUrl?.Trim(),
                 TrailerUrl = request.TrailerUrl?.Trim(),
+                PreviewUrl = NormalizePreviewUrl(request.PreviewUrl),
                 AgeRating = NormalizeAgeRating(request.AgeRating) ?? "P",
                 Director = Blank(request.Director),
                 Cast = Blank(request.Cast),
@@ -200,6 +214,7 @@ namespace MovieService.Service.Impl
             movie.ReleaseDate = DateOnly.FromDateTime(request.ReleaseDate);
             movie.PosterUrl = request.PosterUrl?.Trim();
             movie.TrailerUrl = request.TrailerUrl?.Trim();
+            if (request.PreviewUrl != null) movie.PreviewUrl = NormalizePreviewUrl(request.PreviewUrl);
             movie.AgeRating = NormalizeAgeRating(request.AgeRating) ?? movie.AgeRating;
             movie.Director = Blank(request.Director);
             movie.Cast = Blank(request.Cast);

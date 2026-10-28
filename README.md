@@ -9,19 +9,18 @@ Hệ thống đặt vé xem phim: backend microservice ASP.NET Core 8 và app Fl
 
 ## Cài đặt
 
-Database nằm ở repo riêng [Project-Cinema-DB](https://github.com/PRM393-Cinema/Project-Cinema-DB). Clone repo đó **cạnh** thư mục `Cinema` (Docker lấy file SQL từ đây):
+Database nằm ở repo riêng [Project-Cinema-DB](https://github.com/PRM393-Cinema/Project-Cinema-DB). Repo DB được checkout trong Cinema bằng submodule. Với checkout cũ, chạy `git submodule update --init --recursive` sau pull:
 
 ```powershell
-git clone https://github.com/PRM393-Cinema/Cinema.git
-git clone https://github.com/PRM393-Cinema/Project-Cinema-DB.git
+git clone --recurse-submodules https://github.com/PRM393-Cinema/Cinema.git
 ```
 
 ```text
 <thư mục bất kỳ>/
-├── Cinema/
-│   ├── Cinema_BE/
-│   └── Cinema_Mobile/
-└── Project-Cinema-DB/
+└── Cinema/
+    ├── Cinema_BE/
+    ├── Cinema_Mobile/
+    └── Project-Cinema-DB/
 ```
 
 1. Backend: làm theo [Cinema_BE/docs/DOCKER.md](Cinema_BE/docs/DOCKER.md) (tạo `.env` rồi `docker compose up -d --build`).

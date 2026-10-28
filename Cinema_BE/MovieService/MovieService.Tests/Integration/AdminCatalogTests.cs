@@ -35,6 +35,20 @@ public class AdminCatalogTests
     };
 
     [Fact]
+    public async Task DirectPreview_RoundTrips_AndRejectsYoutubePage()
+    {
+        var body = new { title = $"Preview {Guid.NewGuid():N}", durationMinutes = 120,
+            previewUrl = "/previews/oppenheimer.mp4" };
+        var response = await _admin.PostAsJsonAsync("/api/v1/movies", body);
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var movie = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(body.previewUrl, movie.GetProperty("previewUrl").GetString());
+        var invalid = await _admin.PutAsJsonAsync($"/api/v1/movies/{movie.GetProperty("id").GetInt64()}",
+            new { body.title, body.durationMinutes, previewUrl = "https://youtube.com/watch?v=YoHD9XEInc0" });
+        Assert.Equal(HttpStatusCode.BadRequest, invalid.StatusCode);
+    }
+
+    [Fact]
     public async Task AgeRating_DefaultsToP_KeepsWhenLeftOut_AndRejectsUnknownLevels()
     {
         var title = $"Rated movie {Guid.NewGuid():N}";

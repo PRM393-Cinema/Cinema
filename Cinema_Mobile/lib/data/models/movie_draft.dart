@@ -13,6 +13,7 @@ class MovieDraft {
     this.posterUrl = '',
     this.trailerUrl = '',
     this.ageRating = AgeRating.p,
+    this.previewUrl = '',
     this.director = '',
     this.cast = '',
   });
@@ -26,6 +27,7 @@ class MovieDraft {
     language: movie.language,
     posterUrl: movie.posterUrl,
     trailerUrl: movie.trailerUrl,
+    previewUrl: movie.previewUrl,
     ageRating: movie.ageRating,
     director: movie.director,
     cast: movie.cast,
@@ -39,6 +41,7 @@ class MovieDraft {
   final String language;
   final String posterUrl;
   final String trailerUrl;
+  final String previewUrl;
   final AgeRating ageRating;
   final String director;
   final String cast;
@@ -57,6 +60,7 @@ class MovieDraft {
     ).toIso8601String(),
     'posterUrl': posterUrl.trim(),
     'trailerUrl': trailerUrl.trim(),
+    'previewUrl': previewUrl.trim(),
     'ageRating': ageRating.code,
     'director': director.trim(),
     'cast': cast.trim(),

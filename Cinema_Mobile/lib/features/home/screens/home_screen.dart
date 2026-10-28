@@ -10,7 +10,6 @@ import '../../../app/theme/app_text_styles.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/cinema_background.dart';
-import '../../../core/utils/formatters.dart';
 import '../../../core/utils/layout.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
 import '../../../core/widgets/app_network_image.dart';
@@ -20,7 +19,9 @@ import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_state.dart';
 import '../../../data/models/movie.dart';
 import '../../../data/repositories/catalog_repository.dart';
-import '../../movie/widgets/movie_card.dart';
+import '../../movie/widgets/movie_preview_card.dart';
+import '../../../core/widgets/trailer_preview.dart';
+import '../../../core/utils/trailer_url.dart';
 import '../../../core/session/session_state.dart';
 import '../../../core/widgets/age_rating_badge.dart';
 import '../../../data/repositories/booking_repository.dart';
@@ -291,16 +292,6 @@ class _HomeScreenState extends State<HomeScreen> {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final isWide = constraints.maxWidth >= 900;
-          final genreChips = [
-            for (final genre in [null, ..._genres])
-              ChoiceChip(
-                key: ValueKey('genre-${genre ?? 'all'}'),
-                label: Text(genre ?? 'All genres'),
-                selected: _genre == genre,
-                onSelected: (_) => _filterGenre(genre),
-              ),
-          ];
-
           return Center(
             child: ConstrainedBox(
               // Lined up with the website navigation bar.
@@ -334,47 +325,76 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: AppSpacing.xxl),
                   ],
                   Wrap(
-                    spacing: AppSpacing.sm,
+                    spacing: AppSpacing.md,
+                    runSpacing: AppSpacing.md,
                     children: [
-                      ChoiceChip(
-                        key: const Key('tabNowShowing'),
-                        label: const Text('Now showing'),
-                        selected: !_comingSoon,
-                        onSelected: (_) => _showTab(false),
-                      ),
-                      ChoiceChip(
-                        key: const Key('tabComingSoon'),
-                        label: const Text('Coming soon'),
-                        selected: _comingSoon,
-                        onSelected: (_) => _showTab(true),
-                      ),
-                    ],
-                  ),
-                  if (_genres.isNotEmpty) ...[
-                    const SizedBox(height: AppSpacing.md),
-                    // Website: every genre on view; phone: swipe along a row.
-                    if (isWide)
-                      Wrap(
-                        spacing: AppSpacing.sm,
-                        runSpacing: AppSpacing.sm,
-                        children: genreChips,
-                      )
-                    else
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: [
-                            for (final chip in genreChips)
-                              Padding(
-                                padding: const EdgeInsets.only(
-                                  right: AppSpacing.sm,
+                      SizedBox(
+                        width: constraints.maxWidth < 500
+                            ? constraints.maxWidth - 2 * AppSpacing.lg
+                            : 220,
+                        child: InputDecorator(
+                          decoration: const InputDecoration(
+                            labelText: 'Showing',
+                            prefixIcon: Icon(Icons.movie_outlined),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<bool>(
+                              key: const Key('showingFilter'),
+                              value: _comingSoon,
+                              isExpanded: true,
+                              isDense: true,
+                              items: const [
+                                DropdownMenuItem(
+                                  value: false,
+                                  child: Text('Now showing'),
                                 ),
-                                child: chip,
-                              ),
-                          ],
+                                DropdownMenuItem(
+                                  value: true,
+                                  child: Text('Coming soon'),
+                                ),
+                              ],
+                              onChanged: (value) {
+                                if (value != null) _showTab(value);
+                              },
+                            ),
+                          ),
                         ),
                       ),
-                  ],
+                      if (_genres.isNotEmpty)
+                        SizedBox(
+                          width: constraints.maxWidth < 500
+                              ? constraints.maxWidth - 2 * AppSpacing.lg
+                              : 280,
+                          child: InputDecorator(
+                            decoration: const InputDecoration(
+                              labelText: 'Genre',
+                              prefixIcon: Icon(Icons.filter_list_rounded),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                key: const Key('genreFilter'),
+                                value: _genre ?? '',
+                                isExpanded: true,
+                                isDense: true,
+                                items: [
+                                  const DropdownMenuItem(
+                                    value: '',
+                                    child: Text('All genres'),
+                                  ),
+                                  for (final genre in _genres)
+                                    DropdownMenuItem(
+                                      value: genre,
+                                      child: Text(genre),
+                                    ),
+                                ],
+                                onChanged: (value) =>
+                                    _filterGenre(value == '' ? null : value),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                   const SizedBox(height: AppSpacing.xl),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
@@ -646,17 +666,103 @@ class _FeaturedMovieContent extends StatelessWidget {
   }
 }
 
-class _MovieGrid extends StatelessWidget {
+class _MovieGrid extends StatefulWidget {
   const _MovieGrid({required this.movies, required this.onMovieTap});
 
   final List<Movie> movies;
   final ValueChanged<Movie> onMovieTap;
 
   @override
+  State<_MovieGrid> createState() => _MovieGridState();
+}
+
+class _MovieGridState extends State<_MovieGrid> with WidgetsBindingObserver {
+  final _active = ValueNotifier<int?>(null);
+  final _keys = <int, GlobalKey>{};
+  ScrollPosition? _scroll;
+  Timer? _settle;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final position = Scrollable.maybeOf(context)?.position;
+    if (position != _scroll) {
+      _scroll?.removeListener(_onScroll);
+      _scroll = position;
+      _scroll?.addListener(_onScroll);
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _MovieGrid oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _settle?.cancel();
+    _active.value = null;
+    _keys.removeWhere((id, _) => !widget.movies.any((movie) => movie.id == id));
+  }
+
+  void _onScroll() {
+    _active.value = null;
+    _settle?.cancel();
+    if (supportsTrailerPreview &&
+        MediaQuery.sizeOf(context).width < 600 &&
+        !MediaQuery.disableAnimationsOf(context)) {
+      _settle = Timer(const Duration(milliseconds: 500), _previewVisible);
+    }
+  }
+
+  void _previewVisible() {
+    if (!mounted || ModalRoute.of(context)?.isCurrent != true) return;
+    final height = MediaQuery.sizeOf(context).height;
+    double nearest = double.infinity;
+    int? selected;
+    for (final movie in widget.movies) {
+      if (directPreviewUrl(Uri.tryParse(movie.previewUrl) ?? Uri()) == null) {
+        continue;
+      }
+      final box = _keys[movie.id]?.currentContext?.findRenderObject();
+      if (box is! RenderBox || !box.hasSize || !box.attached) continue;
+      final top = box.localToGlobal(Offset.zero).dy;
+      final bottom = top + box.size.height;
+      final visible =
+          (bottom.clamp(0, height) - top.clamp(0, height)) / box.size.height;
+      final distance = (top + box.size.height / 2 - height / 2).abs();
+      if (visible >= 0.75 && distance < nearest) {
+        selected = movie.id;
+        nearest = distance;
+      }
+    }
+    _active.value = selected;
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) {
+      _settle?.cancel();
+      _active.value = null;
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _scroll?.removeListener(_onScroll);
+    _settle?.cancel();
+    _active.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return GridView.builder(
       padding: EdgeInsets.zero,
-      itemCount: movies.length,
+      itemCount: widget.movies.length,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
@@ -666,17 +772,12 @@ class _MovieGrid extends StatelessWidget {
         mainAxisSpacing: AppSpacing.lg,
       ),
       itemBuilder: (context, index) {
-        final movie = movies[index];
-        return MovieCard(
-          title: movie.title,
-          posterUrl: movie.posterUrl,
-          genre: movie.genre,
-          duration: movie.durationText,
-          ageRating: movie.ageRating,
-          badge: movie.isComingSoon()
-              ? formatShortDate(movie.releaseDate!)
-              : null,
-          onTap: () => onMovieTap(movie),
+        final movie = widget.movies[index];
+        return MoviePreviewCard(
+          key: _keys.putIfAbsent(movie.id, GlobalKey.new),
+          movie: movie,
+          active: _active,
+          onOpen: () => widget.onMovieTap(movie),
         );
       },
     );

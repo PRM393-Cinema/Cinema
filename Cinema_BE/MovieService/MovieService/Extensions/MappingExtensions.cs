@@ -1,4 +1,4 @@
-﻿using MovieService.DTOs.Response;
+using MovieService.DTOs.Response;
 using MovieService.Helpers;
 using MovieService.Models;
 
@@ -20,6 +20,7 @@ namespace MovieService.Extensions
                 ReleaseDate = movie.ReleaseDate ?? default,
                 PosterUrl = movie.PosterUrl,
                 TrailerUrl = movie.TrailerUrl,
+                PreviewUrl = movie.PreviewUrl,
                 AgeRating = movie.AgeRating,
                 Director = movie.Director,
                 Cast = movie.Cast,

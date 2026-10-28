@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using MovieService.Models;
@@ -69,6 +69,7 @@ public partial class MovieDbContext : DbContext
             entity.Property(e => e.Title)
                 .HasMaxLength(200)
                 .HasColumnName("title");
+            entity.Property(e => e.PreviewUrl).HasMaxLength(500).HasColumnName("preview_url");
             entity.Property(e => e.TrailerUrl)
                 .HasMaxLength(500)
                 .HasColumnName("trailer_url");

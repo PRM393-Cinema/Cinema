@@ -1,0 +1,4 @@
+[submodule "Project-Cinema-DB"]
+	path = Project-Cinema-DB
+	url = https://github.com/PRM393-Cinema/Project-Cinema-DB.git
+	branch = main

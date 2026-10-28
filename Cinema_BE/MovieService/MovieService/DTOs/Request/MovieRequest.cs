@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace MovieService.DTOs.Request
 {
@@ -22,6 +22,7 @@ namespace MovieService.DTOs.Request
         public string? PosterUrl { get; set; }
 
         public string? TrailerUrl { get; set; }
+        public string? PreviewUrl { get; set; }
 
         // Phân loại phim: P (mọi độ tuổi), K (dưới 13 tuổi xem cùng cha mẹ), T13, T16, T18.
         // Thêm phim mà bỏ trống thì là P; sửa phim mà bỏ trống thì giữ nguyên

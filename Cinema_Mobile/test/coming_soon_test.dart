@@ -47,7 +47,9 @@ void main() {
 
     // Coming soon: the release date on the poster.
     await _scrollHomeToTop(tester);
-    await tester.tap(find.byKey(const Key('tabComingSoon')));
+    await tester.tap(find.byKey(const Key('showingFilter')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Coming soon').last);
     await pumpRoute(tester);
     expect(catalog.browseCalls.last.comingSoon, isTrue);
     expect(find.text('Coming Soon'), findsOneWidget);
@@ -57,18 +59,25 @@ void main() {
 
     // Back to now showing, only dramas.
     await _scrollHomeToTop(tester);
-    await tester.tap(find.byKey(const Key('tabNowShowing')));
+    await tester.tap(find.byKey(const Key('showingFilter')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Now showing').last);
     await pumpRoute(tester);
-    await tester.ensureVisible(find.byKey(const ValueKey('genre-Drama')));
+    await tester.ensureVisible(find.byKey(const Key('genreFilter')));
     await tester.pump();
-    await tester.tap(find.byKey(const ValueKey('genre-Drama')));
+    await tester.tap(find.byKey(const Key('genreFilter')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Drama').last);
     await pumpRoute(tester);
     expect(catalog.browseCalls.last.genre, 'Drama');
     await scrollHomeTo(tester, find.text('Oppenheimer').first);
     expect(find.text('Interstellar'), findsNothing);
 
     // Searching asks the server once the customer stops typing.
-    await tester.tap(find.byKey(const ValueKey('genre-all')));
+    await _scrollHomeToTop(tester);
+    await tester.tap(find.byKey(const Key('genreFilter')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('All genres').last);
     await pumpRoute(tester);
     await _scrollHomeToTop(tester);
     await tester.enterText(find.byKey(const Key('movieSearchField')), 'nope');

@@ -5,15 +5,7 @@ Một lệnh chạy cả 6 thành phần: **PostgreSQL + RabbitMQ + AuthService 
 ## 1. Chuẩn bị (làm một lần)
 
 1. Cài và **mở Docker Desktop**.
-2. Clone repo `Cinema` (repo này) và repo `Project-Cinema-DB` **nằm cạnh nhau** (container PostgreSQL lấy file SQL từ repo DB):
-   ```
-   <thư mục bất kỳ>/
-   ├── Cinema/
-   │   ├── Cinema_BE/
-   │   └── Cinema_Mobile/
-   └── Project-Cinema-DB/
-   ```
-   Nếu để chỗ khác thì khai báo `DB_SCRIPTS_DIR` trong `.env` (đường dẫn tính từ thư mục `Cinema_BE`).
+2. Khởi tạo submodule DB nằm trong Cinema: chạy git submodule update --init --recursive tại Cinema. Docker mặc định dùng Cinema/Project-Cinema-DB; DB_SCRIPTS_DIR trong .env có thể ghi đè đường dẫn này.
 3. Tạo file `.env` trong thư mục `Cinema_BE`:
    - **Đã được cấp quyền giải mã** ([SECRETS_SOPS.md](SECRETS_SOPS.md)): chạy `.\scripts\secrets.ps1 decrypt` là có `.env` đầy đủ, kể cả SMTP. Bỏ qua phần điền tay bên dưới.
    - **Chưa được cấp quyền**: tạo từ mẫu rồi điền 2 giá trị bắt buộc:
@@ -63,6 +55,8 @@ Tài khoản seed (mật khẩu `123456`): `admin@cinema.com`, `nhanvien1@cinema
 - Lỗi liên tục: **circuit breaker mở 15 giây**, API trả **503** ngay ("... temporarily unavailable. Please try again later.") thay vì để người dùng chờ timeout. Hết 15 giây thì thử lại một request, thành công thì hoạt động bình thường.
 - Gateway kiểm tra `/health/live` của từng service mỗi 10 giây. Service chết thì gateway trả 503 ngay, service sống lại thì tự định tuyến lại.
 - Flutter: gặp **503** thì báo "Hệ thống đang bận, vui lòng thử lại sau", không cần xử lý gì thêm.
+
+Service db-migrate áp dụng schema cho volume cũ và mới trước khi service .NET khởi động. Sau pull, chạy git submodule update --init --recursive tại Cinema rồi docker compose up -d --build tại Cinema_BE. Xem lỗi bằng docker compose logs db-migrate; chạy lại thủ công bằng docker compose run --rm db-migrate. Không cần xoá volume.
 
 ## 3. Các lệnh hay dùng
 
@@ -130,8 +124,8 @@ Lệnh đọc danh sách phim từ `cinema_movie_db` rồi thêm lịch vào `ci
 | BookingService lỗi `column b.concessions_amount does not exist` / `relation "concession_items" does not exist` | DB tạo trước khi có bắp nước → `docker compose exec -T postgres psql -X -U postgres -d cinema_booking_db -v ON_ERROR_STOP=1 -f /db-scripts/migrations/2026-10-27_cinema_booking_concessions.sql` (hoặc `docker compose down -v` rồi chạy lại) |
 | BookingService lỗi `column b.reminded_at does not exist` | DB tạo trước khi có nhắc giờ chiếu → `docker compose exec -T postgres psql -X -U postgres -d cinema_booking_db -v ON_ERROR_STOP=1 -f /db-scripts/migrations/2026-10-28_cinema_booking_reminders.sql` |
 | BookingService lỗi `column n.read_at does not exist` | DB tạo trước khi có trạng thái đã đọc → `docker compose exec -T postgres psql -X -U postgres -d cinema_notification_db -v ON_ERROR_STOP=1 -f /db-scripts/migrations/2026-10-28_cinema_notification_read.sql` |
-| MovieService lỗi `column m.director does not exist` | DB tạo trước khi có đạo diễn / diễn viên → `docker compose exec -T postgres psql -X -U postgres -d cinema_movie_db -v ON_ERROR_STOP=1 -f /db-scripts/migrations/2026-10-28_cinema_movie_credits.sql` |
-| BookingService lỗi `relation "movie_reviews" does not exist` | DB tạo trước khi có đánh giá phim → `docker compose exec -T postgres psql -X -U postgres -d cinema_booking_db -v ON_ERROR_STOP=1 -f /db-scripts/migrations/2026-10-28_cinema_booking_reviews.sql` |
+| Thiếu metadata phim hoặc bảng movie_reviews | Chạy `docker compose run --rm db-migrate`; migration bổ sung nằm trong Cinema_BE/docker/postgres/migrations. |
+| Thiếu metadata phim hoặc bảng movie_reviews | Chạy `docker compose run --rm db-migrate`; migration bổ sung nằm trong Cinema_BE/docker/postgres/migrations. |
 | MovieService lỗi `column s.format does not exist` | DB tạo trước khi có định dạng suất chiếu → `docker compose exec -T postgres psql -X -U postgres -d cinema_showtime_db -v ON_ERROR_STOP=1 -f /db-scripts/migrations/2026-10-28_cinema_showtime_format.sql` (hoặc `docker compose down -v` rồi chạy lại) |
 | MovieService lỗi `column m.age_rating does not exist` | DB tạo trước khi có phân loại phim → `docker compose exec -T postgres psql -X -U postgres -d cinema_movie_db -v ON_ERROR_STOP=1 -f /db-scripts/migrations/2026-10-27_cinema_movie_age_rating.sql` (hoặc `docker compose down -v` rồi chạy lại) |
 | BookingService lỗi `column b.customer_phone does not exist`, hoặc bán vé khách vãng lai bị lỗi `null value in column "user_id"` | DB tạo trước khi có vé vãng lai → chạy 3 file `2026-10-22_*.sql` trong `Project-Cinema-DB/migrations`, ví dụ `docker compose exec -T postgres psql -X -U postgres -d cinema_booking_db -v ON_ERROR_STOP=1 -f /db-scripts/migrations/2026-10-22_cinema_booking_db.sql` (tương tự cho `cinema_payment_db`, `cinema_notification_db`), hoặc `docker compose down -v` rồi chạy lại |

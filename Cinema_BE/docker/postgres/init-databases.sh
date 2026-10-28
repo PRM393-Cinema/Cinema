@@ -6,7 +6,7 @@ set -e
 for db in auth movie showtime booking payment notification; do
     file="/db-scripts/cinema_${db}_db.sql"
     if [ ! -f "$file" ]; then
-        echo "Khong tim thay $file - kiem tra DB_SCRIPTS_DIR trong .env (mac dinh ../../Project-Cinema-DB, canh thu muc Cinema)" >&2
+        echo "Khong tim thay $file - kiem tra DB_SCRIPTS_DIR trong .env (mac dinh ../Project-Cinema-DB, trong thu muc Cinema)" >&2
         exit 1
     fi
 
@@ -38,7 +38,7 @@ echo "==> Them lich chieu demo cho mot thang"
 for migration in 2026-10-10_cinema_more_daily_showtimes.sql 2026-10-10_cinema_distinct_room_layouts.sql; do
     file="/db-scripts/migrations/$migration"
     if [ ! -f "$file" ]; then
-        echo "Bo qua $migration: chua co trong Project-Cinema-DB (git pull repo DB, roi docker compose down -v va up lai)" >&2
+        echo "Bo qua $migration: chua co trong Project-Cinema-DB (git submodule update --init --recursive)" >&2
         continue
     fi
     psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname cinema_showtime_db -f "$file" > /dev/null
