@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../app/routes/app_routes.dart';
@@ -19,6 +21,7 @@ import '../../../data/repositories/booking_repository.dart';
 import 'my_bookings_screen.dart';
 import '../widgets/booking_cancellation_dialog.dart';
 import '../widgets/ticket_qr_card.dart';
+import '../widgets/seat_hold_timer.dart';
 import '../widgets/ticket_share_actions.dart';
 import '../../../data/repositories/catalog_repository.dart';
 
@@ -53,6 +56,28 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   Refund? _refund;
   bool _isRefreshing = false;
   bool _isCancelling = false;
+  Timer? _holdTimer;
+
+  void _watchHold() {
+    _holdTimer?.cancel();
+    final booking = _booking;
+    if (booking == null ||
+        booking.expiresAt == null ||
+        !booking.isAwaitingPayment()) {
+      return;
+    }
+    _holdTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) return;
+      setState(() {});
+      if (_booking?.isAwaitingPayment() != true) timer.cancel();
+    });
+  }
+
+  @override
+  void dispose() {
+    _holdTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   void didChangeDependencies() {
@@ -61,6 +86,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     final args = ModalRoute.of(context)?.settings.arguments;
     if (_booking == null && args is Booking) {
       _booking = args;
+      _watchHold();
       _refresh();
     } else if (_booking == null &&
         !_bookingRequested &&
@@ -82,6 +108,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         _refund = refund;
         _isLoadingBooking = false;
       });
+      _watchHold();
     } on Object {
       // Shown as "Booking not found".
       if (mounted) setState(() => _isLoadingBooking = false);
@@ -105,6 +132,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         _refund = refund;
         _isRefreshing = false;
       });
+      _watchHold();
     } on ApiException {
       if (mounted) setState(() => _isRefreshing = false);
     } on Object {
@@ -161,6 +189,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         _booking = cancelled;
         _isCancelling = false;
       });
+      _watchHold();
       await showBookingCancellationNotice(
         context,
         refundRequested: isPaid,
@@ -188,6 +217,10 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   }
 
   Future<void> _payNow(Booking booking) async {
+    if (!booking.isAwaitingPayment()) {
+      setState(() {});
+      return;
+    }
     await Navigator.pushNamed(
       context,
       AppRoutes.payment(booking.id),
@@ -481,6 +514,13 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (booking.status == BookingStatus.pending) ...[
+          SeatHoldTimer(
+            remaining: booking.expiresAt?.difference(DateTime.now()),
+            expired: booking.isHoldExpired(),
+          ),
+          const SizedBox(height: AppSpacing.md),
+        ],
         if (canPay) ...[
           AppButton(
             label: 'Pay Now',
