@@ -22,6 +22,7 @@ namespace BookingService.DTOs.Responses
 
     public class LoyaltyResponse : LoyaltyAccountResponse
     {
+        public BookingService.Models.MemberGift? Gifts { get; set; }
         // Mới nhất trước, tối đa 50 dòng
         public List<LoyaltyTransactionResponse> Transactions { get; set; } = new();
     }

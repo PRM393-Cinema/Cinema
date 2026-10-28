@@ -413,11 +413,25 @@ namespace BookingService.Services.Implementations
             var previousConcessions = await _concessionRepository.GetByBookingIdAsync(id);
             _context.BookingConcessions.RemoveRange(previousConcessions);
             booking.Concessions = concessions;
+            if(request.UseMemberGifts)
+            {
+                if(!string.IsNullOrWhiteSpace(request.PromotionCode) || request.UsePoints > 0)
+                    throw new BusinessException("Membership gifts cannot be combined with promo codes or points.");
+                var giftDiscount=await new MemberGiftService(_context,_showtimeClient).ReserveAsync(booking,seats,concessions);
+                booking.DiscountAmount=giftDiscount;
+                booking.PromotionId=null; booking.PromotionCode=null; booking.PromotionName="Membership gifts";
+                booking.TotalAmount=seatsAmount+booking.ConcessionsAmount-giftDiscount;
+            }
             await _loyaltyService.RedeemAsync(booking, request.UsePoints ?? 0);
             // Pricing/network work may have consumed the last seconds of the hold.
             if (expiresAt <= DateTime.Now)
                 throw new ConflictException("Your seat hold has expired. Please choose your seats again.");
             await _context.SaveChangesAsync();
+            if(request.UseMemberGifts && booking.TotalAmount==0)
+            {
+                var reservations=await LockReservationsAsync(booking,seats);
+                await MarkConfirmedAsync(booking,seats,reservations,null);
+            }
             await transaction.CommitAsync();
             return await MapBookingAsync(booking);
         }
@@ -532,6 +546,10 @@ namespace BookingService.Services.Implementations
                     throw new ConflictException(
                         $"Payment succeeded but booking {booking.BookingCode} is {status} and cannot be confirmed.");
                 }
+
+                // Expiry returns the gifts, so a late payment must follow the existing refund flow.
+                if (status == "EXPIRED" && booking.PromotionName == "Membership gifts")
+                    throw new ConflictException("Payment arrived after the membership gift reservation expired. A refund is required.");
 
                 var reservations = await LockReservationsAsync(booking, seats);
                 var now = DateTime.Now;

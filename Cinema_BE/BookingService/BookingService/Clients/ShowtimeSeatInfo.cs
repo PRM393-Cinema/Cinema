@@ -7,4 +7,5 @@ public class ShowtimeSeatInfo
     public string SeatLabel { get; set; } = null!;
 
     public decimal Price { get; set; }
+    public string SeatType { get; set; } = "NORMAL";
 }

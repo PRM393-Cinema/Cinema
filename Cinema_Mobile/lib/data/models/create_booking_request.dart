@@ -5,6 +5,7 @@ class CreateBookingRequest {
     this.concessions = const {},
     this.promotionCode,
     this.usePoints = 0,
+    this.useMemberGifts = false,
   });
 
   final int showtimeId;
@@ -18,6 +19,7 @@ class CreateBookingRequest {
 
   // Member points paying part of the price (1 point = 1,000 ₫).
   final int usePoints;
+  final bool useMemberGifts;
 
   // The backend reads the customer, movie title, show time and seat prices
   // itself, so only the showtime and seat ids are sent.
@@ -28,6 +30,7 @@ class CreateBookingRequest {
         for (final seatId in seatIds) {'seatId': seatId},
       ],
       'promotionCode': ?promotionCode,
+      if (useMemberGifts) 'useMemberGifts': true,
       if (usePoints > 0) 'usePoints': usePoints,
       if (concessions.isNotEmpty)
         'concessions': [

@@ -141,6 +141,7 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
   // The member's points; null when they cannot load (no points used then).
   LoyaltyCard? _card;
   bool _usePoints = false;
+  bool _useMemberGifts = false;
 
   @override
   void initState() {
@@ -303,8 +304,9 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                 in _snackQuantities.entries)
               if (quantity > 0) id: quantity,
           },
-          promotionCode: _promoCode,
-          usePoints: usePoints,
+          promotionCode: _useMemberGifts ? null : _promoCode,
+          usePoints: _useMemberGifts ? 0 : usePoints,
+          useMemberGifts: _useMemberGifts,
         ),
       );
 
@@ -315,7 +317,9 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
       _openingPayment = true;
       Navigator.pushNamedAndRemoveUntil(
         context,
-        AppRoutes.payment(booking.id),
+        booking.status == BookingStatus.confirmed
+            ? AppRoutes.bookingDetail(booking.id)
+            : AppRoutes.payment(booking.id),
         (route) => route.isFirst,
         arguments: booking,
       );
@@ -463,34 +467,91 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
             setState(() => _snackQuantities[id] = quantity),
       ),
     );
-    final promotionCard = _SummaryCard(
-      title: 'Promotion',
-      child: PromotionBox(
-        quote: widget.bookingRepository.quotePromotion,
-        showtimeId: showtime.id,
-        tickets: draft.ticketCount,
-        ticketAmount: draft.totalPrice,
-        enabled: !_isSubmitting,
-        onChanged: (quote, code) => setState(() {
-          _promotion = quote;
-          _promoCode = code;
-        }),
-      ),
-    );
-    final discount = _promotion.discount;
-    final orderAmount = draft.totalPrice - discount + snacksTotalPrice;
+    final promotionCard = _useMemberGifts
+        ? const SizedBox.shrink()
+        : _SummaryCard(
+            title: 'Promotion',
+            child: PromotionBox(
+              quote: widget.bookingRepository.quotePromotion,
+              showtimeId: showtime.id,
+              tickets: draft.ticketCount,
+              ticketAmount: draft.totalPrice,
+              enabled: !_isSubmitting,
+              onChanged: (quote, code) => setState(() {
+                _promotion = quote;
+                _promoCode = code;
+              }),
+            ),
+          );
+    final discount = _useMemberGifts ? 0.0 : _promotion.discount;
+    final eligibleSeats =
+        draft.seats
+            .where(
+              (s) =>
+                  _card?.tier == MemberTier.vvip ||
+                  s.type.toUpperCase() == 'VIP',
+            )
+            .map((s) => showtime.priceOf(s.type))
+            .toList()
+          ..sort((a, b) => b.compareTo(a));
+    final eligibleCombos = [
+      for (final snack in pickedSnacks)
+        if (snack.name.toLowerCase().startsWith('combo'))
+          for (var n = 0; n < (_snackQuantities[snack.id] ?? 0); n++)
+            snack.price,
+    ]..sort((a, b) => b.compareTo(a));
+    final giftDiscount = _useMemberGifts
+        ? eligibleSeats
+                  .take(_card?.giftTickets ?? 0)
+                  .fold<double>(0, (a, b) => a + b) +
+              eligibleCombos
+                  .take(_card?.giftCombos ?? 0)
+                  .fold<double>(0, (a, b) => a + b)
+        : 0.0;
+    final orderAmount =
+        draft.totalPrice -
+        (_useMemberGifts ? giftDiscount : discount) +
+        snacksTotalPrice;
     final usePoints = _pointsFor(orderAmount);
     final card = _card;
     final pointsCard = card == null
         ? null
         : _SummaryCard(
             title: 'Member points',
-            child: UsePointsTile(
-              card: card,
-              orderAmount: orderAmount,
-              value: _usePoints,
-              enabled: !_isSubmitting,
-              onChanged: (value) => setState(() => _usePoints = value),
+            child: Column(
+              children: [
+                if (card.giftRenewsAt != null)
+                  SwitchListTile.adaptive(
+                    key: const Key('useMemberGifts'),
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Use membership gifts'),
+                    subtitle: Text(
+                      '${card.giftTickets} ${card.tier == MemberTier.vip ? 'VIP seat ticket(s)' : 'ticket(s)'} · ${card.giftCombos} combo(s)\nRenews ${formatDate(card.giftRenewsAt!)}',
+                    ),
+                    value: _useMemberGifts,
+                    onChanged:
+                        _isSubmitting ||
+                            (card.giftTickets == 0 && card.giftCombos == 0)
+                        ? null
+                        : (value) => setState(() {
+                            _useMemberGifts = value;
+                            if (value) _usePoints = false;
+                          }),
+                  ),
+                if (_useMemberGifts)
+                  Text(
+                    'Gift discount: ${formatVnd(giftDiscount)}. Promo codes and points are not combined.',
+                    style: AppTextStyles.bodySmall,
+                  ),
+                if (!_useMemberGifts)
+                  UsePointsTile(
+                    card: card,
+                    orderAmount: orderAmount,
+                    value: _usePoints,
+                    enabled: !_isSubmitting,
+                    onChanged: (value) => setState(() => _usePoints = value),
+                  ),
+              ],
             ),
           );
     final priceCard = _SummaryCard(
@@ -514,6 +575,22 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                   Text(
                     formatVnd(ticketsByType[type]! * showtime.priceOf(type)),
                     style: AppTextStyles.body,
+                  ),
+                ],
+              ),
+            ),
+          if (giftDiscount > 0)
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.xs),
+              child: Row(
+                children: [
+                  const Expanded(child: Text('Membership gifts')),
+                  Text(
+                    '−${formatVnd(giftDiscount)}',
+                    key: const Key('summaryGifts'),
+                    style: AppTextStyles.body.copyWith(
+                      color: AppColors.success,
+                    ),
                   ),
                 ],
               ),

@@ -5,6 +5,7 @@ using BookingService.Helpers;
 using BookingService.Models;
 using BookingService.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using BookingService.Clients.Interfaces;
 
 namespace BookingService.Services.Implementations
 {
@@ -15,14 +16,17 @@ namespace BookingService.Services.Implementations
         private const int HistorySize = 50;
 
         private readonly BookingDbContext _context;
+        private readonly IShowtimeClient _shows;
 
-        public LoyaltyService(BookingDbContext context)
+        public LoyaltyService(BookingDbContext context, IShowtimeClient shows)
         {
             _context = context;
+            _shows = shows;
         }
 
         public async Task<LoyaltyResponse> GetAsync(long userId)
         {
+            var gift=await new MemberGiftService(_context,_shows).GetAsync(userId);
             var account = await _context.LoyaltyAccounts
                 .AsNoTracking()
                 .FirstOrDefaultAsync(a => a.UserId == userId)
@@ -38,6 +42,7 @@ namespace BookingService.Services.Implementations
 
             var response = new LoyaltyResponse();
             Fill(response, account);
+            response.Gifts=account.Tier=="MEMBER" ? null : gift;
             response.Transactions = history
                 .Select(t => new LoyaltyTransactionResponse
                 {
@@ -154,6 +159,7 @@ namespace BookingService.Services.Implementations
 
         public async Task OnReleasedAsync(Booking booking)
         {
+            await new MemberGiftService(_context,_shows).ReleaseAsync(booking);
             if (booking.UserId is not { } userId)
             {
                 return;

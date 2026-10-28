@@ -110,6 +110,22 @@ class MembershipCard extends StatelessWidget {
             ),
           ],
           if (onHistory != null) ...[
+            if (card.giftRenewsAt != null) ...[
+              const SizedBox(height: AppSpacing.md),
+              const Text('Membership gifts', style: AppTextStyles.title),
+              Text(
+                '${card.giftTickets} ${card.tier == MemberTier.vip ? 'VIP seat ticket(s)' : 'ticket(s) of your choice'} · ${card.giftCombos} combo(s)',
+                style: AppTextStyles.body,
+              ),
+              Text(
+                'Renews ${formatDate(card.giftRenewsAt!)} · Every 6 months',
+                style: AppTextStyles.bodySmall,
+              ),
+              const Text(
+                'Choose seats and combos, then use gifts in Booking Summary.',
+                style: AppTextStyles.bodySmall,
+              ),
+            ],
             const SizedBox(height: AppSpacing.md),
             SizedBox(
               width: double.infinity,

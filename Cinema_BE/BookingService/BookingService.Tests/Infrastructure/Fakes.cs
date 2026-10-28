@@ -17,6 +17,7 @@ public sealed class FakeShowtimeClient : IShowtimeClient
     public const long DefaultMovieId = 7;
 
     public decimal SeatPrice { get; set; } = 90_000;
+    public ConcurrentDictionary<long, string> SeatTypes { get; } = new();
 
     // Giả lập MovieService chết / circuit breaker mở
     public bool Unavailable { get; set; }
@@ -47,7 +48,8 @@ public sealed class FakeShowtimeClient : IShowtimeClient
 
         return Task.FromResult(seatIds
             .Distinct()
-            .Select(id => new ShowtimeSeatInfo { SeatId = id, SeatLabel = $"S{id}", Price = SeatPrice })
+            .Select(id => new ShowtimeSeatInfo { SeatId = id, SeatLabel = $"S{id}", Price = SeatPrice,
+                SeatType = SeatTypes.GetValueOrDefault(id, "NORMAL") })
             .ToList());
     }
 

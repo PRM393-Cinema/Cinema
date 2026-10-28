@@ -39,6 +39,9 @@ class LoyaltyCard {
     this.nextTier,
     this.nextTierSpend,
     this.history = const [],
+    this.giftTickets = 0,
+    this.giftCombos = 0,
+    this.giftRenewsAt,
   });
 
   factory LoyaltyCard.fromJson(Map<String, Object?> json) => LoyaltyCard(
@@ -56,6 +59,15 @@ class LoyaltyCard {
     history: readMapList(json['transactions'])
         .map(LoyaltyLine.fromJson)
         .toList(),
+    giftTickets: json['gifts'] is Map
+        ? readOptionalInt((json['gifts'] as Map)['tickets']) ?? 0
+        : 0,
+    giftCombos: json['gifts'] is Map
+        ? readOptionalInt((json['gifts'] as Map)['combos']) ?? 0
+        : 0,
+    giftRenewsAt: json['gifts'] is Map
+        ? readDateTime((json['gifts'] as Map)['renewsAt'])
+        : null,
   );
 
   final int userId;
@@ -70,6 +82,9 @@ class LoyaltyCard {
 
   // Newest first.
   final List<LoyaltyLine> history;
+  final int giftTickets;
+  final int giftCombos;
+  final DateTime? giftRenewsAt;
 
   double get pointsValue => points * pointValue;
 

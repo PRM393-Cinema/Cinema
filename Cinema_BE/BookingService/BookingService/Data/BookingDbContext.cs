@@ -280,6 +280,20 @@ public partial class BookingDbContext : DbContext
         });
 
         OnModelCreatingPartial(modelBuilder);
+        modelBuilder.Entity<MemberGift>(e => {
+            e.ToTable("member_gifts"); e.HasKey(x=>x.UserId);
+            e.Property(x=>x.UserId).HasColumnName("user_id");
+            e.Property(x=>x.Tier).HasColumnName("tier");
+            e.Property(x=>x.RenewsAt).HasColumnName("renews_at").HasColumnType("timestamp without time zone");
+            e.Property(x=>x.Tickets).HasColumnName("tickets"); e.Property(x=>x.Combos).HasColumnName("combos");
+        });
+        modelBuilder.Entity<MemberGiftUse>(e => {
+            e.ToTable("member_gift_uses"); e.HasKey(x=>x.BookingId);
+            e.Property(x=>x.BookingId).HasColumnName("booking_id"); e.Property(x=>x.UserId).HasColumnName("user_id");
+            e.Property(x=>x.RenewsAt).HasColumnName("renews_at").HasColumnType("timestamp without time zone");
+            e.Property(x=>x.Tickets).HasColumnName("tickets"); e.Property(x=>x.Combos).HasColumnName("combos");
+            e.Property(x=>x.Discount).HasColumnName("discount").HasPrecision(12,2);
+        });
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);

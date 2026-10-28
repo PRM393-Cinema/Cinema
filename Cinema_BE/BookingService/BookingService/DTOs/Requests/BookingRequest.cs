@@ -4,6 +4,7 @@ namespace BookingService.DTOs.Requests
 {
     public class BookingRequest
     {
+        public bool UseMemberGifts { get; set; }
         // Khách: server lấy từ token (không cần gửi). Staff/Admin đặt hộ khách có tài khoản thì gửi id của khách;
         // bỏ trống là vé khách vãng lai bán tại quầy
         public long? UserId { get; set; }

@@ -93,6 +93,7 @@ namespace ShowtimeService.Service.Impl
                 {
                     SeatId = s.Id,
                     SeatLabel = $"{s.SeatRow}{s.SeatNumber}",
+                    SeatType = s.SeatType,
                     Price = SeatPrices.For(showtime.Price, s.SeatType, showtime.Format)
                 })
                 .ToList();
