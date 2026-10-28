@@ -309,7 +309,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text('Select Seats', style: AppTextStyles.heading2),
+                  const CinemaPageHeader(title: 'Select Seats'),
                   const SizedBox(height: AppSpacing.lg),
                   Expanded(
                     child: Row(
@@ -410,10 +410,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
             children: [
               const Padding(
                 padding: EdgeInsets.all(AppSpacing.lg),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text('Select Seats', style: AppTextStyles.heading2),
-                ),
+                child: CinemaPageHeader(title: 'Select Seats'),
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),

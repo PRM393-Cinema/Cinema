@@ -445,10 +445,7 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
             children: [
               Padding(
                 padding: pagePadding(context, AppSpacing.lg),
-                child: const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text('Booking Summary', style: AppTextStyles.heading2),
-                ),
+                child: const CinemaPageHeader(title: 'Booking Summary'),
               ),
               Expanded(
                 child: SingleChildScrollView(

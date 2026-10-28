@@ -257,12 +257,7 @@ class _PageBody extends StatelessWidget {
                         onPressed: () => Scaffold.of(context).openDrawer(),
                       ),
                     ),
-                  if (canGoBack)
-                    IconButton(
-                      tooltip: 'Back',
-                      icon: const Icon(Icons.arrow_back),
-                      onPressed: () => Navigator.maybePop(context),
-                    ),
+                  if (canGoBack) const BackButton(),
                   if (showMenu || canGoBack)
                     const SizedBox(width: AppSpacing.sm),
                   Expanded(

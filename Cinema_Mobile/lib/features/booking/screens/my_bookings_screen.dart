@@ -13,6 +13,7 @@ import '../../../core/widgets/responsive_columns.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/cinema_background.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
+import '../../../core/widgets/cinema_page.dart';
 import '../../../core/widgets/loading_state.dart';
 import '../../../core/widgets/status_badge.dart';
 import '../../../data/models/booking.dart';
@@ -123,10 +124,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                 children: [
                   Padding(
                     padding: pagePadding(context, AppSpacing.lg),
-                    child: const Text(
-                      'My Bookings',
-                      style: AppTextStyles.heading2,
-                    ),
+                    child: const CinemaPageHeader(title: 'My Bookings'),
                   ),
                   Padding(
                     padding: pagePadding(

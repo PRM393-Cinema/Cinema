@@ -397,7 +397,7 @@ class _PaymentScreenState extends State<PaymentScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text('Payment', style: AppTextStyles.heading2),
+                  const CinemaPageHeader(title: 'Payment'),
                   const SizedBox(height: AppSpacing.xl),
                   ResponsiveColumns(
                     main: [
@@ -430,10 +430,7 @@ class _PaymentScreenState extends State<PaymentScreen>
             children: [
               Padding(
                 padding: centeredPadding(context, AppSpacing.lg),
-                child: const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text('Payment', style: AppTextStyles.heading2),
-                ),
+                child: const CinemaPageHeader(title: 'Payment'),
               ),
               Expanded(
                 child: SingleChildScrollView(

@@ -12,6 +12,7 @@ import '../../../core/widgets/responsive_columns.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/cinema_background.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
+import '../../../core/widgets/cinema_page.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_state.dart';
 import '../../../data/models/auth_response.dart';
@@ -205,13 +206,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 Padding(
                   padding: pagePadding(context, AppSpacing.lg),
-                  child: const Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Account settings',
-                      style: AppTextStyles.heading2,
-                    ),
-                  ),
+                  child: const CinemaPageHeader(title: 'Account settings'),
                 ),
                 Expanded(child: Builder(builder: _buildBody)),
               ],

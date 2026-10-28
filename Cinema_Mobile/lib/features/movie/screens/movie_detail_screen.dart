@@ -186,6 +186,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
 
     return Scaffold(
       extendBody: true,
+      appBar: AppBar(title: const Text('Movie Detail')),
       body: CinemaBackground(
         child: SafeArea(
           bottom: false,

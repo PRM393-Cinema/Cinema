@@ -29,17 +29,35 @@ class CinemaPage extends StatelessWidget {
           children: [
             Padding(
               padding: widthPadding(context, AppSpacing.lg, width),
-              child: Row(
-                children: [
-                  Expanded(child: Text(title, style: AppTextStyles.heading2)),
-                  ...actions,
-                ],
-              ),
+              child: CinemaPageHeader(title: title, actions: actions),
             ),
             Expanded(child: child),
           ],
         ),
       ),
     ),
+  );
+}
+
+class CinemaPageHeader extends StatelessWidget {
+  const CinemaPageHeader({
+    required this.title,
+    this.actions = const [],
+    super.key,
+  });
+
+  final String title;
+  final List<Widget> actions;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      if (Navigator.canPop(context)) ...[
+        const BackButton(),
+        const SizedBox(width: AppSpacing.sm),
+      ],
+      Expanded(child: Text(title, style: AppTextStyles.heading2)),
+      ...actions,
+    ],
   );
 }
