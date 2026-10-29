@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:cinema_fe/app/routes/app_routes.dart';
+import 'package:cinema_fe/app/theme/app_colors.dart';
 import 'package:cinema_fe/core/network/api_client.dart';
 import 'package:cinema_fe/core/network/api_exception.dart';
 import 'package:cinema_fe/data/models/review.dart';
@@ -99,6 +100,22 @@ void main() {
       );
       expect(searchRect.right, lessThan(ratingRect.left));
       expect(searchRect.height, closeTo(ratingRect.height, 1));
+      expect(find.text('All ratings'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('ratingStarsFilter')));
+      await pumpRoute(tester);
+      final menuItem = find.byType(PopupMenuItem<int>).first;
+      final menuRect = tester.getRect(menuItem);
+      expect(menuRect.width, closeTo(ratingRect.width, 1));
+      expect(menuRect.left, closeTo(ratingRect.left, 1));
+      final menuSurface = tester.widget<Material>(
+        find.ancestor(of: menuItem, matching: find.byType(Material)).first,
+      );
+      expect(menuSurface.color, AppColors.surfaceSoft);
+      await tester.tap(find.text('4 stars').last);
+      await pumpRoute(tester);
+      expect(find.text('4 stars'), findsOneWidget);
+      expect(find.text('2 ratings · Newest first'), findsOneWidget);
+      expect(find.text('Interstellar'), findsNothing);
       expect(tester.takeException(), isNull);
     });
   }

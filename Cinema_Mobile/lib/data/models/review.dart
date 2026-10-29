@@ -13,11 +13,13 @@ class MovieReview {
     required this.updatedAt,
     this.comment,
     this.mine = false,
+    this.movieTitle,
   });
 
   factory MovieReview.fromJson(Map<String, Object?> json) => MovieReview(
     id: readInt(json['id']),
     movieId: readInt(json['movieId']),
+    movieTitle: readOptionalString(json['movieTitle']),
     bookingId: readInt(json['bookingId']),
     reviewerName: readString(json['reviewerName'], fallback: 'Customer'),
     rating: readOptionalInt(json['rating']) ?? 0,
@@ -29,6 +31,7 @@ class MovieReview {
 
   final int id;
   final int movieId;
+  final String? movieTitle;
   final int bookingId;
   final String reviewerName;
 
@@ -42,6 +45,10 @@ class MovieReview {
   final bool mine;
 
   bool get edited => updatedAt.difference(createdAt).inMinutes >= 1;
+
+  String get movieLabel => movieTitle == null || movieTitle!.trim().isEmpty
+      ? 'Movie #$movieId'
+      : movieTitle!;
 }
 
 // The average, the count per star and the newest reviews of a movie.

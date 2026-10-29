@@ -109,7 +109,8 @@ class _MoviePreviewCardState extends State<MoviePreviewCard> {
   Widget build(BuildContext context) {
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     return MouseRegion(
-      onEnter: (event) {
+      // Scrolling can move a card under a stationary mouse and fire onEnter.
+      onHover: (event) {
         if (event.kind == PointerDeviceKind.mouse && !reduceMotion) {
           _start();
         }

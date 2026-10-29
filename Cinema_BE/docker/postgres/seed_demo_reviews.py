@@ -2,11 +2,13 @@
 
 Run with Python 3 while the Cinema Docker Compose stack is running.
 Accounts: review.customer01@example.com through review.customer10@example.com.
-Demo password: 123456. Existing accounts and reviews are never overwritten.
+Demo password: 123456. Only generated names and untouched [Demo] reviews are refreshed.
 """
 import json
 import pathlib
 import subprocess
+
+from review_samples import REVIEWER_NAMES, review_comment
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 
@@ -28,25 +30,31 @@ def literal(value):
 
 
 def main():
+    names = ",".join(f"({i},{literal(name)})" for i, name in enumerate(REVIEWER_NAMES, 1))
+    allowed_names = ",".join(literal(name) for name in REVIEWER_NAMES)
     # Same known demo password hash as the repository's original customer seed.
-    sql("cinema_auth_db", """
+    sql("cinema_auth_db", f"""
     BEGIN;
     INSERT INTO users(email,password_hash,full_name,enabled,email_verified)
     SELECT 'review.customer' || lpad(n::text,2,'0') || '@example.com',
       '$2y$10$EF16s.OkiRXS3Zt4PQaxbOirxjqeXgY3GeOWHwwX9WUKjMt/TKEf6',
-      'Demo Reviewer ' || lpad(n::text,2,'0'), true, true
-    FROM generate_series(1,10) n ON CONFLICT(email) DO NOTHING;
+      full_name, true, true
+    FROM (VALUES {names}) AS seed(n,full_name) ON CONFLICT(email) DO NOTHING;
+    UPDATE users u SET full_name=seed.full_name
+    FROM (VALUES {names}) AS seed(n,full_name)
+    WHERE u.email='review.customer' || lpad(seed.n::text,2,'0') || '@example.com'
+      AND u.full_name='Demo Reviewer ' || lpad(seed.n::text,2,'0');
     INSERT INTO users_roles(user_id,role_id)
     SELECT u.user_id,r.role_id FROM users u CROSS JOIN roles r
     WHERE u.email ~ '^review[.]customer(0[1-9]|10)@example[.]com$'
-      AND u.full_name LIKE 'Demo Reviewer %' AND r.name='ROLE_CUSTOMER'
+      AND u.full_name IN ({allowed_names}) AND r.name='ROLE_CUSTOMER'
     ON CONFLICT DO NOTHING;
     COMMIT;
     """)
-    customers = json.loads(sql("cinema_auth_db", """
+    customers = json.loads(sql("cinema_auth_db", f"""
       SELECT json_agg(u) FROM (SELECT user_id,email,full_name FROM users
       WHERE email ~ '^review[.]customer(0[1-9]|10)@example[.]com$'
-      AND full_name LIKE 'Demo Reviewer %' AND enabled AND email_verified) u
+      AND full_name IN ({allowed_names}) AND enabled AND email_verified) u
     """))
     assert customers and len(customers) == 10, "Expected 10 verified demo customers"
     movies = json.loads(sql("cinema_movie_db", """
@@ -72,10 +80,12 @@ def main():
     """))
     show_ids = {s["movie_id"]: s["id"] for s in shows}
     statements = []
-    for customer in customers:
+    for index, customer in enumerate(sorted(customers, key=lambda c: c['email'])):
         for movie in movies:
             user_id, movie_id = int(customer["user_id"]), int(movie["id"])
             code = literal(f"DEMO-REVIEW-{user_id}-{movie_id}")
+            comments = "ARRAY[" + ",".join(literal(review_comment(movie['title'], stars, index))
+                                          for stars in range(1, 6)) + "]"
             statements.append(f"""
               INSERT INTO bookings(booking_code,user_id,customer_email,showtime_id,
                 status,total_amount,movie_title,show_time,checked_in_at,created_at)
@@ -85,16 +95,17 @@ def main():
                 timestamp '2000-01-01' + {movie_id} * interval '1 day',
                 timestamp '2000-01-01' + {movie_id} * interval '1 day')
               ON CONFLICT(booking_code) DO NOTHING;
-              WITH sample AS MATERIALIZED (SELECT (1+floor(random()*5))::smallint AS stars)
+              WITH sample AS MATERIALIZED (SELECT COALESCE(
+                (SELECT rating FROM movie_reviews WHERE user_id={user_id} AND movie_id={movie_id}),
+                (1+floor(random()*5))::smallint) AS stars)
               INSERT INTO movie_reviews(movie_id,user_id,booking_id,reviewer_name,rating,comment)
               SELECT {movie_id},{user_id},b.id,{literal(customer['full_name'])},s.stars,
-                '[Demo] ' || (ARRAY['Not my taste; the pacing could be better.',
-                  'Some good moments, but the story did not convince me.',
-                  'An enjoyable movie with a few uneven scenes.',
-                  'Great performances and visuals. Worth watching.',
-                  'Loved the story and atmosphere. Highly recommended.'])[s.stars]
+                ({comments})[s.stars]
               FROM bookings b CROSS JOIN sample s WHERE b.booking_code={code}
-              ON CONFLICT(user_id,movie_id) DO NOTHING;
+              ON CONFLICT(user_id,movie_id) DO UPDATE
+                SET reviewer_name=EXCLUDED.reviewer_name, comment=EXCLUDED.comment
+              WHERE movie_reviews.comment LIKE '[Demo]%'
+                AND movie_reviews.booking_id=EXCLUDED.booking_id;
             """)
     sql("cinema_booking_db", "BEGIN;" + "\n".join(statements) + "COMMIT;")
     ids = ",".join(str(int(c["user_id"])) for c in customers)

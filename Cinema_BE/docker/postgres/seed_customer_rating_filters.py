@@ -1,12 +1,13 @@
 """Local demo ratings for khachhang1@gmail.com, covering every star filter.
 
 Run after seed_demo_reviews.py with the local Docker Compose stack running.
-Existing reviews, account credentials and real bookings are left intact.
+Only untouched [Demo] reviews are refreshed; credentials and real bookings stay intact.
 """
 import json
 import random
 
 from seed_demo_reviews import literal, sql
+from review_samples import review_comment
 
 EMAIL = "khachhang1@gmail.com"
 
@@ -34,17 +35,12 @@ def main():
     assert all(int(m["id"]) in show_ids for m in movies), "Run seed_demo_reviews.py first"
     ratings = [1 + i % 5 for i in range(len(movies))]
     random.shuffle(ratings)
-    comments = [
-        "[Demo] Not my taste; the pacing needs work.",
-        "[Demo] A few good moments, but the story felt uneven.",
-        "[Demo] Enjoyable overall, with some room for improvement.",
-        "[Demo] Great performances and visuals. Worth watching.",
-        "[Demo] Loved the story and atmosphere. Highly recommended.",
-    ]
     statements = []
     for movie, rating in zip(movies, ratings):
         movie_id = int(movie["id"])
         code = literal(f"DEMO-REVIEW-{user_id}-{movie_id}")
+        comments = "ARRAY[" + ",".join(literal(review_comment(movie['title'], stars, 10))
+                                      for stars in range(1, 6)) + "]"
         statements.append(f"""
           INSERT INTO bookings(booking_code,user_id,customer_email,showtime_id,
             status,total_amount,movie_title,show_time,checked_in_at,created_at)
@@ -53,11 +49,17 @@ def main():
             timestamp '2000-01-01' + {movie_id} * interval '1 day',
             timestamp '2000-01-01' + {movie_id} * interval '1 day')
           ON CONFLICT(booking_code) DO NOTHING;
+          WITH sample AS (SELECT COALESCE(
+            (SELECT rating FROM movie_reviews WHERE user_id={user_id} AND movie_id={movie_id}),
+            {rating}) AS stars)
           INSERT INTO movie_reviews(movie_id,user_id,booking_id,reviewer_name,rating,comment)
           SELECT {movie_id},{user_id},b.id,{literal(customer['full_name'])},
-            {rating},{literal(comments[rating-1])} FROM bookings b
+            s.stars,({comments})[s.stars] FROM bookings b CROSS JOIN sample s
           WHERE b.booking_code={code} AND b.user_id={user_id} AND b.checked_in_at IS NOT NULL
-          ON CONFLICT(user_id,movie_id) DO NOTHING;
+          ON CONFLICT(user_id,movie_id) DO UPDATE
+            SET reviewer_name=EXCLUDED.reviewer_name, comment=EXCLUDED.comment
+          WHERE movie_reviews.comment LIKE '[Demo]%'
+            AND movie_reviews.booking_id=EXCLUDED.booking_id;
         """)
     movie_ids = ",".join(str(int(m["id"])) for m in movies)
     # Closed demo screenings do not occupy any current seats or create payments.

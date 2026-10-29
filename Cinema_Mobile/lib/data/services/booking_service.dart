@@ -50,6 +50,11 @@ class BookingService {
         ),
       );
 
+  // All ratings written by the signed-in customer.
+  Future<List<MovieReview>> getMyReviews() async => readMapList(
+    await _apiClient.get('/api/v1/reviews/mine', authenticated: true),
+  ).map(MovieReview.fromJson).toList();
+
   // Whether a ticket's movie can be reviewed, and the review already written.
   Future<BookingReview> getBookingReview(int bookingId) async =>
       BookingReview.fromJson(

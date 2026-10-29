@@ -117,86 +117,94 @@ class _MyRatingsScreenState extends State<MyRatingsScreen> {
                         focusColor: AppColors.primary.withValues(alpha: 0.10),
                         hoverColor: AppColors.primary.withValues(alpha: 0.06),
                       ),
-                      child: PopupMenuButton<int>(
-                        key: const Key('ratingStarsFilter'),
-                        initialValue: _stars ?? 0,
-                        tooltip: 'Filter by rating',
-                        position: PopupMenuPosition.under,
-                        color: AppColors.surface,
-                        surfaceTintColor: Colors.transparent,
-                        constraints: const BoxConstraints(
-                          minWidth: 220,
-                          maxWidth: 280,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: AppRadius.borderRadiusMd,
-                          side: const BorderSide(color: AppColors.border),
-                        ),
-                        itemBuilder: (_) => [
-                          for (final value in [0, 5, 4, 3, 2, 1])
-                            PopupMenuItem(
-                              value: value,
-                              child: Semantics(
-                                selected: value == (_stars ?? 0),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      value == 0
-                                          ? Icons.star_border_rounded
-                                          : Icons.star_rounded,
-                                      size: 20,
-                                      color: value == 0
-                                          ? AppColors.textSecondary
-                                          : AppColors.warning,
-                                    ),
-                                    const SizedBox(width: AppSpacing.md),
-                                    Expanded(
-                                      child: Text(
-                                        value == 0
-                                            ? 'All ratings'
-                                            : formatCount(value, 'star'),
-                                        style: AppTextStyles.body.copyWith(
-                                          color: value == (_stars ?? 0)
-                                              ? AppColors.primary
-                                              : AppColors.textPrimary,
-                                          fontWeight: value == (_stars ?? 0)
-                                              ? FontWeight.w600
-                                              : FontWeight.w400,
-                                        ),
+                      child: LayoutBuilder(
+                        builder: (context, fieldConstraints) =>
+                            PopupMenuButton<int>(
+                              key: const Key('ratingStarsFilter'),
+                              initialValue: _stars ?? 0,
+                              tooltip: 'Filter by rating',
+                              position: PopupMenuPosition.under,
+                              color: AppColors.surfaceSoft,
+                              surfaceTintColor: Colors.transparent,
+                              constraints: BoxConstraints.tightFor(
+                                width: fieldConstraints.maxWidth,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: AppRadius.borderRadiusMd,
+                                side: const BorderSide(color: AppColors.border),
+                              ),
+                              itemBuilder: (_) => [
+                                for (final value in [0, 5, 4, 3, 2, 1])
+                                  PopupMenuItem(
+                                    value: value,
+                                    child: Semantics(
+                                      selected: value == (_stars ?? 0),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            value == 0
+                                                ? Icons.star_border_rounded
+                                                : Icons.star_rounded,
+                                            size: 20,
+                                            color: value == 0
+                                                ? AppColors.textSecondary
+                                                : AppColors.warning,
+                                          ),
+                                          const SizedBox(width: AppSpacing.md),
+                                          Expanded(
+                                            child: Text(
+                                              value == 0
+                                                  ? 'All ratings'
+                                                  : formatCount(value, 'star'),
+                                              style: AppTextStyles.body
+                                                  .copyWith(
+                                                    color:
+                                                        value == (_stars ?? 0)
+                                                        ? AppColors.primary
+                                                        : AppColors.textPrimary,
+                                                    fontWeight:
+                                                        value == (_stars ?? 0)
+                                                        ? FontWeight.w600
+                                                        : FontWeight.w400,
+                                                  ),
+                                            ),
+                                          ),
+                                          if (value == (_stars ?? 0)) ...[
+                                            const SizedBox(
+                                              width: AppSpacing.sm,
+                                            ),
+                                            const Icon(
+                                              Icons.check_rounded,
+                                              size: 20,
+                                              color: AppColors.primary,
+                                            ),
+                                          ],
+                                        ],
                                       ),
                                     ),
-                                    if (value == (_stars ?? 0)) ...[
-                                      const SizedBox(width: AppSpacing.sm),
-                                      const Icon(
-                                        Icons.check_rounded,
-                                        size: 20,
-                                        color: AppColors.primary,
-                                      ),
-                                    ],
-                                  ],
+                                  ),
+                              ],
+                              onSelected: (value) => setState(
+                                () => _stars = value == 0 ? null : value,
+                              ),
+                              child: InputDecorator(
+                                decoration: const InputDecoration(
+                                  labelText: 'Star rating',
+                                  suffixIcon: Icon(Icons.expand_more_rounded),
+                                ),
+                                child: Text(
+                                  _stars == null
+                                      ? 'All ratings'
+                                      : formatCount(_stars!, 'star'),
+                                  style: AppTextStyles.body,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  semanticsLabel: _stars == null
+                                      ? 'All ratings'
+                                      : formatCount(_stars!, 'star'),
                                 ),
                               ),
                             ),
-                        ],
-                        onSelected: (value) =>
-                            setState(() => _stars = value == 0 ? null : value),
-                        child: InputDecorator(
-                          decoration: const InputDecoration(
-                            labelText: 'Star rating',
-                            suffixIcon: Icon(Icons.expand_more_rounded),
-                          ),
-                          child: Text(
-                            _stars == null
-                                ? (compact ? 'All' : 'All ratings')
-                                : formatCount(_stars!, 'star'),
-                            style: AppTextStyles.body,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            semanticsLabel: _stars == null
-                                ? 'All ratings'
-                                : formatCount(_stars!, 'star'),
-                          ),
-                        ),
                       ),
                     );
                     if (constraints.maxWidth >= 300 &&
@@ -205,7 +213,7 @@ class _MyRatingsScreenState extends State<MyRatingsScreen> {
                         children: [
                           Expanded(flex: 3, child: search),
                           const SizedBox(width: AppSpacing.md),
-                          Expanded(flex: 2, child: rating),
+                          SizedBox(width: compact ? 176 : 240, child: rating),
                         ],
                       );
                     }

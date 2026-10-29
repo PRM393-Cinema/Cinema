@@ -16,6 +16,7 @@ import '../../features/booking/screens/booking_detail_screen.dart';
 import '../../features/booking/screens/booking_summary_screen.dart';
 import '../../features/booking/screens/my_bookings_screen.dart';
 import '../../features/home/screens/home_screen.dart';
+import '../../features/review/screens/my_ratings_screen.dart';
 import '../../features/movie/screens/movie_detail_screen.dart';
 import '../../features/notification/screens/notification_detail_screen.dart';
 import '../../features/notification/screens/notification_list_screen.dart';
@@ -161,6 +162,12 @@ class AppRouter {
         );
       case AppRoutes.notifications:
         return _notificationList();
+      case AppRoutes.myRatings:
+        return _RouteMatch(
+          settings,
+          (_) => MyRatingsScreen(bookingRepository: bookingRepository),
+          signInRequired: true,
+        );
       case AppRoutes.paymentHistory:
         return _RouteMatch(
           settings,

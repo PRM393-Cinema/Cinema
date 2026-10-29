@@ -8,6 +8,8 @@ namespace BookingService.DTOs.Responses
 
         public long MovieId { get; set; }
 
+        public string? MovieTitle { get; set; }
+
         public long BookingId { get; set; }
 
         public string ReviewerName { get; set; } = string.Empty;

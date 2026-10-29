@@ -112,7 +112,8 @@ void main() {
     await pumpRoute(tester);
 
     expect(find.text('Notification'), findsOneWidget);
-    expect(find.text(notificationFixture.subject), findsOneWidget);
+    expect(find.text('Đặt vé thành công'), findsOneWidget);
+    expect(find.text('BK-20261005193000-111111'), findsOneWidget);
   });
 
   testWidgets('Signed-out link asks to sign in, then opens the page', (

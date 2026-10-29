@@ -68,13 +68,21 @@ namespace BookingService.Services.Implementations
 
         public async Task<List<MovieReviewResponse>> GetMineAsync(long userId)
         {
-            return (await _context.MovieReviews
-                    .AsNoTracking()
-                    .Where(r => r.UserId == userId)
-                    .OrderByDescending(r => r.UpdatedAt)
-                    .ToListAsync())
-                .Select(r => ToResponse(r, userId))
-                .ToList();
+            var rows = await (
+                from review in _context.MovieReviews.AsNoTracking()
+                join booking in _context.Bookings.AsNoTracking()
+                    on review.BookingId equals booking.Id into bookings
+                from booking in bookings.DefaultIfEmpty()
+                where review.UserId == userId
+                orderby review.UpdatedAt descending, review.Id descending
+                select new { Review = review, MovieTitle = booking == null ? null : booking.MovieTitle }
+            ).ToListAsync();
+            return rows.Select(row =>
+            {
+                var response = ToResponse(row.Review, userId);
+                response.MovieTitle = row.MovieTitle;
+                return response;
+            }).ToList();
         }
 
         public async Task<BookingReviewResponse> GetForBookingAsync(long userId, long bookingId)

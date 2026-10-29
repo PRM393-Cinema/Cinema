@@ -3,6 +3,7 @@ import 'package:cinema_fe/data/models/movie.dart';
 import 'package:cinema_fe/features/movie/screens/movie_detail_screen.dart';
 import 'package:cinema_fe/features/movie/widgets/movie_preview_card.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'support/fixtures.dart';
@@ -10,6 +11,64 @@ import 'support/fakes.dart';
 import 'support/test_app.dart';
 
 void main() {
+  testWidgets(
+    'Scrolling under a stationary mouse does not select another film',
+    (tester) async {
+      tester.view.physicalSize = const Size(375, 812);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final movies = [
+        for (var id = 1; id <= 12; id++)
+          Movie.fromJson({'id': id, 'title': 'Film $id', 'status': 'ACTIVE'}),
+      ];
+      await tester.pumpWidget(
+        buildTestApp(catalogRepository: FakeCatalogRepository(movies: movies)),
+      );
+      await pumpRoute(tester);
+      final first = find.byWidgetPredicate(
+        (w) => w is MoviePreviewCard && w.movie.id == 1,
+      );
+      await scrollHomeTo(tester, first);
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await mouse.addPointer(location: const Offset(0, 0));
+      await mouse.moveTo(tester.getTopLeft(first) + const Offset(40, 100));
+      await tester.pumpAndSettle();
+      final active = tester.widget<MoviePreviewCard>(first).active;
+      expect(active.value, 1);
+      final scroll = tester
+          .state<ScrollableState>(
+            find
+                .descendant(
+                  of: find.byKey(const Key('homeScrollView')),
+                  matching: find.byType(Scrollable),
+                )
+                .first,
+          )
+          .position;
+      final initialOffset = scroll.pixels;
+      for (final offset in [initialOffset + 372, initialOffset]) {
+        scroll.jumpTo(offset);
+        await tester.pumpAndSettle();
+        expect(
+          active.value,
+          isNull,
+          reason:
+              'Only a deliberate pointer move or tap should start a preview',
+        );
+        final id = offset == initialOffset ? 2 : 4;
+        final target = find.byWidgetPredicate(
+          (w) => w is MoviePreviewCard && w.movie.id == id,
+        );
+        await tester.tapAt(tester.getTopLeft(target) + const Offset(40, 100));
+        await tester.pumpAndSettle();
+        expect(active.value, id);
+        expect(find.byType(MovieDetailScreen), findsNothing);
+      }
+      await mouse.removePointer();
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+
   testWidgets(
     'Each movie opens its own details after going back and filtering',
     (tester) async {

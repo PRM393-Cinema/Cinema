@@ -60,7 +60,7 @@ class RouteTracker extends NavigatorObserver {
   }
 }
 
-enum _Section { movies, tickets, notifications, account }
+enum _Section { movies, tickets, ratings, notifications, account }
 
 const _authPages = {
   AppRoutes.login,
@@ -72,6 +72,7 @@ const _authPages = {
 
 _Section? _sectionOf(String path) {
   if (path.startsWith(AppRoutes.myBookings)) return _Section.tickets;
+  if (path == AppRoutes.myRatings) return _Section.ratings;
   if (path.startsWith(AppRoutes.notifications)) return _Section.notifications;
   if (path == AppRoutes.profile || path == AppRoutes.paymentHistory) {
     return _Section.account;
@@ -218,7 +219,7 @@ class _WebHeader extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: AppSpacing.xl),
+            const SizedBox(width: AppSpacing.sm),
             _HeaderLink(
               label: 'Movies',
               selected: selected == _Section.movies,
@@ -229,6 +230,17 @@ class _WebHeader extends StatelessWidget {
                 label: 'My tickets',
                 selected: selected == _Section.tickets,
                 onTap: () => onOpen(AppRoutes.myBookings),
+              ),
+              IconButton(
+                key: const Key('myRatings'),
+                color: selected == _Section.ratings
+                    ? AppColors.primary
+                    : AppColors.textSecondary,
+                onPressed: () => onOpen(AppRoutes.myRatings),
+                icon: const Icon(
+                  Icons.star_outline_rounded,
+                  semanticLabel: 'My ratings',
+                ),
               ),
               _HeaderLink(
                 label: 'Notifications',

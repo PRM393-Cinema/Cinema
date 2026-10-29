@@ -114,7 +114,8 @@ Vé chỉ check-in được từ 3 giờ trước đến 2 giờ sau giờ chi�
 
 - Chạy thủ công: `python Cinema_BE/docker/postgres/seed_demo_reviews.py` từ thư mục Cinema khi Docker đang chạy.
 - Có 10 customer: `review.customer01@example.com` đến `review.customer10@example.com`, mật khẩu demo `123456`.
-- Mỗi tài khoản có một review ngẫu nhiên 1–5 sao cho mỗi phim; tên `Demo Reviewer` và bình luận `[Demo]` phân biệt với đánh giá thật.
+- Mỗi tài khoản có một review ngẫu nhiên 1–5 sao cho mỗi phim, dùng tên giả lập và nhận xét tiếng Việt viết theo từng phim. Đây là dữ liệu mẫu, không phải đánh giá của khách thật.
+- Chạy lại hai script seed review sẽ đổi tên `Demo Reviewer` và nội dung `[Demo]` cũ; giữ nguyên số sao, ngày đánh giá và review đã được người dùng viết/sửa. Không cập nhật mật khẩu.
 - Script tạo suất chiếu đã đóng và vé demo giá 0 trong năm 2000 để khách có thể sửa review theo đúng điều kiện vé đã check-in. Không tạo thanh toán, email hoặc chiếm ghế các suất hiện tại. Vé demo vẫn được tính trong thống kê tổng vé/đơn toàn thời gian.
 - Chạy lại không nhân đôi tài khoản, vé hoặc review và không ghi đè dữ liệu đang có.
 - Trên trang phim, chọn **Rate this movie** để viết/sửa rating; khách chưa đăng nhập sẽ được chuyển đến đăng nhập. Khách chưa có vé đã check-in thấy hướng dẫn điều kiện đánh giá.
