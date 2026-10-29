@@ -1,0 +1,102 @@
+[
+  {
+    "document": "Cinema_Web_NET_SRS_EN",
+    "folder": "web-en",
+    "pages": 216,
+    "sections": 28,
+    "tables": 203,
+    "source_sha256_unchanged": true,
+    "technical_ids_verified": 625,
+    "source_links_verified": 258,
+    "latex_warnings": [],
+    "pdf_replacement_characters": 0,
+    "unique_source_cells_or_paragraphs": 2648,
+    "text_extraction_cells_requiring_review": [],
+    "preview_pages": {
+      "cover": 1,
+      "contents": 3,
+      "section-9": 20,
+      "section-12": 124,
+      "section-13": 140,
+      "section-22": 164,
+      "section-27": 208,
+      "section-28": 216
+    },
+    "visual_review": "Cover, contents, functional requirements, UI screens, API tables, traceability matrix and implementation-status samples inspected; final landscape API/traceability pages inspected."
+  },
+  {
+    "document": "Cinema_Web_NET_SRS_VI",
+    "folder": "web-vi",
+    "pages": 211,
+    "sections": 28,
+    "tables": 203,
+    "source_sha256_unchanged": true,
+    "technical_ids_verified": 625,
+    "source_links_verified": 258,
+    "latex_warnings": [],
+    "pdf_replacement_characters": 0,
+    "unique_source_cells_or_paragraphs": 2649,
+    "text_extraction_cells_requiring_review": [],
+    "preview_pages": {
+      "cover": 1,
+      "contents": 3,
+      "section-9": 20,
+      "section-12": 122,
+      "section-13": 138,
+      "section-22": 161,
+      "section-27": 205,
+      "section-28": 211
+    },
+    "visual_review": "Cover, contents, functional requirements, UI screens, API tables, traceability matrix and implementation-status samples inspected; final landscape API/traceability pages inspected."
+  },
+  {
+    "document": "Cinema_Mobile_SRS_EN",
+    "folder": "mobile-en",
+    "pages": 134,
+    "sections": 28,
+    "tables": 121,
+    "source_sha256_unchanged": true,
+    "technical_ids_verified": 358,
+    "source_links_verified": 150,
+    "latex_warnings": [],
+    "pdf_replacement_characters": 0,
+    "unique_source_cells_or_paragraphs": 1558,
+    "text_extraction_cells_requiring_review": [],
+    "preview_pages": {
+      "cover": 1,
+      "contents": 3,
+      "section-9": 18,
+      "section-12": 78,
+      "section-13": 86,
+      "section-22": 102,
+      "section-27": 129,
+      "section-28": 134
+    },
+    "visual_review": "Cover, contents, functional requirements, UI screens, API tables, traceability matrix and implementation-status samples inspected; final landscape API/traceability pages inspected."
+  },
+  {
+    "document": "Cinema_Mobile_SRS_VI",
+    "folder": "mobile-vi",
+    "pages": 132,
+    "sections": 28,
+    "tables": 121,
+    "source_sha256_unchanged": true,
+    "technical_ids_verified": 358,
+    "source_links_verified": 150,
+    "latex_warnings": [],
+    "pdf_replacement_characters": 0,
+    "unique_source_cells_or_paragraphs": 1558,
+    "text_extraction_cells_requiring_review": [],
+    "preview_pages": {
+      "cover": 1,
+      "contents": 3,
+      "section-9": 18,
+      "section-12": 77,
+      "section-13": 85,
+      "section-22": 101,
+      "section-27": 128,
+      "section-28": 132
+    },
+    "visual_review": "Cover, contents, functional requirements, UI screens, API tables, traceability matrix and implementation-status samples inspected; final landscape API/traceability pages inspected."
+  }
+]

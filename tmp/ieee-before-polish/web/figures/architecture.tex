@@ -1,0 +1,19 @@
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=5mm and 4mm]
+\node[box,text width=54mm] (ui) {Flutter customer Web\\and admin Web};
+\node[box,below=of ui,text width=54mm] (gw) {YARP API gateway / JWT policies};
+\node[box,below=7mm of gw] (mo) {MovieService\\movies and showtimes};
+\node[box,left=of mo] (au) {AuthService\\accounts and tokens};
+\node[box,right=of mo] (bo) {BookingService\\booking / payment / mail};
+\node[box,below=of mo,text width=82mm] (db) {PostgreSQL: auth, movie, showtime, booking, payment, notification};
+\node[box,below=of db,text width=82mm] (ext) {RabbitMQ events; PayOS HTTP; SMTP email\\external calls are made by backend services};
+\draw[arr] (ui)--node[right,font=\tiny]{JSON / bearer token}(gw);
+\draw[arr] (gw)--(au);\draw[arr] (gw)--(mo);\draw[arr] (gw)--(bo);
+\draw[arr] (au)--(db.north west);\draw[arr] (mo)--(db);\draw[arr] (bo)--(db.north east);
+\draw[arr] (bo.east) -- ++(2mm,0) |- (ext.east);
+\end{tikzpicture}
+\caption{Selected deployment overview. Requests enter the gateway; services
+access their database contexts. The bottom box groups backend integrations.}
+\label{fig:architecture}
+\end{figure}

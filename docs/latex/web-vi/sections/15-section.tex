@@ -1,0 +1,61 @@
+\clearpage
+\section{Luồng nghiệp vụ}\label{sec:srs-15}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{15. Luồng nghiệp vụ}\label{tab:srs-190}\\
+\toprule
+\textbf{\texttt{ID}} & \textbf{Luồng} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{\texttt{ID}} & \textbf{Luồng} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+\texttt{WEB-\allowbreak{}WF-\allowbreak{}01} & Đăng ký \ensuremath{\rightarrow} xác thực \texttt{OTP} \ensuremath{\rightarrow} trang đầu theo vai trò; đăng nhập chưa xác thực sang \texttt{OTP}. Khôi phục lỗi không xác thực tài khoản. \\[3pt]
+\texttt{WEB-\allowbreak{}WF-\allowbreak{}02} & Duyệt \ensuremath{\rightarrow} phim \ensuremath{\rightarrow} suất mở \ensuremath{\rightarrow} ghế \ensuremath{\rightarrow} xác nhận phần thêm/\allowbreak{}mã/\allowbreak{}điểm/\allowbreak{}tuổi \ensuremath{\rightarrow} tạo giữ \texttt{PENDING} \ensuremath{\rightarrow} \texttt{Pay\allowbreak{}OS} \ensuremath{\rightarrow} server xác minh \ensuremath{\rightarrow} \texttt{CONFIRME\allowbreak{}D} + thông báo vé. \\[3pt]
+\texttt{WEB-\allowbreak{}WF-\allowbreak{}03} & Tới \texttt{expires\allowbreak{}At} \ensuremath{\rightarrow} tác vụ hết hạn (mặc định mỗi 30 giây) \ensuremath{\rightarrow} \texttt{EXPIRED} và trả ghế/\allowbreak{}điểm. Trả muộn lấy lại ghế và xác nhận hoặc tạo hoàn toàn bộ. \\[3pt]
+\texttt{WEB-\allowbreak{}WF-\allowbreak{}04} & Khách huỷ đã trả \ensuremath{\geq}2 giờ trước suất \ensuremath{\rightarrow} \texttt{REFUND\_\allowbreak{}PENDING} giữ ghế \ensuremath{\rightarrow} nhân viên web chuyển thủ công/\allowbreak{}ghi nhận \ensuremath{\rightarrow} \texttt{REFUNDED\allowbreak{}}/\allowbreak{}\texttt{CANCELLE\allowbreak{}D}. Từ chối đủ điều kiện phục hồi \texttt{SUCCESS}/\allowbreak{}\texttt{CONFIRME\allowbreak{}D}. \\[3pt]
+\texttt{WEB-\allowbreak{}WF-\allowbreak{}05} & 1. Quét \texttt{QR} hoặc nhập mã vé rồi nhấn Enter. 2. Tra vé; bổ sung phòng và phân loại tuổi khi lời gọi danh mục thành công. 3. Kiểm tra danh tính/\allowbreak{}tuổi theo nhắc nhở rồi xác nhận check-in. 4. Lưu \texttt{checked\allowbreak{}In\allowbreak{}At}, hiện xác nhận và sẵn sàng nhập mã tiếp theo. \\[3pt]
+\texttt{WEB-\allowbreak{}WF-\allowbreak{}06} & 1. Chọn khách vãng lai hoặc tìm thành viên qua điện thoại; chọn suất, ghế và bắp nước/\allowbreak{}khuyến mãi/\allowbreak{}điểm nếu cần. 2. Giữ ghế và mở thu tiền tại quầy. 3. Nhận đủ tiền mặt và hiện tiền thối hoặc hiện \texttt{Viet\allowbreak{}QR} và xác minh mỗi ba giây. 4. Sau khi server xác nhận, hiện/\allowbreak{}in vé \texttt{QR}, có thể gửi email và check-in trong khung được phép. \\[3pt]
+\texttt{WEB-\allowbreak{}WF-\allowbreak{}07} & Huỷ suất \ensuremath{\rightarrow} outbox \texttt{Movie\allowbreak{}Service} \ensuremath{\rightarrow} bộ nhận \texttt{Booking\allowbreak{}Service} \ensuremath{\rightarrow} huỷ vé/\allowbreak{}tạo hoàn vé đã trả \ensuremath{\rightarrow} thông báo. Lan truyền nhất quán sau, không phải giao dịch xuyên \texttt{DB}. \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{Hợp đồng trạng thái}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{Hợp đồng trạng thái}\label{tab:srs-191}\\
+\toprule
+\textbf{Đối tượng} & \textbf{Chuyển trạng thái} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{Đối tượng} & \textbf{Chuyển trạng thái} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Booking & \texttt{PENDING} \ensuremath{\rightarrow} \texttt{CONFIRME\allowbreak{}D} /\allowbreak{} \texttt{CANCELLE\allowbreak{}D} /\allowbreak{} \texttt{EXPIRED}; \texttt{EXPIRED} \ensuremath{\rightarrow} \texttt{CONFIRME\allowbreak{}D} (xác minh trả muộn và còn ghế); \texttt{CONFIRME\allowbreak{}D} \ensuremath{\rightarrow} \texttt{REFUND\_\allowbreak{}PENDING} /\allowbreak{} \texttt{CANCELLE\allowbreak{}D}; \texttt{REFUND\_\allowbreak{}PENDING} \ensuremath{\rightarrow} \texttt{CONFIRME\allowbreak{}D} /\allowbreak{} \texttt{CANCELLE\allowbreak{}D} \\[3pt]
+Payment & \texttt{PENDING} \ensuremath{\rightarrow} \texttt{SUCCESS} /\allowbreak{} \texttt{FAILED}; \texttt{FAILED} \ensuremath{\rightarrow} \texttt{SUCCESS} (xác minh trả muộn); \texttt{SUCCESS} \ensuremath{\rightarrow} \texttt{REFUND\_\allowbreak{}PENDING} \ensuremath{\rightarrow} \texttt{REFUNDED\allowbreak{}}; \texttt{REFUND\_\allowbreak{}PENDING} \ensuremath{\rightarrow} \texttt{SUCCESS} \\[3pt]
+Refund & \texttt{PENDING} \ensuremath{\rightarrow} \texttt{COMPLETE\allowbreak{}D} /\allowbreak{} \texttt{REJECTED\allowbreak{}}; \texttt{REJECTED\allowbreak{}} \ensuremath{\rightarrow} \texttt{PENDING} (rạp huỷ sau) \\[3pt]
+Showtime & \texttt{OPEN} \ensuremath{\leftrightarrow} \texttt{CLOSED}; \texttt{OPEN}/\allowbreak{}\texttt{CLOSED} \ensuremath{\rightarrow} \texttt{CANCELLE\allowbreak{}D} \\[3pt]
+Notification & \texttt{PENDING} \ensuremath{\rightarrow} \texttt{SENT}/\allowbreak{}\texttt{FAILED}; \texttt{FAILED} \ensuremath{\rightarrow} \texttt{SENT}; \texttt{read\allowbreak{}At} độc lập trạng thái gửi \\[3pt]
+\end{longtable}
+\endgroup
+
+\texttt{checked\allowbreak{}In\allowbreak{}At} là thuộc tính vé đã xác nhận, không phải trạng thái vé riêng.

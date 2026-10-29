@@ -1,0 +1,2702 @@
+{
+  "source": "../../Cinema_Web_NET_SRS_VI.md",
+  "source_sha256": "1f168feb19f191db253698c9e277f5a996ab044e9466addc86ae7dbf50d80236",
+  "sections": 28,
+  "headings": [
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "ĐẶC TẢ YÊU CẦU PHẦN MỀM"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "Cinema — Web .NET"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "1. Giới thiệu"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "2. Mục đích"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "3. Phạm vi"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "4. Mô tả tổng thể"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "5. Bối cảnh sản phẩm"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "6. Nhóm người dùng / Tác nhân"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "7. Vai trò và phân quyền"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "8. Quy tắc nghiệp vụ"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "9. Yêu cầu chức năng"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-AUTH-01 — Đăng ký"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-AUTH-02 — Đăng nhập"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-AUTH-03 — Thông tin JWT"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-AUTH-04 — Kiểm tra JWT"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-AUTH-05 — Phân quyền vai trò"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-AUTH-06 — Phản hồi chưa xác thực và thiếu quyền"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-AUTH-07 — Xác thực OTP email"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-AUTH-08 — Đăng ký lại email chưa xác thực"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-AUTH-09 — Khôi phục mật khẩu"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-AUTH-10 — Làm mới và đăng xuất"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-AUTH-11 — Tài khoản hiện tại"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-AUTH-12 — Áp dụng khoá và đổi quyền"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-AUTH-13 — Kiểm tra trường tài khoản"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-AUTH-14 — Giới hạn tần suất xác thực"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-AUTH-15 — Tìm thành viên theo điện thoại"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-AUTH-16 — Sửa hồ sơ"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-AUTH-17 — Đổi mật khẩu hiện tại"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-USER-01 — Danh sách tài khoản"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-USER-02 — Chi tiết tài khoản"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-USER-03 — Tạo tài khoản"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-USER-04 — Đổi vai trò tài khoản"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-USER-05 — Khoá và mở khoá"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-USER-06 — Danh sách vai trò"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-MOV-01 — Danh mục phân trang"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-MOV-02 — Chi tiết phim"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-MOV-03 — Tìm theo tên"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-MOV-04 — Danh mục đang hoạt động"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-MOV-05 — Tạo phim"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-MOV-06 — Sửa và chiếu lại phim"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-MOV-07 — Ngừng chiếu phim"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-MOV-08 — Mở trailer"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-MOV-09 — Phân loại tuổi"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-MOV-10 — Đang chiếu và sắp chiếu"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-MOV-11 — Đạo diễn và diễn viên"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-MOV-12 — Đánh giá phim"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-ROOM-01 — Tìm phòng"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-ROOM-02 — Chi tiết phòng"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-ROOM-03 — Tạo phòng và ghế"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-ROOM-04 — Đổi tên phòng"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-ROOM-05 — Xoá phòng đủ điều kiện"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SEAT-01 — Sinh ghế"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SEAT-02 — Chi tiết ghế"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SEAT-03 — Xem sơ đồ phòng"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SEAT-04 — API xoá ghế"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SEAT-05 — Đổi loại ghế"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SEAT-06 — Đổi loại nhiều ghế"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SEAT-07 — Đổi sức chứa"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SEAT-08 — Bảo vệ phòng đã xếp lịch"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SEAT-09 — Làm mới sơ đồ quản lý"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SHOW-01 — Danh sách suất"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SHOW-02 — Tạo suất"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SHOW-03 — Suất và giá"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SHOW-04 — Sửa suất"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SHOW-05 — Huỷ suất"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SHOW-06 — Suất mở chưa bắt đầu"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SHOW-07 — Suất theo phim"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SHOW-08 — Suất phim còn đặt được"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SHOW-09 — Tìm theo khoảng ngày"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SHOW-10 — Mở và đóng bán"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SHOW-11 — Từ chối trùng lịch"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SHOW-12 — Sơ đồ ghế/khách của suất"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-SHOW-13 — Định dạng chiếu"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-BOOK-01 — Giữ chỗ đặt vé"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-BOOK-02 — Chi tiết vé"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-BOOK-03 — Tra vé quản lý"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-BOOK-04 — Lịch sử vé của mình"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-BOOK-05 — Xác nhận vé đã trả"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-BOOK-06 — Huỷ vé"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-BOOK-07 — ID ghế đã chiếm"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-BOOK-08 — Xung đột ghế đồng thời"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-BOOK-09 — Cặp sweetbox"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-BOOK-10 — Hết hạn giữ chỗ chưa trả"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-BOOK-11 — Làm mới sơ đồ khách"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-BOOK-12 — Thống kê vé theo suất"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-BOOK-13 — Bắp nước kèm vé"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-BOOK-14 — Quản lý bắp nước"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-BOOK-15 — Khuyến mãi và mã giảm giá"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-BOOK-16 — Quản lý khuyến mãi"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-BOOK-17 — Điểm thành viên"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-BOOK-18 — Quản lý thành viên"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-BOOK-19 — Chia sẻ và lịch"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-PAY-01 — Tạo/dùng lại link PayOS"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-PAY-02 — Xác minh PayOS"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-PAY-03 — Chi tiết thanh toán"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-PAY-04 — Lịch sử thanh toán của mình"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-PAY-05 — Thanh toán theo vé"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-PAY-06 — Truy cập hoàn tiền"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-PAY-07 — Webhook có chữ ký"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-PAY-08 — Thanh toán muộn"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-PAY-09 — Quản lý thanh toán"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-PAY-10 — Tổng hợp doanh thu"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-PAY-11 — Tự kiểm tra thanh toán"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-REF-01 — Tạo yêu cầu hoàn tiền"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-REF-02 — Danh sách hoàn tiền quản lý"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-REF-03 — Ghi nhận chuyển tiền hoàn tất"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-REF-04 — Từ chối hoàn tiền"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-REF-05 — Mở lại hoàn tiền đã từ chối"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-REF-06 — Trạng thái hoàn tiền của mình"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-REF-07 — Một hoàn tiền mỗi thanh toán"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-POS-01 — Tạo vé tại quầy"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-POS-02 — Thu tiền tại quầy"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-POS-03 — Tiền mặt và tiền thối"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-POS-04 — QR chuyển khoản"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-POS-05 — Đổi chuyển khoản sang tiền mặt"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-POS-06 — Lưu email tại quầy"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-POS-07 — In và cho vào"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-POS-08 — Mở lại vé đã trả"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-CHK-01 — QR vé"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-CHK-02 — Tra mã vé"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-CHK-03 — Kiểm tra check-in"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-CHK-04 — Camera/nhập mã"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-CHK-05 — Hiện giờ check-in"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-NOTI-01 — Lịch sử thông báo"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-NOTI-02 — Soạn tin cho vé"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-NOTI-03 — Gửi/thử lại tin"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-NOTI-04 — Chi tiết thông báo"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-NOTI-05 — API xoá thông báo"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-NOTI-06 — Email sự kiện"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-NOTI-07 — Email OTP và chào mừng"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-NOTI-08 — Nhắc giờ chiếu"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-NOTI-09 — Thông báo đã/chưa đọc"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-DASH-01 — Tổng hôm nay"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-DASH-02 — Bảng suất trực tiếp"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-DASH-03 — Việc nhân viên cần xử lý"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-DASH-04 — Tổng quan tháng quản trị"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-NAV-01 — Bảo vệ và khôi phục route"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-STATE-01 — Trạng thái tải, lỗi và rỗng"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-FR-MEDIA-01 — Media phim theo nền tảng"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "10. Đặc tả ca sử dụng"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "UC-WEB-01 — Xác thực và phiên tài khoản"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "UC-WEB-02 — Quản trị tài khoản"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "UC-WEB-03 — Danh mục phim và đánh giá"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "UC-WEB-04 — Quản lý phòng chiếu"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "UC-WEB-05 — Sơ đồ ghế và tình trạng chỗ"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "UC-WEB-06 — Suất chiếu và giá vé"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "UC-WEB-07 — Đặt vé, bắp nước, khuyến mãi và điểm thành viên"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "UC-WEB-08 — Thanh toán trực tuyến và đối soát"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "UC-WEB-09 — Huỷ vé và hoàn tiền thủ công"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "UC-WEB-10 — Bán vé tại quầy"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "UC-WEB-11 — Tra vé và check-in"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "UC-WEB-12 — Thông báo và email giao dịch"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "UC-WEB-13 — Bảng tổng quan vận hành"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "11. Yêu cầu giao diện bên ngoài"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "12. Yêu cầu giao diện / Màn hình"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-LOGIN — Đăng nhập"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-REGISTER — Đăng ký"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-VERIFY — Xác thực email"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-FORGOT — Quên mật khẩu"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-RESET — Đặt lại mật khẩu"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-HOME — Trang chủ khách"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-MOVIE — Chi tiết phim"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-SEATS — Chọn ghế"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-SUMMARY — Xác nhận đặt vé"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-PAYMENT — Thanh toán"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-RESULT — Kết quả thanh toán"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-TICKETS — Vé của tôi"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-TICKET — Chi tiết vé"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-PAYHISTORY — Lịch sử thanh toán"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-NOTIFICATIONS — Thông báo"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-NOTIFICATION — Chi tiết thông báo"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-PROFILE — Tài khoản và thành viên"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-CHECKIN — Check-in vé"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-STAFF-DASH — Tổng quan nhân viên"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-ADMIN-DASH — Tổng quan quản trị"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-OPERATIONS — Không gian vận hành"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-COUNTER — Đặt vé quầy"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-CHECKOUT — Thu tiền quầy"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-RECORD-BOOKINGS — Bản ghi vé"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-RECORD-PAYMENTS — Bản ghi thanh toán"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-RECORD-REFUNDS — Bản ghi hoàn tiền"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-RECORD-SHOWTIMES — Bản ghi suất chiếu"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-RECORD-ROOMS — Bản ghi phòng"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-SHOW-EDITOR — Sửa suất chiếu"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-COMPOSE — Soạn email cho vé"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-ADMIN-MOVIES — Phim"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-ADMIN-ROOMS — Phòng"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-ADMIN-SNACKS — Bắp nước"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-ADMIN-PROMOTIONS — Khuyến mãi"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-ADMIN-MEMBERS — Thành viên"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-ADMIN-USERS — Tài khoản"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-USER-EDITOR — Tạo/chi tiết tài khoản"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-MGT-PROFILE — Hồ sơ quản lý"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "WEB-SCR-STAFF-ONLY — Thông báo quyền quản lý"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "13. Yêu cầu API"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "Định nghĩa trường yêu cầu"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "14. Yêu cầu dữ liệu"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "15. Luồng nghiệp vụ"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "Hợp đồng trạng thái"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "16. Xác thực và phân quyền"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "17. Xử lý lỗi"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "18. Yêu cầu phi chức năng"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "19. Yêu cầu bảo mật"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "20. Yêu cầu kiểm thử"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "Bằng chứng test hiện có"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "21. Tiêu chí nghiệm thu"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "22. Ma trận truy vết yêu cầu"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "23. Ràng buộc"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "24. Ngoài phạm vi"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "25. Cải tiến tương lai"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "26. Kết luận"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "27. Đối chiếu yêu cầu và triển khai"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "28. Bằng chứng và đối chiếu nguồn"
+    }
+  ],
+  "blocks": 445,
+  "tables": [
+    {
+      "table": 1,
+      "section": 0,
+      "heading": "Thông tin tài liệu",
+      "columns": 2,
+      "rows": 5,
+      "cells_sha256": "d2a67543ec4097bd1852e0ee0bb6c0ca21f7c2dbbd643647ae17a8b114bc5a85"
+    },
+    {
+      "table": 2,
+      "section": 5,
+      "heading": "5. Bối cảnh sản phẩm",
+      "columns": 2,
+      "rows": 4,
+      "cells_sha256": "f290886bc7e1e96192234566f2eccbe9c2704270742418a3ae35e140f6fee22d"
+    },
+    {
+      "table": 3,
+      "section": 6,
+      "heading": "6. Nhóm người dùng / Tác nhân",
+      "columns": 2,
+      "rows": 5,
+      "cells_sha256": "1a2fa5c055c57e8f3577c804a56971a9ff3f6b51e3d2211170933cef8f81cc6f"
+    },
+    {
+      "table": 4,
+      "section": 7,
+      "heading": "7. Vai trò và phân quyền",
+      "columns": 5,
+      "rows": 5,
+      "cells_sha256": "ec57430e382e914df6887ddca6511423011c426a96d05a53f81c8500ced9666e"
+    },
+    {
+      "table": 5,
+      "section": 8,
+      "heading": "8. Quy tắc nghiệp vụ",
+      "columns": 2,
+      "rows": 30,
+      "cells_sha256": "21842fa252bde65c6363e2ea38dcdbbc64fefa92273e5d3bcfdfa6d6944e89f0"
+    },
+    {
+      "table": 6,
+      "section": 9,
+      "heading": "WEB-FR-AUTH-01 — Đăng ký",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "d936672ec0b1196bf0dd3d6a95cabdd20a921fa993bddb129d85c73cf72416e0"
+    },
+    {
+      "table": 7,
+      "section": 9,
+      "heading": "WEB-FR-AUTH-02 — Đăng nhập",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "ead313dd2250b791b7361a76dbccde7e51e825bc2bd85d990f3a006eb0dac995"
+    },
+    {
+      "table": 8,
+      "section": 9,
+      "heading": "WEB-FR-AUTH-03 — Thông tin JWT",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "95ee67da0de10be4a9784336ec9a04ce98d6a23d2a54007c5ed84a204bb1833e"
+    },
+    {
+      "table": 9,
+      "section": 9,
+      "heading": "WEB-FR-AUTH-04 — Kiểm tra JWT",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "b151aa466be779d9258e98e25772c1f3204bcb6b08671ca8893f863320d1761d"
+    },
+    {
+      "table": 10,
+      "section": 9,
+      "heading": "WEB-FR-AUTH-05 — Phân quyền vai trò",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "447db4fc48e13ec32a2e6f98eeba3fa478e2eeb2cb9840713f70f842d7f7c43c"
+    },
+    {
+      "table": 11,
+      "section": 9,
+      "heading": "WEB-FR-AUTH-06 — Phản hồi chưa xác thực và thiếu quyền",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "a89c067372c1fa7523b7905b1a7fdc26c89868de6db4f16e17346eb55239ecb5"
+    },
+    {
+      "table": 12,
+      "section": 9,
+      "heading": "WEB-FR-AUTH-07 — Xác thực OTP email",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "33ac244fbb255e807f0251743b6a6102d10e53ef305326c601fc4f2266bf7fc3"
+    },
+    {
+      "table": 13,
+      "section": 9,
+      "heading": "WEB-FR-AUTH-08 — Đăng ký lại email chưa xác thực",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "e4dd69a852924bf89a911de65b2977cc210b5cf61b53fa58f19a5ba0dce8b4ab"
+    },
+    {
+      "table": 14,
+      "section": 9,
+      "heading": "WEB-FR-AUTH-09 — Khôi phục mật khẩu",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "422d1e4bd449c94f80a6ae9dfd8eabfb3c6c239f7e87e95f00e6defa53f0de80"
+    },
+    {
+      "table": 15,
+      "section": 9,
+      "heading": "WEB-FR-AUTH-10 — Làm mới và đăng xuất",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "2372f274cdad8d433e9c082bc93fe30e294837f34713c2b1de0b4efb0f40e7dc"
+    },
+    {
+      "table": 16,
+      "section": 9,
+      "heading": "WEB-FR-AUTH-11 — Tài khoản hiện tại",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "7c9f8f8515f5ab292504ceec480535e8087550baf092cd7a8bf6d2b24cce8f90"
+    },
+    {
+      "table": 17,
+      "section": 9,
+      "heading": "WEB-FR-AUTH-12 — Áp dụng khoá và đổi quyền",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "b637e0471ed2200eec5ce1f89f096248df40ca43c5e4ffbb3af1053b1a2134eb"
+    },
+    {
+      "table": 18,
+      "section": 9,
+      "heading": "WEB-FR-AUTH-13 — Kiểm tra trường tài khoản",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "1eae5219d4d58cdacdb496ef49f4cd643f9d59a2ff6654eb69e28a4f05c42c28"
+    },
+    {
+      "table": 19,
+      "section": 9,
+      "heading": "WEB-FR-AUTH-14 — Giới hạn tần suất xác thực",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "583304d309c20e9a031f4fa2d6c9dd6ff77c73593fc7cac9360d6f36a932736a"
+    },
+    {
+      "table": 20,
+      "section": 9,
+      "heading": "WEB-FR-AUTH-15 — Tìm thành viên theo điện thoại",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "6e29f9cc745cc11c20e39672bb939490b5ff2628f47f2873262cf7a8aea7a1f9"
+    },
+    {
+      "table": 21,
+      "section": 9,
+      "heading": "WEB-FR-AUTH-16 — Sửa hồ sơ",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "b6ff0405d0584e63efddcc08647fa83c299e69e413871658db7f1085314053ed"
+    },
+    {
+      "table": 22,
+      "section": 9,
+      "heading": "WEB-FR-AUTH-17 — Đổi mật khẩu hiện tại",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "5d9b6f2c9ea868ddc67b07abbcdd5a42614d9dafe8cb9a351c123dfe7398635f"
+    },
+    {
+      "table": 23,
+      "section": 9,
+      "heading": "WEB-FR-USER-01 — Danh sách tài khoản",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "de78f50ba9ae52187618abda9e37225c83a01d8bda3919d4863be677d2294c7b"
+    },
+    {
+      "table": 24,
+      "section": 9,
+      "heading": "WEB-FR-USER-02 — Chi tiết tài khoản",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "b0ac8d3017dec2400785cb5d536f56c7c6dec60b359fa746224ea456ded94ee2"
+    },
+    {
+      "table": 25,
+      "section": 9,
+      "heading": "WEB-FR-USER-03 — Tạo tài khoản",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "4c0f79ae741e4c9abe95aa5272476ed0a0b25cc576a66365285815e391c9107a"
+    },
+    {
+      "table": 26,
+      "section": 9,
+      "heading": "WEB-FR-USER-04 — Đổi vai trò tài khoản",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "f98ba7212aa8d718f203112263c0245409c783cb94836e63e089fef2e04096e4"
+    },
+    {
+      "table": 27,
+      "section": 9,
+      "heading": "WEB-FR-USER-05 — Khoá và mở khoá",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "9d382a10302fd0c056b1ee12b64b5863e7e332eaf2ba4cfa560f1f432fc80614"
+    },
+    {
+      "table": 28,
+      "section": 9,
+      "heading": "WEB-FR-USER-06 — Danh sách vai trò",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "39775a1d6e21abd8502cc97750783d8d5b033cb99ce09439b3a5446d0c567a4c"
+    },
+    {
+      "table": 29,
+      "section": 9,
+      "heading": "WEB-FR-MOV-01 — Danh mục phân trang",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "f1702895e5ba9575f2908fbe34fd615c760f442e49bef7986c64c0580f15ab28"
+    },
+    {
+      "table": 30,
+      "section": 9,
+      "heading": "WEB-FR-MOV-02 — Chi tiết phim",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "8b3ab9665350f61d889271acdb17cf5051c538fc65287a6ce35904ddbb6b99ec"
+    },
+    {
+      "table": 31,
+      "section": 9,
+      "heading": "WEB-FR-MOV-03 — Tìm theo tên",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "68a3fef8a16175ed17dff971bc6438e1091a099f7792a8253e51610996b9ce7f"
+    },
+    {
+      "table": 32,
+      "section": 9,
+      "heading": "WEB-FR-MOV-04 — Danh mục đang hoạt động",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "779e9d3b780be215c225a393986747cdcffb18279227a7701c936002f4a1ec08"
+    },
+    {
+      "table": 33,
+      "section": 9,
+      "heading": "WEB-FR-MOV-05 — Tạo phim",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "f4fb88288968277556349cadc361425e6d359de73f7c2a1e645318c5c4e84458"
+    },
+    {
+      "table": 34,
+      "section": 9,
+      "heading": "WEB-FR-MOV-06 — Sửa và chiếu lại phim",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "bb4e535179833ce96475fe4fc6056677cc5bf51a39e741455a59efe4f6953485"
+    },
+    {
+      "table": 35,
+      "section": 9,
+      "heading": "WEB-FR-MOV-07 — Ngừng chiếu phim",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "10f6a09cfe3de523fe2d02a273bbe0c24a369c7dfb3e6e712eef15d05a71bc2c"
+    },
+    {
+      "table": 36,
+      "section": 9,
+      "heading": "WEB-FR-MOV-08 — Mở trailer",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "84b00e2f434991644a9b5d6bf82fef2e9db6dbd837f165d161e672d6e9d1aaa8"
+    },
+    {
+      "table": 37,
+      "section": 9,
+      "heading": "WEB-FR-MOV-09 — Phân loại tuổi",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "015bedc4e869aec017741c40a26739fb9f25521e8eb6412844eab20630b742c9"
+    },
+    {
+      "table": 38,
+      "section": 9,
+      "heading": "WEB-FR-MOV-10 — Đang chiếu và sắp chiếu",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "4dca75df46b50fac5a3f6612769aeca46c459db89bf9b827edf9755654ae9835"
+    },
+    {
+      "table": 39,
+      "section": 9,
+      "heading": "WEB-FR-MOV-11 — Đạo diễn và diễn viên",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "836c7a12134f2cf8d4cb979a107684ff6b200cf9b323f917594bb36a89f20e54"
+    },
+    {
+      "table": 40,
+      "section": 9,
+      "heading": "WEB-FR-MOV-12 — Đánh giá phim",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "cd41ce4b3b4d1ea41d7cc856671c0bfad17dee1b7abc54bccd9adce168b8afc3"
+    },
+    {
+      "table": 41,
+      "section": 9,
+      "heading": "WEB-FR-ROOM-01 — Tìm phòng",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "87f73da188e48ae65c3eab38c979cb941234aaaece4d35ce5790d8686f212639"
+    },
+    {
+      "table": 42,
+      "section": 9,
+      "heading": "WEB-FR-ROOM-02 — Chi tiết phòng",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "18d6d56cc6a722f0f545aa843737b931898bdbc6449cae8acb6e1d9a68d99a0c"
+    },
+    {
+      "table": 43,
+      "section": 9,
+      "heading": "WEB-FR-ROOM-03 — Tạo phòng và ghế",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "88eae130e241e414c8c2f8f2c0ec16b231eaadc12ad829e3dc2983d962fb12ff"
+    },
+    {
+      "table": 44,
+      "section": 9,
+      "heading": "WEB-FR-ROOM-04 — Đổi tên phòng",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "a4da9cb6917b4de6d91f62a4080dd7ccb51143a92c7d2257473fff2e39961dfc"
+    },
+    {
+      "table": 45,
+      "section": 9,
+      "heading": "WEB-FR-ROOM-05 — Xoá phòng đủ điều kiện",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "908061b4b7b4633e099a3e345ea088de8e56c975a4b5cc269e50d49c89d4507d"
+    },
+    {
+      "table": 46,
+      "section": 9,
+      "heading": "WEB-FR-SEAT-01 — Sinh ghế",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "830d10b50125d081184c451104ca7f6ff9162a6fafece024af0f2201983e2859"
+    },
+    {
+      "table": 47,
+      "section": 9,
+      "heading": "WEB-FR-SEAT-02 — Chi tiết ghế",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "fbeda604f78028b545f8948bd997f841dacaf334b588f94f92fe5d6332f40116"
+    },
+    {
+      "table": 48,
+      "section": 9,
+      "heading": "WEB-FR-SEAT-03 — Xem sơ đồ phòng",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "affd5b037d8b9079c9f9aa2d5cf6418cbd091f6b1802d010aada214f3d1800a3"
+    },
+    {
+      "table": 49,
+      "section": 9,
+      "heading": "WEB-FR-SEAT-04 — API xoá ghế",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "c064d33e50c16042084645e3240039d3c45caae1ecb9583675df947963d886f8"
+    },
+    {
+      "table": 50,
+      "section": 9,
+      "heading": "WEB-FR-SEAT-05 — Đổi loại ghế",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "c0cdee7acbf34ea2b58e2cb18a4c456362ac43d65a9939efe53ec1766da172a3"
+    },
+    {
+      "table": 51,
+      "section": 9,
+      "heading": "WEB-FR-SEAT-06 — Đổi loại nhiều ghế",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "9d2877590fc9c04ea5a6a3ebabaf1cd9795f4c8051ab1029a9c6a34dbd97a7e9"
+    },
+    {
+      "table": 52,
+      "section": 9,
+      "heading": "WEB-FR-SEAT-07 — Đổi sức chứa",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "0b6f1e64deafd70d41b78192df15072c96e08f3adcca34e5329b5ae578830221"
+    },
+    {
+      "table": 53,
+      "section": 9,
+      "heading": "WEB-FR-SEAT-08 — Bảo vệ phòng đã xếp lịch",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "e4195168de6823aa7affbc07843112cb7549a1a79cc52e47e148f73cff42468d"
+    },
+    {
+      "table": 54,
+      "section": 9,
+      "heading": "WEB-FR-SEAT-09 — Làm mới sơ đồ quản lý",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "0c7604d9913b8b2d1bbc39e475c9cec15c36b25f301d70b4a5ad6938ab442471"
+    },
+    {
+      "table": 55,
+      "section": 9,
+      "heading": "WEB-FR-SHOW-01 — Danh sách suất",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "cab870c31a09a0fe4964070f2a7b6ce265e515387f245ed3432701226b2ab467"
+    },
+    {
+      "table": 56,
+      "section": 9,
+      "heading": "WEB-FR-SHOW-02 — Tạo suất",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "c81f11537d300ae4943337e468bba16b5a79bb18c833697530797d388855fa12"
+    },
+    {
+      "table": 57,
+      "section": 9,
+      "heading": "WEB-FR-SHOW-03 — Suất và giá",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "0041b941397d391be83dbcf55cd308577ffb0aecba1d610eedd4aa334dd03836"
+    },
+    {
+      "table": 58,
+      "section": 9,
+      "heading": "WEB-FR-SHOW-04 — Sửa suất",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "a150878ac65b3deffd8705826d5ccd6c4029aca7d9d8f6b2fa4fbec3ac447545"
+    },
+    {
+      "table": 59,
+      "section": 9,
+      "heading": "WEB-FR-SHOW-05 — Huỷ suất",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "0a28ac01f16023f73c8e761def41180cc55349e34bb68cbcfde0595cb55e64a0"
+    },
+    {
+      "table": 60,
+      "section": 9,
+      "heading": "WEB-FR-SHOW-06 — Suất mở chưa bắt đầu",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "e4f5a5ccd82ed7d834f5aba37bf85cd155d4fea15b434f92ae830f0f00cda2a1"
+    },
+    {
+      "table": 61,
+      "section": 9,
+      "heading": "WEB-FR-SHOW-07 — Suất theo phim",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "721867439628f19931e82aa51d3be1c60e120b76c3cfa981065d713471de2965"
+    },
+    {
+      "table": 62,
+      "section": 9,
+      "heading": "WEB-FR-SHOW-08 — Suất phim còn đặt được",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "af66c45968f1195aa7f8aefa6cd636ed9915d3c683e68cbde161f17cb8f1887c"
+    },
+    {
+      "table": 63,
+      "section": 9,
+      "heading": "WEB-FR-SHOW-09 — Tìm theo khoảng ngày",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "220dd7c9a2b2a45532e155c2e48957200627dbde022bd9fd8c3bb489abe0273e"
+    },
+    {
+      "table": 64,
+      "section": 9,
+      "heading": "WEB-FR-SHOW-10 — Mở và đóng bán",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "e7f3bbf79b9bf6b9c473f7abeb14b3232d617e65ac62292a901c083fd9c86df7"
+    },
+    {
+      "table": 65,
+      "section": 9,
+      "heading": "WEB-FR-SHOW-11 — Từ chối trùng lịch",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "6e417086a611490a3f23f970d2aaa1e591ae80b8cb64a0ed0bae22dc30754afd"
+    },
+    {
+      "table": 66,
+      "section": 9,
+      "heading": "WEB-FR-SHOW-12 — Sơ đồ ghế/khách của suất",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "43a5c8df5d16eef03faf6f16a334a52bbcb2d4361229e248b79def53dba40bc2"
+    },
+    {
+      "table": 67,
+      "section": 9,
+      "heading": "WEB-FR-SHOW-13 — Định dạng chiếu",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "c35a4d694a2e5b2f7f38053e4bda20c14e022ade1c067be2c1ecad6ea13ca08e"
+    },
+    {
+      "table": 68,
+      "section": 9,
+      "heading": "WEB-FR-BOOK-01 — Giữ chỗ đặt vé",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "09df97dddedf3b8534b650f1ccb8fe2b445c948a8b90fe518010cd3a2557b3af"
+    },
+    {
+      "table": 69,
+      "section": 9,
+      "heading": "WEB-FR-BOOK-02 — Chi tiết vé",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "82a877eac1d3240061315f3662344cff883d82adfb346658a910cf64367835d1"
+    },
+    {
+      "table": 70,
+      "section": 9,
+      "heading": "WEB-FR-BOOK-03 — Tra vé quản lý",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "8cf780d9125a5cf6daa23c729c3dd620f3e9027ed458e8c17dd44ffe366f58d8"
+    },
+    {
+      "table": 71,
+      "section": 9,
+      "heading": "WEB-FR-BOOK-04 — Lịch sử vé của mình",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "5684e1cd778cf22ccef3efc53265f0a2ba53cbadcda0e32a6f1b3e246d66f1a0"
+    },
+    {
+      "table": 72,
+      "section": 9,
+      "heading": "WEB-FR-BOOK-05 — Xác nhận vé đã trả",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "84ee758c24bdb210e269406fd83b11b0136f1ad7a66cb52d7e56fb4dfe5b7722"
+    },
+    {
+      "table": 73,
+      "section": 9,
+      "heading": "WEB-FR-BOOK-06 — Huỷ vé",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "df7c42cd2b7a91b7bffdd43f5fcf261acd404be590fcc1ac4d961f30dab29483"
+    },
+    {
+      "table": 74,
+      "section": 9,
+      "heading": "WEB-FR-BOOK-07 — ID ghế đã chiếm",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "f93e31a63dd25ed21f519df210a842fa4b2c012333ab54e444625665ef35a72c"
+    },
+    {
+      "table": 75,
+      "section": 9,
+      "heading": "WEB-FR-BOOK-08 — Xung đột ghế đồng thời",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "9cc82e2fbe12508c04cec904bb4e651aef81a5fae363f16c2855a8d77284a133"
+    },
+    {
+      "table": 76,
+      "section": 9,
+      "heading": "WEB-FR-BOOK-09 — Cặp sweetbox",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "d0a6893c8eeacca14c14eb57351645b9c0f049958095d04b60b20c9fc8958971"
+    },
+    {
+      "table": 77,
+      "section": 9,
+      "heading": "WEB-FR-BOOK-10 — Hết hạn giữ chỗ chưa trả",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "a43a3e09e36af9d835573bcef78ba0539e8fd593c98a5fb0f0adc57e0b9734b5"
+    },
+    {
+      "table": 78,
+      "section": 9,
+      "heading": "WEB-FR-BOOK-11 — Làm mới sơ đồ khách",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "5a03c885a57c823284f0f00260aa1be526ea01d50982256c552400c7dac23e28"
+    },
+    {
+      "table": 79,
+      "section": 9,
+      "heading": "WEB-FR-BOOK-12 — Thống kê vé theo suất",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "7bbd7b68006e0606e0e7b889672cfd5e2732845b59ad8ce3cd670b1b7ea57307"
+    },
+    {
+      "table": 80,
+      "section": 9,
+      "heading": "WEB-FR-BOOK-13 — Bắp nước kèm vé",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "5dbf678bf1cb27850424e3007846e552b73fa7d32757e13dbb829fdfea4e9f9b"
+    },
+    {
+      "table": 81,
+      "section": 9,
+      "heading": "WEB-FR-BOOK-14 — Quản lý bắp nước",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "7b65a37682bff5a7a0b13b15d01d1da5e25fc3578f11c934e933b15bc5d1d843"
+    },
+    {
+      "table": 82,
+      "section": 9,
+      "heading": "WEB-FR-BOOK-15 — Khuyến mãi và mã giảm giá",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "a03bfacfb7b91021a336c12b6397c81e99e30a8b8719ad47fa1d75596e9773f6"
+    },
+    {
+      "table": 83,
+      "section": 9,
+      "heading": "WEB-FR-BOOK-16 — Quản lý khuyến mãi",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "b47d8b4e1a6f8b993dc6f72a05e55157559957cf0f9c6ecc08ae0eba9235e304"
+    },
+    {
+      "table": 84,
+      "section": 9,
+      "heading": "WEB-FR-BOOK-17 — Điểm thành viên",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "a065ee931907d63e98809c2c08dd5f3ab84c3cb887a0041887f67643976ff4ee"
+    },
+    {
+      "table": 85,
+      "section": 9,
+      "heading": "WEB-FR-BOOK-18 — Quản lý thành viên",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "4542e471b5cdfa81fe82b255dd7df81fad7d8e2589bbadbecd4709674df5c1f0"
+    },
+    {
+      "table": 86,
+      "section": 9,
+      "heading": "WEB-FR-BOOK-19 — Chia sẻ và lịch",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "2997efef4710de65a58ed817e57d0eeef2c1982350a184c966f7a3d6bfb09d92"
+    },
+    {
+      "table": 87,
+      "section": 9,
+      "heading": "WEB-FR-PAY-01 — Tạo/dùng lại link PayOS",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "7b855a97836ac5e55158f12bb12c9753592affc8b582b3d90b4b87866a2633e2"
+    },
+    {
+      "table": 88,
+      "section": 9,
+      "heading": "WEB-FR-PAY-02 — Xác minh PayOS",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "c08e85829eecde6bbcd2bc29e85541abbad96d327c730d57033159d306244a69"
+    },
+    {
+      "table": 89,
+      "section": 9,
+      "heading": "WEB-FR-PAY-03 — Chi tiết thanh toán",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "02b3d6d6a1ce89e470794274a00a5f211f182739ffab2d49100e68a465f0c942"
+    },
+    {
+      "table": 90,
+      "section": 9,
+      "heading": "WEB-FR-PAY-04 — Lịch sử thanh toán của mình",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "6c0cdc69e0443a36157b85ae82f1cdf48e4abce428ff24d64165b127805a4ec5"
+    },
+    {
+      "table": 91,
+      "section": 9,
+      "heading": "WEB-FR-PAY-05 — Thanh toán theo vé",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "4975c573f5eb4e2a93967d9766448462289803fbc3171d54b29d5f49b8760323"
+    },
+    {
+      "table": 92,
+      "section": 9,
+      "heading": "WEB-FR-PAY-06 — Truy cập hoàn tiền",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "4c5a39302eec72ef9b7ce0f85ea1dc3cff3742dbac6bcf1f40e8a7e60a84a196"
+    },
+    {
+      "table": 93,
+      "section": 9,
+      "heading": "WEB-FR-PAY-07 — Webhook có chữ ký",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "a8aa7b3798751f568dacf84ec04f43d8db24186bb6f5ef04f79c665cb8e4bf67"
+    },
+    {
+      "table": 94,
+      "section": 9,
+      "heading": "WEB-FR-PAY-08 — Thanh toán muộn",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "4e18a0f72a2d26c1194c83241d368c0f2cf04a1b3b311b3bb41823f0d6a11a3e"
+    },
+    {
+      "table": 95,
+      "section": 9,
+      "heading": "WEB-FR-PAY-09 — Quản lý thanh toán",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "2d0970c892820a89a615cc98a2aa0318e3062f3d39b73244211a84f2514413bd"
+    },
+    {
+      "table": 96,
+      "section": 9,
+      "heading": "WEB-FR-PAY-10 — Tổng hợp doanh thu",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "33e89c8d13c7305273e319b1e1376cd2ae0b0494e315f3db551790b80b90ff64"
+    },
+    {
+      "table": 97,
+      "section": 9,
+      "heading": "WEB-FR-PAY-11 — Tự kiểm tra thanh toán",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "641aa1923d7390915fc367949438328aebaeb041ce5b80dd3dd1885f589a4f50"
+    },
+    {
+      "table": 98,
+      "section": 9,
+      "heading": "WEB-FR-REF-01 — Tạo yêu cầu hoàn tiền",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "adb8f536e90649f448de382894badb52add82a4566e72a9a0f739e3ee917b613"
+    },
+    {
+      "table": 99,
+      "section": 9,
+      "heading": "WEB-FR-REF-02 — Danh sách hoàn tiền quản lý",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "73c46a2a037558198d3d693c0307d7edce32729090dd09e8b7e3ac2b1ef4f823"
+    },
+    {
+      "table": 100,
+      "section": 9,
+      "heading": "WEB-FR-REF-03 — Ghi nhận chuyển tiền hoàn tất",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "8be5eb7e9f0803a32896488caf6401a17bd1aba8501ccc009701634679c397a3"
+    },
+    {
+      "table": 101,
+      "section": 9,
+      "heading": "WEB-FR-REF-04 — Từ chối hoàn tiền",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "a49d4567d2a3f8e6d30717ec2a74cfe613f29f9829c38002c1c42e22699bb845"
+    },
+    {
+      "table": 102,
+      "section": 9,
+      "heading": "WEB-FR-REF-05 — Mở lại hoàn tiền đã từ chối",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "0290bb561f7258c8c6f59a8eca0e562bcb5767a6f332c8eba579bbee08f2b9cd"
+    },
+    {
+      "table": 103,
+      "section": 9,
+      "heading": "WEB-FR-REF-06 — Trạng thái hoàn tiền của mình",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "f9d5d9be5c66b4aeee29eecbbe07f18afd805465be265ad4397d3d48c70d5c2b"
+    },
+    {
+      "table": 104,
+      "section": 9,
+      "heading": "WEB-FR-REF-07 — Một hoàn tiền mỗi thanh toán",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "6423e701b53dfbaea5ae9bf99aa03b84aa4a6b2843626c9fd433488e957576da"
+    },
+    {
+      "table": 105,
+      "section": 9,
+      "heading": "WEB-FR-POS-01 — Tạo vé tại quầy",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "9563b17f165c84fee22ef7e4a79c484e71911ee6727e88178256f6e7366af65c"
+    },
+    {
+      "table": 106,
+      "section": 9,
+      "heading": "WEB-FR-POS-02 — Thu tiền tại quầy",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "3926c7e5c0543d9caedd2fad6c4148bbadb909d175804becdd474aabb68eeae5"
+    },
+    {
+      "table": 107,
+      "section": 9,
+      "heading": "WEB-FR-POS-03 — Tiền mặt và tiền thối",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "088394dbefbb4299f6a50e573dc33a44a184932a79bf08297e0a1945fe7218fa"
+    },
+    {
+      "table": 108,
+      "section": 9,
+      "heading": "WEB-FR-POS-04 — QR chuyển khoản",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "0abe0388059fb545aa653e2a791db16409aac82e619a81b75cb389c0d54ef499"
+    },
+    {
+      "table": 109,
+      "section": 9,
+      "heading": "WEB-FR-POS-05 — Đổi chuyển khoản sang tiền mặt",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "6528f179e160614322598d7a96342074935f44a69535e8b486e1f85d9c260ab1"
+    },
+    {
+      "table": 110,
+      "section": 9,
+      "heading": "WEB-FR-POS-06 — Lưu email tại quầy",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "adcfb36d4a773d6ecbce5aa7f123aff6115cb36e45222802731f3e8198bc8380"
+    },
+    {
+      "table": 111,
+      "section": 9,
+      "heading": "WEB-FR-POS-07 — In và cho vào",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "d2e7d8ac0677b0225666b7f63f36075582c990713c20c5fe8f3217ac0e458a80"
+    },
+    {
+      "table": 112,
+      "section": 9,
+      "heading": "WEB-FR-POS-08 — Mở lại vé đã trả",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "9b2b7c2cd724979a07818c09d6d0b786beccbf689082bf99c3fe121d9f10bf06"
+    },
+    {
+      "table": 113,
+      "section": 9,
+      "heading": "WEB-FR-CHK-01 — QR vé",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "41af1b92ac3d1d6973b6a16ca761c6ad24dda3d772c7700cc34d388d074f692a"
+    },
+    {
+      "table": 114,
+      "section": 9,
+      "heading": "WEB-FR-CHK-02 — Tra mã vé",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "d7b40349247573714498d17503b5e5cd9a1617d56e2a73d73f4b0de74dfd095c"
+    },
+    {
+      "table": 115,
+      "section": 9,
+      "heading": "WEB-FR-CHK-03 — Kiểm tra check-in",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "8ca4f276d619d0e042fb9b3ced27362ea1e92f4b68c82a8c9c06d6e61b21ad84"
+    },
+    {
+      "table": 116,
+      "section": 9,
+      "heading": "WEB-FR-CHK-04 — Camera/nhập mã",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "500ffb211f937632e4488d3cfa49b9078a00e30680983746cb49c586e4867b4e"
+    },
+    {
+      "table": 117,
+      "section": 9,
+      "heading": "WEB-FR-CHK-05 — Hiện giờ check-in",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "517933c18048c40945bb4d4fef3ac1fa093dfe442dbf54c7dd4c96ec97d3ff07"
+    },
+    {
+      "table": 118,
+      "section": 9,
+      "heading": "WEB-FR-NOTI-01 — Lịch sử thông báo",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "b333dd703f75cf403e2d886db48676420f5ca0cd4154ac29909a9a0cdf11838e"
+    },
+    {
+      "table": 119,
+      "section": 9,
+      "heading": "WEB-FR-NOTI-02 — Soạn tin cho vé",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "7df2fc3b3fd0e1878ca6b7cf8b3a0f05c2c237cb3668cb478c1d0bc74f6c934c"
+    },
+    {
+      "table": 120,
+      "section": 9,
+      "heading": "WEB-FR-NOTI-03 — Gửi/thử lại tin",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "9d4dc2dd427b0ab21c1ead1156c987624ab80673752940edd5d90edd2b623ff2"
+    },
+    {
+      "table": 121,
+      "section": 9,
+      "heading": "WEB-FR-NOTI-04 — Chi tiết thông báo",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "0b725f408e6769ee69532536dafa5508cf70310a73aa04489e5a90cf4aba5b34"
+    },
+    {
+      "table": 122,
+      "section": 9,
+      "heading": "WEB-FR-NOTI-05 — API xoá thông báo",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "7495170d646062fa1ad2c0c989f567a84f554b533485f12de5993c7f4b4ed4f0"
+    },
+    {
+      "table": 123,
+      "section": 9,
+      "heading": "WEB-FR-NOTI-06 — Email sự kiện",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "5b60d003e4f03ab2475081b0265187350b39df4628d5ac8069bd050a0bcd1673"
+    },
+    {
+      "table": 124,
+      "section": 9,
+      "heading": "WEB-FR-NOTI-07 — Email OTP và chào mừng",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "0390676d5b85bcbddb759e1e2d54dbe9a8b7a1164a6657528849a8a522d4ff4c"
+    },
+    {
+      "table": 125,
+      "section": 9,
+      "heading": "WEB-FR-NOTI-08 — Nhắc giờ chiếu",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "d87c40c9ca244b944769827480a803ecce2cf15b76c8f658eeeda0051cb454b8"
+    },
+    {
+      "table": 126,
+      "section": 9,
+      "heading": "WEB-FR-NOTI-09 — Thông báo đã/chưa đọc",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "a4164218da5c1bcf8e8bd7487b9800c50696de1e91e86e814c2e9c6bc6ffe8a6"
+    },
+    {
+      "table": 127,
+      "section": 9,
+      "heading": "WEB-FR-DASH-01 — Tổng hôm nay",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "81d49f7798279c10d030e8a11a88703d6c4eb012f6a361488300ac937f98321d"
+    },
+    {
+      "table": 128,
+      "section": 9,
+      "heading": "WEB-FR-DASH-02 — Bảng suất trực tiếp",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "a9fe6184492e1a23f9ebdc69be650553ee97420ac6cb9ed8ccb940d173ae83bc"
+    },
+    {
+      "table": 129,
+      "section": 9,
+      "heading": "WEB-FR-DASH-03 — Việc nhân viên cần xử lý",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "13013356b535b75e04988bb9ef71aecf87dc453d2eb6c7d67918449b8761dae3"
+    },
+    {
+      "table": 130,
+      "section": 9,
+      "heading": "WEB-FR-DASH-04 — Tổng quan tháng quản trị",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "b1503596c77610651df1219412b3f441fd4bb98b00205117580f63434adf73ee"
+    },
+    {
+      "table": 131,
+      "section": 9,
+      "heading": "WEB-FR-NAV-01 — Bảo vệ và khôi phục route",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "f5df287cc676cd0a98f2ce4488a26133266bb3d76c9e6cc385e5e571e7e5f294"
+    },
+    {
+      "table": 132,
+      "section": 9,
+      "heading": "WEB-FR-STATE-01 — Trạng thái tải, lỗi và rỗng",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "bfed853fd8880827805bfc871f86f33cde731ca44789774cee7f355d3d3e690d"
+    },
+    {
+      "table": 133,
+      "section": 9,
+      "heading": "WEB-FR-MEDIA-01 — Media phim theo nền tảng",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "63e1c1660a5b2586a5f4e45ce933b26eac6d6d18e50b4c0ff3377f5c8da29501"
+    },
+    {
+      "table": 134,
+      "section": 10,
+      "heading": "UC-WEB-01 — Xác thực và phiên tài khoản",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "655ddf51177be071f7082b0cd8643dcfd018d9affcb2aaa31a8aa9ab5d659fb6"
+    },
+    {
+      "table": 135,
+      "section": 10,
+      "heading": "UC-WEB-02 — Quản trị tài khoản",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "fb8e87d2cb54af040925d6f8d01c3eb50942e8686e02ad38394fb7562dca6681"
+    },
+    {
+      "table": 136,
+      "section": 10,
+      "heading": "UC-WEB-03 — Danh mục phim và đánh giá",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "68e3fe4e41535a31d6fa7c43460c1df5820c078886f03954fb9b32e622bda88f"
+    },
+    {
+      "table": 137,
+      "section": 10,
+      "heading": "UC-WEB-04 — Quản lý phòng chiếu",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "a4844d6907c9f5edb860d7783dc7e4b32f7c5d307bfb543f03936571be74452c"
+    },
+    {
+      "table": 138,
+      "section": 10,
+      "heading": "UC-WEB-05 — Sơ đồ ghế và tình trạng chỗ",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "581e044288073546643ba713887d5226fecb6880e26dc4f9629022cfa3602938"
+    },
+    {
+      "table": 139,
+      "section": 10,
+      "heading": "UC-WEB-06 — Suất chiếu và giá vé",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "9305219fb0ea40bfc3f18a2faa1bfef58242cae129624e5b33ae1358ddcbdb05"
+    },
+    {
+      "table": 140,
+      "section": 10,
+      "heading": "UC-WEB-07 — Đặt vé, bắp nước, khuyến mãi và điểm thành viên",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "7ad8b5f2d66a1c17a9f673ee1ae0b791c4a30f4b98bf38b006a39b9e4b9c993b"
+    },
+    {
+      "table": 141,
+      "section": 10,
+      "heading": "UC-WEB-08 — Thanh toán trực tuyến và đối soát",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "4fda5037734f74278012556f4954312a85bc5c39d535c666ad6bd3653486c663"
+    },
+    {
+      "table": 142,
+      "section": 10,
+      "heading": "UC-WEB-09 — Huỷ vé và hoàn tiền thủ công",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "8255570d5096d654aa517c54cf44fb2fd1e565573a21972bcdadca9209c8eba6"
+    },
+    {
+      "table": 143,
+      "section": 10,
+      "heading": "UC-WEB-10 — Bán vé tại quầy",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "bf769e5614051c993ae5053424a33a48136e0db4ee86a54097f14e51fd8846df"
+    },
+    {
+      "table": 144,
+      "section": 10,
+      "heading": "UC-WEB-11 — Tra vé và check-in",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "599bf63237d5866b8bc72e3a8d92132ebce93a3150f7d2496da6745fc37145d1"
+    },
+    {
+      "table": 145,
+      "section": 10,
+      "heading": "UC-WEB-12 — Thông báo và email giao dịch",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "cb80338b3ffcb730a66f671e6f9b55bf16854d95a8142f916c5f2ab157890ad4"
+    },
+    {
+      "table": 146,
+      "section": 10,
+      "heading": "UC-WEB-13 — Bảng tổng quan vận hành",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "92c4ee1378802032d5a25e41be78ceb1e8f90e947f31171b2e652dbb87113c4d"
+    },
+    {
+      "table": 147,
+      "section": 11,
+      "heading": "11. Yêu cầu giao diện bên ngoài",
+      "columns": 2,
+      "rows": 4,
+      "cells_sha256": "5741cbc074afadd48151f1306ae9a303c7207ea39382f9a7e74203475de7e772"
+    },
+    {
+      "table": 148,
+      "section": 12,
+      "heading": "WEB-SCR-LOGIN — Đăng nhập",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "b97a06fca5ad09eaf2a79cd92e98637245ecde4829913e0f0e1e7dfddfd60551"
+    },
+    {
+      "table": 149,
+      "section": 12,
+      "heading": "WEB-SCR-REGISTER — Đăng ký",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "6e60dc973c2620009465db5722537c4ed88523cce66d878719e02d25186ac34b"
+    },
+    {
+      "table": 150,
+      "section": 12,
+      "heading": "WEB-SCR-VERIFY — Xác thực email",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "6701662b28ac574f9d5002069e5a6a6885c6dceebae05c87b7b56d3cfce44b84"
+    },
+    {
+      "table": 151,
+      "section": 12,
+      "heading": "WEB-SCR-FORGOT — Quên mật khẩu",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "e792198db3e4a2368e693e6177b0b7bea5cae0be0b136a726c42540722df8c06"
+    },
+    {
+      "table": 152,
+      "section": 12,
+      "heading": "WEB-SCR-RESET — Đặt lại mật khẩu",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "fcc42a5dcd4b1606debe5a18116f96c15cd5eea8ac0902e9c1572a4bbbd6f008"
+    },
+    {
+      "table": 153,
+      "section": 12,
+      "heading": "WEB-SCR-HOME — Trang chủ khách",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "1d682378613cc4adc3e5db5e876722ba12cd803bcc9345d9e5cceb8dd1db45b3"
+    },
+    {
+      "table": 154,
+      "section": 12,
+      "heading": "WEB-SCR-MOVIE — Chi tiết phim",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "f13064985494115706ea45fe2658104ef6b5b98bb2d6817e34ee326b7443e33c"
+    },
+    {
+      "table": 155,
+      "section": 12,
+      "heading": "WEB-SCR-SEATS — Chọn ghế",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "6c13b1fc9267432a003a46cdc60923e5e0f6f26b2313548450e839c3172a3631"
+    },
+    {
+      "table": 156,
+      "section": 12,
+      "heading": "WEB-SCR-SUMMARY — Xác nhận đặt vé",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "926dd03c2ca6a5c1e48824c48c1f6d55e6d98e2c025d31c632ceafb37f316efd"
+    },
+    {
+      "table": 157,
+      "section": 12,
+      "heading": "WEB-SCR-PAYMENT — Thanh toán",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "6c1ab00870db2e5058bc8005d627bbe3ef651e2674f2cb8cd11641a485915cde"
+    },
+    {
+      "table": 158,
+      "section": 12,
+      "heading": "WEB-SCR-RESULT — Kết quả thanh toán",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "f1bdec409bd423d275314a1d2a356228e6caf395d930ecb041aece94a1025413"
+    },
+    {
+      "table": 159,
+      "section": 12,
+      "heading": "WEB-SCR-TICKETS — Vé của tôi",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "c746654460b2a7574374740b5ed4cb1454080a4185a839cf284d9686c26b0520"
+    },
+    {
+      "table": 160,
+      "section": 12,
+      "heading": "WEB-SCR-TICKET — Chi tiết vé",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "2828598010a32b00be39ad044b8ec283741c684c5b7baf66830ba02ec916398a"
+    },
+    {
+      "table": 161,
+      "section": 12,
+      "heading": "WEB-SCR-PAYHISTORY — Lịch sử thanh toán",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "1c969cf82c88a676f378988befbdaf480a6d454f895360c6b0a54bfd29a81bb9"
+    },
+    {
+      "table": 162,
+      "section": 12,
+      "heading": "WEB-SCR-NOTIFICATIONS — Thông báo",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "b510da9c5971b2bbe898eafa3c2bb09607b5b5575efccf9ae73c8a57e2a30e85"
+    },
+    {
+      "table": 163,
+      "section": 12,
+      "heading": "WEB-SCR-NOTIFICATION — Chi tiết thông báo",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "9ca18e60885bc3de1c9b8bfe24bad2cd2a03f7b984c1737b0733327704ad9392"
+    },
+    {
+      "table": 164,
+      "section": 12,
+      "heading": "WEB-SCR-PROFILE — Tài khoản và thành viên",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "73b86abd664e3febaf390eb6d5afb043edc3ec6e4f9d1465e2dc1e8b52819bf8"
+    },
+    {
+      "table": 165,
+      "section": 12,
+      "heading": "WEB-SCR-CHECKIN — Check-in vé",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "0e474422d232ad6f6fac6074648d13b894d5ce7baa7dba4b0555ed6dc25aaaac"
+    },
+    {
+      "table": 166,
+      "section": 12,
+      "heading": "WEB-SCR-STAFF-DASH — Tổng quan nhân viên",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "a933dbcbb8eda7b798664e13acbc2bb39998c84d90d5c577f8509eed3da1d7ac"
+    },
+    {
+      "table": 167,
+      "section": 12,
+      "heading": "WEB-SCR-ADMIN-DASH — Tổng quan quản trị",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "4650d69be926cbb8578ddb0a9cf8069d2e5c689959d9abd27e55d5512bbe57d5"
+    },
+    {
+      "table": 168,
+      "section": 12,
+      "heading": "WEB-SCR-OPERATIONS — Không gian vận hành",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "6b99500c8316c034640a68822af9a5dcd89f8db034e74e86e7192b3fcb41eefb"
+    },
+    {
+      "table": 169,
+      "section": 12,
+      "heading": "WEB-SCR-COUNTER — Đặt vé quầy",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "d1892e9df5c9c083d4aba4d6bb370c20c083011b524e94e77ad879c90dee01e7"
+    },
+    {
+      "table": 170,
+      "section": 12,
+      "heading": "WEB-SCR-CHECKOUT — Thu tiền quầy",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "d7626c3fdc5797ca1ddfd19be3ba38e3899e76b652967b9a0f285c6cbe72bb2b"
+    },
+    {
+      "table": 171,
+      "section": 12,
+      "heading": "WEB-SCR-RECORD-BOOKINGS — Bản ghi vé",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "b83953e07891b544ecd9a8cb58fbc874f1d5a31d56a2f6e78b8f9bf9421dc9f3"
+    },
+    {
+      "table": 172,
+      "section": 12,
+      "heading": "WEB-SCR-RECORD-PAYMENTS — Bản ghi thanh toán",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "f0174674356980166d451b231bbd151a176a9b417a8d686fb1e7eabacd4c7a60"
+    },
+    {
+      "table": 173,
+      "section": 12,
+      "heading": "WEB-SCR-RECORD-REFUNDS — Bản ghi hoàn tiền",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "55388422d4a834056173bd08ab20de97de62e898efab212cf7dee175ae556739"
+    },
+    {
+      "table": 174,
+      "section": 12,
+      "heading": "WEB-SCR-RECORD-SHOWTIMES — Bản ghi suất chiếu",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "a5c0d4393afd02321caab6bbbdaebdaeef01e2a7efb128df5d303b19df582d0e"
+    },
+    {
+      "table": 175,
+      "section": 12,
+      "heading": "WEB-SCR-RECORD-ROOMS — Bản ghi phòng",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "1a04fb3e2fc9944c4cd9a3db4a38aabb4e97db807479d7d4aa6128c06de69554"
+    },
+    {
+      "table": 176,
+      "section": 12,
+      "heading": "WEB-SCR-SHOW-EDITOR — Sửa suất chiếu",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "eb686dcfb11e87342246397970191d06c4171925946afd581f9b593ecd03b277"
+    },
+    {
+      "table": 177,
+      "section": 12,
+      "heading": "WEB-SCR-COMPOSE — Soạn email cho vé",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "1671df524246cedfe9ea2379fddf2953b6e51b5a7fd1653e87493505d333a34f"
+    },
+    {
+      "table": 178,
+      "section": 12,
+      "heading": "WEB-SCR-ADMIN-MOVIES — Phim",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "11a7a302e3b1d48560447830ba4c59c2974b5aa91ab095aa87ea2bfc50516a9e"
+    },
+    {
+      "table": 179,
+      "section": 12,
+      "heading": "WEB-SCR-ADMIN-ROOMS — Phòng",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "dd321fc5a0f985f14413adb17becc683d0fac2216a85c8f9155e723db39410ce"
+    },
+    {
+      "table": 180,
+      "section": 12,
+      "heading": "WEB-SCR-ADMIN-SNACKS — Bắp nước",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "7131f7fed4f407fb02ffb15c4a744b95fb410cfe9dccaeeb4a547f2f357e0043"
+    },
+    {
+      "table": 181,
+      "section": 12,
+      "heading": "WEB-SCR-ADMIN-PROMOTIONS — Khuyến mãi",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "47bed3e6be3b9b9ced7793a8a9c4729e828df40dc36cecd34f4a4f5f32568f10"
+    },
+    {
+      "table": 182,
+      "section": 12,
+      "heading": "WEB-SCR-ADMIN-MEMBERS — Thành viên",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "7f2fde9f82bdf6b4055b11b7d4655dc932a987ebe14d2be7eaff440dfa050f3c"
+    },
+    {
+      "table": 183,
+      "section": 12,
+      "heading": "WEB-SCR-ADMIN-USERS — Tài khoản",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "e95ebf6544d1433b099858bd7a9962c4fa01a2ac6900b5983bdc92cb92d0349b"
+    },
+    {
+      "table": 184,
+      "section": 12,
+      "heading": "WEB-SCR-USER-EDITOR — Tạo/chi tiết tài khoản",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "eb3305ca490d18fe4c276054c1f00e9f05794048979e1cd8f7e5be79189b521d"
+    },
+    {
+      "table": 185,
+      "section": 12,
+      "heading": "WEB-SCR-MGT-PROFILE — Hồ sơ quản lý",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "a5279be51909cb403378bfbe6cbf09b49925c82d1fd5f2602578e36b7cb628eb"
+    },
+    {
+      "table": 186,
+      "section": 12,
+      "heading": "WEB-SCR-STAFF-ONLY — Thông báo quyền quản lý",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "ad478cd19c51ea0ac63aa3810215743f5d09d6d810d5e13b6df00086afb90b86"
+    },
+    {
+      "table": 187,
+      "section": 13,
+      "heading": "13. Yêu cầu API",
+      "columns": 6,
+      "rows": 106,
+      "cells_sha256": "ee333f6ad1a54e259faf96920dbded62486ba083d1ea9cb31caf41ab08545f74"
+    },
+    {
+      "table": 188,
+      "section": 13,
+      "heading": "Định nghĩa trường yêu cầu",
+      "columns": 3,
+      "rows": 30,
+      "cells_sha256": "bfcd1b60b28da2708b8b6e7c7468f5d32f30a1e285d233aa4c551783c79bdb11"
+    },
+    {
+      "table": 189,
+      "section": 14,
+      "heading": "14. Yêu cầu dữ liệu",
+      "columns": 3,
+      "rows": 6,
+      "cells_sha256": "9c25025301989e9ed29cefd2d1282324413edb05770c1969ec9c85799c09cb4d"
+    },
+    {
+      "table": 190,
+      "section": 15,
+      "heading": "15. Luồng nghiệp vụ",
+      "columns": 2,
+      "rows": 7,
+      "cells_sha256": "147f58e11e47b1b1360e79a4167c3c25c79e13fa2dc812973e3100e8eebb1921"
+    },
+    {
+      "table": 191,
+      "section": 15,
+      "heading": "Hợp đồng trạng thái",
+      "columns": 2,
+      "rows": 5,
+      "cells_sha256": "2dcf854f517db6aea2a44092d857b7c30a5b6a963412720bf7f19295d1e62e92"
+    },
+    {
+      "table": 192,
+      "section": 17,
+      "heading": "17. Xử lý lỗi",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "4adc9f241f86db34b73516fd96550edeaffc48e98bcad95c51990d47d30e3c98"
+    },
+    {
+      "table": 193,
+      "section": 18,
+      "heading": "18. Yêu cầu phi chức năng",
+      "columns": 3,
+      "rows": 21,
+      "cells_sha256": "5398d5b7f20cf6b6b288d2011446062aef88626b76ea4deb5662a7d98086d3f0"
+    },
+    {
+      "table": 194,
+      "section": 19,
+      "heading": "19. Yêu cầu bảo mật",
+      "columns": 2,
+      "rows": 6,
+      "cells_sha256": "aa5816516393e78095f94d214c098ed273da58700eb585c1c9f76c516bd7d4fc"
+    },
+    {
+      "table": 195,
+      "section": 20,
+      "heading": "20. Yêu cầu kiểm thử",
+      "columns": 2,
+      "rows": 7,
+      "cells_sha256": "6ae3190f643ac2037e7f726dcdf9c4a66b71acfff53d539547c7fb2157b48d79"
+    },
+    {
+      "table": 196,
+      "section": 20,
+      "heading": "Bằng chứng test hiện có",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "86bb7f55b3473722eada892aefe0032218f81974ed1c2dbd9233125faa82d71d"
+    },
+    {
+      "table": 197,
+      "section": 21,
+      "heading": "21. Tiêu chí nghiệm thu",
+      "columns": 2,
+      "rows": 4,
+      "cells_sha256": "3743bf983c692722047bc459a30e6b517b43cb2788c5d07671ab9728a9972f54"
+    },
+    {
+      "table": 198,
+      "section": 22,
+      "heading": "22. Ma trận truy vết yêu cầu",
+      "columns": 6,
+      "rows": 128,
+      "cells_sha256": "215ed47d11709f31867bfb6dcca6de1be5804a44ec39e13d92946c894041e4d2"
+    },
+    {
+      "table": 199,
+      "section": 23,
+      "heading": "23. Ràng buộc",
+      "columns": 2,
+      "rows": 5,
+      "cells_sha256": "a56ceecac0fef0a8c787c594219f9139595feae3328c2fcbc9eff72c7f621556"
+    },
+    {
+      "table": 200,
+      "section": 25,
+      "heading": "25. Cải tiến tương lai",
+      "columns": 3,
+      "rows": 3,
+      "cells_sha256": "afc4f43f80ec67444c7ed707c442944889a54386189e2f9ccc8a63ec54a62b40"
+    },
+    {
+      "table": 201,
+      "section": 27,
+      "heading": "27. Đối chiếu yêu cầu và triển khai",
+      "columns": 5,
+      "rows": 128,
+      "cells_sha256": "82c6fff780e24138a803ac3e983de38c298fa9258df7291e8a661b1c188f6eed"
+    },
+    {
+      "table": 202,
+      "section": 27,
+      "heading": "27. Đối chiếu yêu cầu và triển khai",
+      "columns": 5,
+      "rows": 3,
+      "cells_sha256": "69d429a3599312c26eaba82a6ce05b527ce96638d9d135fe589f662fdc8ba25b"
+    },
+    {
+      "table": 203,
+      "section": 28,
+      "heading": "28. Bằng chứng và đối chiếu nguồn",
+      "columns": 2,
+      "rows": 10,
+      "cells_sha256": "925f5fdc49bc9eaf72e653921bbe6ff824062e71607508c9b13d48d043ccbaea"
+    }
+  ],
+  "images": 0,
+  "source_content_sha256": "0e8f6e481bd0329f9819e9ba62b2b67639c736ec5ccb37854e3c86d4c7d4bd20",
+  "output_pdf": "Cinema_Web_NET_SRS_VI.pdf"
+}

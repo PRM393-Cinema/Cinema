@@ -1,0 +1,29 @@
+\clearpage
+\section{Security Requirements}\label{sec:srs-19}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{19. Security Requirements}\label{tab:srs-194}\\
+\toprule
+\textbf{\texttt{ID}} & \textbf{Security requirement and verification} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{\texttt{ID}} & \textbf{Security requirement and verification} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+\texttt{WEB-\allowbreak{}SEC-\allowbreak{}01} & Reject forged/\allowbreak{}expired/\allowbreak{}wrong-issuer \texttt{JWT} and forbidden roles at gateway/\allowbreak{}service; test record-\texttt{ID} changes against ownership. \\[3pt]
+\texttt{WEB-\allowbreak{}SEC-\allowbreak{}02} & Recompute prices and validate seat pairs/\allowbreak{}menu/\allowbreak{}code/\allowbreak{}points on server; do not trust client totals or redirect parameters as payment. \\[3pt]
+\texttt{WEB-\allowbreak{}SEC-\allowbreak{}03} & Verify \texttt{Pay\allowbreak{}OS} \texttt{HMAC} before effects; test repeat webhook, wrong signature, unknown order and amount mismatch. Keep merchant keys in backend. \\[3pt]
+\texttt{WEB-\allowbreak{}SEC-\allowbreak{}04} & Use deployment \texttt{HTTPS} and restricted \texttt{CORS}/\allowbreak{}private-service exposure. Development \texttt{HTTP} is not proof of production \texttt{TLS}. \\[3pt]
+\texttt{WEB-\allowbreak{}SEC-\allowbreak{}05} & Use platform secure-storage abstraction; never embed backend secrets in client. Clear/\allowbreak{}revoke credentials on logout/\allowbreak{}reset and handle unreadable storage as signed out. \\[3pt]
+\texttt{WEB-\allowbreak{}SEC-\allowbreak{}06} & Encode user content in email; suppress stack traces/\allowbreak{}secrets. Generic forgot-password does not imply universal resistance to email enumeration. \\[3pt]
+\end{longtable}
+\endgroup

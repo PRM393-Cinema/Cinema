@@ -1,0 +1,28 @@
+\clearpage
+\section{User Classes /\allowbreak{} Actors}\label{sec:srs-6}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{6. User Classes /\allowbreak{} Actors}\label{tab:srs-3}\\
+\toprule
+\textbf{Actor} & \textbf{Responsibility} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{Actor} & \textbf{Responsibility} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Guest & Public catalogue/\allowbreak{}showtimes; start account flows \\[3pt]
+Customer & Own profile, tickets, payment, refund state, notifications, reviews and points \\[3pt]
+Staff/\allowbreak{}Admin & Phone ticket lookup/\allowbreak{}check-in; other administration belongs to web \\[3pt]
+Walk-in guest & Counter-sale beneficiary through staff, not a signed-in mobile actor \\[3pt]
+\texttt{Pay\allowbreak{}OS} /\allowbreak{} \texttt{SMTP} /\allowbreak{} workers & External settlement/\allowbreak{}messages; expire holds and exchange committed events \\[3pt]
+\end{longtable}
+\endgroup

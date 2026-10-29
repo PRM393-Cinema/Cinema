@@ -32,6 +32,7 @@ abstract interface class BookingRepository {
   // Reviews of a ticket's movie: allowed once the ticket was checked in.
   Future<BookingReview> getBookingReview(int bookingId);
 
+  // Every rating the signed-in customer wrote.
   Future<List<MovieReview>> getMyReviews();
 
   Future<MovieReview> saveReview({

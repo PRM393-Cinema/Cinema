@@ -1,0 +1,14 @@
+\clearpage
+\section{Overall Description}\label{sec:srs-4}
+\begin{Verbatim}
+Flutter main.dart (Customer + phone check-in)
+                | REST/JSON + JWT
+        ApiGateway / YARP :5000
+          |           |             |
+     AuthService  MovieService  BookingService
+       :5100        :5168          :5063
+          |           |             |
+       PostgreSQL (6 databases) + RabbitMQ/outbox
+                                | PayOS + SMTP
+\end{Verbatim}
+Three business services replace the initial six-service design: \texttt{Auth\allowbreak{}Service} owns identity; \texttt{Movie\allowbreak{}Service} owns movie/\allowbreak{}room/\allowbreak{}seat/\allowbreak{}showtime; \texttt{Booking\allowbreak{}Service} owns bookings, concessions, promotions, loyalty, reviews, payment/\allowbreak{}refund and notifications. Cross-database references are logical IDs, not foreign keys.

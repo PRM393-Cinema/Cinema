@@ -1,0 +1,10 @@
+*.aux
+*.log
+*.out
+*.toc
+*.lot
+*.lof
+*.fls
+*.fdb_latexmk
+build-console.txt
+__pycache__/

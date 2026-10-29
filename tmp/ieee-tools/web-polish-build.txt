@@ -1,0 +1,39 @@
+note: Running TeX ...
+warning: main.tex:101: Underfull \hbox (badness 4805) in paragraph at lines 92--101
+warning: main.tex:185: Underfull \hbox (badness 10000) in paragraph at lines 176--185
+warning: main.tex:185: Underfull \hbox (badness 10000) in paragraph at lines 176--185
+warning: main.tex:185: Underfull \hbox (badness 10000) in paragraph at lines 176--185
+warning: main.tex:185: Underfull \hbox (badness 2951) in paragraph at lines 176--185
+warning: main.tex:349: Underfull \hbox (badness 10000) in paragraph at lines 342--349
+warning: main.tex:349: Underfull \hbox (badness 3815) in paragraph at lines 342--349
+warning: main.tex:492: Underfull \hbox (badness 10000) in paragraph at lines 483--492
+warning: main.tex:492: Underfull \hbox (badness 10000) in paragraph at lines 483--492
+warning: main.tex:492: Underfull \hbox (badness 1546) in paragraph at lines 483--492
+warning: main.tex:492: Underfull \hbox (badness 2221) in paragraph at lines 483--492
+warning: main.tex:497: Underfull \hbox (badness 10000) in paragraph at lines 493--497
+warning: main.tex:497: Underfull \hbox (badness 10000) in paragraph at lines 493--497
+warning: main.tex:497: Underfull \hbox (badness 3386) in paragraph at lines 493--497
+note: Running BibTeX on main.aux ...
+note: Rerunning TeX because bibtex was run ...
+warning: main.tex:101: Underfull \hbox (badness 4805) in paragraph at lines 92--101
+warning: main.tex:185: Underfull \hbox (badness 10000) in paragraph at lines 176--185
+warning: main.tex:185: Underfull \hbox (badness 10000) in paragraph at lines 176--185
+warning: main.tex:185: Underfull \hbox (badness 10000) in paragraph at lines 176--185
+warning: main.tex:185: Underfull \hbox (badness 2951) in paragraph at lines 176--185
+warning: main.tex:349: Underfull \hbox (badness 10000) in paragraph at lines 342--349
+warning: main.tex:349: Underfull \hbox (badness 3815) in paragraph at lines 342--349
+warning: main.tex:492: Underfull \hbox (badness 10000) in paragraph at lines 483--492
+warning: main.tex:492: Underfull \hbox (badness 10000) in paragraph at lines 483--492
+warning: main.tex:492: Underfull \hbox (badness 1546) in paragraph at lines 483--492
+warning: main.tex:492: Underfull \hbox (badness 2221) in paragraph at lines 483--492
+warning: main.tex:497: Underfull \hbox (badness 10000) in paragraph at lines 493--497
+warning: main.tex:497: Underfull \hbox (badness 10000) in paragraph at lines 493--497
+warning: main.tex:497: Underfull \hbox (badness 3386) in paragraph at lines 493--497
+note: Running xdvipdfmx ...
+warning: warnings were issued by the TeX engine; use --print and/or --keep-logs for details.
+note: Writing `docs/ieee-web\main.log` (25.982421875 KiB)
+note: Writing `docs/ieee-web\main.blg` (379 B)
+note: Writing `docs/ieee-web\main.aux` (9.0146484375 KiB)
+note: Writing `docs/ieee-web\main.out` (6.0302734375 KiB)
+note: Writing `docs/ieee-web\main.bbl` (4.6533203125 KiB)
+note: Writing `docs/ieee-web\main.pdf` (83.0791015625 KiB)

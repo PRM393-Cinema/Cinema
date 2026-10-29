@@ -1,0 +1,5 @@
+\clearpage
+\section{Authentication \& Authorization}\label{sec:srs-16}
+Gateway and services validate \texttt{JWT} signature/\allowbreak{}expiry/\allowbreak{}issuer/\allowbreak{}audience. Defaults: access 60 minutes, refresh seven days rotated on use; \texttt{OTP} six digits, five minutes, five attempts, 60-second resend. Admin-created accounts skip registration \texttt{OTP}. Password and \texttt{OTP} values are BCrypt-hashed.
+
+\texttt{Api\allowbreak{}Client} renews and retries a protected request once. Protected checks reject \texttt{ACCOUNT\_\allowbreak{}LOCKED} (\texttt{401}), \texttt{ROLE\_\allowbreak{}CHANGED} (\texttt{403}) or unavailable \texttt{Auth\allowbreak{}Service} (\texttt{503}). Public catalogue GETs omit bearer token; a signed-in client probes /\allowbreak{}auth/\allowbreak{}me at most once per minute, ignores ordinary availability errors for browsing and expires the session for lock/\allowbreak{}role-change signals. Logout clears storage/\allowbreak{}revokes refresh; reset/\allowbreak{}change password revokes old refresh tokens. Refresh revocation alone does not certify immediate invalidation of every issued access token.

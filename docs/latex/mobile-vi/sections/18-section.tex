@@ -1,0 +1,46 @@
+\clearpage
+\section{Yêu cầu phi chức năng}\label{sec:srs-18}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-4\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.58000\SRSWidth}P{0.22000\SRSWidth}@{}}
+\caption{18. Yêu cầu phi chức năng}\label{tab:srs-111}\\
+\toprule
+\textbf{\texttt{ID}} & \textbf{Yêu cầu} & \textbf{Phân bổ} \\
+\midrule
+\endfirsthead
+\multicolumn{3}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{\texttt{ID}} & \textbf{Yêu cầu} & \textbf{Phân bổ} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{3}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}SEC-\allowbreak{}01} & Mật khẩu và \texttt{OTP} băm bằng BCrypt; không trả stack trace hay lỗi nội bộ ra response. & Client hoặc phụ thuộc backend chung \\[3pt]
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}SEC-\allowbreak{}02} & \texttt{JWT} ký bằng secret \ensuremath{\geq} 32 ký tự; access token 60 phút; refresh token 7 ngày, xoay vòng, thu hồi khi đăng xuất, đặt lại mật khẩu, đổi quyền. & Client hoặc phụ thuộc backend chung \\[3pt]
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}SEC-\allowbreak{}03} & Kiểm tra quyền ở cả gateway (theo route) và service (theo dữ liệu, ví dụ chỉ xem vé của mình). & Client hoặc phụ thuộc backend chung \\[3pt]
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}SEC-\allowbreak{}04} & Giới hạn tần suất: 100 request /\allowbreak{} phút /\allowbreak{} \texttt{IP} cho mọi \texttt{API}, 10 cho \texttt{API} xác thực. & Client hoặc phụ thuộc backend chung \\[3pt]
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}SEC-\allowbreak{}05} & Chỉ gateway mở ra mạng; service, \texttt{Postgre\allowbreak{}SQL}, \texttt{Rabbit\allowbreak{}MQ}, công cụ giám sát chỉ nghe \texttt{127.\allowbreak{}0.\allowbreak{}0.\allowbreak{}1}. & Client hoặc phụ thuộc backend chung \\[3pt]
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}SEC-\allowbreak{}06} & Secret không nằm trong mã nguồn; chia sẻ bằng \texttt{SOPS} + age. & Client hoặc phụ thuộc backend chung \\[3pt]
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}SEC-\allowbreak{}07} & Mọi input được kiểm tra ở server (\texttt{Data\allowbreak{}Annotati\allowbreak{}ons} + validator); client kiểm tra trước để báo lỗi sớm. & Client hoặc phụ thuộc backend chung \\[3pt]
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}PERF-\allowbreak{}01} & Endpoint phân trang giới hạn, thường 50; mảng thể loại/\allowbreak{}ghế/\allowbreak{}menu không áp dụng. \texttt{UI} vé chỉ tải trang đầu. \texttt{SLA} thời gian phản hồi/\allowbreak{}người đồng thời là [CẦN XÁC NHẬN], không phải bảo đảm đã đo. & Client hoặc phụ thuộc backend chung \\[3pt]
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}PERF-\allowbreak{}02} & Giữ ghế, xác nhận vé và thu tiền khoá dòng booking (\texttt{SELECT … FOR UPDATE}) trong transaction để không bán trùng ghế hay thu tiền hai lần khi nhiều người thao tác cùng lúc. & Client hoặc phụ thuộc backend chung \\[3pt]
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}REL-\allowbreak{}01} & Lời gọi \texttt{Movie\allowbreak{}Service} /\allowbreak{} \texttt{Pay\allowbreak{}OS}: thử lại tối đa 2 lần với lỗi tạm thời (riêng tạo link \texttt{Pay\allowbreak{}OS} không thử lại); circuit breaker mở 15 giây khi lỗi liên tục và trả \texttt{503} ngay. & Client hoặc phụ thuộc backend chung \\[3pt]
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}REL-\allowbreak{}02} & Outbox: event không mất khi \texttt{Rabbit\allowbreak{}MQ} dừng, gửi bù khi \texttt{Rabbit\allowbreak{}MQ} chạy lại. & Client hoặc phụ thuộc backend chung \\[3pt]
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}REL-\allowbreak{}03} & Consumer idempotent; message lỗi thử lại 3 lần rồi chuyển sang \texttt{DLQ}. & Client hoặc phụ thuộc backend chung \\[3pt]
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}REL-\allowbreak{}04} & Gateway kiểm tra \texttt{/\allowbreak{}health/\allowbreak{}live} của service mỗi 10 giây, service chết thì trả \texttt{503} ngay. & Client hoặc phụ thuộc backend chung \\[3pt]
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}OBS-\allowbreak{}01} & Metrics Prometheus cho \texttt{HTTP}, runtime và nghiệp vụ (booking, payment, refund, outbox); dashboard Grafana "Cinema - Tổng quan". & Client hoặc phụ thuộc backend chung \\[3pt]
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}OBS-\allowbreak{}02} & Trace \texttt{Open\allowbreak{}Telemetr\allowbreak{}y} \ensuremath{\rightarrow} Jaeger, xuyên qua gateway, service, \texttt{SQL}, \texttt{Pay\allowbreak{}OS} và \texttt{Rabbit\allowbreak{}MQ}. & Client hoặc phụ thuộc backend chung \\[3pt]
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}OBS-\allowbreak{}03} & Log có \texttt{Trace\allowbreak{}Id}, \texttt{Span\allowbreak{}Id}, \texttt{Correlat\allowbreak{}ion\allowbreak{}Id}; header \texttt{X-\allowbreak{}Correlat\allowbreak{}ion-\allowbreak{}ID} trên mọi response. & Client hoặc phụ thuộc backend chung \\[3pt]
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}MAINT-\allowbreak{}01} & Kiến trúc lớp, \texttt{DTO}, validator, global exception handler ở mọi service; tài liệu trong \texttt{docs/\allowbreak{}}. & Client hoặc phụ thuộc backend chung \\[3pt]
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}MAINT-\allowbreak{}02} & \texttt{CI} khai báo test .\texttt{NET}, Flutter analyze/\allowbreak{}test và build web khách/\allowbreak{}quản trị. Workflow hiện ghim Flutter 3.47.4 thay mô tả cũ; không khẳng định \texttt{CI} hiện đã đạt. & Client hoặc phụ thuộc backend chung \\[3pt]
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}DEP-\allowbreak{}01} & Một lệnh \texttt{docker compose up -\allowbreak{}d -\allowbreak{}-\allowbreak{}build} chạy toàn bộ backend; giám sát qua profile \texttt{monitori\allowbreak{}ng}. & Client hoặc phụ thuộc backend chung \\[3pt]
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}USE-\allowbreak{}01} & App khách hỗ trợ Android, web, Windows; trang quản trị tối ưu cho máy tính và vẫn dùng được trên màn hình hẹp. & Client hoặc phụ thuộc backend chung \\[3pt]
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}COMP-\allowbreak{}01} & Camera web cần \texttt{localhos\allowbreak{}t} hoặc \texttt{HTTPS}; ứng dụng triển khai thật phải dùng \texttt{HTTPS}. & Client hoặc phụ thuộc backend chung \\[3pt]
+\end{longtable}
+\endgroup
+
+Cơ chế \texttt{NFR} có thể có bằng chứng code; độ sẵn sàng, thông lượng, khả năng tiếp cận toàn diện và tương thích cần kiểm chứng khi chạy, không được xác lập qua kiểm tra tĩnh.

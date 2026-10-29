@@ -31,7 +31,6 @@ class MovieReview {
 
   final int id;
   final int movieId;
-  final String? movieTitle;
   final int bookingId;
   final String reviewerName;
 
@@ -46,9 +45,13 @@ class MovieReview {
 
   bool get edited => updatedAt.difference(createdAt).inMinutes >= 1;
 
-  String get movieLabel => movieTitle == null || movieTitle!.trim().isEmpty
-      ? 'Movie #$movieId'
-      : movieTitle!;
+  // Only "my ratings" includes the movie title (from the reviewed ticket).
+  final String? movieTitle;
+
+  String get movieLabel {
+    final title = movieTitle?.trim() ?? '';
+    return title.isEmpty ? 'Movie #$movieId' : title;
+  }
 }
 
 // The average, the count per star and the newest reviews of a movie.

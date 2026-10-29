@@ -1,0 +1,30 @@
+\clearpage
+\section{Vai trò và phân quyền}\label{sec:srs-7}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-8\tabcolsep\relax}
+\begin{longtable}{@{}P{0.19000\SRSWidth}P{0.18000\SRSWidth}P{0.15000\SRSWidth}P{0.20000\SRSWidth}P{0.28000\SRSWidth}@{}}
+\caption{7. Vai trò và phân quyền}\label{tab:srs-4}\\
+\toprule
+\textbf{Thao tác} & \textbf{Chưa đăng nhập} & \textbf{Customer} & \textbf{Staff} & \textbf{Admin} \\
+\midrule
+\endfirsthead
+\multicolumn{5}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{Thao tác} & \textbf{Chưa đăng nhập} & \textbf{Customer} & \textbf{Staff} & \textbf{Admin} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{5}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Xem phim/\allowbreak{}suất công khai & \ensuremath{\checkmark} & \ensuremath{\checkmark} & \ensuremath{\checkmark} & \ensuremath{\checkmark} \\[3pt]
+Vé/\allowbreak{}thanh toán/\allowbreak{}hồ sơ/\allowbreak{}đánh giá của mình & — & \ensuremath{\checkmark} & Trang đầu theo vai trò & Trang đầu theo vai trò \\[3pt]
+Tra/\allowbreak{}check-in vé & — & — & \ensuremath{\checkmark} & \ensuremath{\checkmark} \\[3pt]
+Quầy/\allowbreak{}tiền mặt, lịch, loại ghế, xử lý hoàn & — & — & \ensuremath{\checkmark} & \ensuremath{\checkmark} \\[3pt]
+Phim, phòng, tài khoản, menu, khuyến mãi, thành viên, doanh thu & — & — & — & \ensuremath{\checkmark} \\[3pt]
+\end{longtable}
+\endgroup
+
+Bảo vệ \texttt{UI} kiểm soát điều hướng; policy controller và kiểm tra chủ bản ghi quyết định quyền. Tài khoản có thể có nhiều vai trò. Khách vào cổng quản trị thấy hướng dẫn về trang khách; quản lý vào cổng khách thấy hướng dẫn quản lý/\allowbreak{}check-in.

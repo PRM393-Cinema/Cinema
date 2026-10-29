@@ -1,0 +1,298 @@
+\clearpage
+\section{Đặc tả ca sử dụng}\label{sec:srs-10}
+\Needspace{10\baselineskip}
+\subsection{\texttt{UC-\allowbreak{}MOB-\allowbreak{}01} — Xác thực và phiên tài khoản}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{UC-\allowbreak{}MOB-\allowbreak{}01} — Xác thực và phiên tài khoản}\label{tab:srs-76}\\
+\toprule
+\textbf{Trường} & \textbf{Đặc tả ca sử dụng} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{Trường} & \textbf{Đặc tả ca sử dụng} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Tác nhân & Khách chưa đăng nhập; người có tài khoản; hệ thống \\[3pt]
+Mục tiêu & Xác thực và phiên tài khoản \\[3pt]
+Tiền điều kiện & Gateway đã được cấu hình. Đăng ký/\allowbreak{}khôi phục cần \texttt{SMTP}; thao tác được bảo vệ cần phiên tài khoản hợp lệ. \\[3pt]
+Kích hoạt & Mở màn liên quan hoặc thực hiện thao tác/\allowbreak{}sự kiện đã nêu. \\[3pt]
+Luồng chính & 1. Nhập thông tin tài khoản hoặc yêu cầu thao tác phiên. 2. Kiểm tra trường dữ liệu; gửi đến \texttt{Auth\allowbreak{}Service} qua gateway. 3. Với xác thực/\allowbreak{}khôi phục, nhập \texttt{OTP} từ email; với đăng nhập/\allowbreak{}làm mới, lưu token và người dùng trả về. 4. Điều hướng theo vai trò và tiếp tục trang đang chờ nếu đủ quyền. \\[3pt]
+Luồng thay thế /\allowbreak{} ngoại lệ & Từ chối trường sai (\texttt{400}), thông tin đăng nhập sai (\texttt{401}), email chưa xác thực (\texttt{403}), \texttt{OTP} cũ/\allowbreak{}sai hoặc vượt giới hạn gửi/\allowbreak{}tần suất (\texttt{429}). Xoá phiên khi tài khoản bị khoá/\allowbreak{}quyền thay đổi; hiển thị lỗi \texttt{SMTP}/\allowbreak{}phụ thuộc (\texttt{503}). \\[3pt]
+Hậu điều kiện & Chỉ thao tác cấp token thành công mới xác thực tài khoản; yêu cầu bị từ chối không cấp quyền truy cập. \\[3pt]
+Yêu cầu /\allowbreak{} ưu tiên & \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}01} (H), \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}02} (H), \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}03} (H), \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}04} (H), \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}05} (H), \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}06} (H), \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}07} (H), \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}08} (M), \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}09} (H), \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}10} (H), \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}11} (M), \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}12} (H), \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}13} (H), \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}14} (M), \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}16} (M), \texttt{MOB-\allowbreak{}FR-\allowbreak{}AUTH-\allowbreak{}17} (M), \texttt{MOB-\allowbreak{}FR-\allowbreak{}NAV-\allowbreak{}01} (H) \\[3pt]
+Nghiệm thu & Thực hiện \texttt{AC}-01/\allowbreak{}\texttt{AC}-02 cho mọi \texttt{FR} liên quan với tác nhân đủ quyền. \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{UC-\allowbreak{}MOB-\allowbreak{}02} — Danh mục phim và đánh giá}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{UC-\allowbreak{}MOB-\allowbreak{}02} — Danh mục phim và đánh giá}\label{tab:srs-77}\\
+\toprule
+\textbf{Trường} & \textbf{Đặc tả ca sử dụng} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{Trường} & \textbf{Đặc tả ca sử dụng} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Tác nhân & Khách chưa đăng nhập/\allowbreak{}khách hàng \\[3pt]
+Mục tiêu & Danh mục phim và đánh giá \\[3pt]
+Tiền điều kiện & Có dữ liệu phim; cập nhật cần quản trị viên; đánh giá cần vé của chính khách đã được check-in. \\[3pt]
+Kích hoạt & Mở màn liên quan hoặc thực hiện thao tác/\allowbreak{}sự kiện đã nêu. \\[3pt]
+Luồng chính & 1. Duyệt đang/\allowbreak{}sắp chiếu, tìm tên và lọc thể loại. 2. Mở thông tin, trailer ngoài và suất bảy ngày; đọc tổng hợp đánh giá. 3. Từ vé của mình đã check-in, gửi/\allowbreak{}sửa 1–5 sao (tối đa 1.000 ký tự) hoặc xoá. 4. Làm mới dữ liệu liên quan. \\[3pt]
+Luồng thay thế /\allowbreak{} ngoại lệ & Hiện trạng thái rỗng khi không có phim/\allowbreak{}suất phù hợp. Đánh giá bằng vé người khác trả \texttt{404}; vé chưa check-in trả \texttt{400}. Media lỗi phải còn ảnh hoặc nội dung dự phòng. \\[3pt]
+Hậu điều kiện & Danh mục/\allowbreak{}đánh giá phản ánh phản hồi chính thức; ngừng chiếu vẫn giữ các vé đã có. \\[3pt]
+Yêu cầu /\allowbreak{} ưu tiên & \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}02} (H), \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}03} (M), \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}04} (H), \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}08} (L), \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}09} (H), \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}10} (M), \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}11} (L), \texttt{MOB-\allowbreak{}FR-\allowbreak{}MOV-\allowbreak{}12} (M), \texttt{MOB-\allowbreak{}FR-\allowbreak{}MEDIA-\allowbreak{}01} (L) \\[3pt]
+Nghiệm thu & Thực hiện \texttt{AC}-01/\allowbreak{}\texttt{AC}-02 cho mọi \texttt{FR} liên quan với tác nhân đủ quyền. \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{UC-\allowbreak{}MOB-\allowbreak{}03} — Sơ đồ ghế và tình trạng chỗ}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{UC-\allowbreak{}MOB-\allowbreak{}03} — Sơ đồ ghế và tình trạng chỗ}\label{tab:srs-78}\\
+\toprule
+\textbf{Trường} & \textbf{Đặc tả ca sử dụng} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{Trường} & \textbf{Đặc tả ca sử dụng} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Tác nhân & Khách hàng \\[3pt]
+Mục tiêu & Sơ đồ ghế và tình trạng chỗ \\[3pt]
+Tiền điều kiện & Khách đã đăng nhập và suất chưa bắt đầu/\allowbreak{}phòng đã chọn tồn tại. \\[3pt]
+Kích hoạt & Mở màn liên quan hoặc thực hiện thao tác/\allowbreak{}sự kiện đã nêu. \\[3pt]
+Luồng chính & 1. Tải ghế phòng, giá suất và \texttt{ID} đã chiếm. 2. Chọn ghế trống, thêm/\allowbreak{}bỏ hai ghế sweetbox cùng nhau. 3. Làm mới mỗi năm giây và bỏ ghế bị người khác giữ. 4. Tiếp tục với dữ liệu đặt vé tạm; lúc này ghế chưa được giữ. \\[3pt]
+Luồng thay thế /\allowbreak{} ngoại lệ & Bỏ chọn ghế vừa bị đơn khác giữ và thông báo cho khách. Từ chối nửa cặp sweetbox, ghế sai phòng và sửa sơ đồ không đủ điều kiện. \\[3pt]
+Hậu điều kiện & Client hiển thị sơ đồ mới; chỉ chọn ghế chưa tạo giữ chỗ. \\[3pt]
+Yêu cầu /\allowbreak{} ưu tiên & \texttt{MOB-\allowbreak{}FR-\allowbreak{}SEAT-\allowbreak{}03} (H) \\[3pt]
+Nghiệm thu & Thực hiện \texttt{AC}-01/\allowbreak{}\texttt{AC}-02 cho mọi \texttt{FR} liên quan với tác nhân đủ quyền. \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{UC-\allowbreak{}MOB-\allowbreak{}04} — Suất chiếu và giá vé}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{UC-\allowbreak{}MOB-\allowbreak{}04} — Suất chiếu và giá vé}\label{tab:srs-79}\\
+\toprule
+\textbf{Trường} & \textbf{Đặc tả ca sử dụng} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{Trường} & \textbf{Đặc tả ca sử dụng} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Tác nhân & Khách chưa đăng nhập/\allowbreak{}khách hàng; nhân viên/\allowbreak{}quản trị viên chỉ xem chi tiết trong check-in \\[3pt]
+Mục tiêu & Suất chiếu và giá vé \\[3pt]
+Tiền điều kiện & Phim và phòng tồn tại; thay đổi quản lý cần nhân viên/\allowbreak{}quản trị viên. \\[3pt]
+Kích hoạt & Mở màn liên quan hoặc thực hiện thao tác/\allowbreak{}sự kiện đã nêu. \\[3pt]
+Luồng chính & 1. Mở chi tiết phim và chọn ngày trong bảy ngày tới. 2. Tải suất \texttt{OPEN} chưa bắt đầu. 3. Hiện phòng, định dạng, giờ và giá theo loại ghế. 4. Chọn suất và mở chọn ghế sau đăng nhập. \\[3pt]
+Luồng thay thế /\allowbreak{} ngoại lệ & Từ chối trùng lịch bằng \texttt{409} và giờ/\allowbreak{}định dạng sai bằng \texttt{400}; suất đã huỷ là trạng thái cuối. Khách không chọn suất đóng bán hoặc đã bắt đầu. \\[3pt]
+Hậu điều kiện & Lịch và giá theo loại ghế từ server là căn cứ chính thức; huỷ được lan truyền bất đồng bộ. \\[3pt]
+Yêu cầu /\allowbreak{} ưu tiên & \texttt{MOB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}03} (H), \texttt{MOB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}06} (H), \texttt{MOB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}07} (M), \texttt{MOB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}08} (H), \texttt{MOB-\allowbreak{}FR-\allowbreak{}SHOW-\allowbreak{}13} (M) \\[3pt]
+Nghiệm thu & Thực hiện \texttt{AC}-01/\allowbreak{}\texttt{AC}-02 cho mọi \texttt{FR} liên quan với tác nhân đủ quyền. \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{UC-\allowbreak{}MOB-\allowbreak{}05} — Đặt vé, bắp nước, khuyến mãi và điểm thành viên}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{UC-\allowbreak{}MOB-\allowbreak{}05} — Đặt vé, bắp nước, khuyến mãi và điểm thành viên}\label{tab:srs-80}\\
+\toprule
+\textbf{Trường} & \textbf{Đặc tả ca sử dụng} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{Trường} & \textbf{Đặc tả ca sử dụng} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Tác nhân & Khách hàng \\[3pt]
+Mục tiêu & Đặt vé, bắp nước, khuyến mãi và điểm thành viên \\[3pt]
+Tiền điều kiện & Khách đã đăng nhập chọn suất \texttt{OPEN} chưa bắt đầu và ghế; khách vãng lai tại quầy được nhân viên/\allowbreak{}quản trị viên thao tác thay. \\[3pt]
+Kích hoạt & Mở màn liên quan hoặc thực hiện thao tác/\allowbreak{}sự kiện đã nêu. \\[3pt]
+Luồng chính & 1. Kiểm tra ghế; có thể chọn bắp nước đang bán, mã khuyến mãi và điểm được dùng. 2. Xác nhận điều kiện phân loại tuổi khi cần. 3. Gửi \texttt{ID}/\allowbreak{}số lượng; server tính lại toàn bộ giá, kiểm tra cặp, khoá giữ chỗ và tạo vé \texttt{PENDING} hết hạn sau mười phút. 4. Mở thanh toán hoặc xem/\allowbreak{}huỷ vé của mình theo trạng thái. \\[3pt]
+Luồng thay thế /\allowbreak{} ngoại lệ & Giữ chỗ đồng thời trả \texttt{409} và không được thu tiền hoặc để lại ghế/\allowbreak{}điểm dở dang. Bắp nước/\allowbreak{}mã/\allowbreak{}điểm sai trả lỗi kiểm tra. Hết hạn nhả ghế và trả điểm đã giữ. \\[3pt]
+Hậu điều kiện & Tạo thành công trả vé đã lưu, chi tiết tiền và hạn; tạo thất bại hoàn tác giao dịch. \\[3pt]
+Yêu cầu /\allowbreak{} ưu tiên & \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}01} (H), \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}02} (H), \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}04} (H), \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}05} (H), \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}06} (H), \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}07} (H), \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}08} (H), \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}09} (H), \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}10} (H), \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}11} (M), \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}13} (M), \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}15} (M), \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}17} (M), \texttt{MOB-\allowbreak{}FR-\allowbreak{}BOOK-\allowbreak{}19} (L), \texttt{MOB-\allowbreak{}FR-\allowbreak{}STATE-\allowbreak{}01} (M) \\[3pt]
+Nghiệm thu & Thực hiện \texttt{AC}-01/\allowbreak{}\texttt{AC}-02 cho mọi \texttt{FR} liên quan với tác nhân đủ quyền. \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{UC-\allowbreak{}MOB-\allowbreak{}06} — Thanh toán trực tuyến và đối soát}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{UC-\allowbreak{}MOB-\allowbreak{}06} — Thanh toán trực tuyến và đối soát}\label{tab:srs-81}\\
+\toprule
+\textbf{Trường} & \textbf{Đặc tả ca sử dụng} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{Trường} & \textbf{Đặc tả ca sử dụng} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Tác nhân & Khách hàng; \texttt{Pay\allowbreak{}OS}/\allowbreak{}hệ thống là phụ thuộc ngoài/\allowbreak{}dùng chung \\[3pt]
+Mục tiêu & Thanh toán trực tuyến và đối soát \\[3pt]
+Tiền điều kiện & Có vé đủ điều kiện thanh toán; thông tin \texttt{Pay\allowbreak{}OS} và callback/\allowbreak{}địa chỉ trở về được cấu hình để thanh toán thật. \\[3pt]
+Kích hoạt & Mở màn liên quan hoặc thực hiện thao tác/\allowbreak{}sự kiện đã nêu. \\[3pt]
+Luồng chính & 1. Yêu cầu/\allowbreak{}dùng lại phiên \texttt{Pay\allowbreak{}OS} cho vé. 2. Mở thanh toán và hiển thị đếm ngược giữ ghế. 3. Hỏi vé mỗi năm giây và xác minh \texttt{Pay\allowbreak{}OS} mỗi ba mươi giây khi trang thanh toán khách đang hoạt động; đối soát khi trở lại ứng dụng. 4. Webhook có chữ ký hoặc dữ liệu \texttt{Pay\allowbreak{}OS} đã xác minh cập nhật thanh toán và vé; tải kết quả từ server. \\[3pt]
+Luồng thay thế /\allowbreak{} ngoại lệ & Không dùng tham số chuyển hướng làm bằng chứng đã trả tiền. Xử lý huỷ, hết thời gian và \texttt{503} mà không báo thành công sai; trả muộn chỉ xác nhận nếu lấy lại được ghế, nếu không tạo hoàn tiền. \\[3pt]
+Hậu điều kiện & Trạng thái thanh toán từ server là chính thức; \texttt{SUCCESS} xác nhận vé và lên lịch thông báo mà không lặp tác động nghiệp vụ. \\[3pt]
+Yêu cầu /\allowbreak{} ưu tiên & \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}01} (H), \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}02} (H), \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}03} (H), \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}04} (M), \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}06} (H), \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}07} (H), \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}08} (M), \texttt{MOB-\allowbreak{}FR-\allowbreak{}PAY-\allowbreak{}11} (M) \\[3pt]
+Nghiệm thu & Thực hiện \texttt{AC}-01/\allowbreak{}\texttt{AC}-02 cho mọi \texttt{FR} liên quan với tác nhân đủ quyền. \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{UC-\allowbreak{}MOB-\allowbreak{}07} — Huỷ vé và hoàn tiền thủ công}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{UC-\allowbreak{}MOB-\allowbreak{}07} — Huỷ vé và hoàn tiền thủ công}\label{tab:srs-82}\\
+\toprule
+\textbf{Trường} & \textbf{Đặc tả ca sử dụng} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{Trường} & \textbf{Đặc tả ca sử dụng} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Tác nhân & Khách hàng \\[3pt]
+Mục tiêu & Huỷ vé và hoàn tiền thủ công \\[3pt]
+Tiền điều kiện & Có vé của chính khách; huỷ vé đã trả phải còn ít nhất hai giờ trước suất. \\[3pt]
+Kích hoạt & Mở màn liên quan hoặc thực hiện thao tác/\allowbreak{}sự kiện đã nêu. \\[3pt]
+Luồng chính & 1. Mở vé đã trả của mình và xác nhận huỷ. 2. Backend kiểm tra mốc hai giờ, tạo/\allowbreak{}dùng lại yêu cầu và giữ ghế khi yêu cầu khách đang chờ. 3. Hiện kết quả chờ/\allowbreak{}hoàn tất/\allowbreak{}từ chối và lý do sau khi nhân viên xử lý trên web. 4. Tải lại vé và thông báo. \\[3pt]
+Luồng thay thế /\allowbreak{} ngoại lệ & Huỷ trong hai giờ bị từ chối bằng \texttt{409}. Hiện trạng thái hoàn tiền/\allowbreak{}từ chối từ backend; điện thoại không có thao tác duyệt/\allowbreak{}từ chối/\allowbreak{}ghi chuyển tiền. \\[3pt]
+Hậu điều kiện & Hoàn tất đưa về \texttt{COMPLETE\allowbreak{}D}/\allowbreak{}\texttt{REFUNDED\allowbreak{}} và nhả ghế vé bị huỷ; từ chối hợp lệ phục hồi \texttt{SUCCESS}/\allowbreak{}\texttt{CONFIRME\allowbreak{}D}; hoàn tiền đang chờ do khách yêu cầu vẫn giữ ghế. \\[3pt]
+Yêu cầu /\allowbreak{} ưu tiên & \texttt{MOB-\allowbreak{}FR-\allowbreak{}REF-\allowbreak{}01} (H), \texttt{MOB-\allowbreak{}FR-\allowbreak{}REF-\allowbreak{}05} (M), \texttt{MOB-\allowbreak{}FR-\allowbreak{}REF-\allowbreak{}06} (M), \texttt{MOB-\allowbreak{}FR-\allowbreak{}REF-\allowbreak{}07} (H) \\[3pt]
+Nghiệm thu & Thực hiện \texttt{AC}-01/\allowbreak{}\texttt{AC}-02 cho mọi \texttt{FR} liên quan với tác nhân đủ quyền. \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{UC-\allowbreak{}MOB-\allowbreak{}08} — Tra vé và check-in}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{UC-\allowbreak{}MOB-\allowbreak{}08} — Tra vé và check-in}\label{tab:srs-83}\\
+\toprule
+\textbf{Trường} & \textbf{Đặc tả ca sử dụng} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{Trường} & \textbf{Đặc tả ca sử dụng} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Tác nhân & Nhân viên/\allowbreak{}quản trị viên quét và cho vào; khách hàng xuất trình vé của mình \\[3pt]
+Mục tiêu & Tra vé và check-in \\[3pt]
+Tiền điều kiện & Nhân viên/\allowbreak{}quản trị viên đã đăng nhập; vé \texttt{CONFIRME\allowbreak{}D}, chưa dùng và trong khoảng 180 phút trước đến 120 phút sau giờ bắt đầu. \\[3pt]
+Kích hoạt & Mở màn liên quan hoặc thực hiện thao tác/\allowbreak{}sự kiện đã nêu. \\[3pt]
+Luồng chính & 1. Quét \texttt{QR} hoặc nhập mã vé rồi nhấn Enter. 2. Tra vé; bổ sung phòng và phân loại tuổi khi lời gọi danh mục thành công. 3. Kiểm tra danh tính/\allowbreak{}tuổi theo nhắc nhở rồi xác nhận check-in. 4. Lưu \texttt{checked\allowbreak{}In\allowbreak{}At}, hiện xác nhận và sẵn sàng nhập mã tiếp theo. \\[3pt]
+Luồng thay thế /\allowbreak{} ngoại lệ & Cho nhập tay khi camera không có/\allowbreak{}bị từ chối. Mã không tồn tại trả \texttt{404}; vé chưa trả, đã huỷ, chờ hoàn tiền, ngoài khung giờ hoặc đã dùng trả \texttt{409}. Lần check-in thứ hai đồng thời thất bại. Lỗi thông tin bổ sung không được che vé. \\[3pt]
+Hậu điều kiện & Chỉ lưu một thời điểm check-in; check-in là thuộc tính, không phải trạng thái vé khác. \\[3pt]
+Yêu cầu /\allowbreak{} ưu tiên & \texttt{MOB-\allowbreak{}FR-\allowbreak{}CHK-\allowbreak{}01} (H), \texttt{MOB-\allowbreak{}FR-\allowbreak{}CHK-\allowbreak{}02} (H), \texttt{MOB-\allowbreak{}FR-\allowbreak{}CHK-\allowbreak{}03} (H), \texttt{MOB-\allowbreak{}FR-\allowbreak{}CHK-\allowbreak{}04} (H), \texttt{MOB-\allowbreak{}FR-\allowbreak{}CHK-\allowbreak{}05} (M) \\[3pt]
+Nghiệm thu & Thực hiện \texttt{AC}-01/\allowbreak{}\texttt{AC}-02 cho mọi \texttt{FR} liên quan với tác nhân đủ quyền. \\[3pt]
+\end{longtable}
+\endgroup
+
+\Needspace{10\baselineskip}
+\subsection{\texttt{UC-\allowbreak{}MOB-\allowbreak{}09} — Thông báo và email giao dịch}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{\texttt{UC-\allowbreak{}MOB-\allowbreak{}09} — Thông báo và email giao dịch}\label{tab:srs-84}\\
+\toprule
+\textbf{Trường} & \textbf{Đặc tả ca sử dụng} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{Trường} & \textbf{Đặc tả ca sử dụng} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Tác nhân & Khách hàng; hệ thống backend tạo email/\allowbreak{}nhắc lịch \\[3pt]
+Mục tiêu & Thông báo và email giao dịch \\[3pt]
+Tiền điều kiện & Có phiên tài khoản để xem lịch sử trong ứng dụng; cấu hình \texttt{SMTP}/\allowbreak{}xử lý sự kiện để gửi thật. \\[3pt]
+Kích hoạt & Mở màn liên quan hoặc thực hiện thao tác/\allowbreak{}sự kiện đã nêu. \\[3pt]
+Luồng chính & 1. Tải danh sách thông báo và số chưa đọc của khách. 2. Mở chi tiết, đánh dấu đã đọc hoặc đánh dấu tất cả thông báo của mình. 3. Mở vé liên quan thuộc mình. 4. Nhận email và lịch sử trong ứng dụng do sự kiện/\allowbreak{}nhắc lịch backend tạo; chưa có tích hợp thông báo đẩy điện thoại. \\[3pt]
+Luồng thay thế /\allowbreak{} ngoại lệ & Kiểm tra chủ sở hữu từ chối dữ liệu người khác; có trạng thái tải/\allowbreak{}rỗng/\allowbreak{}lỗi-thử lại. Gửi lỗi giữ \texttt{FAILED} để thử lại và không hoàn tác thanh toán. Chống lặp sự kiện giảm gửi trùng nhưng \texttt{SMTP} cùng commit database không bảo đảm giao dịch đúng một lần tuyệt đối. \\[3pt]
+Hậu điều kiện & Trạng thái đọc/\allowbreak{}số chưa đọc khớp phản hồi; gửi thành công được ghi riêng với trạng thái vé/\allowbreak{}thanh toán. \\[3pt]
+Yêu cầu /\allowbreak{} ưu tiên & \texttt{MOB-\allowbreak{}FR-\allowbreak{}NOTI-\allowbreak{}01} (M), \texttt{MOB-\allowbreak{}FR-\allowbreak{}NOTI-\allowbreak{}04} (M), \texttt{MOB-\allowbreak{}FR-\allowbreak{}NOTI-\allowbreak{}06} (H), \texttt{MOB-\allowbreak{}FR-\allowbreak{}NOTI-\allowbreak{}07} (H), \texttt{MOB-\allowbreak{}FR-\allowbreak{}NOTI-\allowbreak{}08} (M), \texttt{MOB-\allowbreak{}FR-\allowbreak{}NOTI-\allowbreak{}09} (M) \\[3pt]
+Nghiệm thu & Thực hiện \texttt{AC}-01/\allowbreak{}\texttt{AC}-02 cho mọi \texttt{FR} liên quan với tác nhân đủ quyền. \\[3pt]
+\end{longtable}
+\endgroup

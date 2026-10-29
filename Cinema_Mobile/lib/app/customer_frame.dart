@@ -72,7 +72,7 @@ const _authPages = {
 
 _Section? _sectionOf(String path) {
   if (path.startsWith(AppRoutes.myBookings)) return _Section.tickets;
-  if (path == AppRoutes.myRatings) return _Section.ratings;
+  if (path.startsWith(AppRoutes.myRatings)) return _Section.ratings;
   if (path.startsWith(AppRoutes.notifications)) return _Section.notifications;
   if (path == AppRoutes.profile || path == AppRoutes.paymentHistory) {
     return _Section.account;
@@ -219,37 +219,47 @@ class _WebHeader extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: AppSpacing.sm),
-            _HeaderLink(
-              label: 'Movies',
-              selected: selected == _Section.movies,
-              onTap: () => onOpen(AppRoutes.home),
-            ),
-            if (signedIn) ...[
-              _HeaderLink(
-                label: 'My tickets',
-                selected: selected == _Section.tickets,
-                onTap: () => onOpen(AppRoutes.myBookings),
-              ),
-              IconButton(
-                key: const Key('myRatings'),
-                color: selected == _Section.ratings
-                    ? AppColors.primary
-                    : AppColors.textSecondary,
-                onPressed: () => onOpen(AppRoutes.myRatings),
-                icon: const Icon(
-                  Icons.star_outline_rounded,
-                  semanticLabel: 'My ratings',
+            const SizedBox(width: AppSpacing.xl),
+            // The links take the free space and scroll sideways rather than
+            // overflow on a narrow window.
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _HeaderLink(
+                        label: 'Movies',
+                        selected: selected == _Section.movies,
+                        onTap: () => onOpen(AppRoutes.home),
+                      ),
+                      if (signedIn) ...[
+                        _HeaderLink(
+                          label: 'My tickets',
+                          selected: selected == _Section.tickets,
+                          onTap: () => onOpen(AppRoutes.myBookings),
+                        ),
+                        _HeaderLink(
+                          key: const Key('myRatings'),
+                          label: 'Ratings',
+                          selected: selected == _Section.ratings,
+                          onTap: () => onOpen(AppRoutes.myRatings),
+                        ),
+                        _HeaderLink(
+                          label: 'Notifications',
+                          selected: selected == _Section.notifications,
+                          badge: SessionProvider.of(context)
+                              .unreadNotifications,
+                          onTap: () => onOpen(AppRoutes.notifications),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
               ),
-              _HeaderLink(
-                label: 'Notifications',
-                selected: selected == _Section.notifications,
-                badge: SessionProvider.of(context).unreadNotifications,
-                onTap: () => onOpen(AppRoutes.notifications),
-              ),
-            ],
-            const Spacer(),
+            ),
+            const SizedBox(width: AppSpacing.md),
             if (signedIn)
               _AccountButton(
                 name: name.isEmpty ? 'Account' : name,
@@ -289,6 +299,7 @@ class _HeaderLink extends StatelessWidget {
     required this.selected,
     required this.onTap,
     this.badge = 0,
+    super.key,
   });
 
   final String label;

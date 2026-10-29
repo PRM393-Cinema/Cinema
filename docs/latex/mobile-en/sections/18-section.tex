@@ -1,0 +1,46 @@
+\clearpage
+\section{Non-Functional Requirements}\label{sec:srs-18}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-4\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.58000\SRSWidth}P{0.22000\SRSWidth}@{}}
+\caption{18. Non-Functional Requirements}\label{tab:srs-111}\\
+\toprule
+\textbf{\texttt{ID}} & \textbf{Requirement} & \textbf{Allocation} \\
+\midrule
+\endfirsthead
+\multicolumn{3}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{\texttt{ID}} & \textbf{Requirement} & \textbf{Allocation} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{3}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}SEC-\allowbreak{}01} & Passwords and \texttt{OTP} codes are hashed with BCrypt; responses never include stack traces or internal errors. & Client or shared-backend dependency \\[3pt]
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}SEC-\allowbreak{}02} & JWTs are signed with a secret of at least 32 characters; access tokens last 60 minutes; refresh tokens last 7 days, rotate, and are revoked on sign-out, password reset and role change. & Client or shared-backend dependency \\[3pt]
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}SEC-\allowbreak{}03} & Authorization is checked at the gateway (per route) and in the service (per record, e.g. only one's own tickets). & Client or shared-backend dependency \\[3pt]
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}SEC-\allowbreak{}04} & Rate limits: 100 requests per minute per \texttt{IP} for all APIs, 10 for authentication APIs. & Client or shared-backend dependency \\[3pt]
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}SEC-\allowbreak{}05} & Only the gateway is reachable from the network; services, \texttt{Postgre\allowbreak{}SQL}, \texttt{Rabbit\allowbreak{}MQ} and monitoring listen on \texttt{127.\allowbreak{}0.\allowbreak{}0.\allowbreak{}1}. & Client or shared-backend dependency \\[3pt]
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}SEC-\allowbreak{}06} & Secrets are not in the source code; they are shared with \texttt{SOPS} + age. & Client or shared-backend dependency \\[3pt]
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}SEC-\allowbreak{}07} & The server validates every input (\texttt{Data\allowbreak{}Annotati\allowbreak{}ons} + validators); clients validate first to report mistakes early. & Client or shared-backend dependency \\[3pt]
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}PERF-\allowbreak{}01} & Paged endpoints cap size, normally 50; genres/\allowbreak{}seats/\allowbreak{}menu arrays are exempt. Ticket \texttt{UI} currently loads only the first page. Response-time/\allowbreak{}concurrent-user \texttt{SLA} is [\texttt{TO} \texttt{BE} \texttt{CONFIRME\allowbreak{}D}], not a measured guarantee. & Client or shared-backend dependency \\[3pt]
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}PERF-\allowbreak{}02} & Holding seats, confirming tickets and taking payment lock the booking row (\texttt{SELECT … FOR UPDATE}) in a transaction, so seats are never sold twice and money is never taken twice under concurrent use. & Client or shared-backend dependency \\[3pt]
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}REL-\allowbreak{}01} & Calls to \texttt{Movie\allowbreak{}Service} /\allowbreak{} \texttt{Pay\allowbreak{}OS} retry transient errors at most twice (creating a \texttt{Pay\allowbreak{}OS} link is never retried); a circuit breaker opens for 15 seconds after repeated failures and returns \texttt{503} at once. & Client or shared-backend dependency \\[3pt]
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}REL-\allowbreak{}02} & Outbox: no event is lost while \texttt{Rabbit\allowbreak{}MQ} is down; it is sent when \texttt{Rabbit\allowbreak{}MQ} is back. & Client or shared-backend dependency \\[3pt]
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}REL-\allowbreak{}03} & Consumers are idempotent; failing messages are retried 3 times and then moved to a \texttt{DLQ}. & Client or shared-backend dependency \\[3pt]
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}REL-\allowbreak{}04} & The gateway checks each service's \texttt{/\allowbreak{}health/\allowbreak{}live} every 10 seconds and returns \texttt{503} at once for a dead service. & Client or shared-backend dependency \\[3pt]
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}OBS-\allowbreak{}01} & Prometheus metrics for \texttt{HTTP}, runtime and business events (bookings, payments, refunds, outbox); Grafana dashboard "Cinema - Tổng quan". & Client or shared-backend dependency \\[3pt]
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}OBS-\allowbreak{}02} & \texttt{Open\allowbreak{}Telemetr\allowbreak{}y} traces to Jaeger across the gateway, services, \texttt{SQL}, \texttt{Pay\allowbreak{}OS} and \texttt{Rabbit\allowbreak{}MQ}. & Client or shared-backend dependency \\[3pt]
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}OBS-\allowbreak{}03} & Logs carry \texttt{Trace\allowbreak{}Id}, \texttt{Span\allowbreak{}Id} and \texttt{Correlat\allowbreak{}ion\allowbreak{}Id}; every response has an \texttt{X-\allowbreak{}Correlat\allowbreak{}ion-\allowbreak{}ID} header. & Client or shared-backend dependency \\[3pt]
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}MAINT-\allowbreak{}01} & Layered services, DTOs, validators and a global exception handler everywhere; documentation in \texttt{docs/\allowbreak{}}. & Client or shared-backend dependency \\[3pt]
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}MAINT-\allowbreak{}02} & \texttt{CI} declares .\texttt{NET} tests, Flutter analyze/\allowbreak{}test and customer/\allowbreak{}admin web builds. Current Flutter workflow pins 3.47.4, superseding older prose; no current successful \texttt{CI} run is asserted. & Client or shared-backend dependency \\[3pt]
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}DEP-\allowbreak{}01} & One command, \texttt{docker compose up -\allowbreak{}d -\allowbreak{}-\allowbreak{}build}, runs the whole backend; monitoring through the \texttt{monitori\allowbreak{}ng} profile. & Client or shared-backend dependency \\[3pt]
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}USE-\allowbreak{}01} & The customer app supports Android, web and Windows; the admin website is designed for desktops and still works on narrow screens. & Client or shared-backend dependency \\[3pt]
+\texttt{MOB-\allowbreak{}NFR-\allowbreak{}COMP-\allowbreak{}01} & Web cameras need \texttt{localhos\allowbreak{}t} or \texttt{HTTPS}; a real deployment must use \texttt{HTTPS}. & Client or shared-backend dependency \\[3pt]
+\end{longtable}
+\endgroup
+
+\texttt{NFR} mechanisms may be evidenced in code; availability, throughput, universal accessibility and compatibility require runtime validation and are not established by static inspection.

@@ -1,0 +1,32 @@
+\clearpage
+\section{Error Handling}\label{sec:srs-17}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{17. Error Handling}\label{tab:srs-110}\\
+\toprule
+\textbf{Code /\allowbreak{} condition} & \textbf{Handling} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{Code /\allowbreak{} condition} & \textbf{Handling} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+\texttt{400} & Show field/\allowbreak{}business validation; do not advance \\[3pt]
+\texttt{401} & Renew once if possible; otherwise clear session/\allowbreak{}sign in; retain lock/\allowbreak{}session reason \\[3pt]
+\texttt{403} & Deny role/\allowbreak{}ownership action; \texttt{EMAIL\_\allowbreak{}NOT\_\allowbreak{}VERIFIED\allowbreak{}} opens \texttt{OTP}; \texttt{ROLE\_\allowbreak{}CHANGED} signs in again \\[3pt]
+\texttt{404} & Show missing record without leaking another owner’s review ticket \\[3pt]
+\texttt{409} & Explain seat/\allowbreak{}state/\allowbreak{}time conflict and reload before retrying \\[3pt]
+\texttt{429} & Respect Retry-After/\allowbreak{}countdown; preserve inputs \\[3pt]
+\texttt{500} /\allowbreak{} \texttt{503} & Show retryable service error; no false booking/\allowbreak{}payment success \\[3pt]
+Timeout/\allowbreak{}offline/\allowbreak{}invalid \texttt{JSON} & Bounded error (15-second client timeout); retry and honest pending/\allowbreak{}failure state \\[3pt]
+Loading/\allowbreak{}empty/\allowbreak{}camera denial & Explicit state without fake records; preserve manual ticket-code entry \\[3pt]
+\end{longtable}
+\endgroup

@@ -1,0 +1,27 @@
+\clearpage
+\section{Yêu cầu giao diện bên ngoài}\label{sec:srs-11}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{11. Yêu cầu giao diện bên ngoài}\label{tab:srs-147}\\
+\toprule
+\textbf{Giao diện} & \textbf{Hợp đồng} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{Giao diện} & \textbf{Hợp đồng} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Client/\allowbreak{}gateway & \texttt{REST}/\allowbreak{}\texttt{JSON} \texttt{UTF}-8; Accept application/\allowbreak{}json; Content-Type application/\allowbreak{}json khi có body; \texttt{JWT} Bearer cho lời gọi bảo vệ. Client không nối \texttt{Postgre\allowbreak{}SQL} hoặc cổng service riêng. \\[3pt]
+\texttt{Pay\allowbreak{}OS} & \texttt{URL} thanh toán/\allowbreak{}\texttt{Viet\allowbreak{}QR} qua backend; webhook có chữ ký; client xác minh server thay vì tin chuyển hướng. Client không thu thập dữ liệu thẻ. \\[3pt]
+\texttt{SMTP} /\allowbreak{} \texttt{Rabbit\allowbreak{}MQ} & Chỉ server gửi \texttt{OTP}/\allowbreak{}vé/\allowbreak{}hoàn và sự kiện đã commit; client đọc \texttt{API} thông báo, không nhận broker. \\[3pt]
+Thiết bị/\allowbreak{}trình duyệt & Route hash/\allowbreak{}\texttt{URL}; camera \texttt{HTTPS}/\allowbreak{}localhost; chia sẻ/\allowbreak{}clipboard/\allowbreak{}lịch; in trình duyệt 80 mm; preview \texttt{HTML} dự phòng ảnh. \\[3pt]
+\end{longtable}
+\endgroup

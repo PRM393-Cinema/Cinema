@@ -1,0 +1,33 @@
+\clearpage
+\section{Data Requirements}\label{sec:srs-14}
+Project-Cinema-\texttt{DB} is uninitialized in this checkout (git submodule status begins with “-”). Its \texttt{SQL} dumps/\allowbreak{}seed/\allowbreak{}migrations are unavailable; exact \texttt{DDL} and live migration state are [\texttt{TO} \texttt{BE} \texttt{CONFIRME\allowbreak{}D}]. This contract uses local \texttt{EF} models/\allowbreak{}\texttt{Db\allowbreak{}Contexts\allowbreak{}} and available backend \texttt{SQL} migrations. Model mappings do not prove a live \texttt{DB} has been migrated.
+
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-4\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.58000\SRSWidth}P{0.22000\SRSWidth}@{}}
+\caption{14. Data Requirements}\label{tab:srs-189}\\
+\toprule
+\textbf{Database} & \textbf{Entities /\allowbreak{} tables} & \textbf{Integrity and fields} \\
+\midrule
+\endfirsthead
+\multicolumn{3}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{Database} & \textbf{Entities /\allowbreak{} tables} & \textbf{Integrity and fields} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{3}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+cinema\_auth\_db & User/\allowbreak{}Role; users, roles, users\_roles, refresh\_tokens, otp\_codes & Unique email/\allowbreak{}token; BCrypt hashes; role joins; \texttt{OTP} lifetime and token revocation \\[3pt]
+cinema\_movie\_db & Movie; movies & Title/\allowbreak{}duration/\allowbreak{}genre/\allowbreak{}language/\allowbreak{}rating/\allowbreak{}director/\allowbreak{}cast; poster/\allowbreak{}trailer/\allowbreak{}preview; \texttt{ACTIVE}/\allowbreak{}\texttt{INACTIVE\allowbreak{}} \\[3pt]
+cinema\_showtime\_db & Room/\allowbreak{}Seat/\allowbreak{}Showtime; rooms, seats, showtimes, outbox\_messages & Unique room/\allowbreak{}row/\allowbreak{}number; format, time, price; room-local foreign keys \\[3pt]
+cinema\_booking\_db & Booking, \texttt{Booking\allowbreak{}Seat}, \texttt{Seat\allowbreak{}Reservat\allowbreak{}ion}, \texttt{Concessi\allowbreak{}on\allowbreak{}Item}, \texttt{Booking\allowbreak{}Concessi\allowbreak{}on}, Promotion, \texttt{Loyalty\allowbreak{}Account}, \texttt{Loyalty\allowbreak{}Transact\allowbreak{}ion}, \texttt{Movie\allowbreak{}Review}; bookings, booking\_seats, seat\_reservations, concession\_items, booking\_concessions, promotions, loyalty\_accounts, loyalty\_transactions, movie\_reviews, outbox\_messages & Unique booking code; unique showtime/\allowbreak{}seat reservation; unique user/\allowbreak{}movie review; amount snapshots; nullable counter \texttt{user\allowbreak{}Id}; \texttt{checked\allowbreak{}In\allowbreak{}At}/\allowbreak{}\texttt{expires\allowbreak{}At}/\allowbreak{}\texttt{reminded\allowbreak{}At} \\[3pt]
+cinema\_payment\_db & Payment/\allowbreak{}Refund; payments, refunds, outbox\_messages & Booking, amount, method/\allowbreak{}state, \texttt{Pay\allowbreak{}OS} reference and payer bank; one refund per payment \\[3pt]
+cinema\_notification\_db & Notification; notifications & Recipient/\allowbreak{}booking/\allowbreak{}event; deduplicate event; \texttt{sent\allowbreak{}At}/\allowbreak{}\texttt{read\allowbreak{}At}; state and error \\[3pt]
+\end{longtable}
+\endgroup
+
+Client persistence is session tokens/\allowbreak{}user metadata via flutter\_secure\_storage and in-memory booking drafts, not six local databases. Server decimal totals snapshot seat/\allowbreak{}concession/\allowbreak{}discount/\allowbreak{}point values. Cinema time uses Vietnam local time and timestamp without time zone mappings. Cross-service IDs are application/\allowbreak{}event-validated logical references.

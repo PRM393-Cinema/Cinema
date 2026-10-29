@@ -1,0 +1,28 @@
+\clearpage
+\section{Ràng buộc}\label{sec:srs-23}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{23. Ràng buộc}\label{tab:srs-117}\\
+\toprule
+\textbf{\texttt{ID}} & \textbf{Ràng buộc /\allowbreak{} mục chưa rõ} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{\texttt{ID}} & \textbf{Ràng buộc /\allowbreak{} mục chưa rõ} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+\texttt{MOB-\allowbreak{}CON-\allowbreak{}01} & Triển khai .\texttt{NET} là backend \texttt{API}. \texttt{UI} môn học \texttt{MVC}/\allowbreak{}Razor/\allowbreak{}Blazor riêng là [CẦN XÁC NHẬN]. \\[3pt]
+\texttt{MOB-\allowbreak{}CON-\allowbreak{}02} & Submodule \texttt{DB} vắng/\allowbreak{}chưa khởi tạo; \texttt{DDL}/\allowbreak{}seed \texttt{SQL} chính xác và migrate thật [CẦN XÁC NHẬN]. \texttt{EF}/\allowbreak{}migration cục bộ là bằng chứng sẵn có. \\[3pt]
+\texttt{MOB-\allowbreak{}CON-\allowbreak{}03} & Khoá thật, webhook công khai, \texttt{SMTP} và \texttt{URL} triển khai là phụ thuộc môi trường. Không tạo giao dịch tài chính/\allowbreak{}email để viết tài liệu. \\[3pt]
+\texttt{MOB-\allowbreak{}CON-\allowbreak{}04} & Nghiệm thu \texttt{OS}/\allowbreak{}thiết bị thật, ký/\allowbreak{}phát hành cửa hàng, \texttt{SLA}, lưu backup và mục tiêu tải [CẦN XÁC NHẬN]. Khung nền tảng không phải chứng nhận tương thích. \\[3pt]
+\texttt{MOB-\allowbreak{}CON-\allowbreak{}05} & Gateway emulator Android mặc định http:/\allowbreak{}/\allowbreak{}10.0.2.2:5000; mục tiêu cục bộ khác http:/\allowbreak{}/\allowbreak{}localhost:5000. Điện thoại cần \texttt{API\_\allowbreak{}BASE\_\allowbreak{}URL} truy cập được; \texttt{ADMIN\_\allowbreak{}URL}/\allowbreak{}\texttt{CUSTOMER\allowbreak{}\_\allowbreak{}URL}/\allowbreak{}\texttt{PAYMENT\_\allowbreak{}RETURN\_\allowbreak{}URL} theo triển khai. \\[3pt]
+\end{longtable}
+\endgroup

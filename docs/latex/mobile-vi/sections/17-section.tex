@@ -1,0 +1,32 @@
+\clearpage
+\section{Xử lý lỗi}\label{sec:srs-17}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{17. Xử lý lỗi}\label{tab:srs-110}\\
+\toprule
+\textbf{Mã /\allowbreak{} điều kiện} & \textbf{Xử lý} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{Mã /\allowbreak{} điều kiện} & \textbf{Xử lý} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+\texttt{400} & Hiện lỗi trường/\allowbreak{}nghiệp vụ; không đi tiếp \\[3pt]
+\texttt{401} & Gia hạn một lần nếu được; nếu không xoá phiên/\allowbreak{}đăng nhập; giữ lý do khoá/\allowbreak{}phiên \\[3pt]
+\texttt{403} & Từ chối vai trò/\allowbreak{}sở hữu; \texttt{EMAIL\_\allowbreak{}NOT\_\allowbreak{}VERIFIED\allowbreak{}} mở \texttt{OTP}; \texttt{ROLE\_\allowbreak{}CHANGED} đăng nhập lại \\[3pt]
+\texttt{404} & Hiện thiếu bản ghi không lộ vé đánh giá của người khác \\[3pt]
+\texttt{409} & Giải thích xung đột ghế/\allowbreak{}trạng thái/\allowbreak{}giờ và tải lại trước thử \\[3pt]
+\texttt{429} & Tuân thủ Retry-After/\allowbreak{}đếm ngược; giữ đầu vào \\[3pt]
+\texttt{500} /\allowbreak{} \texttt{503} & Hiện lỗi dịch vụ có thể thử lại; không báo đặt/\allowbreak{}trả thành công sai \\[3pt]
+Timeout/\allowbreak{}mất mạng/\allowbreak{}\texttt{JSON} sai & Lỗi có giới hạn (timeout client 15 giây); thử lại và trạng thái chờ/\allowbreak{}lỗi đúng \\[3pt]
+Tải/\allowbreak{}rỗng/\allowbreak{}từ chối camera & Trạng thái rõ không dữ liệu giả; giữ nhập mã vé thủ công \\[3pt]
+\end{longtable}
+\endgroup
