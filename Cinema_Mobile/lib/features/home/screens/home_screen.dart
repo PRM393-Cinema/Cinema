@@ -216,6 +216,13 @@ class _HomeScreenState extends State<HomeScreen> {
                         icon: const Icon(Icons.confirmation_number_outlined),
                       ),
                       IconButton(
+                        key: const Key('myRatings'),
+                        tooltip: 'My ratings',
+                        onPressed: () =>
+                            Navigator.pushNamed(context, AppRoutes.myRatings),
+                        icon: const Icon(Icons.star_outline_rounded),
+                      ),
+                      IconButton(
                         tooltip: 'Notifications',
                         onPressed: () => Navigator.pushNamed(
                           context,

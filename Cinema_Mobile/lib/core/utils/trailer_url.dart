@@ -8,8 +8,9 @@ Uri? directPreviewUrl(Uri url) {
         ? Uri.base.resolveUri(url)
         : null;
   }
-  if ((url.scheme != 'https' && url.scheme != 'http') || url.host.isEmpty)
+  if ((url.scheme != 'https' && url.scheme != 'http') || url.host.isEmpty) {
     return null;
+  }
   final path = url.path.toLowerCase();
   return path.endsWith('.mp4') || path.endsWith('.webm') ? url : null;
 }

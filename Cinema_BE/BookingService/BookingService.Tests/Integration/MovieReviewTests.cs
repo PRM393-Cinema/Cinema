@@ -70,6 +70,7 @@ public class MovieReviewTests
         var mine = await customer.GetFromJsonAsync<JsonElement>("/api/v1/reviews/mine");
         var only = Assert.Single(mine.EnumerateArray());
         Assert.Equal(movieId, only.GetProperty("movieId").GetInt64());
+        Assert.Equal(FakeShowtimeClient.MovieTitle, only.GetProperty("movieTitle").GetString());
 
         // Khách chưa đăng nhập xem được; người viết thấy đánh giá của mình
         var guestView = await _factory.CreateClient().GetFromJsonAsync<JsonElement>($"/api/v1/reviews/movie/{movieId}?size=50");

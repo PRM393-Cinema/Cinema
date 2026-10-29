@@ -29,6 +29,7 @@ import '../../features/profile/screens/point_history_screen.dart';
 import '../../features/seat/screens/seat_selection_screen.dart';
 import '../../features/staff/screens/staff_check_in_screen.dart';
 import 'app_routes.dart';
+import '../../features/review/screens/my_ratings_screen.dart';
 
 // Builds the customer app's screens from route names such as /movies/7. On
 // web the name is the URL, so a refreshed page or a shared link opens the same
@@ -157,6 +158,12 @@ class AppRouter {
         return _RouteMatch(
           settings,
           (_) => MyBookingsScreen(bookingRepository: bookingRepository),
+          signInRequired: true,
+        );
+      case AppRoutes.myRatings:
+        return _RouteMatch(
+          settings,
+          (_) => MyRatingsScreen(bookingRepository: bookingRepository),
           signInRequired: true,
         );
       case AppRoutes.notifications:
