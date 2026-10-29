@@ -33,6 +33,20 @@ public class EmailTemplatesTests
     }
 
     [Fact]
+    public void BookingConfirmed_CarriesTheTicketQrCode()
+    {
+        var email = EmailTemplates.BookingConfirmed(Booking(), "khach@test.local");
+
+        var qr = Assert.Single(email.InlineImages);
+        Assert.Equal("image/png", qr.MediaType);
+        Assert.Equal(new byte[] { 0x89, 0x50, 0x4E, 0x47 }, qr.Content.Take(4));
+        Assert.Contains($"cid:{qr.ContentId}", email.Content);
+
+        // Other emails have no ticket to show
+        Assert.Empty(EmailTemplates.BookingExpired(Booking(), "khach@test.local").InlineImages);
+    }
+
+    [Fact]
     public void Templates_EncodeTextThatComesFromUsers()
     {
         var email = EmailTemplates.BookingConfirmed(Booking("<script>alert(1)</script>"), "khach@test.local");
@@ -53,6 +67,19 @@ public class EmailTemplatesTests
 
         Assert.Contains("hoàn tiền", EmailTemplates.BookingCancelled(paid, "k@test.local").Content);
         Assert.DoesNotContain("hoàn tiền", EmailTemplates.BookingCancelled(unpaid, "k@test.local").Content);
+    }
+
+    [Fact]
+    public void RefundRejected_EncodesReason()
+    {
+        var email = EmailTemplates.RefundRejected(new PaymentEventData
+        {
+            BookingCode = "BK-1", RefundCode = "RF-1", Reason = "<script>unsafe</script>"
+        }, "khach@test.local");
+        Assert.Contains("BK-1", email.Subject);
+        Assert.Contains("RF-1", email.Content);
+        Assert.Contains("&lt;script&gt;", email.Content);
+        Assert.DoesNotContain("<script>", email.Content);
     }
 
     [Fact]

@@ -33,7 +33,7 @@ namespace BookingService.Services.Interfaces
 
         Task SendNotificationFromEventAsync(
             string eventId,
-            long userId,
+            long? userId,
             long? bookingId,
             string type,
             EmailMessage email);
@@ -41,5 +41,12 @@ namespace BookingService.Services.Interfaces
         Task<NotificationResponse> SendNotificationAsync(long id);
 
         Task DeleteNotificationAsync(long id);
+
+        Task<NotificationResponse> MarkReadAsync(long id);
+
+        // Số thông báo được đánh dấu
+        Task<int> MarkAllReadAsync(long userId);
+
+        Task<int> CountUnreadAsync(long userId);
     }
 }

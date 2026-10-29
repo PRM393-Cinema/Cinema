@@ -44,12 +44,26 @@ namespace BookingService.Messaging.Handlers
                         data.CustomerEmail,
                         email => EmailTemplates.BookingExpired(data, email));
                 }
+                case EventTypes.BookingReminder:
+                {
+                    var data = integrationEvent.GetData<BookingEventData>();
+                    return SendAsync(integrationEvent, data.UserId, data.BookingId, "SHOWTIME_REMINDER",
+                        data.CustomerEmail,
+                        email => EmailTemplates.ShowtimeReminder(data, email));
+                }
                 case EventTypes.PaymentRefundRequested:
                 {
                     var data = integrationEvent.GetData<PaymentEventData>();
                     return SendAsync(integrationEvent, data.UserId, data.BookingId, "REFUND_REQUESTED",
                         data.CustomerEmail,
                         email => EmailTemplates.RefundRequested(data, email));
+                }
+                case EventTypes.PaymentRefundRejected:
+                {
+                    var data = integrationEvent.GetData<PaymentEventData>();
+                    return SendAsync(integrationEvent, data.UserId, data.BookingId, "REFUND_REJECTED",
+                        data.CustomerEmail,
+                        email => EmailTemplates.RefundRejected(data, email));
                 }
                 case EventTypes.PaymentRefunded:
                 {
@@ -66,7 +80,7 @@ namespace BookingService.Messaging.Handlers
 
         private async Task SendAsync(
             IntegrationEvent integrationEvent,
-            long userId,
+            long? userId,
             long? bookingId,
             string type,
             string? recipientEmail,

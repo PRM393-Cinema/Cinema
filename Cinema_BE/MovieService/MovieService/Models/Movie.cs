@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace MovieService.Models;
@@ -26,4 +26,12 @@ public partial class Movie
     public DateTime CreatedAt { get; set; }
 
     public string? TrailerUrl { get; set; }
+        public string? PreviewUrl { get; set; }
+
+    // Phân loại phim theo Luật Điện ảnh 2022: P / K / T13 / T16 / T18
+    public string AgeRating { get; set; } = "P";
+
+    public string? Director { get; set; }
+
+    public string? Cast { get; set; } // diễn viên chính, cách nhau dấu phẩy
 }

@@ -1,5 +1,7 @@
 # SOFTWARE REQUIREMENTS SPECIFICATION
 ## CINEMA MANAGEMENT SYSTEM
+
+> **Bản 1.0 – thiết kế ban đầu.** Bản tổng hợp theo hệ thống hiện tại (2.0): [docs/SRS_VI.md](../docs/SRS_VI.md) · [docs/SRS_EN.md](../docs/SRS_EN.md).
 **Microservice-based Cinema Booking Platform**  
 **Version:** 1.0  
 **Backend:** ASP.NET Core | **Frontend:** Flutter | **Database:** PostgreSQL  

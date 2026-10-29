@@ -1,15 +1,20 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../app/routes/app_routes.dart';
 import '../../../app/theme/app_colors.dart';
+import '../../../app/theme/app_radius.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../auth_error_messages.dart';
-import '../widgets/auth_scaffold.dart';
 import '../verify_email_arguments.dart';
+import '../widgets/auth_scaffold.dart';
+import '../widgets/auth_success_dialog.dart';
 
 class VerifyEmailScreen extends StatefulWidget {
   const VerifyEmailScreen({required this.authRepository, super.key});
@@ -32,6 +37,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   String? _errorMessage;
   String? _successMessage;
   DateTime? _resendAvailableAt;
+  Timer? _resendTimer;
 
   @override
   void didChangeDependencies() {
@@ -54,6 +60,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
 
   @override
   void dispose() {
+    _resendTimer?.cancel();
     _emailController.dispose();
     _otpController.dispose();
     super.dispose();
@@ -65,7 +72,8 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
       return 0;
     }
 
-    final remaining = availableAt.difference(DateTime.now()).inSeconds;
+    final remaining =
+        (availableAt.difference(DateTime.now()).inMilliseconds / 1000).ceil();
     return remaining > 0 ? remaining : 0;
   }
 
@@ -101,7 +109,31 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
         return;
       }
 
-      Navigator.pushReplacementNamed(context, AppRoutes.login);
+      _resendTimer?.cancel();
+      await showGeneralDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        barrierLabel: 'Account created',
+        barrierColor: Colors.black.withValues(alpha: 0.72),
+        transitionDuration: MediaQuery.disableAnimationsOf(context)
+            ? Duration.zero
+            : const Duration(milliseconds: 180),
+        pageBuilder: (context, _, _) => const Material(
+          type: MaterialType.transparency,
+          child: AuthSuccessDialog(
+            title: 'Account created!',
+            message:
+                'Your email is verified.\nYou’re ready for your next movie.',
+            footer: 'Taking you to sign in…',
+          ),
+        ),
+      );
+      if (!mounted) return;
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        AppRoutes.login,
+        (route) => route.settings.name == AppRoutes.home,
+      );
     } on ApiException catch (error) {
       _showError(authErrorMessage(error));
     } on FormatException {
@@ -113,7 +145,10 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
 
   Future<void> _resendCode() async {
     final args = _arguments;
-    if (args == null || _remainingResendSeconds > 0) {
+    if (args == null ||
+        _isResending ||
+        _isVerifying ||
+        _remainingResendSeconds > 0) {
       return;
     }
 
@@ -147,11 +182,20 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   }
 
   void _setResendCooldown(int seconds) {
+    _resendTimer?.cancel();
     if (seconds <= 0) {
       _resendAvailableAt = null;
       return;
     }
     _resendAvailableAt = DateTime.now().add(Duration(seconds: seconds));
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      setState(() {});
+      if (_remainingResendSeconds == 0) timer.cancel();
+    });
   }
 
   void _showError(String message) {
@@ -170,7 +214,9 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   @override
   Widget build(BuildContext context) {
     final remainingSeconds = _remainingResendSeconds;
+
     return AuthScaffold(
+      showBack: true,
       title: 'Verify your email',
       subtitle: 'Enter the verification code sent to your email.',
       child: Form(
@@ -179,7 +225,6 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (_hasRoutePayload) ...[
-              const SizedBox(height: AppSpacing.sm),
               Text(
                 'Code sent to ${_arguments!.email}',
                 style: AppTextStyles.bodySmall.copyWith(
@@ -188,7 +233,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                 textAlign: TextAlign.center,
               ),
             ],
-            const SizedBox(height: AppSpacing.xxl),
+            if (_hasRoutePayload) const SizedBox(height: AppSpacing.lg),
             AuthFieldSurface(
               child: AppTextField(
                 label: 'Email',
@@ -215,22 +260,24 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
             ),
             if (_errorMessage != null) ...[
               const SizedBox(height: AppSpacing.lg),
-              AuthStatusMessage.error(message: _errorMessage!),
+              _AuthStatusMessage.error(message: _errorMessage!),
             ],
             if (_successMessage != null) ...[
               const SizedBox(height: AppSpacing.lg),
-              AuthStatusMessage.success(message: _successMessage!),
+              _AuthStatusMessage.success(message: _successMessage!),
             ],
             const SizedBox(height: AppSpacing.xxl),
-            AuthButton(
+            AppButton(
               label: 'Verify email',
+              useGradient: true,
+              trailingIcon: Icons.arrow_forward_rounded,
               isLoading: _isVerifying,
               onPressed: _isVerifying || !_hasRoutePayload
                   ? null
                   : _verifyEmail,
             ),
             const SizedBox(height: AppSpacing.md),
-            AuthButton.secondary(
+            AppButton.secondary(
               label: remainingSeconds > 0
                   ? 'Resend code (${remainingSeconds}s)'
                   : 'Resend code',
@@ -259,4 +306,62 @@ String? _validateOtp(String? value) {
     return 'Verification code must be 6 digits.';
   }
   return null;
+}
+
+class _AuthStatusMessage extends StatelessWidget {
+  const _AuthStatusMessage._({
+    required this.message,
+    required this.color,
+    required this.icon,
+  });
+
+  const _AuthStatusMessage.error({required String message})
+    : this._(
+        message: message,
+        color: AppColors.error,
+        icon: Icons.error_outline,
+      );
+
+  const _AuthStatusMessage.success({required String message})
+    : this._(
+        message: message,
+        color: AppColors.success,
+        icon: Icons.check_circle_outline,
+      );
+
+  final String message;
+  final Color color;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      liveRegion: true,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: AppRadius.borderRadiusMd,
+          border: Border.all(color: color),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: color, size: AppSpacing.xl),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  message,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

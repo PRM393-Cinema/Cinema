@@ -95,6 +95,19 @@ Sau đó chạy lại AuthService và BookingService.
 
 Đăng ký lại một email **chưa xác thực** vẫn được: thông tin mới thay thông tin cũ và hệ thống gửi mã mới.
 
+### Quy tắc dữ liệu tài khoản
+
+App và API kiểm tra giống nhau (`Helpers/AccountValidation.cs` bên AuthService, `lib/core/utils/account_validators.dart` bên Flutter). Áp dụng cho đăng ký, đăng nhập, quên / đặt lại mật khẩu và Admin tạo tài khoản. Sai thì **400** kèm `errors` theo từng trường, không tạo tài khoản và không gửi email.
+
+| Trường | Quy tắc |
+|---|---|
+| `email` | Bắt buộc, tối đa 150 ký tự, có tên miền với đuôi ít nhất 2 chữ cái, không dấu cách (`a b@c.com`, `abc@def` bị từ chối) |
+| `password` (mật khẩu mới) | 6 đến 72 ký tự. BCrypt chỉ dùng 72 byte đầu, mà chữ có dấu chiếm 2–3 byte, nên mật khẩu tiếng Việt dài có thể bị từ chối dù chưa tới 72 ký tự. Đăng nhập chỉ cần không để trống |
+| `fullName` | Bắt buộc, tối đa 150 ký tự |
+| `phone` | Không bắt buộc; 8 đến 15 chữ số, có thể bắt đầu bằng `+` và ngăn cách bằng dấu cách `.` `-` `( )`, tối đa 20 ký tự |
+
+Form đăng ký trên app có thêm ô **Confirm password**.
+
 ### Đăng nhập khi chưa xác thực email
 
 `POST /api/v1/auth/login` trả **403**:
@@ -113,10 +126,10 @@ Khi đó chuyển sang màn hình OTP, gọi `resend-verification` để lấy m
 
 ### Email xác nhận đặt vé
 
-BookingService gửi email chi tiết vé ngay khi booking được xác nhận:
+BookingService gửi email chi tiết vé ngay khi booking được xác nhận. Email có **mã QR của vé** (ảnh PNG đính kèm dạng `cid:`, hiện ngay trong Gmail / Outlook) cùng mã đặt vé: khách đưa mã này ở quầy, nhân viên quét để check-in.
 
 - **Khách thanh toán PayOS:** sau khi trả tiền xong, app gọi `POST /api/v1/payments/payos/{orderCode}/verify`. PayOS báo đã nhận tiền thì booking tự chuyển sang CONFIRMED và email vé được gửi về **email trong token** của khách. Muốn gửi tới email khác thì thêm `?recipientEmail=...`. Khách không tự gọi `/bookings/{id}/confirm` được.
-- **Staff xác nhận tại quầy** (khách trả tiền mặt): `POST /api/v1/bookings/{id}/confirm?paymentMethod=CASH&recipientEmail=<email khách>`.
+- **Bán tại quầy**: Staff thu tiền mặt bằng `POST /api/v1/payments/cash` (body có `recipientEmail` tuỳ chọn), hoặc khách quét QR chuyển khoản. Email vé gửi tới email khách cho ở quầy, và email này được lưu vào vé để các email huỷ / hoàn tiền sau đó cũng tới. Khách vãng lai không cho email thì không gửi: nhân viên in vé hoặc khách chụp QR trên màn hình.
 
 Gửi email lỗi không làm hỏng booking, trạng thái gửi xem ở `/api/v1/notifications`. Gọi xác minh lại nhiều lần cũng không gửi trùng email.
 

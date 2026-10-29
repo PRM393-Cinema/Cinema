@@ -30,21 +30,31 @@ class ShowtimeChip extends StatelessWidget {
         : AppColors.textSecondary;
     final borderColor = isSelected ? AppColors.primary : AppColors.border;
     final backgroundColor = isSelected
-        ? AppColors.primaryDark
-        : AppColors.surface;
+        ? AppColors.primary.withValues(alpha: 0.14)
+        : AppColors.surfaceSoft.withValues(alpha: 0.65);
 
     return InkWell(
       onTap: isAvailable ? onTap : null,
       borderRadius: AppRadius.borderRadiusMd,
-      child: DecoratedBox(
+      child: AnimatedContainer(
+        duration: MediaQuery.disableAnimationsOf(context)
+            ? Duration.zero
+            : const Duration(milliseconds: 160),
         decoration: BoxDecoration(
-          color: backgroundColor,
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              backgroundColor,
+              AppColors.surface.withValues(alpha: 0.55),
+            ],
+          ),
           borderRadius: AppRadius.borderRadiusMd,
           border: Border.all(color: borderColor),
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
+            horizontal: AppSpacing.sm,
             vertical: AppSpacing.md,
           ),
           child: Column(
@@ -52,7 +62,9 @@ class ShowtimeChip extends StatelessWidget {
             children: [
               Text(
                 time,
-                style: AppTextStyles.button.copyWith(color: foregroundColor),
+                style: AppTextStyles.button.copyWith(
+                  color: isSelected ? AppColors.primary : foregroundColor,
+                ),
               ),
               if (room != null) ...[
                 const SizedBox(height: AppSpacing.xs),

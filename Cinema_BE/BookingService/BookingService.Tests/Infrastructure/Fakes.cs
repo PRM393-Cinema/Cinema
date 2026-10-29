@@ -14,17 +14,20 @@ public sealed class FakeShowtimeClient : IShowtimeClient
 
     public const string MovieTitle = "Phim Kiểm Thử";
 
+    public const long DefaultMovieId = 7;
+
     public decimal SeatPrice { get; set; } = 90_000;
+    public ConcurrentDictionary<long, string> SeatTypes { get; } = new();
 
     // Giả lập MovieService chết / circuit breaker mở
     public bool Unavailable { get; set; }
 
-    public ShowtimeInfo AddShowtime(DateTime startTime, string status = "OPEN")
+    public ShowtimeInfo AddShowtime(DateTime startTime, string status = "OPEN", long movieId = DefaultMovieId)
     {
         var showtime = new ShowtimeInfo
         {
             Id = Interlocked.Increment(ref _nextId),
-            MovieId = 7,
+            MovieId = movieId,
             StartTime = startTime,
             EndTime = startTime.AddHours(2),
             Status = status
@@ -45,7 +48,8 @@ public sealed class FakeShowtimeClient : IShowtimeClient
 
         return Task.FromResult(seatIds
             .Distinct()
-            .Select(id => new ShowtimeSeatInfo { SeatId = id, SeatLabel = $"S{id}", Price = SeatPrice })
+            .Select(id => new ShowtimeSeatInfo { SeatId = id, SeatLabel = $"S{id}", Price = SeatPrice,
+                SeatType = SeatTypes.GetValueOrDefault(id, "NORMAL") })
             .ToList());
     }
 
@@ -102,7 +106,8 @@ public sealed class FakePayOsClient : IPayOsClient
         {
             OrderCode = orderCode,
             CheckoutUrl = $"https://pay.example/{orderCode}",
-            PaymentLinkId = $"link-{orderCode}"
+            PaymentLinkId = $"link-{orderCode}",
+            QrCode = $"00020101021238570010A000000727{orderCode}"
         });
     }
 
@@ -126,6 +131,12 @@ public sealed class FakePayOsClient : IPayOsClient
         CancellationToken cancellationToken = default)
     {
         ThrowIfUnavailable();
+
+        // Như PayOS thật: đơn đã trả tiền thì không huỷ được
+        if (Statuses.GetValueOrDefault(orderCode) == "PAID")
+        {
+            throw new ExternalServiceException("PayOS refused to cancel a paid order.");
+        }
 
         CancelledLinks.Add(orderCode);
         Statuses[orderCode] = "CANCELLED";

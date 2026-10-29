@@ -2,20 +2,41 @@
   Gia lap PayOS goi webhook "da thanh toan" cho mot don hang (test luong dat ve tren may, khong can tra tien that).
   Huong dan: docs/PAYOS.md
 
-    .\scripts\payos-webhook.ps1 -OrderCode 15 -Amount 90000
-    .\scripts\payos-webhook.ps1 -OrderCode 15 -Amount 90000 -BaseUrl http://localhost:5063
+    .\scripts\payos-webhook.ps1 -BookingId 17
+    .\scripts\payos-webhook.ps1 -OrderCode 17195614 -Amount 90000 -BaseUrl http://localhost:5063
 
-  OrderCode = id cua booking (orderCode tra ve khi tao link PayOS), Amount = totalAmount cua booking.
+  -BookingId: chay bang Docker, script tu lay ma don PayOS va so tien cua booking trong database.
+  -OrderCode / -Amount: ma don PayOS (orderCode tra ve khi tao link, = transaction_ref cua payment PAYOS) va
+  totalAmount cua booking. Dung khi chay BookingService bang Visual Studio.
   Checksum key lay tu PAYOS_CHECKSUM_KEY trong .env (giong key BookingService dang dung) hoac tham so -ChecksumKey.
 #>
 param(
-    [Parameter(Mandatory = $true)][long]$OrderCode,
-    [Parameter(Mandatory = $true)][long]$Amount,
+    [long]$BookingId,
+    [long]$OrderCode,
+    [long]$Amount,
     [string]$BaseUrl = "http://localhost:5000",
     [string]$ChecksumKey = $env:PAYOS_CHECKSUM_KEY
 )
 
 $ErrorActionPreference = "Stop"
+
+if ($BookingId) {
+    # Payment PayOS moi nhat cua booking (tao khi bam "Pay with PayOS")
+    Push-Location (Split-Path -Parent $PSScriptRoot)
+    try {
+        $row = docker compose exec -T postgres psql -U postgres -d cinema_payment_db -tAc `
+            "select transaction_ref || '|' || round(amount) from payments where booking_id = $BookingId and method = 'PAYOS' order by id desc limit 1"
+    }
+    finally { Pop-Location }
+    if (-not "$row".Trim()) {
+        throw "Booking $BookingId chua co thanh toan PayOS: bam 'Pay with PayOS' trong app truoc"
+    }
+    $OrderCode, $Amount = "$row".Trim() -split '\|'
+}
+
+if (-not $OrderCode -or -not $Amount) {
+    throw "Truyen -BookingId, hoac ca -OrderCode va -Amount"
+}
 
 if (-not $ChecksumKey) {
     $envFile = Join-Path (Split-Path -Parent $PSScriptRoot) ".env"

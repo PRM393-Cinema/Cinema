@@ -1,0 +1,41 @@
+# Cinema
+
+Hệ thống đặt vé xem phim: backend microservice ASP.NET Core 8 và app Flutter cho khách hàng.
+
+| Thư mục | Nội dung | Tài liệu |
+|---|---|---|
+| `Cinema_BE/` | AuthService, MovieService, BookingService, ApiGateway; chạy cả hệ thống bằng Docker Compose | [Cinema_BE/docs](Cinema_BE/docs) |
+| `Cinema_Mobile/` | App Flutter cho khách (web, Android, Windows) và trang quản trị web cho nhân viên, admin; gọi API Gateway ở cổng 5000 | [Cinema_Mobile/README.md](Cinema_Mobile/README.md) |
+
+## Cài đặt
+
+Database nằm ở repo riêng [Project-Cinema-DB](https://github.com/PRM393-Cinema/Project-Cinema-DB). Repo DB được checkout trong Cinema bằng submodule. Với checkout cũ, chạy `git submodule update --init --recursive` sau pull:
+
+```powershell
+git clone --recurse-submodules https://github.com/PRM393-Cinema/Cinema.git
+```
+
+```text
+<thư mục bất kỳ>/
+└── Cinema/
+    ├── Cinema_BE/
+    ├── Cinema_Mobile/
+    └── Project-Cinema-DB/
+```
+
+1. Backend: làm theo [Cinema_BE/docs/DOCKER.md](Cinema_BE/docs/DOCKER.md) (tạo `.env` rồi `docker compose up -d --build`).
+2. App: làm theo [Cinema_Mobile/README.md](Cinema_Mobile/README.md) (`flutter run -d chrome`).
+3. Trang quản trị (nhân viên, admin): `flutter run -d chrome -t lib/main_admin.dart`.
+
+Lệnh trong `Cinema_BE/docs` chạy trong thư mục `Cinema_BE`; lệnh Flutter chạy trong `Cinema_Mobile`.
+
+Chuẩn bị máy và kịch bản demo: [DEMO.md](DEMO.md).
+
+Đặc tả yêu cầu phần mềm (SRS) 2.0 của toàn hệ thống: [tiếng Việt](docs/SRS_VI.md) · [English](docs/SRS_EN.md).
+
+## CI
+
+Chạy cho pull request vào `dev` / `main`:
+
+- [`.github/workflows/ci.yml`](.github/workflows/ci.yml): build và chạy test backend khi có thay đổi trong `Cinema_BE/` (xem [TESTING.md](Cinema_BE/docs/TESTING.md)).
+- [`.github/workflows/flutter.yml`](.github/workflows/flutter.yml): `flutter analyze`, `flutter test` và build hai bản web (trang khách, trang quản trị) khi có thay đổi trong `Cinema_Mobile/`.

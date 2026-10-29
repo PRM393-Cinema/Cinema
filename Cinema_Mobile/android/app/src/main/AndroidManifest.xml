@@ -2,7 +2,7 @@
     <!-- Calls the cinema backend (also needed by release builds). -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <application
-        android:label="cinema_fe"
+        android:label="CosmoQ Cinema"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

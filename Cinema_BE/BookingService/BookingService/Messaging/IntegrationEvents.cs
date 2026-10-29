@@ -8,12 +8,15 @@ namespace BookingService.Messaging
         public const string BookingCreated = "booking.created";
         public const string BookingConfirmed = "booking.confirmed";
         public const string BookingCancelled = "booking.cancelled";
+        public const string BookingRefundRequested = "booking.refund_requested";
         public const string BookingExpired = "booking.expired";
+        public const string BookingReminder = "booking.reminder"; // nhắc giờ chiếu
         public const string PaymentCreated = "payment.created";
         public const string PaymentSucceeded = "payment.succeeded";
         public const string PaymentFailed = "payment.failed";
         public const string PaymentRefundRequested = "payment.refund_requested";
         public const string PaymentRefunded = "payment.refunded";
+        public const string PaymentRefundRejected = "payment.refund_rejected";
 
         // Do MovieService phát khi huỷ suất chiếu
         public const string ShowtimeCancelled = "showtime.cancelled";
@@ -48,7 +51,7 @@ namespace BookingService.Messaging
 
         public string BookingCode { get; set; } = string.Empty;
 
-        public long UserId { get; set; }
+        public long? UserId { get; set; } // null: khách vãng lai
 
         public string? CustomerEmail { get; set; }
 
@@ -62,6 +65,19 @@ namespace BookingService.Messaging
         public DateTime? ShowTime { get; set; }
 
         public List<string> Seats { get; set; } = new();
+
+        // Bắp nước mua kèm, vd "2 × Combo đôi"
+        public List<string> Concessions { get; set; } = new();
+
+        public decimal DiscountAmount { get; set; }
+
+        public string? PromotionName { get; set; }
+
+        public int PointsUsed { get; set; }
+
+        public decimal PointsDiscount { get; set; }
+
+        public int PointsEarned { get; set; }
 
         public decimal TotalAmount { get; set; }
 
@@ -89,7 +105,7 @@ namespace BookingService.Messaging
 
         public string? BookingCode { get; set; }
 
-        public long UserId { get; set; }
+        public long? UserId { get; set; } // null: khách vãng lai
 
         public string? CustomerEmail { get; set; }
 

@@ -29,9 +29,16 @@ namespace BookingService.Services.Interfaces
 
         Task<PaymentResponse> GetPaymentByIdAsync(long id);
 
+        Task<PaymentSummaryResponse> GetPaymentSummaryAsync(DateTime start, DateTime end);
+
         Task<PaymentResponse> GetPaymentByOrderCodeAsync(long orderCode);
 
-        Task<PaymentResponse> CreatePaymentAsync(PaymentRequest request);
+        Task<PaymentResponse> CreatePaymentAsync(PaymentRequest request, bool manager = false);
+
+        /// <summary>
+        /// Staff thu tiền mặt tại quầy: ghi payment CASH đã thành công rồi xác nhận vé (email vé kèm QR nếu có email).
+        /// </summary>
+        Task<PaymentResponse> PayCashAsync(CashPaymentRequest request);
 
         Task<PaymentResponse> ProcessPaymentAsync(
             long id,
@@ -41,8 +48,10 @@ namespace BookingService.Services.Interfaces
             long id,
             string? reason);
 
+        // manager: Staff/Admin tạo QR chuyển khoản tại quầy (kể cả vé vãng lai), không kiểm tra người đặt
         Task<PayOsCheckoutResponse> CreatePayOsPaymentAsync(
-            PayOsCreateRequest request);
+            PayOsCreateRequest request,
+            bool manager = false);
 
         // PayOS báo đã thanh toán -> payment SUCCESS và booking được xác nhận tự động
         Task<PaymentResponse> VerifyPayOsPaymentAsync(

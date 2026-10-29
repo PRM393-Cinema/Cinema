@@ -37,7 +37,8 @@ namespace ShowtimeService.Repository.Impl
                 StartTime = request.StartTime,
                 EndTime = request.EndTime,
                 Price = request.Price,
-                Status = string.IsNullOrWhiteSpace(request.Status) ? "OPEN" : request.Status
+                Status = string.IsNullOrWhiteSpace(request.Status) ? "OPEN" : request.Status,
+                Format = request.Format ?? "2D"
             };
 
             _context.Showtimes.Add(showtime);
@@ -251,7 +252,7 @@ namespace ShowtimeService.Repository.Impl
 
         public async Task<bool> ExistsByRoomIdAsync(long roomId)
         {
-            return await _context.Seats
+            return await _context.Showtimes
                 .AnyAsync(x => x.RoomId == roomId);
         }
     }

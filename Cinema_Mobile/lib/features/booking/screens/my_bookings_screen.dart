@@ -8,7 +8,12 @@ import '../../../app/theme/app_text_styles.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/session/session_state.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/utils/layout.dart';
+import '../../../core/widgets/responsive_columns.dart';
 import '../../../core/widgets/error_state.dart';
+import '../../../core/widgets/cinema_background.dart';
+import '../../../core/widgets/cinema_account_widgets.dart';
+import '../../../core/widgets/cinema_page.dart';
 import '../../../core/widgets/loading_state.dart';
 import '../../../core/widgets/status_badge.dart';
 import '../../../data/models/booking.dart';
@@ -24,6 +29,7 @@ class MyBookingsScreen extends StatefulWidget {
 }
 
 class _MyBookingsScreenState extends State<MyBookingsScreen> {
+  final _glassBackgroundKey = GlobalKey();
   List<Booking> _bookings = const [];
   bool _isLoading = true;
   bool _hasStarted = false;
@@ -77,7 +83,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
   Future<void> _openBooking(Booking booking) async {
     await Navigator.pushNamed(
       context,
-      AppRoutes.bookingDetail,
+      AppRoutes.bookingDetail(booking.id),
       arguments: booking,
     );
     // The booking may have been paid or cancelled from the detail screen.
@@ -91,6 +97,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
   bool _isActive(Booking booking, DateTime now) {
     return switch (booking.status) {
       BookingStatus.pending => !booking.isHoldExpired(now),
+      BookingStatus.refundPending => true,
       BookingStatus.confirmed =>
         booking.showTime == null || booking.showTime!.isAfter(now),
       _ => false,
@@ -106,19 +113,83 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('My Bookings'),
-          bottom: const TabBar(
-            tabs: [
-              Tab(text: 'Active'),
-              Tab(text: 'History'),
-            ],
-            indicatorColor: AppColors.primary,
-            labelColor: AppColors.primary,
-            unselectedLabelColor: AppColors.textSecondary,
+        extendBody: true,
+        body: CinemaGlassBackground(
+          key: _glassBackgroundKey,
+          child: CinemaBackground(
+            child: SafeArea(
+              bottom: false,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Padding(
+                    padding: pagePadding(context, AppSpacing.lg),
+                    child: const CinemaPageHeader(title: 'My Bookings'),
+                  ),
+                  Padding(
+                    padding: pagePadding(
+                      context,
+                      AppSpacing.md,
+                    ).copyWith(top: 0),
+                    // A narrow tab switch on the website, full width in the app.
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: isDesktopLayout(context)
+                              ? 420
+                              : double.infinity,
+                        ),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: AppColors.surface.withValues(alpha: 0.55),
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.08),
+                            ),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(4),
+                            child: TabBar(
+                              dividerColor: Colors.transparent,
+                              dividerHeight: 0,
+                              indicatorSize: TabBarIndicatorSize.tab,
+                              indicator: BoxDecoration(
+                                color: AppColors.primary.withValues(
+                                  alpha: 0.10,
+                                ),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: AppColors.primary.withValues(
+                                    alpha: 0.24,
+                                  ),
+                                ),
+                              ),
+                              labelColor: AppColors.primary,
+                              unselectedLabelColor: AppColors.textSecondary,
+                              tabs: const [
+                                Tab(text: 'Active', height: 44),
+                                Tab(text: 'History', height: 44),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(child: _buildBody(activeBookings, historyBookings)),
+                ],
+              ),
+            ),
           ),
         ),
-        body: _buildBody(activeBookings, historyBookings),
+        // The website has its navigation at the top.
+        bottomNavigationBar: isDesktopLayout(context)
+            ? null
+            : CinemaNavigationBar(
+                selectedIndex: 1,
+                backgroundKey: _glassBackgroundKey,
+              ),
       ),
     );
   }
@@ -181,19 +252,23 @@ class _BookingList extends StatelessWidget {
                 ),
               ],
             )
-          : ListView.separated(
+          : ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(AppSpacing.md),
-              itemCount: bookings.length,
-              separatorBuilder: (context, index) =>
-                  const SizedBox(height: AppSpacing.md),
-              itemBuilder: (context, index) {
-                final booking = bookings[index];
-                return _BookingCard(
-                  booking: booking,
-                  onTap: () => onTap(booking),
-                );
-              },
+              padding: pagePadding(context, AppSpacing.md).copyWith(
+                bottom: AppSpacing.md + MediaQuery.paddingOf(context).bottom,
+              ),
+              children: [
+                // Two columns of tickets on the website, one in the app.
+                CardColumns(
+                  children: [
+                    for (final booking in bookings)
+                      _BookingCard(
+                        booking: booking,
+                        onTap: () => onTap(booking),
+                      ),
+                  ],
+                ),
+              ],
             ),
     );
   }
@@ -216,7 +291,11 @@ class _BookingCard extends StatelessWidget {
       borderRadius: AppRadius.borderRadiusMd,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [AppColors.surfaceSoft, AppColors.surface],
+          ),
           borderRadius: AppRadius.borderRadiusMd,
           border: Border.all(color: AppColors.border),
         ),
@@ -236,15 +315,48 @@ class _BookingCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  BookingStatusBadge(status: booking.status),
+                  BookingStatusBadge(
+                    status: booking.status,
+                    checkedIn: booking.isCheckedIn,
+                  ),
                 ],
               ),
               const SizedBox(height: AppSpacing.sm),
-              Text(showTimeStr, style: AppTextStyles.body),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.schedule_outlined,
+                    size: 18,
+                    color: AppColors.accent,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(child: Text(showTimeStr, style: AppTextStyles.body)),
+                ],
+              ),
               const SizedBox(height: AppSpacing.xs),
-              Text(
-                'Seats: ${booking.seatLabels}',
-                style: AppTextStyles.bodySmall,
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  const Text('Seats:', style: AppTextStyles.bodySmall),
+                  for (final seat in booking.seats)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        seat.seatLabel,
+                        style: AppTextStyles.caption.copyWith(
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                ],
               ),
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
@@ -262,7 +374,9 @@ class _BookingCard extends StatelessWidget {
                   ),
                   Text(
                     formatVnd(booking.totalAmount),
-                    style: AppTextStyles.body,
+                    style: AppTextStyles.title.copyWith(
+                      color: AppColors.primary,
+                    ),
                   ),
                 ],
               ),
@@ -275,15 +389,30 @@ class _BookingCard extends StatelessWidget {
 }
 
 class BookingStatusBadge extends StatelessWidget {
-  const BookingStatusBadge({required this.status, super.key});
+  const BookingStatusBadge({
+    required this.status,
+    this.checkedIn = false,
+    super.key,
+  });
 
   final BookingStatus status;
+
+  // A paid ticket already used at the cinema.
+  final bool checkedIn;
 
   @override
   Widget build(BuildContext context) {
     final (label, variant) = switch (status) {
       BookingStatus.pending => ('Pending', StatusBadgeVariant.warning),
+      BookingStatus.confirmed when checkedIn => (
+        'Checked in',
+        StatusBadgeVariant.success,
+      ),
       BookingStatus.confirmed => ('Confirmed', StatusBadgeVariant.success),
+      BookingStatus.refundPending => (
+        'Refund pending',
+        StatusBadgeVariant.warning,
+      ),
       BookingStatus.cancelled => ('Cancelled', StatusBadgeVariant.error),
       BookingStatus.expired => ('Expired', StatusBadgeVariant.neutral),
     };

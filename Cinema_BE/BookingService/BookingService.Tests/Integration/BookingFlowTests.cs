@@ -77,13 +77,13 @@ public class BookingFlowTests
         var id = booking.GetProperty("id").GetInt64();
         var amount = booking.GetProperty("totalAmount").GetDecimal();
 
-        Assert.Equal(HttpStatusCode.OK, (await CheckoutAsync(_customerA, id, amount)).StatusCode);
+        var orderCode = await CheckoutOrderCodeAsync(_customerA, id, amount);
 
         // Link PayOS hết hạn đúng lúc hết thời gian giữ ghế (PostgreSQL lưu tới micro giây)
-        var linkExpiresAt = _factory.PayOs.LinkExpiresAt[id]!.Value;
+        var linkExpiresAt = _factory.PayOs.LinkExpiresAt[orderCode]!.Value;
         Assert.True(Math.Abs((booking.GetProperty("expiresAt").GetDateTime() - linkExpiresAt).TotalMilliseconds) < 1);
 
-        var webhook = await SendWebhookAsync(_factory.CreateClient(), id, amount);
+        var webhook = await SendWebhookAsync(_factory.CreateClient(), orderCode, amount);
         Assert.Equal(HttpStatusCode.OK, webhook.StatusCode);
 
         var confirmed = await _customerA.GetFromJsonAsync<JsonElement>($"/api/v1/bookings/{id}");
@@ -95,7 +95,7 @@ public class BookingFlowTests
         Assert.Equal("0011223344", payment.PayerAccountNumber);
 
         // PayOS gửi lại webhook: không xác nhận / phát event lần hai
-        Assert.Equal(HttpStatusCode.OK, (await SendWebhookAsync(_factory.CreateClient(), id, amount)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await SendWebhookAsync(_factory.CreateClient(), orderCode, amount)).StatusCode);
         Assert.Single(await _factory.OutboxEventsAsync<BookingDbContext>(EventTypes.BookingConfirmed, id));
     }
 
@@ -106,9 +106,9 @@ public class BookingFlowTests
         var booking = await CreateBookingAsync(_customerA, showtime.Id, NewSeat());
         var id = booking.GetProperty("id").GetInt64();
         var amount = booking.GetProperty("totalAmount").GetDecimal();
-        await CheckoutAsync(_customerA, id, amount);
+        var orderCode = await CheckoutOrderCodeAsync(_customerA, id, amount);
 
-        var response = await SendWebhookAsync(_factory.CreateClient(), id, amount, checksumKey: "forged-key");
+        var response = await SendWebhookAsync(_factory.CreateClient(), orderCode, amount, checksumKey: "forged-key");
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Equal("PENDING", await PaymentStatusAsync(id));
@@ -122,7 +122,7 @@ public class BookingFlowTests
         var booking = await CreateBookingAsync(_customerA, showtime.Id, seat);
         var id = booking.GetProperty("id").GetInt64();
         var amount = booking.GetProperty("totalAmount").GetDecimal();
-        await CheckoutAsync(_customerA, id, amount);
+        var orderCode = await CheckoutOrderCodeAsync(_customerA, id, amount);
 
         await ExpireHoldAsync(id);
         await _factory.ExecuteAsync<IBookingService>(service => service.ExpireOverdueBookingsAsync(100));
@@ -134,7 +134,7 @@ public class BookingFlowTests
         await CreateBookingAsync(_customerB, showtime.Id, seat);
 
         // Khách A trả tiền muộn: không giữ được ghế -> tự tạo yêu cầu hoàn tiền
-        Assert.Equal(HttpStatusCode.OK, (await SendWebhookAsync(_factory.CreateClient(), id, amount)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await SendWebhookAsync(_factory.CreateClient(), orderCode, amount)).StatusCode);
 
         Assert.Equal("EXPIRED", await BookingStatusAsync(id));
         Assert.Equal("REFUND_PENDING", await PaymentStatusAsync(id));
@@ -149,9 +149,10 @@ public class BookingFlowTests
         var seat = NewSeat();
         var booking = await CreateBookingAsync(_customerA, showtime.Id, seat);
         var id = booking.GetProperty("id").GetInt64();
-        await CheckoutAsync(_customerA, id, booking.GetProperty("totalAmount").GetDecimal());
+        var orderCode = await CheckoutOrderCodeAsync(_customerA, id, booking.GetProperty("totalAmount").GetDecimal());
 
-        _factory.PayOs.Statuses[id] = "CANCELLED";
+        // App gửi id booking khi xác minh: server tìm payment PayOS của booking
+        _factory.PayOs.Statuses[orderCode] = "CANCELLED";
         var verify = await _customerA.PostAsync($"/api/v1/payments/payos/{id}/verify", null);
 
         Assert.Equal(HttpStatusCode.OK, verify.StatusCode);
@@ -203,6 +204,60 @@ public class BookingFlowTests
 
         // Không tạo payment dở dang: PayOS hoạt động lại thì thanh toán tiếp được
         Assert.Equal(HttpStatusCode.OK, (await CheckoutAsync(_customerA, id, amount)).StatusCode);
+    }
+
+    [Fact]
+    public async Task HeldBooking_ExtrasCanChange_WithoutRestartingHold_AndCannotChangeAfterCheckout()
+    {
+        var showtime = _factory.Showtimes.AddShowtime(DateTime.Now.AddDays(2));
+        var seat = NewSeat();
+        var booking = await CreateBookingAsync(_customerA, showtime.Id, seat);
+        var id = booking.GetProperty("id").GetInt64();
+        var deadline = booking.GetProperty("expiresAt").GetDateTime();
+        var admin = _factory.ClientFor(TestUsers.AdminToken);
+        var itemResponse = await admin.PostAsJsonAsync("/api/v1/concessions", new { name = "Hold test popcorn", price = 55000 });
+        Assert.Equal(HttpStatusCode.OK, itemResponse.StatusCode);
+        var item = (await itemResponse.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt64();
+        var details = new { showtimeId = showtime.Id, seats = new[] { new { seatId = seat } },
+            concessions = new[] { new { itemId = item, quantity = 2 } } };
+
+        Assert.Equal(HttpStatusCode.Forbidden, (await _customerB.PutAsJsonAsync($"/api/v1/bookings/{id}/details", details)).StatusCode);
+        // Retrying replaces the extras instead of duplicating them or resetting the clock.
+        for (var retry = 0; retry < 2; retry++)
+        {
+            var response = await _customerA.PutAsJsonAsync($"/api/v1/bookings/{id}/details", details);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            var updated = await response.Content.ReadFromJsonAsync<JsonElement>();
+            Assert.True(Math.Abs((deadline - updated.GetProperty("expiresAt").GetDateTime()).TotalMilliseconds) < 1);
+            Assert.Equal(110000m, updated.GetProperty("concessionsAmount").GetDecimal());
+            Assert.Equal(booking.GetProperty("totalAmount").GetDecimal() + 110000m, updated.GetProperty("totalAmount").GetDecimal());
+            Assert.Single(updated.GetProperty("concessions").EnumerateArray());
+        }
+        var read = await _customerA.GetFromJsonAsync<JsonElement>($"/api/v1/bookings/{id}");
+        await CheckoutOrderCodeAsync(_customerA, id, read.GetProperty("totalAmount").GetDecimal());
+        Assert.Equal(HttpStatusCode.Conflict, (await _customerA.PutAsJsonAsync($"/api/v1/bookings/{id}/details", details)).StatusCode);
+    }
+
+    [Fact]
+    public async Task HeldBooking_RejectsExpiredHold_SeatChanges_AndInvalidExtras()
+    {
+        var showtime = _factory.Showtimes.AddShowtime(DateTime.Now.AddDays(2));
+        var seat = NewSeat();
+        var booking = await CreateBookingAsync(_customerA, showtime.Id, seat);
+        var id = booking.GetProperty("id").GetInt64();
+        var path = $"/api/v1/bookings/{id}/details";
+        Assert.Equal(HttpStatusCode.BadRequest, (await _customerA.PutAsJsonAsync(path,
+            new { showtimeId = showtime.Id, seats = new[] { new { seatId = NewSeat() } } })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await _customerA.PutAsJsonAsync(path,
+            new { showtimeId = showtime.Id, seats = new[] { new { seatId = seat } }, usePoints = -1 })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await _customerA.PutAsJsonAsync(path,
+            new { showtimeId = showtime.Id, seats = new[] { new { seatId = seat } },
+                concessions = new[] { new { itemId = 1, quantity = 0 } } })).StatusCode);
+        await ExpireHoldAsync(id);
+        Assert.Equal(HttpStatusCode.Conflict, (await _customerA.PutAsJsonAsync(path,
+            new { showtimeId = showtime.Id, seats = new[] { new { seatId = seat } } })).StatusCode);
+        await _factory.ExecuteAsync<IBookingService>(service => service.ExpireOverdueBookingsAsync(100));
+        await CreateBookingAsync(_customerB, showtime.Id, seat);
     }
 
     private Task<string> BookingStatusAsync(long id)

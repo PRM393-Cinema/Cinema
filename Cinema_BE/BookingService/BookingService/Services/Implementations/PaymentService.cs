@@ -113,6 +113,26 @@ namespace BookingService.Services.Implementations
             };
         }
 
+        public async Task<PaymentSummaryResponse> GetPaymentSummaryAsync(DateTime start, DateTime end)
+        {
+            if (end < start)
+            {
+                throw new BusinessException("End must not be before start.");
+            }
+
+            var rows = await _paymentRepository.SumByStatusAsync(start, end);
+            var paid = rows.Where(r => r.Status is "SUCCESS" or "REFUND_PENDING").ToList();
+
+            return new PaymentSummaryResponse
+            {
+                Start = start,
+                End = end,
+                PaidCount = paid.Sum(r => r.Count),
+                Revenue = paid.Sum(r => r.Amount),
+                RefundedAmount = rows.Where(r => r.Status == "REFUNDED").Sum(r => r.Amount)
+            };
+        }
+
         public async Task<PaymentResponse> GetPaymentByIdAsync(long id)
         {
             var payment = await GetPaymentAsync(id);
@@ -121,20 +141,24 @@ namespace BookingService.Services.Implementations
 
         public async Task<PaymentResponse> GetPaymentByOrderCodeAsync(long orderCode)
         {
+            return (await FindPayOsPaymentAsync(orderCode)).ToResponse();
+        }
+
+        // Theo mã đơn PayOS. Trang thanh toán của app (và bản app cũ) gửi id booking: khi đó lấy payment
+        // PayOS mới nhất của booking. Mã đơn mới luôn lớn hơn id booking nên hai cách không lẫn nhau.
+        private async Task<Payment> FindPayOsPaymentAsync(long orderCodeOrBookingId)
+        {
             var payment = await _paymentRepository.GetByTransactionRefAsync(
-                orderCode.ToString());
+                              orderCodeOrBookingId.ToString())
+                          ?? await _paymentRepository.GetLatestPayOsByBookingIdAsync(orderCodeOrBookingId);
 
-            if (payment == null)
-            {
-                throw new KeyNotFoundException(
-                    $"Payment for PayOS order {orderCode} was not found.");
-            }
-
-            return payment.ToResponse();
+            return payment ?? throw new KeyNotFoundException(
+                $"Payment for PayOS order {orderCodeOrBookingId} was not found.");
         }
 
         public async Task<PaymentResponse> CreatePaymentAsync(
-            PaymentRequest request)
+            PaymentRequest request,
+            bool manager = false)
         {
             PaymentValidator.ValidatePayment(request);
 
@@ -146,7 +170,7 @@ namespace BookingService.Services.Implementations
                 var booking = await GetBookingForUpdateAsync(
                     request.BookingId!.Value);
 
-                if (booking.UserId != request.UserId!.Value)
+                if (!manager && booking.UserId != request.UserId)
                 {
                     throw new BusinessException(
                         "Payment user does not match the booking user.");
@@ -191,7 +215,8 @@ namespace BookingService.Services.Implementations
         }
 
         public async Task<PayOsCheckoutResponse> CreatePayOsPaymentAsync(
-            PayOsCreateRequest request)
+            PayOsCreateRequest request,
+            bool manager = false)
         {
             PaymentValidator.ValidatePayOsCreate(request);
 
@@ -203,7 +228,7 @@ namespace BookingService.Services.Implementations
                 var booking = await GetBookingForUpdateAsync(
                     request.BookingId!.Value);
 
-                if (booking.UserId != request.UserId!.Value)
+                if (!manager && booking.UserId != request.UserId)
                 {
                     throw new BusinessException(
                         "Payment user does not match the booking user.");
@@ -216,20 +241,28 @@ namespace BookingService.Services.Implementations
 
                 // A booking always maps to one stable PayOS order code. Retrying
                 // the same request therefore reuses the same remote payment.
-                var orderCode = GenerateOrderCode(booking.Id);
+                var orderCode = GenerateOrderCode(booking);
 
                 if (booking.PaymentId.HasValue)
                 {
+                    // Link tạo trước đây: dùng đúng mã đơn đã lưu (payment cũ có mã đơn = id booking)
                     var existingPayment = await GetPaymentAsync(booking.PaymentId.Value);
+
+                    if (!string.Equals(existingPayment.Method, "PAYOS", StringComparison.OrdinalIgnoreCase) ||
+                        !long.TryParse(existingPayment.TransactionRef, out var existingOrderCode))
+                    {
+                        throw new ConflictException("This booking already has a payment.");
+                    }
+
                     var existingLink = await _payOsClient.GetPaymentStatusAsync(
-                        orderCode);
+                        existingOrderCode);
 
                     await transaction.CommitAsync();
 
                     return new PayOsCheckoutResponse
                     {
                         paymentId = existingPayment.Id,
-                        orderCode = orderCode,
+                        orderCode = existingOrderCode,
                         checkoutUrl = existingLink.CheckoutUrl
                     };
                 }
@@ -249,13 +282,14 @@ namespace BookingService.Services.Implementations
                     await _bookingRepository.UpdateBookingAsync(
                         booking.Id,
                         booking);
+                    var existingLink = await _payOsClient.GetPaymentStatusAsync(orderCode);
                     await transaction.CommitAsync();
 
                     return new PayOsCheckoutResponse
                     {
                         paymentId = existingPaymentForOrder.Id,
                         orderCode = orderCode,
-                        checkoutUrl = null
+                        checkoutUrl = existingLink.CheckoutUrl
                     };
                 }
 
@@ -296,7 +330,8 @@ namespace BookingService.Services.Implementations
                 {
                     paymentId = payment.Id,
                     orderCode = orderCode,
-                    checkoutUrl = link.CheckoutUrl
+                    checkoutUrl = link.CheckoutUrl,
+                    qrCode = link.QrCode
                 };
             }
             catch
@@ -304,6 +339,105 @@ namespace BookingService.Services.Implementations
                 await transaction.RollbackAsync();
                 throw;
             }
+        }
+
+        public async Task<PaymentResponse> PayCashAsync(CashPaymentRequest request)
+        {
+            PaymentValidator.ValidateCash(request);
+
+            Payment payment;
+            await using (var transaction = await _transactionManager.BeginTransactionAsync())
+            {
+                try
+                {
+                    var booking = await GetBookingForUpdateAsync(request.BookingId!.Value);
+                    EnsurePayableBooking(booking);
+
+                    if (request.AmountReceived!.Value < booking.TotalAmount)
+                    {
+                        throw new BusinessException(
+                            $"The customer gave {request.AmountReceived.Value:N0} VND but the tickets cost " +
+                            $"{booking.TotalAmount:N0} VND.");
+                    }
+
+                    if (booking.PaymentId.HasValue)
+                    {
+                        await CloseOtherPaymentAsync(await GetPaymentAsync(booking.PaymentId.Value));
+                    }
+
+                    payment = await AddPaymentAsync(new Payment
+                    {
+                        PaymentCode = await GeneratePaymentCodeAsync(),
+                        BookingId = booking.Id,
+                        UserId = booking.UserId,
+                        Amount = booking.TotalAmount,
+                        Method = "CASH",
+                        Status = "PENDING",
+                        TransactionRef = $"CASH-{booking.BookingCode}",
+                        CreatedAt = DateTime.Now
+                    }, booking);
+                    await MarkPaymentSucceededAsync(payment);
+
+                    booking.PaymentId = payment.Id;
+                    await _bookingRepository.UpdateBookingAsync(booking.Id, booking);
+
+                    await transaction.CommitAsync();
+                }
+                catch
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
+            }
+
+            // Như thanh toán online: xác nhận vé (event booking.confirmed gửi email vé kèm QR)
+            await ConfirmBookingOrRefundAsync(payment, request.RecipientEmail);
+
+            return (await GetPaymentAsync(payment.Id)).ToResponse();
+        }
+
+        // Booking đang có payment khác khi thu tiền mặt: đã trả rồi thì từ chối; QR chuyển khoản PayOS chưa trả
+        // thì huỷ link trước (không huỷ được thì dừng lại, tránh khách trả hai lần)
+        private async Task CloseOtherPaymentAsync(Payment other)
+        {
+            if (other.Status is "SUCCESS" or "REFUND_PENDING" or "REFUNDED")
+            {
+                throw new ConflictException("This booking is already paid.");
+            }
+
+            if (other.Status != "PENDING")
+            {
+                return;
+            }
+
+            if (string.Equals(other.Method, "PAYOS", StringComparison.OrdinalIgnoreCase) &&
+                long.TryParse(other.TransactionRef, out var orderCode))
+            {
+                try
+                {
+                    await _payOsClient.CancelPaymentLinkAsync(orderCode, "Paid in cash at the counter");
+                }
+                catch (ExternalServiceException ex)
+                {
+                    // PayOS từ chối huỷ: link đã huỷ / hết hạn thì thu tiền mặt được, còn lại (đã chuyển khoản...) thì dừng
+                    var status = (await _payOsClient.GetPaymentStatusAsync(orderCode)).Status.Trim().ToUpperInvariant();
+
+                    if (status == "PAID")
+                    {
+                        throw new ConflictException(
+                            "The customer already paid this booking by bank transfer. Check the transfer instead.");
+                    }
+
+                    if (status is not ("CANCELLED" or "EXPIRED"))
+                    {
+                        throw new ConflictException(
+                            "The bank transfer QR of this booking could not be cancelled, so the customer could " +
+                            $"still pay it. Try again in a moment. ({ex.Message})");
+                    }
+                }
+            }
+
+            await MarkPaymentFailedAsync(other, "Paid in cash at the counter.");
         }
 
         public async Task<PaymentResponse> ProcessPaymentAsync(
@@ -322,7 +456,7 @@ namespace BookingService.Services.Implementations
             return await VerifyPayOsPaymentAsync(orderCode, recipientEmail);
         }
 
-        // Staff/Admin hoàn tiền một payment đã thanh toán (FR-PAY-06). Booking còn hiệu lực thì huỷ luôn
+        // Admin hoàn tiền thủ công một payment đã thanh toán (FR-PAY-06). Booking còn hiệu lực thì huỷ luôn
         // (nhả ghế), rồi tạo yêu cầu hoàn 100%. PayOS không có API hoàn tiền: Staff chuyển khoản trả khách
         // rồi xác nhận bằng POST /api/v1/payments/refunds/{refundId}/complete.
         public async Task<RefundResponse> RefundPaymentAsync(
@@ -348,21 +482,15 @@ namespace BookingService.Services.Implementations
                 await _bookingService.CancelBookingAsync(booking.Id, manager: true, refundReason);
             }
 
-            return await _refundService.RequestRefundAsync(payment.Id, refundReason);
+            return await _refundService.RequestRefundAsync(payment.Id, refundReason, reopenRejected: true);
         }
 
         public async Task<PaymentResponse> VerifyPayOsPaymentAsync(
             long orderCode,
             string? recipientEmail)
         {
-            var payment = await _paymentRepository.GetByTransactionRefAsync(
-                orderCode.ToString());
-
-            if (payment == null)
-            {
-                throw new KeyNotFoundException(
-                    $"Payment for PayOS order {orderCode} was not found.");
-            }
+            var payment = await FindPayOsPaymentAsync(orderCode);
+            orderCode = long.Parse(payment.TransactionRef!);
 
             // FAILED cũng hỏi lại PayOS: job hết hạn có thể đã đánh FAILED đúng lúc khách vừa trả tiền
             if (payment.Status is "PENDING" or "FAILED")
@@ -526,7 +654,8 @@ namespace BookingService.Services.Implementations
 
                 var refund = await _refundService.RequestRefundAsync(
                     payment.Id,
-                    "Đã nhận tiền nhưng không giữ được ghế (đơn đã hết hạn hoặc bị huỷ)");
+                    "Đã nhận tiền nhưng không giữ được ghế (đơn đã hết hạn hoặc bị huỷ)",
+                    reopenRejected: true);
 
                 return $"{ex.Message} Refund {refund.RefundCode} was requested.";
             }
@@ -694,14 +823,26 @@ namespace BookingService.Services.Implementations
                 "Could not generate a unique payment code.");
         }
 
-        private static long GenerateOrderCode(long bookingId)
+        // Mã đơn PayOS = id booking × 1.000.000 + 6 số ngẫu nhiên cuối mã vé
+        // (booking 17, BK-20261026105156-195614 -> 17195614). Cố định cho mỗi booking nên gọi lại vẫn ra
+        // đúng đơn cũ. Tài khoản PayOS dùng chung cho nhiều môi trường, mà mã đơn không được trùng:
+        // chỉ dùng id booking thì id nhỏ đã có đơn ở DB khác và PayOS từ chối tạo link.
+        private static long GenerateOrderCode(Booking booking)
         {
-            if (bookingId <= 0)
+            const long suffixRange = 1_000_000;
+            const long maxOrderCode = 9_007_199_254_740_991; // giới hạn số nguyên của PayOS (2^53 - 1)
+
+            if (booking.Id <= 0 || booking.Id > (maxOrderCode - suffixRange) / suffixRange)
             {
-                throw new BusinessException("Booking id must be positive.");
+                throw new BusinessException("Booking id is out of range for a PayOS order code.");
             }
 
-            return bookingId;
+            var code = booking.BookingCode;
+            var suffix = code.Length >= 6 && int.TryParse(code[^6..], out var digits)
+                ? digits
+                : booking.CreatedAt.Ticks % suffixRange;
+
+            return booking.Id * suffixRange + suffix;
         }
     }
 }

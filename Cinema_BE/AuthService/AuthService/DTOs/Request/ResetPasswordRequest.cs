@@ -1,11 +1,12 @@
 using System.ComponentModel.DataAnnotations;
+using AuthService.Helpers;
 
 namespace AuthService.DTOs.Request
 {
     public class ResetPasswordRequest
     {
         [Required(ErrorMessage = "Email is required")]
-        [EmailAddress(ErrorMessage = "Email is not valid")]
+        [AccountEmail]
         public string Email { get; set; } = null!;
 
         [Required(ErrorMessage = "OTP is required")]
@@ -13,7 +14,7 @@ namespace AuthService.DTOs.Request
         public string Otp { get; set; } = null!;
 
         [Required(ErrorMessage = "New password is required")]
-        [MinLength(6, ErrorMessage = "Password must be at least 6 characters")]
+        [AccountPassword]
         public string NewPassword { get; set; } = null!;
     }
 }

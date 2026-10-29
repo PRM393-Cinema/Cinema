@@ -15,7 +15,7 @@ class AppButton extends StatelessWidget {
     this.isLoading = false,
     this.leadingIcon,
     this.trailingIcon,
-    this.style,
+    this.useGradient = false,
     super.key,
   });
 
@@ -25,7 +25,7 @@ class AppButton extends StatelessWidget {
     this.isLoading = false,
     this.leadingIcon,
     this.trailingIcon,
-    this.style,
+    this.useGradient = false,
     super.key,
   }) : variant = AppButtonVariant.secondary;
 
@@ -35,7 +35,7 @@ class AppButton extends StatelessWidget {
     this.isLoading = false,
     this.leadingIcon,
     this.trailingIcon,
-    this.style,
+    this.useGradient = false,
     super.key,
   }) : variant = AppButtonVariant.danger;
 
@@ -45,40 +45,56 @@ class AppButton extends StatelessWidget {
   final bool isLoading;
   final IconData? leadingIcon;
   final IconData? trailingIcon;
-  final ButtonStyle? style;
+  final bool useGradient;
 
   bool get _isDisabled => onPressed == null || isLoading;
 
   @override
   Widget build(BuildContext context) {
     final colors = _ButtonColors.fromVariant(variant);
+    final showGradient = useGradient && !_isDisabled;
 
     return SizedBox(
       height: AppSpacing.xxxl,
-      child: ElevatedButton(
-        onPressed: _isDisabled ? null : onPressed,
-        style: (style ?? const ButtonStyle()).merge(
-          ElevatedButton.styleFrom(
-            backgroundColor: colors.background,
-            foregroundColor: colors.foreground,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: showGradient
+              ? const LinearGradient(
+                  colors: [AppColors.primary, AppColors.primaryDark],
+                )
+              : null,
+          borderRadius: AppRadius.borderRadiusMd,
+        ),
+        child: ElevatedButton(
+          onPressed: _isDisabled ? null : onPressed,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: showGradient
+                ? Colors.transparent
+                : colors.background,
+            foregroundColor: showGradient
+                ? AppColors.background
+                : colors.foreground,
             disabledBackgroundColor: variant == AppButtonVariant.secondary
                 ? AppColors.surface
                 : AppColors.surfaceSoft,
             disabledForegroundColor: AppColors.textSecondary,
+            shadowColor: Colors.transparent,
             elevation: 0,
-            side: BorderSide(color: colors.border),
+            side: BorderSide(
+              color: showGradient ? Colors.transparent : colors.border,
+            ),
             shape: RoundedRectangleBorder(
               borderRadius: AppRadius.borderRadiusMd,
             ),
             textStyle: AppTextStyles.button,
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
           ),
-        ),
-        child: _ButtonContent(
-          label: label,
-          isLoading: isLoading,
-          leadingIcon: leadingIcon,
-          trailingIcon: trailingIcon,
+          child: _ButtonContent(
+            label: label,
+            isLoading: isLoading,
+            leadingIcon: leadingIcon,
+            trailingIcon: trailingIcon,
+          ),
         ),
       ),
     );
@@ -137,7 +153,7 @@ class _ButtonColors {
     return switch (variant) {
       AppButtonVariant.primary => const _ButtonColors(
         background: AppColors.primary,
-        foreground: AppColors.textPrimary,
+        foreground: AppColors.onPrimary,
         border: AppColors.primary,
       ),
       AppButtonVariant.secondary => const _ButtonColors(

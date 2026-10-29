@@ -8,9 +8,13 @@ import '../../../app/theme/app_text_styles.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/session/session_state.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/utils/layout.dart';
 import '../../../core/widgets/empty_state.dart';
+import '../../../core/widgets/cinema_page.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_state.dart';
+
+import '../../../core/widgets/cinema_account_widgets.dart';
 import '../../../data/models/app_notification.dart';
 import '../../../data/repositories/booking_repository.dart';
 
@@ -27,6 +31,7 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
   List<AppNotification> _notifications = const [];
   bool _hasStarted = false;
   bool _isLoading = true;
+  bool _isRefreshing = false;
   String? _errorMessage;
 
   @override
@@ -39,6 +44,7 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
   }
 
   Future<void> _loadNotifications() async {
+    if (_isRefreshing) return;
     final userId = SessionProvider.of(context).user?.userId;
     if (userId == null) {
       _showError('Please sign in to see your notifications.');
@@ -46,6 +52,7 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
     }
 
     setState(() {
+      _isRefreshing = true;
       _isLoading = _notifications.isEmpty;
       _errorMessage = null;
     });
@@ -58,7 +65,10 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
       setState(() {
         _notifications = notifications;
         _isLoading = false;
+        _isRefreshing = false;
       });
+      SessionProvider.of(context)
+          .setUnreadNotifications(notifications.where((n) => !n.isRead).length);
     } on ApiException catch (error) {
       _showError(error.message);
     } on FormatException {
@@ -68,19 +78,55 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
     }
   }
 
+  Future<void> _markAllRead() async {
+    try {
+      await widget.bookingRepository.markAllNotificationsRead();
+      if (!mounted) return;
+      final now = DateTime.now();
+      setState(() {
+        _notifications = [
+          for (final notification in _notifications)
+            notification.markedRead(now),
+        ];
+      });
+      SessionProvider.of(context).setUnreadNotifications(0);
+    } on Object {
+      if (mounted) {
+        setState(() => _errorMessage = 'Could not mark them as read.');
+      }
+    }
+  }
+
+  Future<void> _open(AppNotification notification) async {
+    await Navigator.pushNamed(
+      context,
+      AppRoutes.notificationDetail(notification.id),
+    );
+    // The detail page marks it read.
+    if (!mounted || notification.isRead) return;
+    setState(() {
+      _notifications = [
+        for (final item in _notifications)
+          item.id == notification.id ? item.markedRead(DateTime.now()) : item,
+      ];
+    });
+  }
+
   void _showError(String message) {
     if (!mounted) return;
     setState(() {
       _isLoading = false;
+      _isRefreshing = false;
       _errorMessage = message;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Notifications')),
-      body: SafeArea(child: _buildBody()),
+    return CinemaPage(
+      title: 'Notifications',
+      width: PageWidth.reading,
+      child: _buildBody(),
     );
   }
 
@@ -102,35 +148,73 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
         onRefresh: _loadNotifications,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          children: const [
-            SizedBox(height: AppSpacing.xxxl * 2),
-            EmptyState(
-              icon: Icons.notifications_none_outlined,
-              title: 'No notifications yet',
-              message: 'Booking and payment updates will appear here.',
+          padding: widthPadding(context, AppSpacing.xl, PageWidth.reading),
+          children: [
+            const SizedBox(height: AppSpacing.xxxl),
+            CinemaPanel(
+              surfaceOpacity: 0.8,
+              child: EmptyState(
+                icon: Icons.notifications_none_outlined,
+                title: 'You’re all caught up',
+                message: 'Booking confirmations, cancellations and refund updates will appear here.',
+              ),
             ),
           ],
         ),
       );
     }
 
+    final unread = _notifications.where((n) => !n.isRead).length;
     return RefreshIndicator(
       onRefresh: _loadNotifications,
       child: ListView.separated(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(AppSpacing.md),
-        itemCount: _notifications.length,
+        padding: widthPadding(context, AppSpacing.md, PageWidth.reading),
+        itemCount: _notifications.length + 1,
         separatorBuilder: (context, index) =>
             const SizedBox(height: AppSpacing.md),
         itemBuilder: (context, index) {
-          final notification = _notifications[index];
+          if (index == 0) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Cinema updates', style: AppTextStyles.heading2),
+                const SizedBox(height: AppSpacing.sm),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        [
+                          formatCount(_notifications.length, 'notification'),
+                          if (unread > 0) '$unread unread',
+                        ].join(' · '),
+                        style: AppTextStyles.bodySmall,
+                      ),
+                    ),
+                    if (unread > 0)
+                      TextButton(
+                        key: const Key('markAllRead'),
+                        onPressed: _markAllRead,
+                        child: const Text('Mark all read'),
+                      ),
+                  ],
+                ),
+                if (_errorMessage != null) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    _errorMessage!,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.error,
+                    ),
+                  ),
+                ],
+              ],
+            );
+          }
+          final notification = _notifications[index - 1];
           return _NotificationTile(
             notification: notification,
-            onTap: () => Navigator.pushNamed(
-              context,
-              AppRoutes.notificationDetail,
-              arguments: notification,
-            ),
+            onTap: () => _open(notification),
           );
         },
       ),
@@ -147,39 +231,73 @@ class _NotificationTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: AppRadius.borderRadiusMd,
-        side: const BorderSide(color: AppColors.border),
-      ),
+      color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
         borderRadius: AppRadius.borderRadiusMd,
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        child: CinemaPanel(
+          surfaceOpacity: 0.8,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Icon(Icons.mail_outline, color: AppColors.primary),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      notification.subject,
-                      style: AppTextStyles.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
+              Row(
+                children: [
+                  const Icon(
+                    Icons.notifications_outlined,
+                    color: AppColors.primary,
+                    size: 24,
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Text(
                       formatDateTime(notification.createdAt),
-                      style: AppTextStyles.caption,
+                      style: AppTextStyles.bodySmall,
+                    ),
+                  ),
+                  if (!notification.isRead) ...[
+                    const SizedBox(width: AppSpacing.sm),
+                    Semantics(
+                      label: 'Unread',
+                      child: Container(
+                        key: ValueKey('unread-${notification.id}'),
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          color: AppColors.accent,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
                     ),
                   ],
-                ),
+                  const SizedBox(width: AppSpacing.sm),
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    color: AppColors.textSecondary,
+                  ),
+                ],
               ),
+              const SizedBox(height: AppSpacing.lg),
+              Text(
+                notification.displayTitle,
+                key: ValueKey('notificationTitle-${notification.id}'),
+                style: AppTextStyles.heading2,
+              ),
+              if (notification.bookingCode != null) ...[
+                const SizedBox(height: AppSpacing.sm),
+                Text(notification.bookingCode!, style: AppTextStyles.bodySmall),
+              ],
+              if (notification.previewText.isNotEmpty) ...[
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+                  child: Divider(height: 1, color: AppColors.border),
+                ),
+                Text(
+                  notification.previewText,
+                  style: AppTextStyles.body.copyWith(height: 1.5),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ],
           ),
         ),

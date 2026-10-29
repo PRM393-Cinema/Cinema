@@ -80,7 +80,11 @@ DateTime tomorrowEvening() {
   return DateTime(now.year, now.month, now.day + 1, 19, 30);
 }
 
-Showtime showtimeFixture({int id = 11, double price = 90000}) {
+Showtime showtimeFixture({
+  int id = 11,
+  double price = 90000,
+  Map<String, double> seatPrices = const {},
+}) {
   final start = tomorrowEvening();
   return Showtime(
     id: id,
@@ -90,6 +94,7 @@ Showtime showtimeFixture({int id = 11, double price = 90000}) {
     endTime: start.add(const Duration(minutes: 148)),
     price: price,
     status: 'OPEN',
+    seatPrices: seatPrices,
   );
 }
 
@@ -116,6 +121,7 @@ Booking bookingFixture({
   int? paymentId,
   DateTime? showTime,
   DateTime? expiresAt,
+  DateTime? checkedInAt,
   List<String> seatLabels = const ['B1', 'B2'],
 }) {
   return Booking(
@@ -134,6 +140,7 @@ Booking bookingFixture({
         (status == BookingStatus.pending
             ? DateTime.now().add(const Duration(minutes: 10))
             : null),
+    checkedInAt: checkedInAt,
     createdAt: DateTime.now().subtract(const Duration(minutes: 1)),
     seats: [
       for (final (index, label) in seatLabels.indexed)

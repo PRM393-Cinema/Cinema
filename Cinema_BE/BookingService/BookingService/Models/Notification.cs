@@ -7,7 +7,7 @@ public partial class Notification
 {
     public long Id { get; set; }
 
-    public long UserId { get; set; }
+    public long? UserId { get; set; } // null: vé của khách vãng lai
 
     public long? BookingId { get; set; }
 
@@ -28,4 +28,6 @@ public partial class Notification
     public DateTime? SentAt { get; set; }
 
     public string? Subject { get; set; }
+
+    public DateTime? ReadAt { get; set; } // khách đã mở thông báo trong app
 }

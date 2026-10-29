@@ -33,9 +33,14 @@ namespace BookingService.Repositories.Interfaces
 
         Task<Payment?> GetByTransactionRefAsync(string transactionRef);
 
+        Task<Payment?> GetLatestPayOsByBookingIdAsync(long bookingId);
+
         Task<PagedList<Payment>> GetByStatusAsync(string status, int pageNumber, int pageSize, string sortBy, string sortDir);
 
         Task<bool> ExistsByPaymentCodeAsync(string paymentCode);
+
+        // Số tiền theo trạng thái của các thanh toán tạo trong [start, end]
+        Task<List<(string Status, int Count, decimal Amount)>> SumByStatusAsync(DateTime start, DateTime end);
 
         Task<Payment> AddAsync(Payment payment);
 

@@ -8,7 +8,7 @@
 
         public long BookingId { get; set; }
 
-        public long UserId { get; set; }
+        public long? UserId { get; set; }
 
         public string RecipientEmail { get; set; } = null!;
 

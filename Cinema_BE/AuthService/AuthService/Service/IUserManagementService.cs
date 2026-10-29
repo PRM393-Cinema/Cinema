@@ -17,5 +17,8 @@ namespace AuthService.Service
         Task<UserResponse> UpdateRolesAsync(long actorId, long userId, UpdateUserRolesRequest request);
 
         Task<UserResponse> UpdateStatusAsync(long actorId, long userId, bool enabled);
+
+        // Staff / Admin: tài khoản khách hàng đang hoạt động có số điện thoại này
+        Task<List<MemberResponse>> FindMembersByPhoneAsync(string? phone);
     }
 }

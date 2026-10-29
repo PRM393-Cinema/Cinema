@@ -63,6 +63,36 @@ namespace BookingService.Controllers
                 userId, page, size, sortBy, sortDir));
         }
 
+        // Số thông báo chưa đọc của người đang đăng nhập (chấm đỏ trên chuông)
+        [HttpGet("unread-count")]
+        public async Task<ActionResult<UnreadCountResponse>> GetUnreadCount()
+        {
+            return Ok(new UnreadCountResponse
+            {
+                Count = await _notificationService.CountUnreadAsync(User.GetCurrentUserId())
+            });
+        }
+
+        // Khách mở thông báo: đánh dấu đã đọc (đọc rồi thì giữ thời điểm cũ)
+        [HttpPatch("{id:long}/read")]
+        public async Task<ActionResult<NotificationResponse>> MarkRead(long id)
+        {
+            var notification = await _notificationService.GetNotificationByIdAsync(id);
+            if (notification.UserId != User.GetCurrentUserId())
+            {
+                return Forbid();
+            }
+
+            return Ok(await _notificationService.MarkReadAsync(id));
+        }
+
+        [HttpPost("read-all")]
+        public async Task<ActionResult<UnreadCountResponse>> MarkAllRead()
+        {
+            await _notificationService.MarkAllReadAsync(User.GetCurrentUserId());
+            return Ok(new UnreadCountResponse { Count = 0 });
+        }
+
         [HttpPost]
         [Authorize(Policy = AuthorizationPolicies.StaffOrAdmin)]
         public async Task<ActionResult<NotificationResponse>> Create(

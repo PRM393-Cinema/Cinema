@@ -55,7 +55,16 @@ public static class BookingApi
         });
     }
 
-    // Body webhook PayOS đã ký bằng checksum key (orderCode = id của booking)
+    // Tạo link PayOS, trả về mã đơn (id booking × 1.000.000 + 6 số cuối mã vé)
+    public static async Task<long> CheckoutOrderCodeAsync(HttpClient client, long bookingId, decimal amount)
+    {
+        var response = await CheckoutAsync(client, bookingId, amount);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        return (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("orderCode").GetInt64();
+    }
+
+    // Body webhook PayOS đã ký bằng checksum key
     public static Task<HttpResponseMessage> SendWebhookAsync(
         HttpClient client,
         long orderCode,
@@ -109,8 +118,8 @@ public static class BookingApi
         var bookingId = booking.GetProperty("id").GetInt64();
         var amount = booking.GetProperty("totalAmount").GetDecimal();
 
-        Assert.Equal(HttpStatusCode.OK, (await CheckoutAsync(customer, bookingId, amount)).StatusCode);
-        Assert.Equal(HttpStatusCode.OK, (await SendWebhookAsync(factory.CreateClient(), bookingId, amount)).StatusCode);
+        var orderCode = await CheckoutOrderCodeAsync(customer, bookingId, amount);
+        Assert.Equal(HttpStatusCode.OK, (await SendWebhookAsync(factory.CreateClient(), orderCode, amount)).StatusCode);
 
         return bookingId;
     }

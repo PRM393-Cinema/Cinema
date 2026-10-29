@@ -1,4 +1,4 @@
-﻿using MovieService.DTOs.Response;
+using MovieService.DTOs.Response;
 using MovieService.Helpers;
 using MovieService.Models;
 
@@ -16,9 +16,14 @@ namespace MovieService.Extensions
                 DurationMinutes = movie.DurationMinutes,
                 Genre = movie.Genre,
                 Language = movie.Language,
-                ReleaseDate = movie.ReleaseDate.Value,
+                // Phim chưa có ngày phát hành: trả 0001-01-01 thay vì lỗi 500 cho cả danh sách (app coi là không có ngày)
+                ReleaseDate = movie.ReleaseDate ?? default,
                 PosterUrl = movie.PosterUrl,
                 TrailerUrl = movie.TrailerUrl,
+                PreviewUrl = movie.PreviewUrl,
+                AgeRating = movie.AgeRating,
+                Director = movie.Director,
+                Cast = movie.Cast,
                 Status = movie.Status,
                 CreatedAt = movie.CreatedAt
             };

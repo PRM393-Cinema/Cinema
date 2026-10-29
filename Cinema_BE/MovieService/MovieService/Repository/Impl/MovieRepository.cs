@@ -19,7 +19,7 @@ namespace MovieService.Repository.Impl
         {
             var query = _context.Movies.AsNoTracking();
 
-            return await PagedList<Movie>.CreateAsync(query, pageNumber, pageSize);
+            return await PagedList<Movie>.CreateAsync(Sort(query, sortBy, sortDir), pageNumber, pageSize);
         }
 
         public async Task<PagedList<Movie>> GetByStatusAsync(string status, int pageNumber, int pageSize, string sortBy, string sortDir)
@@ -28,7 +28,7 @@ namespace MovieService.Repository.Impl
             .AsNoTracking()
             .Where(m => m.Status == status);
 
-            return await PagedList<Movie>.CreateAsync(query, pageNumber, pageSize);
+            return await PagedList<Movie>.CreateAsync(Sort(query, sortBy, sortDir), pageNumber, pageSize);
         }
 
         public async Task<PagedList<Movie>> SearchByTitleAsync(string keyword, int pageNumber, int pageSize, string sortBy, string sortDir)
@@ -37,9 +37,74 @@ namespace MovieService.Repository.Impl
 
             if (!string.IsNullOrEmpty(keyword))
             {
-                query = query.Where(m => m.Title.Contains(keyword));
+                // Không phân biệt hoa thường: "dune" tìm được "Dune"
+                var lowered = keyword.ToLower();
+                query = query.Where(m => m.Title.ToLower().Contains(lowered));
             }
-            return await PagedList<Movie>.CreateAsync(query, pageNumber, pageSize);
+            return await PagedList<Movie>.CreateAsync(Sort(query, sortBy, sortDir), pageNumber, pageSize);
+        }
+
+        public async Task<PagedList<Movie>> BrowseAsync(
+            bool comingSoon,
+            string? genre,
+            string? keyword,
+            DateOnly today,
+            int pageNumber,
+            int pageSize)
+        {
+            var query = _context.Movies.AsNoTracking().Where(m => m.Status == "ACTIVE");
+            query = comingSoon
+                ? query.Where(m => m.ReleaseDate > today)
+                : query.Where(m => m.ReleaseDate == null || m.ReleaseDate <= today);
+
+            if (!string.IsNullOrWhiteSpace(genre))
+            {
+                var pattern = $"%{EscapeLike(genre.Trim())}%";
+                query = query.Where(m => m.Genre != null && EF.Functions.ILike(m.Genre, pattern, "\\"));
+            }
+
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                var pattern = $"%{EscapeLike(keyword.Trim())}%";
+                query = query.Where(m => EF.Functions.ILike(m.Title, pattern, "\\"));
+            }
+
+            // Sắp chiếu: phim khởi chiếu sớm nhất trước; đang chiếu: phim mới thêm trước (như trang chủ cũ)
+            var ordered = comingSoon
+                ? query.OrderBy(m => m.ReleaseDate).ThenBy(m => m.Id)
+                : query.OrderByDescending(m => m.CreatedAt).ThenByDescending(m => m.Id);
+            return await PagedList<Movie>.CreateAsync(ordered, pageNumber, pageSize);
+        }
+
+        public async Task<List<string>> GetActiveGenresAsync()
+        {
+            return await _context.Movies
+                .AsNoTracking()
+                .Where(m => m.Status == "ACTIVE" && m.Genre != null)
+                .Select(m => m.Genre!)
+                .Distinct()
+                .ToListAsync();
+        }
+
+        // % và _ trong từ khoá là ký tự thường, không phải ký tự đại diện
+        private static string EscapeLike(string text)
+        {
+            return text.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
+        }
+
+        // Không sắp xếp thì Postgres trả hàng theo vị trí lưu trữ: phim vừa sửa nhảy sang chỗ khác,
+        // có khi sang trang khác. Id là khoá phụ để các phim cùng giá trị luôn đứng cùng một thứ tự.
+        private static IQueryable<Movie> Sort(IQueryable<Movie> query, string sortBy, string sortDir)
+        {
+            var descending = string.Equals(sortDir, "desc", StringComparison.OrdinalIgnoreCase);
+            IOrderedQueryable<Movie> ordered = sortBy?.Trim().ToLowerInvariant() switch
+            {
+                "title" => descending ? query.OrderByDescending(m => m.Title) : query.OrderBy(m => m.Title),
+                "releasedate" => descending ? query.OrderByDescending(m => m.ReleaseDate) : query.OrderBy(m => m.ReleaseDate),
+                "durationminutes" => descending ? query.OrderByDescending(m => m.DurationMinutes) : query.OrderBy(m => m.DurationMinutes),
+                _ => descending ? query.OrderByDescending(m => m.CreatedAt) : query.OrderBy(m => m.CreatedAt),
+            };
+            return descending ? ordered.ThenByDescending(m => m.Id) : ordered.ThenBy(m => m.Id);
         }
 
         public async Task<Movie?> GetMovieByIdAsync(long id)

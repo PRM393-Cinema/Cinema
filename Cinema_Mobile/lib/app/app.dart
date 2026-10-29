@@ -1,34 +1,25 @@
 import 'package:flutter/material.dart';
 
+import '../core/session/session_state.dart';
 import '../data/repositories/auth_repository.dart';
 import '../data/repositories/booking_repository.dart';
 import '../data/repositories/catalog_repository.dart';
-import '../features/auth/screens/forgot_password_screen.dart';
-import '../features/auth/screens/login_screen.dart';
-import '../features/auth/screens/register_screen.dart';
-import '../features/auth/screens/reset_password_screen.dart';
-import '../features/auth/screens/verify_email_screen.dart';
-import '../features/booking/screens/booking_detail_screen.dart';
-import '../features/booking/screens/booking_summary_screen.dart';
-import '../features/booking/screens/my_bookings_screen.dart';
-import '../features/home/screens/home_screen.dart';
-import '../features/movie/screens/movie_detail_screen.dart';
-import '../features/notification/screens/notification_detail_screen.dart';
-import '../features/notification/screens/notification_list_screen.dart';
+import '../data/services/staff_service.dart';
 import '../features/payment/payment_args.dart';
-import '../features/payment/screens/payment_result_screen.dart';
-import '../features/payment/screens/payment_screen.dart';
-import '../features/profile/screens/profile_screen.dart';
-import '../features/seat/screens/seat_selection_screen.dart';
+import 'customer_frame.dart';
+import 'routes/app_router.dart';
 import 'routes/app_routes.dart';
-import 'theme/app_theme.dart';
+import 'session_app.dart';
 
-class CinemaApp extends StatelessWidget {
+// Customer app, on the web and on phones. Staff and admins use the admin
+// website instead (lib/main_admin.dart).
+class CinemaApp extends StatefulWidget {
   const CinemaApp({
     required this.authRepository,
     required this.catalogRepository,
     required this.bookingRepository,
-    this.initialRoute = AppRoutes.home,
+    this.staffService,
+    this.initialRoute,
     this.paymentReturn,
     super.key,
   });
@@ -36,73 +27,50 @@ class CinemaApp extends StatelessWidget {
   final AuthRepository authRepository;
   final CatalogRepository catalogRepository;
   final BookingRepository bookingRepository;
-  final String initialRoute;
+
+  // Lets staff accounts check tickets in from the app.
+  final StaffService? staffService;
+  final String? initialRoute;
 
   // Set when PayOS redirected the browser back to the web app.
   final PayOsReturn? paymentReturn;
 
-  Map<String, WidgetBuilder> get _routes => {
-    AppRoutes.login: (_) => LoginScreen(authRepository: authRepository),
-    AppRoutes.register: (_) => RegisterScreen(authRepository: authRepository),
-    AppRoutes.verifyEmail: (_) =>
-        VerifyEmailScreen(authRepository: authRepository),
-    AppRoutes.forgotPassword: (_) =>
-        ForgotPasswordScreen(authRepository: authRepository),
-    AppRoutes.resetPassword: (_) =>
-        ResetPasswordScreen(authRepository: authRepository),
-    AppRoutes.home: (_) => HomeScreen(catalogRepository: catalogRepository),
-    AppRoutes.movieDetail: (_) =>
-        MovieDetailScreen(catalogRepository: catalogRepository),
-    AppRoutes.seatSelection: (_) =>
-        SeatSelectionScreen(catalogRepository: catalogRepository),
-    AppRoutes.bookingSummary: (_) =>
-        BookingSummaryScreen(bookingRepository: bookingRepository),
-    AppRoutes.payment: (_) =>
-        PaymentScreen(bookingRepository: bookingRepository),
-    AppRoutes.paymentResult: (_) =>
-        PaymentResultScreen(bookingRepository: bookingRepository),
-    AppRoutes.myBookings: (_) =>
-        MyBookingsScreen(bookingRepository: bookingRepository),
-    AppRoutes.bookingDetail: (_) =>
-        BookingDetailScreen(bookingRepository: bookingRepository),
-    AppRoutes.notifications: (_) =>
-        NotificationListScreen(bookingRepository: bookingRepository),
-    AppRoutes.notificationDetail: (_) => const NotificationDetailScreen(),
-    AppRoutes.profile: (_) => ProfileScreen(authRepository: authRepository),
-  };
+  @override
+  State<CinemaApp> createState() => _CinemaAppState();
+}
+
+class _CinemaAppState extends State<CinemaApp> {
+  final _routes = RouteTracker();
+
+  @override
+  void dispose() {
+    _routes.current.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final routes = _routes;
-    final payOsReturn = paymentReturn;
-
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Cinema App',
-      theme: AppTheme.darkTheme,
-      initialRoute: initialRoute,
-      routes: routes,
-      onGenerateInitialRoutes: payOsReturn == null
-          ? null
-          : (_) => [
-              _route(routes, AppRoutes.home),
-              _route(
-                routes,
-                AppRoutes.paymentResult,
-                arguments: PaymentResultArgs(bookingId: payOsReturn.orderCode),
-              ),
-            ],
+    final router = AppRouter(
+      authRepository: widget.authRepository,
+      catalogRepository: widget.catalogRepository,
+      bookingRepository: widget.bookingRepository,
+      staffService: widget.staffService,
+      session: SessionProvider.of(context),
     );
-  }
+    final payOsReturn = widget.paymentReturn;
 
-  Route<dynamic> _route(
-    Map<String, WidgetBuilder> routes,
-    String name, {
-    Object? arguments,
-  }) {
-    return MaterialPageRoute<void>(
-      settings: RouteSettings(name: name, arguments: arguments),
-      builder: routes[name]!,
+    return SessionApp(
+      title: 'CosmoQ Cinema',
+      initialRoute: widget.initialRoute,
+      navigatorObservers: [_routes],
+      builder: (context, child) =>
+          CustomerFrame(routes: _routes, child: child ?? const SizedBox()),
+      onGenerateRoute: router.onGenerateRoute,
+      onGenerateInitialRoutes: (name) => router.onGenerateInitialRoutes(
+        payOsReturn == null
+            ? name
+            : AppRoutes.paymentResult(payOsReturn.orderCode),
+      ),
     );
   }
 }

@@ -26,10 +26,16 @@ namespace BookingService.Services.Implementations
         private readonly BookingDbContext _context;
         private readonly IBookingRepository _bookingRepository;
         private readonly IBookingSeatRepository _bookingSeatRepository;
+        private readonly IConcessionRepository _concessionRepository;
+        private readonly IPromotionRepository _promotionRepository;
+        private readonly IPromotionService _promotionService;
+        private readonly ILoyaltyService _loyaltyService;
         private readonly ISeatReservationRepository _seatReservationRepository;
+        private readonly IRefundRepository _refundRepository;
         private readonly IShowtimeClient _showtimeClient;
         private readonly OutboxWriter<BookingDbContext> _outbox;
         private readonly RefundPolicyOptions _refundPolicy;
+        private readonly CheckInOptions _checkIn;
         private readonly BookingMetrics _metrics;
         private readonly ILogger<BookingService> _logger;
 
@@ -37,20 +43,32 @@ namespace BookingService.Services.Implementations
             BookingDbContext context,
             IBookingRepository bookingRepository,
             IBookingSeatRepository bookingSeatRepository,
+            IConcessionRepository concessionRepository,
+            IPromotionRepository promotionRepository,
+            IPromotionService promotionService,
+            ILoyaltyService loyaltyService,
             ISeatReservationRepository seatReservationRepository,
+            IRefundRepository refundRepository,
             IShowtimeClient showtimeClient,
             OutboxWriter<BookingDbContext> outbox,
             IOptions<RefundPolicyOptions> refundPolicy,
+            IOptions<CheckInOptions> checkIn,
             BookingMetrics metrics,
             ILogger<BookingService> logger)
         {
             _context = context;
             _bookingRepository = bookingRepository;
             _bookingSeatRepository = bookingSeatRepository;
+            _concessionRepository = concessionRepository;
+            _promotionRepository = promotionRepository;
+            _promotionService = promotionService;
+            _loyaltyService = loyaltyService;
             _seatReservationRepository = seatReservationRepository;
+            _refundRepository = refundRepository;
             _showtimeClient = showtimeClient;
             _outbox = outbox;
             _refundPolicy = refundPolicy.Value;
+            _checkIn = checkIn.Value;
             _metrics = metrics;
             _logger = logger;
         }
@@ -152,7 +170,7 @@ namespace BookingService.Services.Implementations
             BookingValidator.ValidateCreateBooking(request);
 
             var showtimeId = request.ShowtimeId!.Value;
-            var userId = request.UserId!.Value;
+            var userId = request.UserId;
 
             var seatIds = request.Seats
                 .Select(x => x.SeatId)
@@ -188,8 +206,20 @@ namespace BookingService.Services.Implementations
             var seatMap = seatInfos.ToDictionary(
                 x => x.SeatId);
 
-            var totalAmount = seatIds.Sum(
+            var seatsAmount = seatIds.Sum(
                 seatId => seatMap[seatId].Price);
+
+            // Bắp nước: giá lấy từ menu đang bán, không tin giá app gửi lên
+            var concessions = await PriceConcessionsAsync(request.Concessions);
+            var concessionsAmount = concessions.Sum(item => item.UnitPrice * item.Quantity);
+
+            // Khuyến mãi chỉ giảm tiền vé: mã khách nhập, hoặc ưu đãi tự áp dụng tốt nhất
+            var (promotion, discountAmount) = await _promotionService.ResolveAsync(
+                request.PromotionCode,
+                seatsAmount,
+                seatIds.Count,
+                showtime.StartTime);
+            var totalAmount = seatsAmount - discountAmount + concessionsAmount;
 
             var expiresAt =
                 DateTime.Now.Add(HoldDuration);
@@ -243,9 +273,18 @@ namespace BookingService.Services.Implementations
                     CustomerEmail = string.IsNullOrWhiteSpace(request.CustomerEmail)
                         ? null
                         : request.CustomerEmail.Trim(),
+                    CustomerPhone = string.IsNullOrWhiteSpace(request.CustomerPhone)
+                        ? null
+                        : request.CustomerPhone.Trim(),
                     ShowtimeId = showtimeId,
                     Status = "PENDING",
                     TotalAmount = totalAmount,
+                    ConcessionsAmount = concessionsAmount,
+                    Concessions = concessions,
+                    DiscountAmount = discountAmount,
+                    PromotionId = promotion?.Id,
+                    PromotionCode = promotion?.Code,
+                    PromotionName = promotion?.Name,
                     BookingCode = GenerateBookingCode(),
                     MovieTitle = movieTitle,
                     ShowTime = showtime.StartTime,
@@ -256,6 +295,9 @@ namespace BookingService.Services.Implementations
                 booking =
                     await _bookingRepository
                         .CreateBookingAsync(booking);
+
+                // Điểm thành viên: trừ điểm, giảm tổng tiền (tối đa 50%)
+                await _loyaltyService.RedeemAsync(booking, request.UsePoints ?? 0);
 
                 var bookingSeats = new List<BookingSeat>();
 
@@ -331,6 +373,69 @@ namespace BookingService.Services.Implementations
             }
         }
 
+        // Editing an order never restarts its seat hold or changes a payment's amount.
+        public async Task<BookingResponse> UpdatePendingBookingAsync(long id, BookingRequest request)
+        {
+            BookingValidator.ValidateCreateBooking(request);
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            var booking = await _bookingRepository.GetBookingByIdForUpdateAsync(id)
+                ?? throw new KeyNotFoundException($"Booking with id {id} was not found.");
+            await _context.Entry(booking).ReloadAsync();
+            if (booking.UserId != request.UserId)
+                throw new BusinessException("Booking user does not match the current user.");
+            if (NormalizeStatus(booking) != "PENDING" || booking.ExpiresAt is not { } expiresAt || expiresAt <= DateTime.Now)
+                throw new ConflictException("Your seat hold has expired or is no longer active. Please choose your seats again.");
+            if (booking.PaymentId.HasValue)
+                throw new ConflictException("This booking already has a payment and cannot be edited.");
+
+            var seats = await _bookingSeatRepository.GetByBookingIdAsync(id);
+            if (booking.ShowtimeId != request.ShowtimeId ||
+                !seats.Select(s => s.SeatId).Order().SequenceEqual(request.Seats.Select(s => s.SeatId).Order()))
+                throw new BusinessException("The held showtime and seats cannot be changed.");
+
+            var concessions = await PriceConcessionsAsync(request.Concessions);
+            var seatsAmount = seats.Sum(s => s.Price);
+            var (promotion, discount) = await _promotionService.ResolveAsync(
+                request.PromotionCode, seatsAmount, seats.Count, booking.ShowTime!.Value);
+
+            // Return any previous redemption before applying the revised order (also safe on retries).
+            await _loyaltyService.OnReleasedAsync(booking);
+            // Redeem reloads the locked account; persist the return inside this transaction first.
+            await _context.SaveChangesAsync();
+            booking.PointsUsed = 0;
+            booking.PointsDiscount = 0;
+            booking.ConcessionsAmount = concessions.Sum(c => c.UnitPrice * c.Quantity);
+            booking.DiscountAmount = discount;
+            booking.PromotionId = promotion?.Id;
+            booking.PromotionCode = promotion?.Code;
+            booking.PromotionName = promotion?.Name;
+            booking.TotalAmount = seatsAmount - discount + booking.ConcessionsAmount;
+            var previousConcessions = await _concessionRepository.GetByBookingIdAsync(id);
+            _context.BookingConcessions.RemoveRange(previousConcessions);
+            booking.Concessions = concessions;
+            if(request.UseMemberGifts)
+            {
+                if(!string.IsNullOrWhiteSpace(request.PromotionCode) || request.UsePoints > 0)
+                    throw new BusinessException("Membership gifts cannot be combined with promo codes or points.");
+                var giftDiscount=await new MemberGiftService(_context,_showtimeClient).ReserveAsync(booking,seats,concessions);
+                booking.DiscountAmount=giftDiscount;
+                booking.PromotionId=null; booking.PromotionCode=null; booking.PromotionName="Membership gifts";
+                booking.TotalAmount=seatsAmount+booking.ConcessionsAmount-giftDiscount;
+            }
+            await _loyaltyService.RedeemAsync(booking, request.UsePoints ?? 0);
+            // Pricing/network work may have consumed the last seconds of the hold.
+            if (expiresAt <= DateTime.Now)
+                throw new ConflictException("Your seat hold has expired. Please choose your seats again.");
+            await _context.SaveChangesAsync();
+            if(request.UseMemberGifts && booking.TotalAmount==0)
+            {
+                var reservations=await LockReservationsAsync(booking,seats);
+                await MarkConfirmedAsync(booking,seats,reservations,null);
+            }
+            await transaction.CommitAsync();
+            return await MapBookingAsync(booking);
+        }
+
         // Staff/Admin xác nhận tay tại quầy (vd: khách trả tiền mặt).
         // Không truyền email thì gửi vé về email lưu trên booking.
         public async Task<BookingResponse> ConfirmBookingAsync(
@@ -357,6 +462,7 @@ namespace BookingService.Services.Implementations
                 {
                     var releasedSeats = await ReleaseSeatsAsync(booking, "EXPIRED", includeBooked: false);
                     booking.Status = "EXPIRED";
+                    await _loyaltyService.OnReleasedAsync(booking);
 
                     _outbox.Add(
                         EventTypes.BookingExpired,
@@ -394,8 +500,7 @@ namespace BookingService.Services.Implementations
                 await transaction.CommitAsync();
                 _metrics.Booking("confirmed");
 
-                return booking.ToResponse(
-                    seats.Select(x => x.ToResponse()).ToList());
+                return await MapBookingAsync(booking);
             }
             catch
             {
@@ -429,12 +534,11 @@ namespace BookingService.Services.Implementations
                     await _bookingSeatRepository
                         .GetByBookingIdAsync(booking.Id);
 
-                if (status == "CONFIRMED")
+                if (status is "CONFIRMED" or "REFUND_PENDING")
                 {
                     await transaction.CommitAsync();
 
-                    return booking.ToResponse(
-                        seats.Select(x => x.ToResponse()).ToList());
+                    return await MapBookingAsync(booking);
                 }
 
                 if (status is not ("PENDING" or "EXPIRED"))
@@ -442,6 +546,10 @@ namespace BookingService.Services.Implementations
                     throw new ConflictException(
                         $"Payment succeeded but booking {booking.BookingCode} is {status} and cannot be confirmed.");
                 }
+
+                // Expiry returns the gifts, so a late payment must follow the existing refund flow.
+                if (status == "EXPIRED" && booking.PromotionName == "Membership gifts")
+                    throw new ConflictException("Payment arrived after the membership gift reservation expired. A refund is required.");
 
                 var reservations = await LockReservationsAsync(booking, seats);
                 var now = DateTime.Now;
@@ -459,6 +567,7 @@ namespace BookingService.Services.Implementations
                     {
                         await ReleaseSeatsAsync(booking, "EXPIRED", includeBooked: false);
                         booking.Status = "EXPIRED";
+                        await _loyaltyService.OnReleasedAsync(booking);
 
                         _outbox.Add(
                             EventTypes.BookingExpired,
@@ -486,8 +595,7 @@ namespace BookingService.Services.Implementations
                 await transaction.CommitAsync();
                 _metrics.Booking("confirmed");
 
-                return booking.ToResponse(
-                    seats.Select(x => x.ToResponse()).ToList());
+                return await MapBookingAsync(booking);
             }
             catch (DbUpdateException ex) when (IsUniqueViolation(ex))
             {
@@ -509,7 +617,7 @@ namespace BookingService.Services.Implementations
 
         // Khách: huỷ booking chưa thanh toán; booking đã thanh toán chỉ huỷ được khi còn đủ thời gian
         // trước giờ chiếu (RefundPolicy:CustomerCancelBeforeHours). Staff/Admin huỷ được mọi lúc.
-        // Booking đã thanh toán bị huỷ: phía payment nhận booking.cancelled và tạo yêu cầu hoàn 100%.
+        // Khách yêu cầu hoàn tiền: REFUND_PENDING, giữ ghế; chỉ huỷ sau payment.refunded.
         public async Task<BookingResponse> CancelBookingAsync(
             long id,
             bool manager,
@@ -538,6 +646,17 @@ namespace BookingService.Services.Implementations
                 if (!manager && status == "CONFIRMED")
                 {
                     EnsureCustomerCanCancelPaidBooking(booking);
+                    if (booking.PaymentId.HasValue &&
+                        await _refundRepository.GetByPaymentIdAsync(booking.PaymentId.Value) != null)
+                        throw new ConflictException("This refund has already been processed. Please contact the cinema.");
+                    booking.Status = "REFUND_PENDING";
+                    var heldSeats = await _bookingSeatRepository.GetByBookingIdAsync(booking.Id);
+                    _outbox.Add(EventTypes.BookingRefundRequested,
+                        EventFactory.Booking(booking, heldSeats, "CONFIRMED",
+                            string.IsNullOrWhiteSpace(reason) ? "Refund requested by customer" : reason.Trim(), "CUSTOMER"));
+                    await _bookingRepository.UpdateBookingAsync(booking.Id, booking);
+                    await transaction.CommitAsync();
+                    return await MapBookingAsync(booking);
                 }
                 else if (!manager && status != "PENDING")
                 {
@@ -553,8 +672,7 @@ namespace BookingService.Services.Implementations
                 await transaction.CommitAsync();
                 _metrics.Booking("cancelled");
 
-                return booking.ToResponse(
-                    seats.Select(x => x.ToResponse()).ToList());
+                return await MapBookingAsync(booking);
             }
             catch
             {
@@ -612,7 +730,7 @@ namespace BookingService.Services.Implementations
                         .GetBookingByIdForUpdateAsync(id);
 
                 if (booking == null ||
-                    NormalizeStatus(booking) is not ("PENDING" or "CONFIRMED"))
+                    NormalizeStatus(booking) is not ("PENDING" or "CONFIRMED" or "REFUND_PENDING"))
                 {
                     await transaction.CommitAsync();
                     continue;
@@ -626,6 +744,52 @@ namespace BookingService.Services.Implementations
             }
 
             return cancelled;
+        }
+
+        public async Task ApplyRefundDecisionAsync(long bookingId, bool completed)
+        {
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            var booking = await GetBookingForUpdateAsync(bookingId);
+            if (NormalizeStatus(booking) == "REFUND_PENDING")
+            {
+                if (completed)
+                    await CancelLockedBookingAsync(booking, "Refund completed", "STAFF");
+                else
+                {
+                    booking.Status = "CONFIRMED";
+                    await _bookingRepository.UpdateBookingAsync(booking.Id, booking);
+                }
+            }
+            await transaction.CommitAsync();
+        }
+
+        public async Task<int> SendShowtimeRemindersAsync(TimeSpan before, int batchSize)
+        {
+            var now = DateTime.Now;
+            var until = now.Add(before);
+            var due = await _context.Bookings
+                .Where(b => b.Status == "CONFIRMED" &&
+                            b.CheckedInAt == null &&
+                            b.RemindedAt == null &&
+                            b.ShowTime > now &&
+                            b.ShowTime <= until)
+                .OrderBy(b => b.ShowTime)
+                .Take(batchSize)
+                .ToListAsync();
+
+            foreach (var booking in due)
+            {
+                // Mỗi lượt gửi được đánh dấu ngay để job chạy lại không nhắc hai lần
+                booking.RemindedAt = now;
+                if (booking.CreatedAt < booking.ShowTime!.Value.Subtract(before))
+                {
+                    var seats = await _bookingSeatRepository.GetByBookingIdAsync(booking.Id);
+                    _outbox.Add(EventTypes.BookingReminder, EventFactory.Booking(booking, seats));
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return due.Count(b => b.CreatedAt < b.ShowTime!.Value.Subtract(before));
         }
 
         // Job chạy nền gọi định kỳ: booking PENDING quá hạn giữ ghế -> EXPIRED, nhả ghế.
@@ -662,6 +826,7 @@ namespace BookingService.Services.Implementations
                 var seats = await ReleaseSeatsAsync(booking, "EXPIRED", includeBooked: false);
 
                 booking.Status = "EXPIRED";
+                await _loyaltyService.OnReleasedAsync(booking);
 
                 _outbox.Add(
                     EventTypes.BookingExpired,
@@ -674,8 +839,7 @@ namespace BookingService.Services.Implementations
                 await transaction.CommitAsync();
                 _metrics.Booking("expired");
 
-                expired.Add(booking.ToResponse(
-                    seats.Select(x => x.ToResponse()).ToList()));
+                expired.Add(await MapBookingAsync(booking));
             }
 
             return expired;
@@ -686,6 +850,152 @@ namespace BookingService.Services.Implementations
         {
             return await _bookingRepository
                 .GetOccupiedSeatIdsAsync(showtimeId, DateTime.Now);
+        }
+
+        public async Task<List<ShowtimeSeatBookingResponse>> GetSeatBookingsOfShowtimeAsync(
+            long showtimeId)
+        {
+            var seats = await _bookingRepository
+                .GetOccupiedSeatsWithBookingAsync(showtimeId, DateTime.Now);
+
+            return seats
+                .Select(seat => new ShowtimeSeatBookingResponse
+                {
+                    SeatId = seat.SeatId,
+                    SeatLabel = seat.SeatLabel,
+                    BookingId = seat.BookingId,
+                    BookingCode = seat.Booking.BookingCode,
+                    UserId = seat.Booking.UserId,
+                    CustomerEmail = seat.Booking.CustomerEmail,
+                    Status = NormalizeStatus(seat.Booking),
+                    CheckedInAt = seat.Booking.CheckedInAt
+                })
+                .ToList();
+        }
+
+        public async Task<List<ShowtimeBookingStatsResponse>> GetShowtimeStatsAsync(
+            List<long>? showtimeIds,
+            DateTime? start,
+            DateTime? end)
+        {
+            var ids = showtimeIds is { Count: > 0 } ? showtimeIds.Distinct().ToList() : null;
+            if (ids == null && (start == null || end == null))
+            {
+                throw new BusinessException("Give showtime ids, or a start and an end.");
+            }
+
+            if (ids is { Count: > 200 })
+            {
+                throw new BusinessException("Ask for at most 200 showtimes at a time.");
+            }
+
+            if (start.HasValue && end.HasValue && (end < start || end - start > TimeSpan.FromDays(31)))
+            {
+                throw new BusinessException("The range must be from start to end, at most 31 days.");
+            }
+
+            var seats = await _bookingRepository
+                .GetOccupiedSeatsWithBookingAsync(ids, start, end, DateTime.Now);
+
+            return seats
+                .GroupBy(seat => seat.Booking.ShowtimeId)
+                .Select(showtime => new ShowtimeBookingStatsResponse
+                {
+                    ShowtimeId = showtime.Key,
+                    Bookings = showtime.Select(seat => seat.BookingId).Distinct().Count(),
+                    SoldSeats = showtime.Count(seat => NormalizeStatus(seat.Booking) != "PENDING"),
+                    HeldSeats = showtime.Count(seat => NormalizeStatus(seat.Booking) == "PENDING"),
+                    CheckedInSeats = showtime.Count(seat => seat.Booking.CheckedInAt != null)
+                })
+                .OrderBy(stats => stats.ShowtimeId)
+                .ToList();
+        }
+
+        public async Task<BookingResponse> GetBookingByCodeAsync(string bookingCode)
+        {
+            var code = bookingCode.Trim().ToUpperInvariant();
+            var booking = code.Length == 0
+                ? null
+                : await _bookingRepository.GetBookingByCodeAsync(code);
+
+            if (booking == null)
+            {
+                throw new KeyNotFoundException(
+                    $"No booking has the code {code}.");
+            }
+
+            if (booking.CheckedInAt != null)
+            {
+                throw new ConflictException("This ticket was already checked in and cannot be used again.");
+            }
+
+            return await MapBookingAsync(booking);
+        }
+
+        // Check-in tại rạp (Staff quét QR / nhập mã vé). Khoá dòng booking để hai quầy không check-in trùng.
+        public async Task<BookingResponse> CheckInAsync(long id)
+        {
+            await using var transaction =
+                await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                var booking = await GetBookingForUpdateAsync(id);
+                var code = booking.BookingCode;
+
+                if (booking.CheckedInAt != null)
+                {
+                    throw new ConflictException(
+                        "This ticket was already checked in and cannot be used again.");
+                }
+
+                var status = NormalizeStatus(booking);
+                if (status != "CONFIRMED")
+                {
+                    throw new ConflictException(status switch
+                    {
+                        "PENDING" => $"Booking {code} has not been paid yet.",
+                        "REFUND_PENDING" => $"Booking {code} is waiting for a refund and cannot be used.",
+                        _ => $"Booking {code} is {status.ToLowerInvariant()} and cannot be used."
+                    });
+                }
+
+                var now = DateTime.Now;
+                if (booking.ShowTime is { } showTime)
+                {
+                    var opens = showTime.AddMinutes(-_checkIn.OpensBeforeMinutes);
+                    var closes = showTime.AddMinutes(_checkIn.ClosesAfterMinutes);
+
+                    if (now < opens)
+                    {
+                        throw new ConflictException(
+                            $"Check-in for this showtime opens at {opens:HH:mm dd/MM/yyyy}.");
+                    }
+
+                    if (now > closes)
+                    {
+                        throw new ConflictException(
+                            $"Check-in for this showtime closed at {closes:HH:mm dd/MM/yyyy}.");
+                    }
+                }
+
+                booking.CheckedInAt = now;
+                await _bookingRepository.UpdateBookingAsync(booking.Id, booking);
+
+                await transaction.CommitAsync();
+                _metrics.Booking("checked_in");
+
+                return await MapBookingAsync(booking);
+            }
+            catch
+            {
+                if (_context.Database.CurrentTransaction is not null)
+                {
+                    await transaction.RollbackAsync();
+                }
+
+                throw;
+            }
         }
 
         private void EnsureCustomerCanCancelPaidBooking(Booking booking)
@@ -712,6 +1022,9 @@ namespace BookingService.Services.Implementations
 
             booking.Status = "CANCELLED";
             booking.ExpiresAt = null;
+
+            // Trả điểm đã dùng; vé đã thanh toán thì thu hồi điểm đã cộng
+            await _loyaltyService.OnReleasedAsync(booking);
 
             _outbox.Add(
                 EventTypes.BookingCancelled,
@@ -801,6 +1114,24 @@ namespace BookingService.Services.Implementations
             booking.Status = "CONFIRMED";
             booking.ExpiresAt = null;
 
+            // Email vé liệt kê cả bắp nước
+            await _context.Entry(booking).Collection(b => b.Concessions).LoadAsync();
+
+            // Lượt dùng khuyến mãi được đếm khi vé đã thanh toán
+            if (booking.PromotionId.HasValue)
+            {
+                await _promotionRepository.IncrementUsageAsync(booking.PromotionId.Value);
+            }
+
+            // Cộng điểm thành viên theo số tiền thực trả
+            await _loyaltyService.OnPaidAsync(booking);
+
+            // Khách vãng lai cho email lúc trả tiền tại quầy: lưu vào vé để email huỷ / hoàn tiền sau này cũng tới
+            if (string.IsNullOrWhiteSpace(booking.CustomerEmail) && !string.IsNullOrWhiteSpace(recipientEmail))
+            {
+                booking.CustomerEmail = recipientEmail.Trim();
+            }
+
             _outbox.Add(
                 EventTypes.BookingConfirmed,
                 EventFactory.Booking(
@@ -882,14 +1213,47 @@ namespace BookingService.Services.Implementations
             };
         }
 
+        private async Task<List<BookingConcession>> PriceConcessionsAsync(
+            List<BookingConcessionRequest> requested)
+        {
+            if (requested.Count == 0)
+            {
+                return new List<BookingConcession>();
+            }
+
+            var items = (await _concessionRepository.GetByIdsAsync(requested.Select(item => item.ItemId)))
+                .ToDictionary(item => item.Id);
+
+            return requested.Select(line =>
+            {
+                if (!items.TryGetValue(line.ItemId, out var item) || !item.Active)
+                {
+                    throw new BusinessException("A snack item you picked is no longer sold. Please choose again.");
+                }
+
+                return new BookingConcession
+                {
+                    ItemId = item.Id,
+                    ItemName = item.Name,
+                    UnitPrice = item.Price,
+                    Quantity = line.Quantity
+                };
+            }).ToList();
+        }
+
         private async Task<BookingResponse> MapBookingAsync(
             Booking booking)
         {
             var seats = await _bookingSeatRepository
                 .GetByBookingIdAsync(booking.Id);
 
+            var concessions = booking.Concessions.Count > 0
+                ? booking.Concessions.ToList()
+                : await _concessionRepository.GetByBookingIdAsync(booking.Id);
+
             return booking.ToResponse(
-                seats.Select(x => x.ToResponse()).ToList());
+                seats.Select(x => x.ToResponse()).ToList(),
+                concessions);
         }
 
         private async Task<PagedResult<BookingResponse>> ToPagedResultAsync(

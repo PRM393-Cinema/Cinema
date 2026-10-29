@@ -5,6 +5,7 @@ namespace ShowtimeService.DTOs.Response
     {
         public long SeatId { get; set; }
         public string SeatLabel { get; set; } = null!;
+        public string SeatType { get; set; } = "NORMAL";
         public decimal Price { get; set; }
     }
 }

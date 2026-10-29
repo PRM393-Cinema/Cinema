@@ -1,23 +1,49 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../app/routes/app_routes.dart';
 import '../../../app/theme/app_colors.dart';
-import '../../../app/theme/app_radius.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/utils/layout.dart';
+import '../../../core/widgets/responsive_columns.dart';
 import '../../../core/widgets/app_button.dart';
+import '../../../core/widgets/cinema_account_widgets.dart';
+import '../../../core/widgets/cinema_page.dart';
 import '../../../core/widgets/error_state.dart';
+import '../../../core/widgets/loading_state.dart';
 import '../../../data/models/booking.dart';
 import '../../../data/models/payment.dart';
 import '../../../data/repositories/booking_repository.dart';
 import 'my_bookings_screen.dart';
+import '../widgets/booking_cancellation_dialog.dart';
+import '../widgets/ticket_qr_card.dart';
+import '../widgets/seat_hold_timer.dart';
+import '../widgets/ticket_share_actions.dart';
+import '../../../data/repositories/catalog_repository.dart';
 
 class BookingDetailScreen extends StatefulWidget {
-  const BookingDetailScreen({required this.bookingRepository, super.key});
+  const BookingDetailScreen({
+    required this.bookingRepository,
+    this.bookingId,
+    this.catalogRepository,
+    this.shareTicket,
+    super.key,
+  });
 
   final BookingRepository bookingRepository;
+
+  // Reads the show's end for "Add to calendar".
+  final CatalogRepository? catalogRepository;
+
+  // The share sheet; null uses the device's.
+  final TextSharer? shareTicket;
+
+  // Set when the screen is opened from its URL: the booking is loaded by id.
+  final int? bookingId;
 
   @override
   State<BookingDetailScreen> createState() => _BookingDetailScreenState();
@@ -25,9 +51,33 @@ class BookingDetailScreen extends StatefulWidget {
 
 class _BookingDetailScreenState extends State<BookingDetailScreen> {
   Booking? _booking;
+  bool _bookingRequested = false;
+  bool _isLoadingBooking = false;
   Refund? _refund;
   bool _isRefreshing = false;
   bool _isCancelling = false;
+  Timer? _holdTimer;
+
+  void _watchHold() {
+    _holdTimer?.cancel();
+    final booking = _booking;
+    if (booking == null ||
+        booking.expiresAt == null ||
+        !booking.isAwaitingPayment()) {
+      return;
+    }
+    _holdTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) return;
+      setState(() {});
+      if (_booking?.isAwaitingPayment() != true) timer.cancel();
+    });
+  }
+
+  @override
+  void dispose() {
+    _holdTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   void didChangeDependencies() {
@@ -36,7 +86,32 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     final args = ModalRoute.of(context)?.settings.arguments;
     if (_booking == null && args is Booking) {
       _booking = args;
+      _watchHold();
       _refresh();
+    } else if (_booking == null &&
+        !_bookingRequested &&
+        widget.bookingId != null) {
+      _bookingRequested = true;
+      _isLoadingBooking = true;
+      _loadBooking(widget.bookingId!);
+    }
+  }
+
+  // Opened from its URL (web refresh or shared link).
+  Future<void> _loadBooking(int bookingId) async {
+    try {
+      final booking = await widget.bookingRepository.getBooking(bookingId);
+      final refund = await _loadRefund(booking);
+      if (!mounted) return;
+      setState(() {
+        _booking = booking;
+        _refund = refund;
+        _isLoadingBooking = false;
+      });
+      _watchHold();
+    } on Object {
+      // Shown as "Booking not found".
+      if (mounted) setState(() => _isLoadingBooking = false);
     }
   }
 
@@ -57,6 +132,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         _refund = refund;
         _isRefreshing = false;
       });
+      _watchHold();
     } on ApiException {
       if (mounted) setState(() => _isRefreshing = false);
     } on Object {
@@ -71,6 +147,8 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     final paymentId = booking.paymentId;
     final mayHaveRefund =
         booking.status == BookingStatus.cancelled ||
+        booking.status == BookingStatus.confirmed ||
+        booking.status == BookingStatus.refundPending ||
         booking.status == BookingStatus.expired;
     if (paymentId == null || !mayHaveRefund) return null;
 
@@ -88,32 +166,12 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
 
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: const Text('Cancel Booking?', style: AppTextStyles.title),
-        content: Text(
-          isPaid
-              ? 'You will receive a full refund of ${formatVnd(booking.totalAmount)}. '
-                    'The cinema transfers the money back and emails you when it is done.'
-              : 'Your seats will be released for other customers.',
-          style: AppTextStyles.body,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text(
-              'No, Keep It',
-              style: TextStyle(color: AppColors.textSecondary),
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(
-              'Yes, Cancel',
-              style: TextStyle(color: AppColors.error),
-            ),
-          ),
-        ],
+      builder: (_) => BookingCancellationDialog(
+        requestRefund: isPaid,
+        message: isPaid
+            ? 'Request a full refund of ${formatVnd(booking.totalAmount)}. '
+                  'Your booking and seats remain active while staff review the request. The booking is cancelled only after the refund is completed.'
+            : 'Your seats will be released for other customers.',
       ),
     );
 
@@ -131,14 +189,13 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         _booking = cancelled;
         _isCancelling = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            isPaid
-                ? 'Booking cancelled. Your refund has been requested.'
-                : 'Booking cancelled.',
-          ),
-        ),
+      _watchHold();
+      await showBookingCancellationNotice(
+        context,
+        refundRequested: isPaid,
+        message: isPaid
+            ? 'Your refund request is pending review. Your booking remains active.'
+            : 'Your seats have been released.',
       );
       // The refund request is created in the background (RabbitMQ).
       await Future<void>.delayed(const Duration(seconds: 2));
@@ -160,7 +217,15 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   }
 
   Future<void> _payNow(Booking booking) async {
-    await Navigator.pushNamed(context, AppRoutes.payment, arguments: booking);
+    if (!booking.isAwaitingPayment()) {
+      setState(() {});
+      return;
+    }
+    await Navigator.pushNamed(
+      context,
+      AppRoutes.payment(booking.id),
+      arguments: booking,
+    );
     if (mounted) await _refresh();
   }
 
@@ -168,10 +233,17 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   Widget build(BuildContext context) {
     final booking = _booking;
 
+    if (booking == null && _isLoadingBooking) {
+      return CinemaPage(
+        title: 'Booking Detail',
+        child: const LoadingState(message: 'Loading booking...'),
+      );
+    }
+
     if (booking == null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Booking Detail')),
-        body: const ErrorState(
+      return CinemaPage(
+        title: 'Booking Detail',
+        child: const ErrorState(
           title: 'Booking not found',
           message: 'The booking details could not be loaded.',
         ),
@@ -186,226 +258,360 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         : 'TBA';
 
     final canPay = booking.isAwaitingPayment();
-    final canCancel = booking.canCancel();
+    final canCancel = booking.canCancel() && !(_refund?.isRejected ?? false);
     final paidButTooLate =
         booking.status == BookingStatus.confirmed &&
-        !canCancel &&
+        !booking.canCancel() &&
         booking.showTime != null &&
         booking.showTime!.isAfter(DateTime.now());
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Booking Detail'),
-        bottom: _isRefreshing
-            ? const PreferredSize(
-                preferredSize: Size.fromHeight(2),
-                child: LinearProgressIndicator(minHeight: 2),
-              )
-            : null,
-      ),
-      body: SafeArea(
+    final headerCard = CinemaPanel(
+      surfaceOpacity: 0.8,
+      padding: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: _refresh,
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.all(AppSpacing.xl),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Header Card
-                      DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: AppRadius.borderRadiusMd,
-                          border: Border.all(color: AppColors.border),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(AppSpacing.lg),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      'Code: ${booking.bookingCode}',
-                                      style: AppTextStyles.caption,
-                                    ),
-                                  ),
-                                  BookingStatusBadge(status: booking.status),
-                                ],
-                              ),
-                              const SizedBox(height: AppSpacing.sm),
-                              Text(
-                                booking.movieTitle ?? 'Unknown Movie',
-                                style: AppTextStyles.heading2,
-                              ),
-                              const SizedBox(height: AppSpacing.md),
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.calendar_today,
-                                    size: 20,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                  const SizedBox(width: AppSpacing.sm),
-                                  Text(showDateStr, style: AppTextStyles.body),
-                                  const SizedBox(width: AppSpacing.lg),
-                                  const Icon(
-                                    Icons.access_time,
-                                    size: 20,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                  const SizedBox(width: AppSpacing.sm),
-                                  Text(showTimeStr, style: AppTextStyles.body),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.xl),
-
-                      // Seats Card
-                      _DetailSection(
-                        title: 'Seats & Tickets',
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(booking.seatLabels, style: AppTextStyles.body),
-                            const SizedBox(height: AppSpacing.xs),
-                            Text(
-                              '${booking.seats.length} Ticket(s)',
-                              style: AppTextStyles.bodySmall,
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.xl),
-
-                      // Price Card
-                      _DetailSection(
-                        title: 'Payment Summary',
-                        child: Column(
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text(
-                                  'Total Amount',
-                                  style: AppTextStyles.body,
-                                ),
-                                Text(
-                                  formatVnd(booking.totalAmount),
-                                  style: AppTextStyles.title,
-                                ),
-                              ],
-                            ),
-                            if (booking.paymentId != null) ...[
-                              const SizedBox(height: AppSpacing.xs),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Text(
-                                    'Payment ID',
-                                    style: AppTextStyles.bodySmall,
-                                  ),
-                                  Text(
-                                    '${booking.paymentId}',
-                                    style: AppTextStyles.caption,
-                                  ),
-                                ],
-                              ),
-                            ],
-                            if (_refund != null) ...[
-                              const SizedBox(height: AppSpacing.xs),
-                              _RefundRow(refund: _refund!),
-                            ],
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.xl),
-
-                      // Timeline Card
-                      _DetailSection(
-                        title: 'Timeline',
-                        child: Column(
-                          children: [
-                            _TimelineRow(
-                              label: 'Created',
-                              value: formatDateTime(booking.createdAt),
-                            ),
-                            if (booking.expiresAt != null &&
-                                booking.status == BookingStatus.pending)
-                              Padding(
-                                padding: const EdgeInsets.only(
-                                  top: AppSpacing.sm,
-                                ),
-                                child: _TimelineRow(
-                                  label: 'Expires',
-                                  value: formatDateTime(booking.expiresAt!),
-                                  isWarning: true,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                      if (paidButTooLate) ...[
-                        const SizedBox(height: AppSpacing.lg),
-                        Text(
-                          'Paid bookings can be cancelled up to '
-                          '${Booking.cancelBeforeShowtime.inHours} hours before the show. '
-                          'Please contact the cinema for help.',
-                          style: AppTextStyles.bodySmall,
-                        ),
-                      ],
-                    ],
+            Wrap(
+              spacing: AppSpacing.md,
+              runSpacing: AppSpacing.sm,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                const Icon(
+                  Icons.local_activity_outlined,
+                  color: AppColors.primary,
+                  size: 24,
+                ),
+                Text(
+                  'Your booking',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textPrimary,
                   ),
                 ),
+                BookingStatusBadge(
+                  status: booking.status,
+                  checkedIn: booking.isCheckedIn,
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              booking.movieTitle ?? 'Unknown Movie',
+              style: AppTextStyles.heading2,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              'Booking code',
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.textPrimary,
               ),
             ),
-
-            // Bottom Actions
-            if (canPay || canCancel)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(AppSpacing.xl),
-                decoration: const BoxDecoration(
-                  color: AppColors.surface,
-                  border: Border(top: BorderSide(color: AppColors.border)),
+            const SizedBox(height: AppSpacing.xs),
+            SelectableText(
+              booking.bookingCode,
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+              child: Divider(height: 1, color: AppColors.border),
+            ),
+            Wrap(
+              spacing: AppSpacing.xl,
+              runSpacing: AppSpacing.md,
+              children: [
+                _ShowtimeField(
+                  icon: Icons.calendar_today_outlined,
+                  label: 'Show date',
+                  value: showDateStr,
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (canPay) ...[
-                      AppButton(
-                        label: 'Pay Now',
-                        onPressed: _isCancelling
-                            ? null
-                            : () => _payNow(booking),
-                      ),
+                _ShowtimeField(
+                  icon: Icons.schedule_outlined,
+                  label: 'Show time',
+                  value: showTimeStr,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+    final seatsCard = _DetailSection(
+      title: 'Seats & Tickets',
+      icon: Icons.event_seat_outlined,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              for (final seat in booking.seats)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.sm,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: AppColors.primary.withValues(alpha: 0.35),
+                    ),
+                  ),
+                  child: Text(
+                    seat.seatLabel,
+                    style: AppTextStyles.title.copyWith(
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            '${booking.seats.length} Ticket(s)',
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+    final paymentCard = _DetailSection(
+      title: 'Payment Summary',
+      icon: Icons.receipt_long_outlined,
+      child: Column(
+        children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (booking.concessions.isNotEmpty) ...[
+                  Text(
+                    'Snacks: ${booking.snacksText}',
+                    key: const Key('bookingSnacks'),
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                ],
+                if (booking.hasDiscount) ...[
+                  Text(
+                    'Discount: ${booking.discountText}',
+                    key: const Key('bookingDiscount'),
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.success,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                ],
+                if (booking.pointsUsed > 0) ...[
+                  Text(
+                    'Points: ${booking.pointsUsedText}',
+                    key: const Key('bookingPointsUsed'),
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.success,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                ],
+                if (booking.pointsEarned > 0) ...[
+                  Text(
+                    'Earned ${booking.pointsEarned} points',
+                    key: const Key('bookingPointsEarned'),
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.accent,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                ],
+                Text(
+                  'Total Amount',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  formatVnd(booking.totalAmount),
+                  style: AppTextStyles.heading1.copyWith(
+                    color: AppColors.primary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          if (booking.paymentId != null) ...[
+            const SizedBox(height: AppSpacing.xs),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Payment ID',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                Text(
+                  '${booking.paymentId}',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+          ],
+          if (_refund != null) ...[
+            const SizedBox(height: AppSpacing.xs),
+            _RefundRow(refund: _refund!),
+          ],
+        ],
+      ),
+    );
+    final timelineCard = _DetailSection(
+      title: 'Timeline',
+      icon: Icons.history_outlined,
+      child: Column(
+        children: [
+          _TimelineRow(
+            label: 'Created',
+            value: formatDateTime(booking.createdAt),
+          ),
+          if (booking.checkedInAt case final checkedInAt?)
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.sm),
+              child: _TimelineRow(
+                label: 'Checked in',
+                value: formatDateTime(checkedInAt),
+              ),
+            ),
+          if (booking.expiresAt != null &&
+              booking.status == BookingStatus.pending)
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.sm),
+              child: _TimelineRow(
+                label: 'Expires',
+                value: formatDateTime(booking.expiresAt!),
+                isWarning: true,
+              ),
+            ),
+        ],
+      ),
+    );
+    final lateNote = Text(
+      'Paid bookings can be cancelled up to '
+      '${Booking.cancelBeforeShowtime.inHours} hours before the show. '
+      'Please contact the cinema for help.',
+      style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary),
+    );
+    final actions = Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (canPay) ...[
+          AppButton(
+            label: 'Pay Now',
+            useGradient: true,
+            leadingIcon: Icons.qr_code_2_rounded,
+            onPressed: _isCancelling ? null : () => _payNow(booking),
+          ),
+          const SizedBox(height: AppSpacing.md),
+        ],
+        if (canCancel)
+          AppButton.danger(
+            label: booking.status == BookingStatus.confirmed
+                ? 'Request refund'
+                : 'Cancel Booking',
+            isLoading: _isCancelling,
+            onPressed: _isCancelling ? null : () => _cancelBooking(booking),
+          ),
+      ],
+    );
+    final hasActions = canPay || canCancel;
+    final desktop = isDesktopLayout(context);
+    // Paid tickets carry the QR code staff scan at the cinema.
+    final hasTicket = booking.status == BookingStatus.confirmed;
+    final shareActions = TicketShareActions(
+      booking: booking,
+      catalogRepository: widget.catalogRepository,
+      share: widget.shareTicket ?? TicketShareActions.defaultShare,
+    );
+
+    return CinemaPage(
+      title: 'Booking Detail',
+      width: PageWidth.page,
+      child: Column(
+        children: [
+          if (_isRefreshing) const LinearProgressIndicator(minHeight: 2),
+          if (booking.status == BookingStatus.pending)
+            Padding(
+              padding: pagePadding(context, AppSpacing.sm),
+              child: SeatHoldTimer(
+                remaining: booking.expiresAt?.difference(DateTime.now()),
+                expired: booking.isHoldExpired(),
+              ),
+            ),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _refresh,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: pagePadding(context, AppSpacing.xl),
+                // Website: the ticket on the left, payment and actions on
+                // the right.
+                child: ResponsiveColumns(
+                  main: [
+                    headerCard,
+                    if (hasTicket && !desktop) ...[
+                      const SizedBox(height: AppSpacing.xl),
+                      TicketQrCard(booking: booking),
                       const SizedBox(height: AppSpacing.md),
+                      shareActions,
                     ],
-                    if (canCancel)
-                      AppButton.danger(
-                        label: 'Cancel Booking',
-                        isLoading: _isCancelling,
-                        onPressed: _isCancelling
-                            ? null
-                            : () => _cancelBooking(booking),
-                      ),
+                    const SizedBox(height: AppSpacing.xl),
+                    seatsCard,
+                    const SizedBox(height: AppSpacing.xl),
+                    if (desktop) timelineCard,
+                  ],
+                  side: [
+                    if (hasTicket && desktop) ...[
+                      TicketQrCard(booking: booking),
+                      const SizedBox(height: AppSpacing.md),
+                      shareActions,
+                      const SizedBox(height: AppSpacing.xl),
+                    ],
+                    paymentCard,
+                    if (!desktop) ...[
+                      const SizedBox(height: AppSpacing.xl),
+                      timelineCard,
+                    ],
+                    if (paidButTooLate) ...[
+                      const SizedBox(height: AppSpacing.lg),
+                      lateNote,
+                    ],
+                    if (desktop && hasActions) ...[
+                      const SizedBox(height: AppSpacing.xl),
+                      actions,
+                    ],
                   ],
                 ),
               ),
-          ],
-        ),
+            ),
+          ),
+
+          // Bottom Actions
+          if (!desktop && hasActions)
+            Padding(
+              padding: centeredPadding(context, AppSpacing.lg),
+              child: actions,
+            ),
+        ],
       ),
     );
   }
@@ -418,22 +624,85 @@ class _RefundRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (refund.isRejected) {
+      return Container(
+        margin: const EdgeInsets.only(top: AppSpacing.md),
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        decoration: BoxDecoration(
+          color: AppColors.error.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.error.withValues(alpha: 0.45)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(
+                  Icons.info_outline,
+                  color: AppColors.error,
+                  size: 22,
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(
+                    'Refund request rejected',
+                    style: AppTextStyles.body.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (refund.note != null) ...[
+              const SizedBox(height: AppSpacing.lg),
+              Text(
+                'Rejection reason',
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              SelectableText(
+                refund.note!,
+                style: AppTextStyles.body.copyWith(height: 1.5),
+              ),
+            ],
+          ],
+        ),
+      );
+    }
     final label = refund.isCompleted
         ? 'Refunded ${formatVnd(refund.amount)}'
         : 'Refund of ${formatVnd(refund.amount)} in progress';
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text('Refund', style: AppTextStyles.bodySmall),
-        Flexible(
-          child: Text(
-            label,
-            textAlign: TextAlign.right,
-            style: AppTextStyles.caption.copyWith(
-              color: refund.isCompleted ? AppColors.success : AppColors.warning,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Refund',
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.textPrimary,
+              ),
             ),
-          ),
+            const SizedBox(width: AppSpacing.sm),
+            Flexible(
+              child: Text(
+                label,
+                textAlign: TextAlign.right,
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: refund.isCompleted
+                      ? AppColors.success
+                      : AppColors.warning,
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -441,30 +710,35 @@ class _RefundRow extends StatelessWidget {
 }
 
 class _DetailSection extends StatelessWidget {
-  const _DetailSection({required this.title, required this.child});
+  const _DetailSection({
+    required this.title,
+    required this.icon,
+    required this.child,
+  });
 
   final String title;
+  final IconData icon;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title, style: AppTextStyles.caption),
-        const SizedBox(height: AppSpacing.sm),
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: AppRadius.borderRadiusMd,
-            border: Border.all(color: AppColors.border),
+    return CinemaPanel(
+      surfaceOpacity: 0.8,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 20, color: AppColors.textSecondary),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(child: Text(title, style: AppTextStyles.title)),
+            ],
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            child: SizedBox(width: double.infinity, child: child),
-          ),
-        ),
-      ],
+          const SizedBox(height: AppSpacing.lg),
+          child,
+        ],
+      ),
     );
   }
 }
@@ -485,11 +759,55 @@ class _TimelineRow extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: AppTextStyles.bodySmall),
         Text(
-          value,
-          style: AppTextStyles.bodySmall.copyWith(
-            color: isWarning ? AppColors.warning : AppColors.textPrimary,
+          label,
+          style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            style: AppTextStyles.bodySmall.copyWith(
+              color: isWarning ? AppColors.warning : AppColors.textPrimary,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ShowtimeField extends StatelessWidget {
+  const _ShowtimeField({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 20, color: AppColors.primary),
+        const SizedBox(width: AppSpacing.sm),
+        Flexible(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              Text(value, style: AppTextStyles.body),
+            ],
           ),
         ),
       ],

@@ -1,4 +1,4 @@
-﻿using System.Runtime.InteropServices;
+using System.Runtime.InteropServices;
 
 namespace MovieService.DTOs.Response
 {
@@ -13,6 +13,10 @@ namespace MovieService.DTOs.Response
         public DateOnly ReleaseDate { get; set; }
         public string? PosterUrl { get; set; }
         public string? TrailerUrl { get; set; }
+        public string? PreviewUrl { get; set; }
+        public string AgeRating { get; set; } = "P";
+        public string? Director { get; set; }
+        public string? Cast { get; set; }
         public string? Status { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
     }

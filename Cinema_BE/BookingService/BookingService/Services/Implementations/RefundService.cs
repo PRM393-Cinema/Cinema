@@ -36,7 +36,10 @@ namespace BookingService.Services.Implementations
             _logger = logger;
         }
 
-        public async Task<RefundResponse> RequestRefundAsync(long paymentId, string reason)
+        public async Task<RefundResponse> RequestRefundAsync(
+            long paymentId,
+            string reason,
+            bool reopenRejected = false)
         {
             await using var transaction = await _outbox.BeginTransactionAsync();
 
@@ -47,6 +50,31 @@ namespace BookingService.Services.Implementations
             var booking = await _bookingRepository.GetBookingByIdAsync(payment.BookingId);
 
             var existing = await _refundRepository.GetByPaymentIdAsync(paymentId);
+
+            // A rejected customer request is reopened when the cinema itself cancels the booking
+            // (staff, cancelled showtime, admin refund): the customer must still get the money back.
+            if (existing is { Status: "REJECTED" } && reopenRejected && payment.Status == "SUCCESS")
+            {
+                var reopenedAt = DateTime.Now;
+                existing.Status = "PENDING";
+                existing.Reason = Truncate(string.IsNullOrWhiteSpace(reason) ? "Refund requested." : reason.Trim(), 255);
+                existing.Note = null;
+                existing.ProcessedBy = null;
+                existing.ProcessedAt = null;
+                existing.CreatedAt = reopenedAt;
+                payment.Status = "REFUND_PENDING";
+                payment.UpdatedAt = reopenedAt;
+                _outbox.Add(EventTypes.PaymentRefundRequested, EventFactory.Payment(payment, booking, existing));
+                await _refundRepository.UpdateAsync(existing);
+                await transaction.CommitAsync();
+                _metrics.Refund("requested");
+                _logger.LogInformation(
+                    "Rejected refund {RefundCode} reopened for payment {PaymentId}: {Reason}",
+                    existing.RefundCode,
+                    payment.Id,
+                    existing.Reason);
+                return existing.ToResponse(payment);
+            }
 
             if (existing != null)
             {
@@ -95,7 +123,10 @@ namespace BookingService.Services.Implementations
             return refund.ToResponse(payment);
         }
 
-        public async Task<RefundResponse?> RequestRefundForBookingAsync(long bookingId, string reason)
+        public async Task<RefundResponse?> RequestRefundForBookingAsync(
+            long bookingId,
+            string reason,
+            bool reopenRejected = false)
         {
             var paidPayment = await _paymentRepository.GetLatestByBookingIdAsync(
                 bookingId,
@@ -106,7 +137,7 @@ namespace BookingService.Services.Implementations
                 return null;
             }
 
-            return await RequestRefundAsync(paidPayment.Id, reason);
+            return await RequestRefundAsync(paidPayment.Id, reason, reopenRejected);
         }
 
         public async Task<RefundResponse> CompleteRefundAsync(
@@ -121,10 +152,10 @@ namespace BookingService.Services.Implementations
             var refund = await _refundRepository.GetByIdForUpdateAsync(refundId)
                 ?? throw new KeyNotFoundException($"Refund with id {refundId} was not found.");
 
-            if (refund.Status == "COMPLETED")
+            if (refund.Status != "PENDING")
             {
                 throw new ConflictException(
-                    $"Refund {refund.RefundCode} has already been completed.");
+                    $"Refund {refund.RefundCode} is {refund.Status}; only pending refunds can be completed.");
             }
 
             var payment = await _paymentRepository.GetByIdForUpdateAsync(refund.PaymentId)
@@ -151,6 +182,39 @@ namespace BookingService.Services.Implementations
             await transaction.CommitAsync();
             _metrics.Refund("completed");
 
+            return refund.ToResponse(payment);
+        }
+
+        public async Task<RefundResponse> RejectRefundAsync(long refundId, string reason, long processedBy)
+        {
+            if (string.IsNullOrWhiteSpace(reason) || reason.Trim().Length > 500)
+                throw new BusinessException("A rejection reason of 1–500 characters is required.");
+
+            await using var transaction = await _outbox.BeginTransactionAsync();
+            // Use the same lock order as completion so only one decision can win.
+            var refund = await _refundRepository.GetByIdForUpdateAsync(refundId)
+                ?? throw new KeyNotFoundException($"Refund with id {refundId} was not found.");
+            if (refund.Status != "PENDING")
+                throw new ConflictException($"Refund {refund.RefundCode} is already {refund.Status}.");
+            var payment = await _paymentRepository.GetByIdForUpdateAsync(refund.PaymentId)
+                ?? throw new KeyNotFoundException($"Payment with id {refund.PaymentId} was not found.");
+            var booking = await _bookingRepository.GetBookingByIdAsync(refund.BookingId);
+            // Only a customer's own request can be refused. Refunds for bookings the cinema cancelled
+            // (seats already released) must be paid out.
+            if (!string.Equals(booking?.Status, "REFUND_PENDING", StringComparison.OrdinalIgnoreCase))
+                throw new ConflictException(
+                    $"Refund {refund.RefundCode} was not requested by the customer and cannot be rejected.");
+            refund.Status = "REJECTED";
+            refund.Note = reason.Trim();
+            refund.ProcessedBy = processedBy;
+            refund.ProcessedAt = DateTime.Now;
+            payment.Status = "SUCCESS";
+            payment.UpdatedAt = refund.ProcessedAt;
+            _outbox.Add(EventTypes.PaymentRefundRejected,
+                EventFactory.Payment(payment, booking, refund, refund.Note));
+            await _refundRepository.UpdateAsync(refund);
+            await transaction.CommitAsync();
+            _metrics.Refund("rejected");
             return refund.ToResponse(payment);
         }
 

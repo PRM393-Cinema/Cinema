@@ -68,14 +68,33 @@ namespace ShowtimeService.Service.Impl
                     $"Seat(s) {string.Join(", ", invalidIds)} do not belong to the room of showtime {showtimeId}.");
             }
 
-            // Giá ghế = giá suất chiếu (khớp dữ liệu hiện có: booking_seats.price = showtimes.price).
+            // Sweetbox là ghế đôi: phải đặt cả hai ghế của cặp
+            if (seats.Any(s => SeatPairs.IsSweetbox(s.SeatType)))
+            {
+                var roomSeats = await _seatRepository.GetAllSeatsByRoomAsync(showtime.RoomId);
+                foreach (var seat in seats.Where(s => SeatPairs.IsSweetbox(s.SeatType)))
+                {
+                    var partner = SeatPairs.PartnerOf(seat, roomSeats);
+                    if (partner != null &&
+                        SeatPairs.IsSweetbox(partner.SeatType) &&
+                        !requestedIds.Contains(partner.Id))
+                    {
+                        throw new BusinessException(
+                            $"Sweetbox seats are booked in pairs: book {SeatPairs.Label(seat)} " +
+                            $"together with {SeatPairs.Label(partner)}.");
+                    }
+                }
+            }
+
+            // Giá ghế = giá suất chiếu cộng phụ thu theo loại ghế (VIP, sweetbox)
             return seats
                 .OrderBy(s => requestedIds.IndexOf(s.Id))
                 .Select(s => new ShowtimeSeatResponse
                 {
                     SeatId = s.Id,
                     SeatLabel = $"{s.SeatRow}{s.SeatNumber}",
-                    Price = showtime.Price
+                    SeatType = s.SeatType,
+                    Price = SeatPrices.For(showtime.Price, s.SeatType, showtime.Format)
                 })
                 .ToList();
         }
@@ -134,6 +153,7 @@ namespace ShowtimeService.Service.Impl
             }
 
             request.Status = NormalizeEditableStatus(request.Status) ?? Open;
+            request.Format = NormalizeFormat(request.Format) ?? ShowtimeFormats.TwoD;
 
             var hasConflict = await _showtimeRepository
                 .HasScheduleConflictAsync(
@@ -184,6 +204,7 @@ namespace ShowtimeService.Service.Impl
 
             // Không gửi status thì giữ nguyên trạng thái hiện tại
             request.Status = NormalizeEditableStatus(request.Status) ?? existingShowtime.Status;
+            request.Format = NormalizeFormat(request.Format) ?? existingShowtime.Format;
 
             var hasConflict = await _showtimeRepository
                 .HasScheduleConflictAsync(
@@ -410,6 +431,18 @@ namespace ShowtimeService.Service.Impl
                 _ => throw new BusinessException(
                     "Status must be OPEN or CLOSED.")
             };
+        }
+
+        // null khi bỏ trống; định dạng lạ thì 400
+        private static string? NormalizeFormat(string? format)
+        {
+            var normalized = ShowtimeFormats.Normalize(format);
+            if (normalized != null && !ShowtimeFormats.IsValid(normalized))
+            {
+                throw new BusinessException("Format must be 2D, 3D or IMAX.");
+            }
+
+            return normalized;
         }
 
         private static void ValidateShowtimeRequest(

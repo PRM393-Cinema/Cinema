@@ -32,9 +32,43 @@ class MovieService {
     return PagedResult.fromJson(response, Movie.fromJson);
   }
 
+  // Active movies for customers: now showing or coming soon, by genre and
+  // title.
+  Future<PagedResult<Movie>> browseMovies({
+    bool comingSoon = false,
+    String? genre,
+    String? keyword,
+    int size = maxPageSize,
+  }) async {
+    final response = await _apiClient.get(
+      '/api/v1/movies/browse',
+      query: {
+        'when': comingSoon ? 'soon' : 'now',
+        'genre': genre,
+        'keyword': keyword,
+        'size': size,
+      },
+    );
+    return PagedResult.fromJson(response, Movie.fromJson);
+  }
+
+  // The genres of the active movies, for the filter chips.
+  Future<List<String>> getGenres() async {
+    final response = await _apiClient.get('/api/v1/movies/genres');
+    if (response is! List) {
+      throw const FormatException('Expected a list of genres.');
+    }
+    return response.map((genre) => '$genre').toList();
+  }
+
   Future<Movie> getMovie(int movieId) async {
     final response = await _apiClient.get('/api/v1/movies/$movieId');
     return Movie.fromJson(readMap(response));
+  }
+
+  Future<Showtime> getShowtime(int showtimeId) async {
+    final response = await _apiClient.get('/api/showtimes/$showtimeId');
+    return Showtime.fromJson(readMap(response));
   }
 
   // Showtimes that are still open for booking and have not started yet.

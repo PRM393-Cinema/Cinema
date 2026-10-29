@@ -24,6 +24,15 @@ namespace BookingService.Messaging
                 MovieTitle = booking.MovieTitle,
                 ShowTime = booking.ShowTime,
                 Seats = seats.Select(seat => seat.SeatLabel).ToList(),
+                Concessions = booking.Concessions
+                    .OrderBy(item => item.Id)
+                    .Select(item => $"{item.Quantity} × {item.ItemName}")
+                    .ToList(),
+                DiscountAmount = booking.DiscountAmount,
+                PromotionName = booking.PromotionName,
+                PointsUsed = booking.PointsUsed,
+                PointsDiscount = booking.PointsDiscount,
+                PointsEarned = booking.PointsEarned,
                 TotalAmount = booking.TotalAmount,
                 Status = booking.Status,
                 PreviousStatus = previousStatus,

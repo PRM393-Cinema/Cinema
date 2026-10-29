@@ -4,7 +4,7 @@ namespace BookingService.DTOs.Requests
 {
     public class NotificationRequest
     {
-        [Required(ErrorMessage = "User id is required")]
+        // Bỏ trống: email cho khách vãng lai (vé bán tại quầy, không có tài khoản)
         public long? UserId { get; set; }
 
         public long? BookingId { get; set; }

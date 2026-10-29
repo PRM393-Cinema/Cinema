@@ -6,6 +6,7 @@ import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_radius.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
+import 'seat_type_style.dart';
 
 enum SeatItemState { available, selected, held, booked }
 
@@ -13,6 +14,7 @@ class SeatItem extends StatelessWidget {
   const SeatItem({
     required this.label,
     this.state = SeatItemState.available,
+    this.type = 'NORMAL',
     this.onTap,
     this.size = AppSpacing.xxxl,
     super.key,
@@ -20,6 +22,9 @@ class SeatItem extends StatelessWidget {
 
   final String label;
   final SeatItemState state;
+
+  // Free seats are coloured by type (NORMAL, VIP, SWEETBOX).
+  final String type;
   final VoidCallback? onTap;
 
   // Seat maps shrink seats so a whole row fits on a phone.
@@ -30,7 +35,7 @@ class SeatItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = _SeatStyle.fromState(state);
+    final style = _SeatStyle.fromState(state, type);
     final borderRadius = BorderRadius.circular(
       math.min(AppRadius.sm, size / 5),
     );
@@ -70,16 +75,17 @@ class _SeatStyle {
     required this.border,
   });
 
-  factory _SeatStyle.fromState(SeatItemState state) {
+  factory _SeatStyle.fromState(SeatItemState state, String type) {
+    final (fill, border, text) = seatTypeColors(type);
     return switch (state) {
-      SeatItemState.available => const _SeatStyle(
-        background: AppColors.surface,
-        foreground: AppColors.textPrimary,
-        border: AppColors.border,
+      SeatItemState.available => _SeatStyle(
+        background: fill,
+        foreground: text,
+        border: border,
       ),
       SeatItemState.selected => const _SeatStyle(
         background: AppColors.primary,
-        foreground: AppColors.textPrimary,
+        foreground: AppColors.onPrimary,
         border: AppColors.primary,
       ),
       SeatItemState.held => const _SeatStyle(

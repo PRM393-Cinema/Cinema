@@ -69,6 +69,34 @@ namespace MovieService.Controllers
             return Ok(result);
         }
 
+        // PUT: api/seats/room/{roomId}/types
+        // Đổi loại nhiều ghế của phòng một lần (sweetbox theo cặp), trả về sơ đồ ghế mới
+        [HttpPut("room/{roomId:long}/types")]
+        [Authorize(Policy = AuthorizationPolicies.StaffOrAdmin)]
+        public async Task<ActionResult<List<SeatResponse>>> UpdateRoomSeatTypes(
+            long roomId,
+            [FromBody] UpdateSeatTypeRequest request)
+        {
+            var result = await _seatService
+                .UpdateRoomSeatTypesAsync(roomId, request);
+
+            return Ok(result);
+        }
+
+        // PUT: api/seats/room/{roomId}/capacity
+        // Đổi số ghế của phòng (thêm cuối sơ đồ / bỏ ghế cuối), trả về sơ đồ ghế mới
+        [HttpPut("room/{roomId:long}/capacity")]
+        [Authorize(Policy = AuthorizationPolicies.AdminOnly)]
+        public async Task<ActionResult<List<SeatResponse>>> UpdateRoomSeats(
+            long roomId,
+            [FromBody] UpdateRoomSeatsRequest request)
+        {
+            var result = await _seatService
+                .UpdateRoomSeatsAsync(roomId, request);
+
+            return Ok(result);
+        }
+
         // DELETE: api/seats/{seatId}
         [HttpDelete("{seatId:long}")]
         [Authorize(Policy = AuthorizationPolicies.AdminOnly)]

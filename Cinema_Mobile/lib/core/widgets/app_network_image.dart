@@ -28,6 +28,7 @@ class AppNetworkImage extends StatelessWidget {
             width: width,
             height: height,
             fit: fit,
+            webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
             loadingBuilder: (context, child, loadingProgress) {
               if (loadingProgress == null) {
                 return child;

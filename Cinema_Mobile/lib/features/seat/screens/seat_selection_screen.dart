@@ -1,4 +1,4 @@
-import 'dart:math' as math;
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 
@@ -9,11 +9,16 @@ import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/utils/layout.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_network_image.dart';
 import '../../../core/widgets/empty_state.dart';
+import '../../../core/widgets/cinema_page.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_state.dart';
+import '../../../core/widgets/cinema_background.dart';
+import '../../../core/widgets/cinema_account_widgets.dart';
+import '../../../core/widgets/top_notice.dart';
 import '../../../data/models/booking_draft.dart';
 import '../../../data/models/movie.dart';
 import '../../../data/models/seat.dart';
@@ -21,22 +26,50 @@ import '../../../data/models/showtime.dart';
 import '../../../data/repositories/catalog_repository.dart';
 import '../widgets/seat_item.dart';
 import '../widgets/seat_legend.dart';
+import '../widgets/seat_map_rows.dart';
+import '../widgets/seat_type_style.dart';
 
 class SeatSelectionScreen extends StatefulWidget {
-  const SeatSelectionScreen({required this.catalogRepository, super.key});
+  const SeatSelectionScreen({
+    required this.catalogRepository,
+    this.showtimeId,
+    super.key,
+  });
 
   final CatalogRepository catalogRepository;
+
+  // Set when the screen is opened from its URL: the showtime and its movie
+  // are loaded by id.
+  final int? showtimeId;
 
   @override
   State<SeatSelectionScreen> createState() => _SeatSelectionScreenState();
 }
 
 class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
+  // Seats taken by other customers show up while the map is open.
+  static const _liveInterval = Duration(seconds: 5);
+
   final Set<int> _selectedSeatIds = {};
+  bool _showtimeRequested = false;
   SeatSelectionArgs? _args;
   ShowtimeSeatsData? _data;
   bool _isLoading = true;
   String? _errorMessage;
+  Timer? _liveTimer;
+  bool _refreshing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _liveTimer = Timer.periodic(_liveInterval, (_) => _refreshSeatMap());
+  }
+
+  @override
+  void dispose() {
+    _liveTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   void didChangeDependencies() {
@@ -46,7 +79,39 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
     if (_args == null && args is SeatSelectionArgs) {
       _args = args;
       _loadSeatMap();
+    } else if (_args == null &&
+        !_showtimeRequested &&
+        widget.showtimeId != null) {
+      _showtimeRequested = true;
+      _loadShowtime();
     }
+  }
+
+  // Opened from its URL (web refresh or shared link): load the showtime and
+  // its movie, then the seat map.
+  Future<void> _loadShowtime() async {
+    try {
+      final catalog = widget.catalogRepository;
+      final showtime = await catalog.getShowtime(widget.showtimeId!);
+      final movie = await catalog.getMovie(showtime.movieId);
+      if (!mounted) return;
+      _args = SeatSelectionArgs(movie: movie, showtime: showtime);
+      await _loadSeatMap();
+    } on ApiException catch (error) {
+      _showError(error.message);
+    } on FormatException {
+      _showError('The server returned an invalid response.');
+    } on Object {
+      _showError('Something went wrong. Please try again.');
+    }
+  }
+
+  void _retryShowtime() {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    _loadShowtime();
   }
 
   Future<void> _loadSeatMap() async {
@@ -60,19 +125,70 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
 
     try {
       final data = await widget.catalogRepository.getSeatMap(args.showtime);
-      if (!mounted) return;
-      setState(() {
-        _data = data;
-        _isLoading = false;
-        // Drop selections that someone else took in the meantime.
-        _selectedSeatIds.removeWhere((id) => data.reservations.containsKey(id));
-      });
+      if (mounted) _showSeatMap(data);
     } on ApiException catch (error) {
       _showError(error.message);
     } on FormatException {
       _showError('The server returned an invalid response.');
     } on Object {
       _showError('Something went wrong. Please try again.');
+    }
+  }
+
+  // Reloads the seat map in the background while this page is on top (not
+  // under the booking summary). A failed refresh keeps the last map.
+  Future<void> _refreshSeatMap() async {
+    final args = _args;
+    if (args == null ||
+        _data == null ||
+        _isLoading ||
+        _refreshing ||
+        ModalRoute.of(context)?.isCurrent != true) {
+      return;
+    }
+    _refreshing = true;
+    try {
+      final data = await widget.catalogRepository.getSeatMap(args.showtime);
+      if (mounted && !_isLoading) _showSeatMap(data, notify: true);
+    } on Object {
+      // Keep the last seat map; the next refresh tries again.
+    } finally {
+      _refreshing = false;
+    }
+  }
+
+  // Shows a newer seat map. Selected seats that are no longer free (someone
+  // else took them) are let go, with the other half of their sweetbox; with
+  // [notify] the customer is told which.
+  void _showSeatMap(ShowtimeSeatsData data, {bool notify = false}) {
+    final selected = _selectedSeats(_data);
+    final free = {
+      for (final seat in data.seats)
+        if (data.statusOf(seat) == SeatReservationStatus.available) seat.id,
+    };
+    setState(() {
+      _data = data;
+      _isLoading = false;
+      _selectedSeatIds.removeWhere((id) => !free.contains(id));
+      _selectedSeatIds.removeWhere((id) {
+        final seat = data.seats.where((s) => s.id == id).firstOrNull;
+        final partner = seat?.sweetboxPartnerIn(data.seats);
+        return partner != null && !_selectedSeatIds.contains(partner.id);
+      });
+    });
+    final lost = [
+      for (final seat in selected)
+        if (!_selectedSeatIds.contains(seat.id)) seat.label,
+    ];
+    if (notify && lost.isNotEmpty) {
+      showTopNotice(
+        Overlay.of(context, rootOverlay: true),
+        lost.length == 1
+            ? '${lost.single} was just taken, so it was removed from your '
+                  'seats.'
+            : '${lost.join(', ')} were just taken, so they were removed from '
+                  'your seats.',
+      );
     }
   }
 
@@ -84,17 +200,35 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
     });
   }
 
+  // A sweetbox is a couple seat: picking either half picks both (1 with 2,
+  // 4 with 3), and so does letting it go.
   void _toggleSeat(Seat seat, SeatReservationStatus status) {
-    if (status == SeatReservationStatus.held ||
+    final data = _data;
+    if (data == null ||
+        status == SeatReservationStatus.held ||
         status == SeatReservationStatus.booked) {
       return; // Cannot select
     }
-    setState(() {
-      if (_selectedSeatIds.contains(seat.id)) {
+    final partner = seat.sweetboxPartnerIn(data.seats);
+    if (_selectedSeatIds.contains(seat.id)) {
+      setState(() {
         _selectedSeatIds.remove(seat.id);
-      } else {
-        _selectedSeatIds.add(seat.id);
-      }
+        if (partner != null) _selectedSeatIds.remove(partner.id);
+      });
+      return;
+    }
+    if (partner != null &&
+        data.statusOf(partner) != SeatReservationStatus.available) {
+      showTopNotice(
+        Overlay.of(context, rootOverlay: true),
+        '${seat.label} is a sweetbox (couple seat) and ${partner.label} is '
+        'taken, so it cannot be booked.',
+      );
+      return;
+    }
+    setState(() {
+      _selectedSeatIds.add(seat.id);
+      if (partner != null) _selectedSeatIds.add(partner.id);
     });
   }
 
@@ -113,9 +247,9 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
   Future<void> _continue(SeatSelectionArgs args, ShowtimeSeatsData data) async {
     final seats = _selectedSeats(data);
 
-    final seatsTaken = await Navigator.pushNamed(
+    await Navigator.pushNamed(
       context,
-      AppRoutes.bookingSummary,
+      AppRoutes.bookingSummary(args.showtime.id),
       arguments: BookingDraft(
         movie: args.movie,
         showtime: args.showtime,
@@ -123,9 +257,8 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
       ),
     );
 
-    // The summary returns true when some seats were taken before the booking
-    // was created: reload the map so the customer can pick again.
-    if (seatsTaken == true && mounted) {
+    // A summary may release its hold or lose seats to another customer.
+    if (mounted) {
       await _loadSeatMap();
     }
   }
@@ -135,100 +268,241 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
     final args = _args;
 
     if (args == null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Seat Selection')),
-        body: const ErrorState(
-          title: 'Showtime not found',
-          message: 'Please return and select a showtime again.',
-        ),
+      final error = _errorMessage;
+      return CinemaPage(
+        title: 'Seat Selection',
+        child: _showtimeRequested && _isLoading
+            ? const LoadingState(message: 'Loading showtime...')
+            : _showtimeRequested && error != null
+            ? ErrorState(
+                title: 'Unable to load the showtime',
+                message: error,
+                onRetry: _retryShowtime,
+              )
+            : const ErrorState(
+                title: 'Showtime not found',
+                message: 'Please return and select a showtime again.',
+              ),
       );
     }
 
     final showtime = args.showtime;
     final data = _data;
-    final totalPrice = _selectedSeatIds.length * showtime.price;
-    final selectedLabels = _selectedSeats(data)
-        .map((seat) => seat.label)
-        .join(', ');
+    final selectedSeats = _selectedSeats(data);
+    final totalPrice = selectedSeats.fold(
+      0.0,
+      (total, seat) => total + showtime.priceOf(seat.type),
+    );
+    final selectedLabels = selectedSeats.map((seat) => seat.label).join(', ');
+    final onContinue = data != null && _selectedSeatIds.isNotEmpty
+        ? () => _continue(args, data)
+        : null;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Select Seats')),
-      body: SafeArea(
-        child: Column(
-          children: [
-            _ShowtimeSummary(movie: args.movie, showtime: showtime),
-            const Divider(height: 1, color: AppColors.border),
-            Expanded(child: _buildSeatMap(data)),
-            const Divider(height: 1, color: AppColors.border),
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.xl,
-                vertical: AppSpacing.lg,
-              ),
-              color: AppColors.surface,
-              child: SafeArea(
-                top: false,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
+    if (isDesktopLayout(context)) {
+      // Website: the seat map with the order summary next to it.
+      return Scaffold(
+        body: CinemaBackground(
+          child: SafeArea(
+            child: Padding(
+              padding: pagePadding(context, AppSpacing.lg),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const CinemaPageHeader(title: 'Select Seats'),
+                  const SizedBox(height: AppSpacing.lg),
+                  Expanded(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // A large total shrinks instead of pushing the
-                        // button off narrow screens.
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    '${_selectedSeatIds.length} seat(s)',
-                                    style: AppTextStyles.bodySmall,
-                                  ),
-                                  if (selectedLabels.isNotEmpty)
-                                    Flexible(
-                                      child: Text(
-                                        ' • $selectedLabels',
-                                        style: AppTextStyles.bodySmall.copyWith(
-                                          color: AppColors.textPrimary,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                ],
-                              ),
-                              FittedBox(
-                                fit: BoxFit.scaleDown,
-                                alignment: Alignment.centerLeft,
-                                child: Text(
-                                  formatVnd(totalPrice),
-                                  style: AppTextStyles.heading2,
-                                ),
-                              ),
-                            ],
+                          child: CinemaPanel(
+                            surfaceOpacity: 0.45,
+                            child: _buildSeatMap(showtime, data),
                           ),
                         ),
-                        const SizedBox(width: AppSpacing.lg),
-                        AppButton(
-                          label: 'Continue',
-                          onPressed: data != null && _selectedSeatIds.isNotEmpty
-                              ? () => _continue(args, data)
-                              : null,
+                        const SizedBox(width: AppSpacing.xl),
+                        SizedBox(
+                          width: 360,
+                          child: SingleChildScrollView(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                CinemaPanel(
+                                  padding: EdgeInsets.zero,
+                                  surfaceOpacity: 0.8,
+                                  child: _ShowtimeSummary(
+                                    movie: args.movie,
+                                    showtime: showtime,
+                                    seats: data?.seats,
+                                  ),
+                                ),
+                                const SizedBox(height: AppSpacing.md),
+                                CinemaPanel(
+                                  surfaceOpacity: 0.8,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      const Text(
+                                        'Your seats',
+                                        style: AppTextStyles.title,
+                                      ),
+                                      const SizedBox(height: AppSpacing.sm),
+                                      if (selectedSeats.isEmpty)
+                                        const Text(
+                                          'Choose your seats on the map.',
+                                          style: AppTextStyles.bodySmall,
+                                        )
+                                      else
+                                        for (final seat in selectedSeats)
+                                          _SelectedSeatRow(
+                                            seat: seat,
+                                            price: showtime.priceOf(seat.type),
+                                          ),
+                                      const SizedBox(height: AppSpacing.lg),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            '${_selectedSeatIds.length} seat(s)',
+                                            style: AppTextStyles.bodySmall,
+                                          ),
+                                          const Spacer(),
+                                          Text(
+                                            formatVnd(totalPrice),
+                                            style: AppTextStyles.heading2
+                                                .copyWith(
+                                                  color: AppColors.primary,
+                                                ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: AppSpacing.lg),
+                                      AppButton(
+                                        label: 'Continue',
+                                        useGradient: true,
+                                        trailingIcon:
+                                            Icons.arrow_forward_rounded,
+                                        onPressed: onContinue,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
-          ],
+          ),
+        ),
+      );
+    }
+
+    return Scaffold(
+      body: CinemaBackground(
+        child: SafeArea(
+          child: Column(
+            children: [
+              const Padding(
+                padding: EdgeInsets.all(AppSpacing.lg),
+                child: CinemaPageHeader(title: 'Select Seats'),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                child: CinemaPanel(
+                  padding: EdgeInsets.zero,
+                  surfaceOpacity: 0.8,
+                  child: _ShowtimeSummary(
+                    movie: args.movie,
+                    showtime: showtime,
+                    seats: data?.seats,
+                  ),
+                ),
+              ),
+              Expanded(child: _buildSeatMap(showtime, data)),
+              Padding(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: CinemaPanel(
+                  surfaceOpacity: 0.72,
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: SafeArea(
+                    top: false,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          children: [
+                            // A large total shrinks instead of pushing the
+                            // button off narrow screens.
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      // Both parts shorten next to the
+                                      // Continue button on narrow phones.
+                                      Flexible(
+                                        child: Text(
+                                          '${_selectedSeatIds.length} seat(s)',
+                                          style: AppTextStyles.bodySmall,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      if (selectedLabels.isNotEmpty)
+                                        Flexible(
+                                          child: Text(
+                                            ' • $selectedLabels',
+                                            style: AppTextStyles.bodySmall
+                                                .copyWith(
+                                                  color: AppColors.textPrimary,
+                                                ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                  FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      formatVnd(totalPrice),
+                                      style: AppTextStyles.heading2.copyWith(
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.lg),
+                            AppButton(
+                              label: 'Continue',
+                              useGradient: true,
+                              trailingIcon: Icons.arrow_forward_rounded,
+                              onPressed: onContinue,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildSeatMap(ShowtimeSeatsData? data) {
+  Widget _buildSeatMap(Showtime showtime, ShowtimeSeatsData? data) {
     if (_isLoading) {
       return const LoadingState(message: 'Loading seats...');
     }
@@ -251,21 +525,86 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
 
     return _SeatMap(
       data: data,
+      showtime: showtime,
       selectedSeatIds: _selectedSeatIds,
       onSeatTap: _toggleSeat,
     );
   }
 }
 
+// A chosen seat in the website's order summary: label, type and price.
+class _SelectedSeatRow extends StatelessWidget {
+  const _SelectedSeatRow({required this.seat, required this.price});
+
+  final Seat seat;
+  final double price;
+
+  @override
+  Widget build(BuildContext context) {
+    final (_, border, text) = seatTypeColors(seat.type);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Row(
+        children: [
+          Container(
+            constraints: const BoxConstraints(minWidth: 44),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm,
+              vertical: AppSpacing.xs,
+            ),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.12),
+              borderRadius: AppRadius.borderRadiusSm,
+              border: Border.all(color: AppColors.primary),
+            ),
+            child: Text(
+              seat.label,
+              textAlign: TextAlign.center,
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Icon(Icons.event_seat, size: 16, color: border),
+          const SizedBox(width: AppSpacing.xs),
+          Expanded(
+            child: Text(
+              seatTypeLabel(seat.type),
+              style: AppTextStyles.bodySmall.copyWith(color: text),
+            ),
+          ),
+          Text(
+            formatVnd(price),
+            style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 // What is being booked: shown above the seat map.
 class _ShowtimeSummary extends StatelessWidget {
-  const _ShowtimeSummary({required this.movie, required this.showtime});
+  const _ShowtimeSummary({
+    required this.movie,
+    required this.showtime,
+    this.seats,
+  });
 
   final Movie movie;
   final Showtime showtime;
 
+  // The seats of the room once loaded: the price is the one of their types.
+  final List<Seat>? seats;
+
   @override
   Widget build(BuildContext context) {
+    final price = seatPriceLabel(
+      showtime,
+      types: seats?.map((seat) => seat.type),
+    );
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Row(
@@ -297,7 +636,7 @@ class _ShowtimeSummary extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
-                  '${showtime.roomLabel} • ${formatVnd(showtime.price)} / seat',
+                  '${showtime.roomLabel} • $price',
                   style: AppTextStyles.caption,
                 ),
               ],
@@ -312,11 +651,13 @@ class _ShowtimeSummary extends StatelessWidget {
 class _SeatMap extends StatelessWidget {
   const _SeatMap({
     required this.data,
+    required this.showtime,
     required this.selectedSeatIds,
     required this.onSeatTap,
   });
 
   final ShowtimeSeatsData data;
+  final Showtime showtime;
   final Set<int> selectedSeatIds;
   final void Function(Seat seat, SeatReservationStatus status) onSeatTap;
 
@@ -333,34 +674,33 @@ class _SeatMap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Group seats by row
-    final Map<String, List<Seat>> rows = {};
-    for (final seat in data.seats) {
-      rows.putIfAbsent(seat.row, () => []).add(seat);
-    }
-
-    // Sort rows alphabetically (A, B, C...)
-    final sortedRowKeys = rows.keys.toList()..sort();
-
-    // Sort seats in each row by seat number
-    for (final row in sortedRowKeys) {
-      rows[row]!.sort((a, b) => a.number.compareTo(b.number));
-    }
-
-    final seatsPerRow = rows.values.fold<int>(
-      0,
-      (widest, row) => math.max(widest, row.length),
-    );
+    final rows = seatRowsOf(data.seats);
+    final seatsPerRow = widestRowOf(rows);
+    final types = {for (final seat in data.seats) seat.type.toUpperCase()};
+    // Prices tell the seat types apart only when they differ.
+    final showPrices = seatPricesOf(showtime, types: types).length > 1;
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final layout = _SeatMapLayout.fit(
+        final layout = SeatMapLayout.fit(
           maxWidth: constraints.maxWidth,
           seatsPerRow: seatsPerRow,
         );
         final fitsScreen = layout.mapWidth(seatsPerRow) <= constraints.maxWidth;
+        final legend = ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: constraints.maxWidth - SeatMapLayout.padding * 2,
+          ),
+          child: SeatLegend(
+            types: types,
+            priceOf: showPrices ? showtime.priceOf : null,
+          ),
+        );
 
-        return InteractiveViewer(
+        Widget viewer(
+          BoxConstraints box, {
+          Widget? legend,
+        }) => InteractiveViewer(
           // Pinch to zoom in on small seats; very wide rooms can also be
           // zoomed out and panned.
           minScale: fitsScreen ? 1 : 0.5,
@@ -370,153 +710,69 @@ class _SeatMap extends StatelessWidget {
           // leaving a gap below the seats.
           child: ConstrainedBox(
             constraints: BoxConstraints(
-              minWidth: constraints.maxWidth,
-              minHeight: constraints.maxHeight,
+              minWidth: box.maxWidth,
+              minHeight: box.maxHeight,
             ),
             child: Center(
               child: Padding(
-                padding: const EdgeInsets.all(_SeatMapLayout.padding),
+                padding: const EdgeInsets.all(SeatMapLayout.padding),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _ScreenIndicator(width: layout.seatsWidth(seatsPerRow)),
-                    const SizedBox(height: AppSpacing.xl),
-                    ...sortedRowKeys.map((rowKey) {
-                      final rowSeats = rows[rowKey]!;
-                      return Padding(
-                        padding: EdgeInsets.only(bottom: layout.gap),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _RowLabel(label: rowKey),
-                            const SizedBox(width: _SeatMapLayout.labelGap),
-                            for (final (index, seat) in rowSeats.indexed) ...[
-                              if (index > 0) SizedBox(width: layout.gap),
-                              SeatItem(
-                                label: seat.number.toString(),
-                                state: _itemStateOf(seat, data.statusOf(seat)),
-                                size: layout.seatSize,
-                                onTap: () =>
-                                    onSeatTap(seat, data.statusOf(seat)),
-                              ),
-                            ],
-                            const SizedBox(width: _SeatMapLayout.labelGap),
-                            _RowLabel(label: rowKey),
-                          ],
-                        ),
-                      );
-                    }),
-                    const SizedBox(height: AppSpacing.lg),
+                    SeatScreenIndicator(width: layout.seatsWidth(seatsPerRow)),
+                    const SizedBox(height: AppSpacing.sm),
+                    // Wraps instead of widening the column: the map is
+                    // laid out unconstrained, so a long line would push
+                    // the seats off-centre (large text sizes, narrow
+                    // phones).
                     ConstrainedBox(
                       constraints: BoxConstraints(
-                        maxWidth:
-                            constraints.maxWidth - _SeatMapLayout.padding * 2,
+                        maxWidth: box.maxWidth - SeatMapLayout.padding * 2,
                       ),
-                      child: const SeatLegend(),
+                      child: Text(
+                        '${rows.length} rows • ${data.seats.length} seats • Pinch to zoom',
+                        style: AppTextStyles.caption,
+                        textAlign: TextAlign.center,
+                      ),
                     ),
+                    const SizedBox(height: AppSpacing.xl),
+                    SeatMapRows(
+                      rows: rows,
+                      layout: layout,
+                      seatBuilder: (seat, size) => SeatItem(
+                        label: seat.number.toString(),
+                        state: _itemStateOf(seat, data.statusOf(seat)),
+                        type: seat.type,
+                        size: size,
+                        onTap: () => onSeatTap(seat, data.statusOf(seat)),
+                      ),
+                    ),
+                    if (legend != null) ...[
+                      const SizedBox(height: AppSpacing.lg),
+                      legend,
+                    ],
                   ],
                 ),
               ),
             ),
           ),
         );
+
+        if (fitsScreen) return viewer(constraints, legend: legend);
+        // A map wider than the screen is panned: its key stays in view below
+        // it instead of moving (and being cut off) with the seats.
+        return Column(
+          children: [
+            Expanded(child: LayoutBuilder(builder: (_, box) => viewer(box))),
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: SeatMapLayout.padding,
+              ),
+              child: legend,
+            ),
+          ],
+        );
       },
     );
   }
-}
-
-// Sizes the seat map so the widest row fits the screen: seats shrink on
-// phones (down to [minSeat]) and grow up to [maxSeat] on larger screens.
-class _SeatMapLayout {
-  const _SeatMapLayout({required this.seatSize, required this.gap});
-
-  factory _SeatMapLayout.fit({
-    required double maxWidth,
-    required int seatsPerRow,
-  }) {
-    final seats = math.max(seatsPerRow, 1);
-    final gap = maxWidth < 600 ? 6.0 : AppSpacing.md;
-    final available =
-        maxWidth -
-        padding * 2 -
-        (labelWidth + labelGap) * 2 -
-        gap * (seats - 1);
-
-    return _SeatMapLayout(
-      seatSize: (available / seats).clamp(minSeat, maxSeat).toDouble(),
-      gap: gap,
-    );
-  }
-
-  static const padding = AppSpacing.md;
-  static const labelWidth = 20.0;
-  static const labelGap = 6.0;
-  static const minSeat = 20.0;
-  static const maxSeat = 44.0;
-
-  final double seatSize;
-  final double gap;
-
-  double seatsWidth(int seats) => seats * seatSize + (seats - 1) * gap;
-
-  double mapWidth(int seats) {
-    return seatsWidth(seats) + (labelWidth + labelGap) * 2 + padding * 2;
-  }
-}
-
-class _RowLabel extends StatelessWidget {
-  const _RowLabel({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: _SeatMapLayout.labelWidth,
-      child: Text(
-        label,
-        style: AppTextStyles.bodySmall.copyWith(
-          color: AppColors.textPrimary,
-          fontWeight: FontWeight.w600,
-        ),
-        textAlign: TextAlign.center,
-      ),
-    );
-  }
-}
-
-class _ScreenIndicator extends StatelessWidget {
-  const _ScreenIndicator({required this.width});
-
-  final double width;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        CustomPaint(size: Size(width, 24), painter: _ScreenCurvePainter()),
-        const SizedBox(height: AppSpacing.sm),
-        const Text('SCREEN', style: AppTextStyles.caption),
-      ],
-    );
-  }
-}
-
-class _ScreenCurvePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppColors.primary.withAlpha(128)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.0;
-
-    final path = Path()
-      ..moveTo(0, size.height)
-      ..quadraticBezierTo(size.width / 2, 0, size.width, size.height);
-
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

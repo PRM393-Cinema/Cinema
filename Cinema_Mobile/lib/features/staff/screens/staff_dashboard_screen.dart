@@ -1,0 +1,149 @@
+import 'package:flutter/material.dart';
+
+import '../../../app/routes/app_routes.dart';
+import '../../../app/theme/app_spacing.dart';
+import '../../../app/theme/app_text_styles.dart';
+import '../../../core/utils/layout.dart';
+import '../../../core/widgets/cinema_account_widgets.dart';
+import '../../../core/widgets/error_state.dart';
+import '../../../core/widgets/loading_state.dart';
+import '../../../data/models/booking.dart';
+import '../../../data/services/staff_service.dart';
+import '../../../core/widgets/responsive_columns.dart';
+import '../../admin/widgets/admin_layout.dart';
+import '../../admin/widgets/admin_page.dart';
+import '../widgets/today_at_cinema.dart';
+import '../widgets/staff_feedback.dart';
+
+class StaffDashboardScreen extends StatefulWidget {
+  const StaffDashboardScreen({required this.service, super.key});
+  final StaffService service;
+  @override
+  State<StaffDashboardScreen> createState() => _StaffDashboardScreenState();
+}
+
+class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
+  List<(String, int, IconData)>? _counts;
+  List<Booking> _pending = [];
+  bool _loading = false;
+  int _refreshes = 0;
+  String? _error;
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    if (_loading) return;
+    setState(() {
+      _loading = true;
+      _error = null;
+      _refreshes++;
+    });
+    try {
+      final pending = await widget.service.bookings(status: 'PENDING');
+      final refunds = await widget.service.refunds(status: 'PENDING');
+      if (!mounted) return;
+      setState(() {
+        _counts = [
+          ('Pending bookings', pending.totalCount, Icons.schedule),
+          ('Pending refunds', refunds.totalCount, Icons.currency_exchange),
+        ];
+        _pending = pending.items.take(5).toList();
+      });
+    } on Object catch (error) {
+      if (mounted) setState(() => _error = staffError(error));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => AdminPage(
+    title: 'Staff dashboard',
+    section: AdminSection.dashboard,
+    // The counter's two everyday jobs, one tap away.
+    actions: [
+      IconButton(
+        tooltip: 'Sell tickets',
+        icon: const Icon(Icons.point_of_sale_outlined),
+        onPressed: () =>
+            Navigator.pushNamed(context, AppRoutes.staffCreateBooking),
+      ),
+      IconButton(
+        tooltip: 'Check in',
+        icon: const Icon(Icons.qr_code_scanner_rounded),
+        onPressed: () => Navigator.pushNamed(context, AppRoutes.staffCheckIn),
+      ),
+    ],
+    child: RefreshIndicator(
+      onRefresh: _load,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: pagePadding(context, AppSpacing.lg),
+        children: [
+          TodayAtCinema(service: widget.service, refresh: _refreshes),
+          const SizedBox(height: AppSpacing.xl),
+          const Text('Needs attention', style: AppTextStyles.title),
+          const SizedBox(height: AppSpacing.sm),
+          const Text(
+            'Bookings waiting for payment and refund requests to review.',
+            style: AppTextStyles.bodySmall,
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          if (_loading)
+            const LoadingState(message: 'Loading shift overview...')
+          else if (_error != null)
+            ErrorState(
+              title: 'Unable to load dashboard',
+              message: _error!,
+              onRetry: _load,
+            )
+          else if (_counts != null) ...[
+            StatTiles(tiles: _counts!),
+            const SizedBox(height: AppSpacing.xl),
+            const Text('Pending bookings', style: AppTextStyles.title),
+            const SizedBox(height: AppSpacing.md),
+            if (_pending.isEmpty)
+              const Text(
+                'No pending bookings.',
+                style: AppTextStyles.bodySmall,
+              ),
+            CardColumns(
+              runSpacing: 0,
+              children: [
+                for (final booking in _pending)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                    child: CinemaPanel(
+                      surfaceOpacity: 0.8,
+                      child: ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                          booking.bookingCode,
+                          style: AppTextStyles.title,
+                        ),
+                        subtitle: Text(
+                          booking.movieTitle ?? 'Movie',
+                          style: AppTextStyles.bodySmall,
+                        ),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () async {
+                          await Navigator.pushNamed(
+                            context,
+                            AppRoutes.staffRecord('bookings', booking.id),
+                          );
+                          if (mounted) _load();
+                        },
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    ),
+  );
+}

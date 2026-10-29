@@ -107,11 +107,58 @@ namespace BookingService.Controllers
             return Ok(result);
         }
 
+        // Sơ đồ ghế đã đặt của một suất: mỗi ghế kèm vé đang giữ nó và trạng thái check-in
+        [HttpGet("showtime/{showtimeId:long}/seats")]
+        [Authorize(Policy = AuthorizationPolicies.StaffOrAdmin)]
+        public async Task<ActionResult<List<ShowtimeSeatBookingResponse>>> GetSeatBookings(
+            long showtimeId)
+        {
+            var result = await _bookingService
+                .GetSeatBookingsOfShowtimeAsync(showtimeId);
+
+            return Ok(result);
+        }
+
+        // Vé của các suất chiếu cho dashboard: ?showtimeIds=1&showtimeIds=2, hoặc ?start=&end= (giờ chiếu)
+        [HttpGet("showtimes/stats")]
+        [Authorize(Policy = AuthorizationPolicies.StaffOrAdmin)]
+        public async Task<ActionResult<List<ShowtimeBookingStatsResponse>>> GetShowtimeStats(
+            [FromQuery] List<long>? showtimeIds,
+            [FromQuery] DateTime? start,
+            [FromQuery] DateTime? end)
+        {
+            var result = await _bookingService
+                .GetShowtimeStatsAsync(showtimeIds, start, end);
+
+            return Ok(result);
+        }
+
+        // Tra vé theo mã: Staff quét QR trên vé của khách hoặc nhập mã vé
+        [HttpGet("code/{bookingCode}")]
+        [Authorize(Policy = AuthorizationPolicies.StaffOrAdmin)]
+        public async Task<ActionResult<BookingResponse>> GetByCode(string bookingCode)
+        {
+            var result = await _bookingService.GetBookingByCodeAsync(bookingCode);
+
+            return Ok(result);
+        }
+
+        // Check-in tại rạp: vé đã thanh toán, mỗi vé một lần, trong khung giờ quanh giờ chiếu (CheckIn)
+        [HttpPost("{id:long}/check-in")]
+        [Authorize(Policy = AuthorizationPolicies.StaffOrAdmin)]
+        public async Task<ActionResult<BookingResponse>> CheckIn(long id)
+        {
+            var result = await _bookingService.CheckInAsync(id);
+
+            return Ok(result);
+        }
+
         [HttpPost]
         public async Task<ActionResult<BookingResponse>> Create(
             [FromBody] BookingRequest request)
         {
-            // Khách tự đặt: user và email nhận vé lấy từ token. Staff đặt hộ thì gửi userId + email của khách
+            // Khách tự đặt: user và email nhận vé lấy từ token. Staff đặt hộ thì gửi userId + email của khách,
+            // hoặc bỏ trống userId cho khách vãng lai (email / số điện thoại nếu khách cho)
             if (!User.IsStaffOrAdmin())
             {
                 request.UserId = User.GetCurrentUserId();
@@ -149,8 +196,17 @@ namespace BookingService.Controllers
             return Ok(result);
         }
 
-        // Khách: huỷ booking chưa thanh toán, hoặc booking đã thanh toán khi còn ít nhất 2 giờ trước giờ chiếu
-        // (hoàn 100%). Staff/Admin huỷ được mọi lúc. Đã thanh toán thì yêu cầu hoàn tiền được tạo tự động.
+        [HttpPut("{id:long}/details")]
+        public async Task<ActionResult<BookingResponse>> UpdateDetails(long id, [FromBody] BookingRequest request)
+        {
+            var existing = await _bookingService.GetBookingByIdAsync(id);
+            if (existing.UserId != User.GetCurrentUserId()) return Forbid();
+            request.UserId = User.GetCurrentUserId();
+            return Ok(await _bookingService.UpdatePendingBookingAsync(id, request));
+        }
+
+        // Khách: huỷ vé chưa trả tiền; vé đã trả tiền chuyển REFUND_PENDING và giữ ghế đến khi hoàn tất.
+        // Staff/Admin vẫn huỷ trực tiếp. Yêu cầu hoàn tiền được tạo qua outbox.
         [HttpPost("{id:long}/cancel")]
         [Authorize(Policy = AuthorizationPolicies.UserOrStaff)]
         public async Task<ActionResult<BookingResponse>> Cancel(

@@ -1,30 +1,48 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/widgets/trailer_player.dart';
+
 import '../../../app/routes/app_routes.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_radius.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
 import '../../../core/network/api_exception.dart';
-import '../../../core/session/auth_guard.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/utils/layout.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_network_image.dart';
 import '../../../core/widgets/empty_state.dart';
+import '../../../core/widgets/cinema_page.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_state.dart';
+import '../../../core/widgets/cinema_background.dart';
+import '../../../core/widgets/cinema_account_widgets.dart';
 import '../../../data/models/booking_draft.dart';
 import '../../../data/models/movie.dart';
 import '../../../data/models/showtime.dart';
 import '../../../data/repositories/catalog_repository.dart';
+import '../../../data/repositories/booking_repository.dart';
+import '../../seat/widgets/seat_type_style.dart';
 import '../../showtime/widgets/showtime_section.dart';
+import '../../../core/widgets/age_rating_badge.dart';
+import '../../review/widgets/review_widgets.dart';
 
 // Movie details with its upcoming showtimes, so customers pick a time here
 // and go straight to the seat map.
 class MovieDetailScreen extends StatefulWidget {
-  const MovieDetailScreen({required this.catalogRepository, super.key});
+  const MovieDetailScreen({
+    required this.catalogRepository,
+    required this.bookingRepository,
+    this.movieId,
+    super.key,
+  });
 
   final CatalogRepository catalogRepository;
+  final BookingRepository bookingRepository;
+
+  // Set when the screen is opened from its URL: the movie is loaded by id.
+  final int? movieId;
 
   @override
   State<MovieDetailScreen> createState() => _MovieDetailScreenState();
@@ -32,10 +50,20 @@ class MovieDetailScreen extends StatefulWidget {
 
 class _MovieDetailScreenState extends State<MovieDetailScreen> {
   Movie? _movie;
+
+  // The release date of a movie that is not out yet.
+  DateTime? get _comingSoonDate {
+    final movie = _movie;
+    return movie != null && movie.isComingSoon() ? movie.releaseDate : null;
+  }
+
   List<Showtime> _showtimes = const [];
   bool _isLoading = true;
   String? _errorMessage;
   Showtime? _selectedShowtime;
+  bool _movieRequested = false;
+  bool _isLoadingMovie = false;
+  String? _movieError;
 
   @override
   void didChangeDependencies() {
@@ -45,7 +73,47 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     if (_movie == null && args is Movie) {
       _movie = args;
       _loadShowtimes();
+    } else if (_movie == null && !_movieRequested && widget.movieId != null) {
+      _movieRequested = true;
+      _isLoadingMovie = true;
+      _loadMovie();
     }
+  }
+
+  // Opened from its URL (web refresh or shared link): load the movie first.
+  Future<void> _loadMovie() async {
+    try {
+      final movie = await widget.catalogRepository.getMovie(widget.movieId!);
+      if (!mounted) return;
+      setState(() {
+        _movie = movie;
+        _isLoadingMovie = false;
+      });
+      await _loadShowtimes();
+    } on ApiException catch (error) {
+      _showMovieError(error.statusCode == 404 ? null : error.message);
+    } on FormatException {
+      _showMovieError('The server returned an invalid response.');
+    } on Object {
+      _showMovieError('Something went wrong. Please try again.');
+    }
+  }
+
+  void _retryMovie() {
+    setState(() {
+      _isLoadingMovie = true;
+      _movieError = null;
+    });
+    _loadMovie();
+  }
+
+  // A null message means the movie does not exist.
+  void _showMovieError(String? message) {
+    if (!mounted) return;
+    setState(() {
+      _isLoadingMovie = false;
+      _movieError = message;
+    });
   }
 
   Future<void> _loadShowtimes() async {
@@ -89,14 +157,9 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
   void _continueToSeats(Movie movie, Showtime showtime) {
     final args = SeatSelectionArgs(movie: movie, showtime: showtime);
 
-    AuthGuard.requireAuthentication(
-      context,
-      pendingRoute: AppRoutes.seatSelection,
-      pendingArguments: args,
-      onAuthenticated: () {
-        Navigator.pushNamed(context, AppRoutes.seatSelection, arguments: args);
-      },
-    );
+    final route = AppRoutes.seatSelection(showtime.id);
+
+    Navigator.pushNamed(context, route, arguments: args);
   }
 
   @override
@@ -104,54 +167,107 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     final movie = _movie;
 
     if (movie == null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Movie Detail')),
-        body: const ErrorState(
-          title: 'Movie not found',
-          message: 'Please return home and select a movie again.',
-        ),
+      final error = _movieError;
+      return CinemaPage(
+        title: 'Movie Detail',
+        child: _isLoadingMovie
+            ? const LoadingState(message: 'Loading movie...')
+            : error != null
+            ? ErrorState(
+                title: 'Unable to load the movie',
+                message: error,
+                onRetry: _retryMovie,
+              )
+            : const ErrorState(
+                title: 'Movie not found',
+                message: 'Please return home and select a movie again.',
+              ),
       );
     }
 
     final selected = _selectedShowtime;
 
     return Scaffold(
-      appBar: AppBar(title: Text(movie.title)),
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final isWide = constraints.maxWidth >= 760;
+      extendBody: true,
+      appBar: AppBar(title: const Text('Movie Detail')),
+      body: CinemaBackground(
+        child: SafeArea(
+          bottom: false,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isWide = constraints.maxWidth >= 760;
+              final desktop = isDesktopLayout(context);
+              // On the website the page lines up with the navigation bar.
+              final side = desktop
+                  ? AppSpacing.lg
+                  : (isWide ? AppSpacing.xxl : AppSpacing.lg);
 
-            return RefreshIndicator(
-              onRefresh: _loadShowtimes,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 1040),
-                    child: Padding(
-                      padding: EdgeInsets.all(
-                        isWide ? AppSpacing.xxl : AppSpacing.lg,
+              return RefreshIndicator(
+                onRefresh: _loadShowtimes,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: desktop
+                            ? pageMaxWidth + 2 * AppSpacing.lg
+                            : 1040,
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _MovieOverview(movie: movie, isWide: isWide),
-                          const SizedBox(height: AppSpacing.xxl),
-                          const Text(
-                            'Showtimes',
-                            style: AppTextStyles.heading2,
-                          ),
-                          const SizedBox(height: AppSpacing.md),
-                          _buildShowtimes(),
-                        ],
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          side,
+                          AppSpacing.xl,
+                          side,
+                          AppSpacing.xl + MediaQuery.paddingOf(context).bottom,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            CinemaPanel(
+                              child: _MovieOverview(
+                                movie: movie,
+                                isWide: isWide,
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.xxl),
+                            const Row(
+                              children: [
+                                Icon(
+                                  Icons.schedule_rounded,
+                                  color: AppColors.primary,
+                                ),
+                                SizedBox(width: AppSpacing.sm),
+                                Flexible(
+                                  child: Text(
+                                    'Showtimes',
+                                    style: AppTextStyles.heading2,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                            const Text(
+                              'Choose your cinema moment.',
+                              style: AppTextStyles.bodySmall,
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+                            _buildShowtimes(),
+                            const SizedBox(height: AppSpacing.xxl),
+                            MovieReviewsSection(
+                              movie: movie,
+                              repository: widget.bookingRepository,
+                              load: () => widget.catalogRepository
+                                  .getMovieReviews(movie.id),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
       bottomNavigationBar: _SelectionBar(
@@ -180,14 +296,16 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     }
 
     if (_showtimes.isEmpty) {
+      final release = _comingSoonDate;
       return EmptyState(
         icon: Icons.event_busy_outlined,
-        title: 'No showtimes available',
-        message: 'There are no upcoming showtimes for this movie yet.',
-        action: AppButton.secondary(
-          label: 'Refresh',
-          onPressed: _loadShowtimes,
-        ),
+        title: release == null
+            ? 'No showtimes available'
+            : 'Opens ${formatDate(release)}',
+        message: release == null
+            ? 'There are no upcoming showtimes for this movie yet.'
+            : 'This movie is coming soon. Showtimes will be added closer '
+                  'to the release.',
       );
     }
 
@@ -209,44 +327,69 @@ class _MovieOverview extends StatelessWidget {
   final Movie movie;
   final bool isWide;
 
+  Uri? get _trailer {
+    final uri = Uri.tryParse(movie.trailerUrl.trim());
+    return uri != null && (uri.scheme == 'https' || uri.scheme == 'http')
+        ? uri
+        : null;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final trailer = _trailer;
     final synopsis = movie.description.isEmpty
         ? null
         : _Synopsis(description: movie.description);
 
-    // Poster beside the facts keeps the title and details on the first
-    // screen. Wide screens also put the synopsis in that column.
+    final poster = AppNetworkImage(
+      key: const Key('movieOverviewPoster'),
+      imageUrl: movie.posterUrl,
+      width: isWide ? 220 : double.infinity,
+      height: isWide ? 330 : 200,
+      fit: BoxFit.contain,
+      borderRadius: AppRadius.borderRadiusLg,
+    );
+    final facts = _MovieFacts(movie: movie, isWide: isWide);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            AppNetworkImage(
-              imageUrl: movie.posterUrl,
-              width: isWide ? 220 : 116,
-              height: isWide ? 330 : 174,
-              borderRadius: AppRadius.borderRadiusLg,
-            ),
-            SizedBox(width: isWide ? AppSpacing.xxl : AppSpacing.lg),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _MovieFacts(movie: movie, isWide: isWide),
-                  if (isWide && synopsis != null) ...[
-                    const SizedBox(height: AppSpacing.xl),
-                    synopsis,
+        if (!isWide) ...[
+          poster,
+          const SizedBox(height: AppSpacing.lg),
+          facts,
+        ] else
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              poster,
+              const SizedBox(width: AppSpacing.xxl),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    facts,
+                    if (synopsis != null) ...[
+                      const SizedBox(height: AppSpacing.xl),
+                      synopsis,
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
         if (!isWide && synopsis != null) ...[
           const SizedBox(height: AppSpacing.xl),
           synopsis,
+        ],
+        if (trailer != null) ...[
+          const SizedBox(height: AppSpacing.lg),
+          AppButton.secondary(
+            key: const Key('watchTrailer'),
+            label: 'Watch trailer',
+            leadingIcon: Icons.play_circle_outline,
+            onPressed: () => showMovieTrailer(context, trailer, movie.title),
+          ),
         ],
       ],
     );
@@ -266,22 +409,56 @@ class _MovieFacts extends StatelessWidget {
       children: [
         Text(
           movie.title,
+          key: const Key('movieOverviewTitle'),
           style: isWide ? AppTextStyles.display : AppTextStyles.heading2,
         ),
         const SizedBox(height: AppSpacing.md),
         Wrap(
           spacing: AppSpacing.sm,
           runSpacing: AppSpacing.sm,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            if (movie.releaseYear.isNotEmpty)
-              _InfoPill(label: movie.releaseYear),
-            _InfoPill(label: movie.durationText),
-            if (movie.language.isNotEmpty) _InfoPill(label: movie.language),
+            AgeRatingBadge(rating: movie.ageRating, large: true),
+            if (movie.isComingSoon())
+              Text(
+                'Coming ${formatDate(movie.releaseDate!)}',
+                key: const Key('comingSoonPill'),
+                style: AppTextStyles.bodySmall,
+              )
+            else if (movie.releaseYear.isNotEmpty)
+              Text(movie.releaseYear, style: AppTextStyles.bodySmall),
+            Text(movie.durationText, style: AppTextStyles.bodySmall),
           ],
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Text(
+          movie.ageRating.meaning,
+          key: const Key('ageRatingMeaning'),
+          style: AppTextStyles.bodySmall,
         ),
         if (movie.genre.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.md),
-          Text(movie.genre, style: AppTextStyles.title),
+          Text(movie.genre, style: AppTextStyles.body),
+        ],
+        if (movie.language.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.xs),
+          Text(movie.language, style: AppTextStyles.bodySmall),
+        ],
+        if (movie.director.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            'Director: ${movie.director}',
+            key: const Key('movieDirector'),
+            style: AppTextStyles.body,
+          ),
+        ],
+        if (movie.cast.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            'Cast: ${movie.cast}',
+            key: const Key('movieCast'),
+            style: AppTextStyles.bodySmall,
+          ),
         ],
       ],
     );
@@ -298,37 +475,13 @@ class _Synopsis extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Synopsis', style: AppTextStyles.caption),
+        const Text('Synopsis', style: AppTextStyles.title),
         const SizedBox(height: AppSpacing.sm),
         ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 680),
           child: Text(description, style: AppTextStyles.body),
         ),
       ],
-    );
-  }
-}
-
-class _InfoPill extends StatelessWidget {
-  const _InfoPill({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: AppRadius.borderRadiusSm,
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.sm,
-        ),
-        child: Text(label, style: AppTextStyles.caption),
-      ),
     );
   }
 }
@@ -343,67 +496,123 @@ class _SelectionBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final selected = showtime;
+    if (isDesktopLayout(context)) return _desktop(context, selected);
 
-    return Container(
+    return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.lg,
-        AppSpacing.md,
+        AppSpacing.sm,
         AppSpacing.lg,
-        AppSpacing.lg,
-      ),
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        border: Border(top: BorderSide(color: AppColors.border)),
+        AppSpacing.sm,
       ),
       child: SafeArea(
         top: false,
-        child: Center(
-          heightFactor: 1,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (selected == null)
-                  const Text(
-                    'Choose a showtime to continue.',
-                    style: AppTextStyles.bodySmall,
-                    textAlign: TextAlign.center,
-                  )
-                else
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          '${formatShortDate(selected.startTime)} • '
-                          '${formatTime(selected.startTime)} • '
-                          '${selected.roomLabel}',
-                          style: AppTextStyles.bodySmall.copyWith(
-                            color: AppColors.textPrimary,
+        child: CinemaPanel(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          surfaceOpacity: 0.72,
+          child: Center(
+            heightFactor: 1,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (selected == null)
+                    const Text(
+                      'Choose a showtime to continue.',
+                      style: AppTextStyles.bodySmall,
+                      textAlign: TextAlign.center,
+                    )
+                  else
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            '${formatShortDate(selected.startTime)} • '
+                            '${formatTime(selected.startTime)} • '
+                            '${selected.roomLabel}',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.textPrimary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                      const SizedBox(width: AppSpacing.md),
-                      Text(
-                        '${formatVnd(selected.price)} / seat',
-                        style: AppTextStyles.bodySmall,
-                      ),
-                    ],
+                        const SizedBox(width: AppSpacing.md),
+                        Text(
+                          seatPriceLabel(selected),
+                          style: AppTextStyles.bodySmall,
+                        ),
+                      ],
+                    ),
+                  const SizedBox(height: AppSpacing.md),
+                  AppButton(
+                    label: 'Continue to Seats',
+                    leadingIcon: Icons.event_seat_outlined,
+                    useGradient: true,
+                    onPressed: onContinue,
                   ),
-                const SizedBox(height: AppSpacing.md),
-                AppButton(
-                  label: 'Continue to Seats',
-                  leadingIcon: Icons.event_seat_outlined,
-                  onPressed: onContinue,
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
       ),
     );
   }
+
+  // Website: one row as wide as the page, the button on the right.
+  Widget _desktop(BuildContext context, Showtime? selected) => Padding(
+    padding: centeredPadding(
+      context,
+      AppSpacing.lg,
+      maxWidth: pageMaxWidth,
+    ).copyWith(top: AppSpacing.sm, bottom: AppSpacing.md),
+    child: CinemaPanel(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.md,
+      ),
+      surfaceOpacity: 0.85,
+      child: Row(
+        children: [
+          Expanded(
+            child: selected == null
+                ? const Text(
+                    'Choose a showtime to continue.',
+                    style: AppTextStyles.body,
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '${formatShortDate(selected.startTime)} • '
+                        '${formatTime(selected.startTime)} • '
+                        '${selected.roomLabel}',
+                        style: AppTextStyles.title,
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        seatPriceLabel(selected),
+                        style: AppTextStyles.bodySmall,
+                      ),
+                    ],
+                  ),
+          ),
+          const SizedBox(width: AppSpacing.lg),
+          SizedBox(
+            width: 280,
+            child: AppButton(
+              label: 'Continue to Seats',
+              leadingIcon: Icons.event_seat_outlined,
+              useGradient: true,
+              onPressed: onContinue,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }

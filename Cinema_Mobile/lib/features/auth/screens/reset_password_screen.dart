@@ -4,11 +4,16 @@ import '../../../app/routes/app_routes.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
+import '../../../core/session/session_state.dart';
+import '../widgets/auth_scaffold.dart';
+import '../widgets/auth_success_dialog.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../core/utils/account_validators.dart';
+import '../../../core/widgets/app_button.dart';
+import '../../../core/widgets/cinema_page.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../auth_error_messages.dart';
-import '../widgets/auth_scaffold.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   const ResetPasswordScreen({required this.authRepository, super.key});
@@ -23,8 +28,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _otpController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmController = TextEditingController();
 
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -32,6 +39,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   void dispose() {
     _otpController.dispose();
     _passwordController.dispose();
+    _confirmController.dispose();
     super.dispose();
   }
 
@@ -54,12 +62,34 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       );
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Your password has been reset. Please sign in.'),
+      await widget.authRepository.logout();
+      if (!mounted) return;
+      SessionProvider.of(context).clear();
+      await showGeneralDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        barrierLabel: 'Password reset successful',
+        barrierColor: Colors.black.withValues(alpha: 0.72),
+        transitionDuration: MediaQuery.disableAnimationsOf(context)
+            ? Duration.zero
+            : const Duration(milliseconds: 180),
+        pageBuilder: (context, _, _) => const Material(
+          type: MaterialType.transparency,
+          child: AuthSuccessDialog(
+            title: 'Password reset!',
+            message: 'Your password has been updated.\nPlease sign in again.',
+            footer: 'Taking you to sign in…',
+          ),
         ),
+        transitionBuilder: (context, animation, secondaryAnimation, child) =>
+            FadeTransition(opacity: animation, child: child),
       );
-      Navigator.pushReplacementNamed(context, AppRoutes.login);
+      if (!mounted) return;
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        AppRoutes.login,
+        (route) => false,
+      );
     } on ApiException catch (error) {
       _showError(authErrorMessage(error));
     } on FormatException {
@@ -80,37 +110,37 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     final email = ModalRoute.of(context)?.settings.arguments as String?;
+
     if (email == null || email.isEmpty) {
-      return AuthScaffold(
+      return CinemaPage(
         title: 'Reset password',
-        subtitle: 'Request a new verification code to reset your password.',
-        child: AuthButton.secondary(
-          label: 'Request a new code',
-          onPressed: () =>
-              Navigator.pushReplacementNamed(context, AppRoutes.forgotPassword),
+        child: Center(
+          child: AppButton.secondary(
+            label: 'Request a new code',
+            onPressed: () => Navigator.pushReplacementNamed(
+              context,
+              AppRoutes.forgotPassword,
+            ),
+          ),
         ),
       );
     }
+
     return AuthScaffold(
-      title: 'Reset password',
-      subtitle: 'Choose a new password for your account.',
+      showBack: true,
+      title: 'Set a new password',
+      subtitle: 'Enter the verification code sent to $email.',
       child: Form(
         key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              'Code sent to $email',
-              style: AppTextStyles.bodySmall.copyWith(color: AppColors.primary),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: AppSpacing.xxl),
             AuthFieldSurface(
               child: AppTextField(
+                isRequired: true,
                 controller: _otpController,
                 label: 'Verification code',
                 hint: '123456',
-                isRequired: true,
                 keyboardType: TextInputType.number,
                 enabled: !_isLoading,
                 prefixIcon: const Icon(Icons.pin_outlined),
@@ -126,31 +156,23 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
             const SizedBox(height: AppSpacing.lg),
             AuthFieldSurface(
               child: AppTextField(
+                isRequired: true,
                 controller: _passwordController,
                 label: 'New password',
                 hint: 'Enter new password',
-                isRequired: true,
                 obscureText: _obscurePassword,
                 enabled: !_isLoading,
                 prefixIcon: const Icon(Icons.lock_outline),
-                onChanged: (value) {
-                  if (value.isEmpty && !_obscurePassword) {
-                    setState(() => _obscurePassword = true);
-                  }
-                },
-                validator: (value) {
-                  if ((value ?? '').length < 6) {
-                    return 'Password must be at least 6 characters.';
-                  }
-                  return null;
-                },
+                validator: validateNewPassword,
                 suffixIcon: IconButton(
                   tooltip: _obscurePassword ? 'Show password' : 'Hide password',
-                  onPressed: () {
-                    setState(() {
-                      _obscurePassword = !_obscurePassword;
-                    });
-                  },
+                  onPressed: _isLoading
+                      ? null
+                      : () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
                   icon: Icon(
                     _obscurePassword
                         ? Icons.visibility_outlined
@@ -159,13 +181,53 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 ),
               ),
             ),
+            const SizedBox(height: AppSpacing.lg),
+            AuthFieldSurface(
+              child: AppTextField(
+                label: 'Confirm new password',
+                hint: 'Re-enter your new password',
+                controller: _confirmController,
+                enabled: !_isLoading,
+                isRequired: true,
+                obscureText: _obscureConfirmPassword,
+                prefixIcon: const Icon(Icons.lock_outline),
+                suffixIcon: IconButton(
+                  tooltip: _obscureConfirmPassword
+                      ? 'Show confirm password'
+                      : 'Hide confirm password',
+                  onPressed: _isLoading
+                      ? null
+                      : () => setState(() {
+                          _obscureConfirmPassword = !_obscureConfirmPassword;
+                        }),
+                  icon: Icon(
+                    _obscureConfirmPassword
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                  ),
+                ),
+                validator: (value) => validatePasswordConfirmation(
+                  value,
+                  _passwordController.text,
+                ),
+              ),
+            ),
             if (_errorMessage != null) ...[
               const SizedBox(height: AppSpacing.lg),
-              AuthStatusMessage.error(message: _errorMessage!),
+              Semantics(
+                liveRegion: true,
+                child: Text(
+                  _errorMessage!,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.error,
+                  ),
+                ),
+              ),
             ],
             const SizedBox(height: AppSpacing.xxl),
-            AuthButton(
+            AppButton(
               label: 'Reset password',
+              useGradient: true,
               isLoading: _isLoading,
               onPressed: _isLoading ? null : () => _resetPassword(email),
             ),

@@ -155,7 +155,7 @@ namespace AuthService.Service
 
             if (!user.Enabled)
             {
-                throw new UnauthorizedException("Tài khoản đã bị vô hiệu hóa.");
+                throw new UnauthorizedException("Tài khoản đã bị vô hiệu hóa.", "ACCOUNT_LOCKED");
             }
 
             if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
@@ -243,7 +243,7 @@ namespace AuthService.Service
             // Tài khoản bị admin khoá thì không được cấp token mới
             if (!stored.User.Enabled)
             {
-                throw new UnauthorizedException("Tài khoản đã bị vô hiệu hóa.");
+                throw new UnauthorizedException("Tài khoản đã bị vô hiệu hóa.", "ACCOUNT_LOCKED");
             }
 
             // Thu hồi token cũ và cấp cặp token mới (rotation)
@@ -272,7 +272,50 @@ namespace AuthService.Service
             var user = await _userRepository.GetByIdAsync(userId)
                 ?? throw new NotFoundException($"Không tìm thấy người dùng với ID {userId}.");
 
+            if (!user.Enabled)
+            {
+                throw new ForbiddenException(
+                    "Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.", "ACCOUNT_LOCKED");
+            }
+
             return user.ToResponse();
+        }
+
+        // ======= SỬA HỒ SƠ =======
+        public async Task<UserResponse> UpdateProfileAsync(long userId, UpdateProfileRequest request)
+        {
+            var user = await _userRepository.GetByIdAsync(userId)
+                ?? throw new UnauthorizedException("Không tìm thấy người dùng.");
+
+            user.FullName = request.FullName.Trim();
+            user.Phone = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim();
+            await _userRepository.SaveChangesAsync();
+
+            return user.ToResponse();
+        }
+
+        // ======= ĐỔI MẬT KHẨU BẰNG MẬT KHẨU HIỆN TẠI =======
+        public async Task<AuthResponse> ChangePasswordAsync(long userId, ChangePasswordRequest request)
+        {
+            var user = await _userRepository.GetByIdAsync(userId)
+                ?? throw new UnauthorizedException("Không tìm thấy người dùng.");
+
+            if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.PasswordHash))
+            {
+                throw new BusinessException("Current password is incorrect.");
+            }
+
+            if (BCrypt.Net.BCrypt.Verify(request.NewPassword, user.PasswordHash))
+            {
+                throw new BusinessException("The new password must be different from the current one.");
+            }
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            await _userRepository.SaveChangesAsync();
+
+            // Đăng xuất các thiết bị khác, thiết bị này nhận token mới
+            await _refreshTokenRepository.DeleteAllByUserIdAsync(user.UserId);
+            return await BuildAuthResponseAsync(user);
         }
 
         // ======= HELPER: tạo access token + refresh token và lưu lại =======

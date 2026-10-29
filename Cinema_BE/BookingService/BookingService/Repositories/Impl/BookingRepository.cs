@@ -151,6 +151,7 @@ namespace BookingService.Repositories.Impl
                     bs.Booking.ShowtimeId == showtimeId &&
                     (
                         bs.Booking.Status == "CONFIRMED" ||
+                        bs.Booking.Status == "REFUND_PENDING" ||
                         (
                             bs.Booking.Status == "PENDING" &&
                             (bs.Booking.ExpiresAt == null || bs.Booking.ExpiresAt > now)
@@ -162,13 +163,58 @@ namespace BookingService.Repositories.Impl
                 .ToListAsync();
         }
 
+        // Như GetOccupiedSeatIdsAsync, kèm vé đang giữ từng ghế (sơ đồ ghế đã đặt cho Staff)
+        public Task<List<BookingSeat>> GetOccupiedSeatsWithBookingAsync(long showtimeId, DateTime now) =>
+            GetOccupiedSeatsWithBookingAsync([showtimeId], null, null, now);
+
+        // Ghế đang bị giữ / đã bán của các suất chiếu (theo id, hoặc giờ chiếu lưu trên vé trong [from, to))
+        public async Task<List<BookingSeat>> GetOccupiedSeatsWithBookingAsync(
+            IReadOnlyCollection<long>? showtimeIds,
+            DateTime? showFrom,
+            DateTime? showTo,
+            DateTime now)
+        {
+            var query = _context.BookingSeats
+                .AsNoTracking()
+                .Include(bs => bs.Booking)
+                .AsQueryable();
+
+            if (showtimeIds != null)
+            {
+                query = query.Where(bs => showtimeIds.Contains(bs.Booking.ShowtimeId));
+            }
+
+            if (showFrom.HasValue)
+            {
+                query = query.Where(bs => bs.Booking.ShowTime >= showFrom.Value);
+            }
+
+            if (showTo.HasValue)
+            {
+                query = query.Where(bs => bs.Booking.ShowTime < showTo.Value);
+            }
+
+            return await query
+                .Where(bs =>
+                    (
+                        bs.Booking.Status == "CONFIRMED" ||
+                        bs.Booking.Status == "REFUND_PENDING" ||
+                        (
+                            bs.Booking.Status == "PENDING" &&
+                            (bs.Booking.ExpiresAt == null || bs.Booking.ExpiresAt > now)
+                        )
+                    ))
+                .OrderBy(bs => bs.SeatId)
+                .ToListAsync();
+        }
+
         public async Task<List<long>> GetActiveBookingIdsByShowtimeAsync(long showtimeId)
         {
             return await _context.Bookings
                 .AsNoTracking()
                 .Where(b =>
                     b.ShowtimeId == showtimeId &&
-                    (b.Status == "PENDING" || b.Status == "CONFIRMED"))
+                    (b.Status == "PENDING" || b.Status == "CONFIRMED" || b.Status == "REFUND_PENDING"))
                 .OrderBy(b => b.Id)
                 .Select(b => b.Id)
                 .ToListAsync();

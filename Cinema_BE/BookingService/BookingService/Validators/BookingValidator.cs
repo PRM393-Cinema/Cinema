@@ -11,9 +11,36 @@ namespace BookingService.Validators
                 throw new ArgumentNullException(nameof(request));
             }
 
-            if (request.UserId == null || request.UserId <= 0)
+            // Không có user id: vé khách vãng lai (chỉ Staff/Admin, controller điền user id cho khách)
+            if (request.UserId is <= 0)
             {
-                throw new ArgumentException("User id is required.");
+                throw new ArgumentException("User id must be greater than 0.");
+            }
+
+            if (request.Concessions == null || request.UsePoints is < 0)
+            {
+                throw new ArgumentException("Concessions are required and points must not be negative.");
+            }
+
+            if (request.Concessions.Count > 10)
+            {
+                throw new ArgumentException("At most 10 different snack items per booking.");
+            }
+
+            if (request.Concessions.Any(item => item.Quantity is < 1 or > 20))
+            {
+                throw new ArgumentException("Snack quantity must be between 1 and 20.");
+            }
+
+            if (request.Concessions.Select(item => item.ItemId).Distinct().Count() != request.Concessions.Count)
+            {
+                throw new ArgumentException("Each snack item can be listed only once.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.CustomerPhone) &&
+                !System.Text.RegularExpressions.Regex.IsMatch(request.CustomerPhone.Trim(), @"^\+?[0-9 .-]{8,19}$"))
+            {
+                throw new ArgumentException("Customer phone must be 8 to 15 digits.");
             }
 
             if (request.ShowtimeId == null || request.ShowtimeId <= 0)

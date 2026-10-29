@@ -4,6 +4,7 @@ import 'package:cinema_fe/core/session/session_state.dart';
 import 'package:cinema_fe/core/utils/formatters.dart';
 import 'package:cinema_fe/core/widgets/app_button.dart';
 import 'package:cinema_fe/data/models/booking.dart';
+import 'package:cinema_fe/data/models/movie.dart';
 import 'package:cinema_fe/data/models/payment.dart';
 import 'package:cinema_fe/data/models/seat.dart';
 import 'package:cinema_fe/features/payment/payment_args.dart';
@@ -22,6 +23,52 @@ void main() {
   setUp(() {
     urlLauncher = FakeUrlLauncher();
     UrlLauncherPlatform.instance = urlLauncher;
+  });
+
+  testWidgets('A movie trailer opens outside the app', (tester) async {
+    tester.view.physicalSize = const Size(375, 812);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    const trailer = 'https://www.youtube.com/watch?v=YoHD9XEInc0';
+    await tester.pumpWidget(
+      buildTestApp(
+        catalogRepository: FakeCatalogRepository(
+          movies: [
+            Movie(
+              id: inception.id,
+              title: inception.title,
+              description: inception.description,
+              durationMinutes: inception.durationMinutes,
+              genre: inception.genre,
+              language: inception.language,
+              releaseDate: null,
+              posterUrl: '',
+              trailerUrl: trailer,
+              status: 'ACTIVE',
+            ),
+          ],
+        ),
+        initialRoute: AppRoutes.movieDetail(inception.id),
+      ),
+    );
+    await pumpRoute(tester);
+
+    await tester.ensureVisible(find.byKey(const Key('watchTrailer')));
+    expect(
+      tester.widget<AppButton>(find.byKey(const Key('watchTrailer'))).variant,
+      AppButtonVariant.secondary,
+    );
+    expect(
+      tester.getTopLeft(find.byKey(const Key('watchTrailer'))).dx,
+      tester.getTopLeft(find.text('Synopsis')).dx,
+    );
+    expect(
+      tester.getSize(find.byKey(const Key('watchTrailer'))).height,
+      greaterThanOrEqualTo(48),
+    );
+    await tester.tap(find.byKey(const Key('watchTrailer')));
+    await tester.pump();
+    expect(urlLauncher.launchedUrls, [trailer]);
   });
 
   group('Seat selection and booking', () {
@@ -100,33 +147,317 @@ void main() {
       expect(find.text('0 seat(s)'), findsOneWidget);
     });
 
-    testWidgets('Confirm Booking creates the booking and opens payment', (
+    testWidgets('A sweetbox is picked as a couple and shown in the back row', (
       WidgetTester tester,
     ) async {
-      final bookings = FakeBookingRepository();
-      await _openSeatSelection(tester, bookingRepository: bookings);
+      // Row A is a sweetbox row; B4 is taken.
+      final catalog = FakeCatalogRepository(
+        seatMap: ShowtimeSeatsData.fromOccupied(
+          seats: [
+            for (final (index, (row, type)) in [
+              ('A', 'SWEETBOX'),
+              ('B', 'VIP'),
+            ].indexed)
+              for (var number = 1; number <= 4; number++)
+                Seat(
+                  id: index * 4 + number,
+                  roomId: 1,
+                  row: row,
+                  number: number,
+                  type: type,
+                ),
+          ],
+          occupiedSeatIds: const [8],
+        ),
+      );
+      await _openSeatSelection(tester, catalogRepository: catalog);
+
+      // Sweetbox row A sits behind row B, and every seat type has a key.
+      expect(
+        tester.getTopLeft(find.text('A').first).dy,
+        greaterThan(tester.getTopLeft(find.text('B').first).dy),
+      );
+      for (final label in ['VIP', 'Sweetbox (couple)', 'Selected']) {
+        expect(find.text(label), findsOneWidget);
+      }
+      expect(find.text('Standard'), findsNothing);
+
+      Finder seat(String number, {required bool sweetbox}) =>
+          (sweetbox ? find.text(number).last : find.text(number).first);
+
+      // An odd seat brings the even one on its right, and back.
+      await tester.tap(seat('1', sweetbox: true));
+      await tester.pump();
+      expect(find.text('2 seat(s)'), findsOneWidget);
+      await tester.tap(seat('2', sweetbox: true));
+      await tester.pump();
+      expect(find.text('0 seat(s)'), findsOneWidget);
+
+      // An even seat brings the odd one on its left.
+      await tester.tap(seat('4', sweetbox: true));
+      await tester.pump();
+      expect(find.text('2 seat(s)'), findsOneWidget);
+      expect(find.text(formatVnd(180000)), findsOneWidget);
+
+      // A single VIP seat is picked on its own.
+      await tester.tap(seat('1', sweetbox: false));
+      await tester.pump();
+      expect(find.text('3 seat(s)'), findsOneWidget);
+    });
+
+    testWidgets('A sweetbox whose pair is taken cannot be picked', (
+      WidgetTester tester,
+    ) async {
+      final catalog = FakeCatalogRepository(
+        seatMap: ShowtimeSeatsData.fromOccupied(
+          seats: [
+            for (var number = 1; number <= 4; number++)
+              Seat(
+                id: number,
+                roomId: 1,
+                row: 'A',
+                number: number,
+                type: 'SWEETBOX',
+              ),
+          ],
+          occupiedSeatIds: const [4],
+        ),
+      );
+      await _openSeatSelection(tester, catalogRepository: catalog);
+
+      await tester.tap(find.text('3').first);
+      await tester.pump();
+      expect(find.text('0 seat(s)'), findsOneWidget);
+      expect(
+        find.text(
+          'A3 is a sweetbox (couple seat) and A4 is taken, so it cannot be '
+          'booked.',
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('VIP and sweetbox seats cost more', (
+      WidgetTester tester,
+    ) async {
+      // Row A is a sweetbox row, row B a VIP row.
+      final catalog = FakeCatalogRepository(
+        showtimes: [
+          showtimeFixture(
+            seatPrices: const {
+              'NORMAL': 90000,
+              'VIP': 108000,
+              'SWEETBOX': 117000,
+            },
+          ),
+        ],
+        seatMap: ShowtimeSeatsData.fromOccupied(
+          seats: [
+            for (final (index, (row, type)) in [
+              ('A', 'SWEETBOX'),
+              ('B', 'VIP'),
+            ].indexed)
+              for (var number = 1; number <= 4; number++)
+                Seat(
+                  id: index * 4 + number,
+                  roomId: 1,
+                  row: row,
+                  number: number,
+                  type: type,
+                ),
+          ],
+          occupiedSeatIds: const [],
+        ),
+      );
+      await _openSeatSelection(tester, catalogRepository: catalog);
+
+      // The room has no standard seats: its cheapest seat is a VIP one.
+      expect(
+        find.text('Room 1 • from ${formatVnd(108000)} / seat'),
+        findsOneWidget,
+      );
+      expect(find.text(formatVnd(108000)), findsOneWidget);
+      expect(find.text('${formatVnd(234000)} / pair'), findsOneWidget);
+
+      // A sweetbox (A1 and A2) and a VIP seat (B1).
+      await tester.tap(find.text('1').last);
+      await tester.tap(find.text('1').first);
+      await tester.pump();
+      expect(find.text('3 seat(s)'), findsOneWidget);
+      expect(find.text(formatVnd(342000)), findsOneWidget);
+
+      await tester.tap(find.text('Continue'));
+      await pumpRoute(tester);
+      expect(find.text('1x VIP (${formatVnd(108000)})'), findsOneWidget);
+      expect(find.text('2x Sweetbox (${formatVnd(117000)})'), findsOneWidget);
+      expect(find.text(formatVnd(234000)), findsOneWidget);
+      expect(find.text(formatVnd(342000)), findsOneWidget);
+    });
+
+    testWidgets('The key of a map wider than the phone stays on screen', (
+      WidgetTester tester,
+    ) async {
+      tester.view.physicalSize = const Size(375, 812);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      // Rows of 14 seats are wider than the phone, so the map is panned.
+      final catalog = FakeCatalogRepository(
+        showtimes: [
+          showtimeFixture(
+            seatPrices: const {
+              'NORMAL': 90000,
+              'VIP': 108000,
+              'SWEETBOX': 117000,
+            },
+          ),
+        ],
+        seatMap: ShowtimeSeatsData.fromOccupied(
+          seats: [
+            for (final (index, (row, type)) in [
+              ('A', 'NORMAL'),
+              ('B', 'VIP'),
+              ('C', 'SWEETBOX'),
+            ].indexed)
+              for (var number = 1; number <= 14; number++)
+                Seat(
+                  id: index * 14 + number,
+                  roomId: 1,
+                  row: row,
+                  number: number,
+                  type: type,
+                ),
+          ],
+          occupiedSeatIds: const [],
+        ),
+      );
+      await _openSeatSelection(tester, catalogRepository: catalog);
+
+      for (final label in [
+        'Standard',
+        'VIP',
+        'Sweetbox (couple)',
+        '${formatVnd(234000)} / pair',
+        'Selected',
+        'Unavailable',
+      ]) {
+        final rect = tester.getRect(find.text(label));
+        expect(rect.left, greaterThanOrEqualTo(0), reason: label);
+        expect(rect.right, lessThanOrEqualTo(375), reason: label);
+      }
+    });
+
+    testWidgets('Seats taken by others while choosing are let go', (
+      WidgetTester tester,
+    ) async {
+      final catalog = FakeCatalogRepository();
+      await _openSeatSelection(tester, catalogRepository: catalog);
 
       // B1 and B2 (ids 5 and 6).
       await tester.tap(find.text('1').last);
       await tester.tap(find.text('2').last);
       await tester.pump();
+      expect(find.text('2 seat(s)'), findsOneWidget);
+
+      // Another customer takes B1; the open map shows it within seconds.
+      catalog.seatMap = ShowtimeSeatsData.fromOccupied(
+        seats: seatMapFixture.seats,
+        occupiedSeatIds: const [2, 5],
+      );
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pump();
+      expect(catalog.seatMapLoads, 2);
+      expect(find.text('1 seat(s)'), findsOneWidget);
+      expect(
+        find.text('B1 was just taken, so it was removed from your seats.'),
+        findsOneWidget,
+      );
+
+      // No refresh behind the booking summary.
       await tester.tap(find.text('Continue'));
       await pumpRoute(tester);
+      await tester.pump(const Duration(seconds: 20));
+      expect(catalog.seatMapLoads, 2);
+    });
 
-      expect(find.text('Booking Summary'), findsWidgets);
-      expect(find.text('B1, B2'), findsOneWidget);
-      expect(find.text('2 Ticket(s)'), findsOneWidget);
-      expect(find.text(formatVnd(180000)), findsWidgets);
+    testWidgets(
+      'Summary holds seats and confirmation keeps the same deadline',
+      (WidgetTester tester) async {
+        final bookings = FakeBookingRepository();
+        await _openSeatSelection(tester, bookingRepository: bookings);
 
-      await tester.tap(find.text('Confirm Booking'));
-      await pumpFrames(tester);
+        // B1 and B2 (ids 5 and 6).
+        await tester.tap(find.text('1').last);
+        await tester.tap(find.text('2').last);
+        await tester.pump();
+        await tester.tap(find.text('Continue'));
+        await pumpRoute(tester);
 
+        expect(find.text('Booking Summary'), findsWidgets);
+        expect(find.text('B1, B2'), findsOneWidget);
+        expect(find.text('2 Ticket(s)'), findsOneWidget);
+        expect(find.text(formatVnd(180000)), findsWidgets);
+        expect(bookings.createCalls, hasLength(1));
+        expect(bookings.updateCalls, isEmpty);
+        expect(find.textContaining('Seats held for'), findsOneWidget);
+        final held = bookings.bookings.single;
+
+        await tester.tap(find.text('Confirm Booking'));
+        await pumpFrames(tester);
+
+        expect(bookings.createCalls, hasLength(1));
+        expect(bookings.createCalls.single.showtimeId, 11);
+        expect(bookings.createCalls.single.seatIds, [5, 6]);
+        expect(bookings.updateCalls, hasLength(1));
+        expect(bookings.bookings.single.expiresAt, held.expiresAt);
+        expect(bookings.cancelledIds, isEmpty);
+
+        expect(find.text('Pay with PayOS'), findsOneWidget);
+        expect(find.textContaining('Seats held for'), findsOneWidget);
+      },
+    );
+
+    testWidgets('Leaving summary cancels its hold and refreshes the seats', (
+      tester,
+    ) async {
+      final bookings = FakeBookingRepository();
+      final catalog = FakeCatalogRepository();
+      await _openSeatSelection(
+        tester,
+        bookingRepository: bookings,
+        catalogRepository: catalog,
+      );
+      await tester.tap(find.text('1').last);
+      await tester.pump();
+      await tester.tap(find.text('Continue'));
+      await pumpRoute(tester);
+      final heldId = bookings.bookings.single.id;
+      await tester.tap(find.byType(BackButton));
+      await pumpRoute(tester);
+      expect(bookings.cancelledIds, [heldId]);
+      expect(bookings.updateCalls, isEmpty);
+      expect(find.text('Booking Summary'), findsNothing);
+      expect(catalog.seatMapLoads, 2);
+    });
+
+    testWidgets('An expired summary cannot confirm or restart the hold', (
+      tester,
+    ) async {
+      final bookings = FakeBookingRepository()
+        ..holdExpiresAt = DateTime.now().subtract(const Duration(seconds: 1));
+      await _openSeatSelection(tester, bookingRepository: bookings);
+      await tester.tap(find.text('1').last);
+      await tester.pump();
+      await tester.tap(find.text('Continue'));
+      await pumpRoute(tester);
+      expect(find.textContaining('Your seat hold has expired'), findsOneWidget);
+      expect(find.text('Confirm Booking'), findsNothing);
       expect(bookings.createCalls, hasLength(1));
-      expect(bookings.createCalls.single.showtimeId, 11);
-      expect(bookings.createCalls.single.seatIds, [5, 6]);
-
-      expect(find.text('Pay with PayOS'), findsOneWidget);
-      expect(find.textContaining('Seats held for'), findsOneWidget);
+      await tester.tap(find.text('Choose seats again'));
+      await pumpRoute(tester);
+      expect(bookings.cancelledIds, [bookings.bookings.single.id]);
+      expect(bookings.updateCalls, isEmpty);
+      expect(find.text('Pay with PayOS'), findsNothing);
     });
 
     testWidgets('Seats taken meanwhile send the customer back to choose', (
@@ -148,8 +479,6 @@ void main() {
       await tester.tap(find.text('1').last);
       await tester.pump();
       await tester.tap(find.text('Continue'));
-      await pumpRoute(tester);
-      await tester.tap(find.text('Confirm Booking'));
       await pumpRoute(tester);
 
       expect(find.text('Seats no longer available'), findsOneWidget);
@@ -188,27 +517,32 @@ void main() {
       );
     });
 
-    testWidgets('I have paid confirms the booking and shows success', (
-      WidgetTester tester,
-    ) async {
-      final bookings = FakeBookingRepository(
-        bookings: [bookingFixture(id: 101)],
-      );
-      await _openPaymentFromMyBookings(tester, bookings);
+    testWidgets(
+      'Coming back from PayOS confirms the booking and shows success',
+      (WidgetTester tester) async {
+        final bookings = FakeBookingRepository(
+          bookings: [bookingFixture(id: 101)],
+        );
+        await _openPaymentFromMyBookings(tester, bookings);
 
-      await tester.tap(find.text('I have paid'));
-      await pumpRoute(tester);
+        await tester.tap(find.text('Pay with PayOS'));
+        await pumpFrames(tester);
+        tester.binding.handleAppLifecycleStateChanged(
+          AppLifecycleState.resumed,
+        );
+        await pumpRoute(tester);
 
-      expect(bookings.verifiedIds, [101]);
-      expect(find.text('Payment successful'), findsOneWidget);
-      expect(find.textContaining(customerUser.email), findsOneWidget);
+        expect(bookings.verifiedIds, [101]);
+        expect(find.text('Payment successful'), findsOneWidget);
+        expect(find.textContaining(customerUser.email), findsOneWidget);
 
-      await tester.tap(find.text('View my bookings'));
-      await pumpRoute(tester);
+        await tester.tap(find.text('View my bookings'));
+        await pumpRoute(tester);
 
-      expect(find.text('My Bookings'), findsWidgets);
-      expect(find.text('Confirmed'), findsOneWidget);
-    });
+        expect(find.text('My Bookings'), findsWidgets);
+        expect(find.text('Confirmed'), findsOneWidget);
+      },
+    );
 
     testWidgets('Unpaid order keeps the customer on the payment screen', (
       WidgetTester tester,
@@ -219,14 +553,38 @@ void main() {
       );
       await _openPaymentFromMyBookings(tester, bookings);
 
-      await tester.tap(find.text('I have paid'));
+      await tester.tap(find.text('Pay with PayOS'));
+      await pumpFrames(tester);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
       await pumpFrames(tester);
 
-      expect(
-        find.textContaining('PayOS has not received your payment yet'),
-        findsOneWidget,
+      expect(bookings.verifiedIds, [101]);
+      expect(find.text('Payment successful'), findsNothing);
+      expect(find.text('Continue with PayOS'), findsOneWidget);
+    });
+
+    testWidgets('Background checks ask PayOS every 30 seconds', (
+      WidgetTester tester,
+    ) async {
+      final bookings = FakeBookingRepository(
+        bookings: [bookingFixture(id: 101, paymentId: 7)],
+        verifyResult: paymentFixture(status: PaymentStatus.pending),
       );
-      expect(find.text('Pay with PayOS'), findsOneWidget);
+      await _openPaymentFromMyBookings(tester, bookings);
+
+      for (var second = 0; second < 25; second++) {
+        await tester.pump(const Duration(seconds: 1));
+      }
+      expect(bookings.verifiedIds, isEmpty);
+      for (var second = 0; second < 6; second++) {
+        await tester.pump(const Duration(seconds: 1));
+      }
+      expect(bookings.verifiedIds, [101]);
+      // The button stays usable while PayOS is asked in the background.
+      final pay = tester.widget<AppButton>(
+        find.widgetWithText(AppButton, 'Continue with PayOS'),
+      );
+      expect(pay.onPressed, isNotNull);
     });
 
     testWidgets('PayOS redirect back to the web app verifies the payment', (
@@ -253,7 +611,30 @@ void main() {
 
       await tester.tap(find.byTooltip('Close'));
       await pumpRoute(tester);
-      expect(find.text('Find your next movie night'), findsOneWidget);
+      expect(find.text('Step Into CosmoQ Cinema'), findsOneWidget);
+    });
+
+    testWidgets('PayOS sends back its order code, not the booking id', (
+      WidgetTester tester,
+    ) async {
+      final bookings = FakeBookingRepository(
+        bookings: [bookingFixture(id: 101)],
+      )..orderCodes[101195614] = 101;
+      await tester.pumpWidget(
+        buildTestApp(
+          authenticated: true,
+          bookingRepository: bookings,
+          paymentReturn: PayOsReturn.fromUri(
+            Uri.parse(
+              'http://localhost:8090/?code=00&id=abc&cancel=false&status=PAID&orderCode=101195614',
+            ),
+          ),
+        ),
+      );
+      await pumpRoute(tester);
+
+      expect(bookings.verifiedIds.first, 101195614);
+      expect(find.text('Payment successful'), findsOneWidget);
     });
 
     testWidgets('Cancelled PayOS payment shows payment not completed', (
@@ -326,7 +707,7 @@ void main() {
       expect(find.text('Pay Now'), findsOneWidget);
       expect(find.text('Cancel Booking'), findsOneWidget);
 
-      await tester.pageBack();
+      await tester.binding.handlePopRoute();
       await pumpRoute(tester);
 
       await tester.tap(find.text('History'));
@@ -338,7 +719,7 @@ void main() {
       await tester.tap(find.text('Code: BK-CANCELLED'));
       await pumpRoute(tester);
 
-      expect(find.text('Code: BK-CANCELLED'), findsWidgets);
+      expect(find.text('BK-CANCELLED'), findsWidgets);
       expect(find.text('Cancel Booking'), findsNothing);
       expect(find.text('Pay Now'), findsNothing);
     });
@@ -375,21 +756,32 @@ void main() {
 
       await tester.tap(find.text('Code: BK-CONFIRMED'));
       await pumpRoute(tester);
-      await tester.tap(find.text('Cancel Booking'));
+      await tester.tap(find.text('Request refund'));
       await pumpRoute(tester);
 
       expect(find.textContaining('full refund'), findsOneWidget);
-      await tester.tap(find.text('Yes, Cancel'));
-      await tester.pump();
-      await tester.pump(const Duration(seconds: 3));
+      await tester.tap(find.text('Request'));
+      await pumpRoute(tester);
+      await tester.pump(const Duration(seconds: 2));
       await pumpRoute(tester);
 
       expect(bookings.cancelledIds, [102]);
-      expect(find.text('Cancelled'), findsOneWidget);
+      expect(find.text('Refund pending'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 2));
+      await pumpRoute(tester);
       expect(
         find.text('Refund of ${formatVnd(180000)} in progress'),
         findsOneWidget,
       );
+      expect(bookings.bookings.single.status, BookingStatus.refundPending);
+      expect(find.text('Request refund'), findsNothing);
+      Navigator.of(tester.element(find.text('Booking Detail'))).pop();
+      await pumpRoute(tester);
+      expect(find.text('Code: BK-CONFIRMED'), findsOneWidget);
+      expect(find.text('Refund pending'), findsOneWidget);
+      await tester.tap(find.text('History'));
+      await pumpRoute(tester);
+      expect(find.text('Code: BK-CONFIRMED'), findsNothing);
     });
 
     testWidgets('Paid booking close to the show cannot be cancelled', (
@@ -444,8 +836,8 @@ void main() {
       await tester.tap(find.byTooltip('Profile'));
       await pumpRoute(tester);
 
-      expect(find.text(customerUser.fullName!), findsOneWidget);
-      expect(find.text(customerUser.email), findsOneWidget);
+      expect(find.text(customerUser.fullName!), findsWidgets);
+      expect(find.text(customerUser.email), findsWidgets);
       expect(find.text('Customer'), findsOneWidget);
 
       await tester.ensureVisible(find.text('Sign out'));
@@ -468,13 +860,14 @@ void main() {
       await tester.tap(find.byTooltip('Notifications'));
       await pumpRoute(tester);
 
-      expect(find.text(notificationFixture.subject), findsOneWidget);
+      expect(find.text(notificationFixture.displayTitle), findsOneWidget);
 
-      await tester.tap(find.text(notificationFixture.subject));
+      await tester.tap(find.text(notificationFixture.displayTitle));
       await pumpRoute(tester);
 
       expect(find.textContaining('Đặt vé thành công'), findsOneWidget);
-      expect(find.textContaining('Phim: Inception & bạn'), findsOneWidget);
+      expect(find.text('Phim'), findsOneWidget);
+      expect(find.text('Inception & bạn'), findsOneWidget);
     });
 
     testWidgets('Forgot password sends a code and resets the password', (
@@ -488,15 +881,20 @@ void main() {
 
       await tester.tap(find.text('Forgot password?'));
       await pumpRoute(tester);
+      final sendCode = find.widgetWithText(AppButton, 'Send verification code');
+      expect(sendCode, findsOneWidget);
       await tester.enterText(
         find.widgetWithText(TextFormField, 'Email'),
         'khachhang1@gmail.com',
       );
-      await tester.tap(find.text('Continue'));
+      await tester.tap(sendCode);
       await pumpRoute(tester);
 
       expect(auth.forgotPasswordEmail, 'khachhang1@gmail.com');
-      expect(find.text('Code sent to khachhang1@gmail.com'), findsOneWidget);
+      expect(
+        find.text('Enter the verification code sent to khachhang1@gmail.com.'),
+        findsOneWidget,
+      );
 
       await tester.enterText(
         find.widgetWithText(TextFormField, 'Verification code'),
@@ -506,6 +904,10 @@ void main() {
         find.widgetWithText(TextFormField, 'New password'),
         'NewSecret1',
       );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Confirm new password'),
+        'NewSecret1',
+      );
       final resetButton = find.widgetWithText(AppButton, 'Reset password');
       await tester.ensureVisible(resetButton);
       await tester.pumpAndSettle();
@@ -513,7 +915,7 @@ void main() {
       await pumpRoute(tester);
 
       expect(auth.resetOtp, '654321');
-      expect(find.text('Welcome back'), findsOneWidget);
+      expect(find.byKey(const Key('loginTitle')), findsOneWidget);
     });
   });
 }
@@ -532,8 +934,10 @@ Future<void> _openSeatSelection(
   );
   await pumpRoute(tester);
 
-  await scrollHomeTo(tester, find.text('View Details').first);
-  await tester.tap(find.text('View Details').first);
+  await scrollHomeTo(tester, find.text(inception.title).first);
+  await tester.tap(find.text(inception.title).first);
+  await pumpRoute(tester);
+  await tester.tap(find.text('View details'));
   await pumpRoute(tester);
 
   // Showtimes are listed on the movie detail screen.

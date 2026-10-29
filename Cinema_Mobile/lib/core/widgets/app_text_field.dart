@@ -10,7 +10,9 @@ class AppTextField extends StatelessWidget {
     this.keyboardType,
     this.prefixIcon,
     this.suffixIcon,
+    this.labelAbove = false,
     this.isRequired = false,
+    this.labelAction,
     this.onChanged,
     this.enabled = true,
     this.maxLines = 1,
@@ -25,7 +27,9 @@ class AppTextField extends StatelessWidget {
   final TextInputType? keyboardType;
   final Widget? prefixIcon;
   final Widget? suffixIcon;
+  final bool labelAbove;
   final bool isRequired;
+  final Widget? labelAction;
   final ValueChanged<String>? onChanged;
   final bool enabled;
   final int maxLines;
@@ -33,28 +37,7 @@ class AppTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget buildField(bool hasValue) {
-      final showRequiredMark = isRequired && !hasValue;
-      final trailing = showRequiredMark
-          ? SizedBox(
-              width: 48,
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: Padding(
-                  padding: const EdgeInsetsDirectional.only(end: 16),
-                  child: Text(
-                    '*',
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ),
-            )
-          : suffixIcon;
-
-      return TextFormField(
+      final field = TextFormField(
         controller: controller,
         validator: validator,
         obscureText: obscureText,
@@ -63,18 +46,56 @@ class AppTextField extends StatelessWidget {
         enabled: enabled,
         maxLines: obscureText ? 1 : maxLines,
         decoration: InputDecoration(
-          labelText: label,
+          labelText: labelAbove ? null : label,
           hintText: hint,
           prefixIcon: prefixIcon,
-          suffixIcon: trailing,
+          suffixIcon: isRequired && !hasValue
+              ? SizedBox(
+                  width: 48,
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 16),
+                      child: Text(
+                        '*',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+              : suffixIcon,
         ),
+      );
+
+      if (!labelAbove) return field;
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              ?labelAction,
+            ],
+          ),
+          const SizedBox(height: 6),
+          Semantics(label: label, child: field),
+        ],
       );
     }
 
-    if (controller == null) {
-      return buildField(false);
-    }
-
+    if (!isRequired || controller == null) return buildField(false);
     return ValueListenableBuilder<TextEditingValue>(
       valueListenable: controller!,
       builder: (context, value, _) => buildField(value.text.trim().isNotEmpty),

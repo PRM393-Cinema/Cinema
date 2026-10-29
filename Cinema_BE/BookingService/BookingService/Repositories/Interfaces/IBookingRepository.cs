@@ -21,6 +21,9 @@ namespace BookingService.Repositories.Interfaces
             string sortBy,
             string sortDir);
         Task<List<long>> GetOccupiedSeatIdsAsync(long showtimeId, DateTime now);
+        Task<List<BookingSeat>> GetOccupiedSeatsWithBookingAsync(long showtimeId, DateTime now);
+        Task<List<BookingSeat>> GetOccupiedSeatsWithBookingAsync(
+            IReadOnlyCollection<long>? showtimeIds, DateTime? showFrom, DateTime? showTo, DateTime now);
         Task<Booking?> GetBookingByIdForUpdateAsync(long id);
         Task<List<long>> GetOverduePendingBookingIdsAsync(DateTime now, int take);
         Task<List<long>> GetActiveBookingIdsByShowtimeAsync(long showtimeId);

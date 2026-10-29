@@ -7,14 +7,28 @@ namespace BookingService.Mapping
     {
         public static BookingResponse ToResponse(
         this Booking booking,
-        List<BookingSeatResponse>? seats = null)
+        List<BookingSeatResponse>? seats = null,
+        IEnumerable<BookingConcession>? concessionLines = null)
         {
+            var concessions = (concessionLines ?? booking.Concessions)
+                .OrderBy(item => item.Id)
+                .Select(item => new BookingConcessionResponse
+                {
+                    ItemId = item.ItemId,
+                    Name = item.ItemName,
+                    UnitPrice = item.UnitPrice,
+                    Quantity = item.Quantity,
+                    Amount = item.UnitPrice * item.Quantity
+                })
+                .ToList();
+
             return new BookingResponse
             {
                 Id = booking.Id,
                 BookingCode = booking.BookingCode,
                 UserId = booking.UserId,
                 CustomerEmail = booking.CustomerEmail,
+                CustomerPhone = booking.CustomerPhone,
                 ShowtimeId = booking.ShowtimeId,
                 Status = booking.Status,
                 TotalAmount = booking.TotalAmount,
@@ -22,8 +36,52 @@ namespace BookingService.Mapping
                 MovieTitle = booking.MovieTitle,
                 ShowTime = booking.ShowTime,
                 ExpiresAt = booking.ExpiresAt,
+                CheckedInAt = booking.CheckedInAt,
                 CreatedAt = booking.CreatedAt,
-                Seats = seats ?? new List<BookingSeatResponse>()
+                Seats = seats ?? new List<BookingSeatResponse>(),
+                ConcessionsAmount = booking.ConcessionsAmount,
+                Concessions = concessions,
+                DiscountAmount = booking.DiscountAmount,
+                PromotionCode = booking.PromotionCode,
+                PromotionName = booking.PromotionName,
+                PointsUsed = booking.PointsUsed,
+                PointsDiscount = booking.PointsDiscount,
+                PointsEarned = booking.PointsEarned
+            };
+        }
+
+        public static PromotionResponse ToResponse(this Promotion promotion)
+        {
+            return new PromotionResponse
+            {
+                Id = promotion.Id,
+                Code = promotion.Code,
+                Name = promotion.Name,
+                Description = promotion.Description,
+                DiscountType = promotion.DiscountType,
+                DiscountValue = promotion.DiscountValue,
+                MaxDiscount = promotion.MaxDiscount,
+                MinTickets = promotion.MinTickets,
+                DaysOfWeek = Helpers.PromotionRules.ParseDays(promotion.DaysOfWeek),
+                StartsAt = promotion.StartsAt,
+                EndsAt = promotion.EndsAt,
+                UsageLimit = promotion.UsageLimit,
+                UsedCount = promotion.UsedCount,
+                Active = promotion.Active
+            };
+        }
+
+        public static ConcessionItemResponse ToResponse(this ConcessionItem item)
+        {
+            return new ConcessionItemResponse
+            {
+                Id = item.Id,
+                Name = item.Name,
+                Description = item.Description,
+                Price = item.Price,
+                ImageUrl = item.ImageUrl,
+                Active = item.Active,
+                SortOrder = item.SortOrder
             };
         }
 

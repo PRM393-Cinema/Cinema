@@ -1,4 +1,7 @@
+import '../../core/widgets/age_rating_badge.dart';
 import 'json_readers.dart';
+
+import 'package:flutter/material.dart';
 
 class Movie {
   const Movie({
@@ -12,6 +15,10 @@ class Movie {
     required this.posterUrl,
     required this.trailerUrl,
     required this.status,
+    this.ageRating = AgeRating.p,
+    this.previewUrl = '',
+    this.director = '',
+    this.cast = '',
   });
 
   factory Movie.fromJson(Map<String, Object?> json) {
@@ -30,7 +37,11 @@ class Movie {
           : null,
       posterUrl: readString(json['posterUrl']),
       trailerUrl: readString(json['trailerUrl']),
+      previewUrl: readString(json['previewUrl']),
       status: readString(json['status']),
+      ageRating: AgeRating.parse(readOptionalString(json['ageRating'])),
+      director: readString(json['director']),
+      cast: readString(json['cast']),
     );
   }
 
@@ -43,8 +54,22 @@ class Movie {
   final DateTime? releaseDate;
   final String posterUrl;
   final String trailerUrl;
+  final String previewUrl;
   final String status; // 'ACTIVE', 'INACTIVE'
+  final AgeRating ageRating;
+
+  // Main cast, separated by commas.
+  final String director;
+  final String cast;
 
   String get durationText => '$durationMinutes min';
   String get releaseYear => releaseDate?.year.toString() ?? '';
+
+  // Not released yet: shown under "Coming soon", usually without showtimes.
+  bool isComingSoon([DateTime? now]) {
+    final release = releaseDate;
+    if (release == null) return false;
+    final today = DateUtils.dateOnly(now ?? DateTime.now());
+    return DateUtils.dateOnly(release).isAfter(today);
+  }
 }

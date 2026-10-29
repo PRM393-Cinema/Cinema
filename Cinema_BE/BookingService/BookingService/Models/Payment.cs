@@ -11,7 +11,7 @@ public partial class Payment
 
     public long BookingId { get; set; }
 
-    public long UserId { get; set; }
+    public long? UserId { get; set; } // null: vé của khách vãng lai
 
     public decimal Amount { get; set; }
 

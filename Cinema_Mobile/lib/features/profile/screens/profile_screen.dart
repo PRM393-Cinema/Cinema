@@ -2,33 +2,56 @@ import 'package:flutter/material.dart';
 
 import '../../../app/routes/app_routes.dart';
 import '../../../app/theme/app_colors.dart';
-import '../../../app/theme/app_radius.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/session/session_state.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/utils/layout.dart';
+import '../../../core/widgets/responsive_columns.dart';
 import '../../../core/widgets/app_button.dart';
+import '../../../core/widgets/cinema_background.dart';
+import '../../../core/widgets/cinema_account_widgets.dart';
+import '../../../core/widgets/cinema_page.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_state.dart';
 import '../../../data/models/auth_response.dart';
 import '../../../data/repositories/auth_repository.dart';
+import '../../admin/widgets/admin_page.dart';
+import '../../../data/models/loyalty.dart';
+import '../../../data/repositories/booking_repository.dart';
+import '../widgets/membership_card.dart';
+import '../widgets/account_dialogs.dart';
+import '../../../core/widgets/top_notice.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({required this.authRepository, super.key});
+  const ProfileScreen({
+    required this.authRepository,
+    this.bookingRepository,
+    this.adminMode = false,
+    this.staffMode = false,
+    super.key,
+  });
 
   final AuthRepository authRepository;
+
+  // Customers: loads the membership card (points and tier).
+  final BookingRepository? bookingRepository;
+  final bool adminMode;
+  final bool staffMode;
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  final _glassBackgroundKey = GlobalKey();
   AuthUser? _user;
   bool _hasStarted = false;
   bool _isLoading = true;
   bool _isLoggingOut = false;
   String? _errorMessage;
+  LoyaltyCard? _card;
 
   @override
   void didChangeDependencies() {
@@ -37,6 +60,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _hasStarted = true;
       _user = SessionProvider.of(context).user;
       _loadProfile();
+      _loadCard();
     }
   }
 
@@ -60,6 +84,54 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _showError('The server returned an invalid response.');
     } on Object {
       _showError('Something went wrong. Please try again.');
+    }
+  }
+
+  Future<void> _loadCard() async {
+    final bookings = widget.bookingRepository;
+    if (bookings == null || widget.adminMode || widget.staffMode) return;
+    try {
+      final card = await bookings.getMyLoyalty();
+      if (mounted) setState(() => _card = card);
+    } on Object {
+      // The profile still shows without the card.
+    }
+  }
+
+  Future<void> _editProfile(AuthUser user) async {
+    final saved = await showDialog<AuthUser>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) =>
+          EditProfileDialog(repository: widget.authRepository, user: user),
+    );
+    if (saved == null || !mounted) return;
+    SessionProvider.of(context).setAuthenticated(saved);
+    setState(() => _user = saved);
+    showTopNotice(Overlay.of(context, rootOverlay: true), 'Profile saved.');
+  }
+
+  Future<void> _changePassword(AuthUser user) async {
+    final changed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => ChangePasswordDialog(
+        repository: widget.authRepository,
+        onForgotPassword: () {
+          Navigator.pop(dialogContext);
+          Navigator.pushNamed(
+            context,
+            AppRoutes.forgotPassword,
+            arguments: user.email,
+          );
+        },
+      ),
+    );
+    if (changed == true && mounted) {
+      showTopNotice(
+        Overlay.of(context, rootOverlay: true),
+        'Password changed. Other devices were signed out.',
+      );
     }
   }
 
@@ -116,13 +188,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.adminMode || widget.staffMode) {
+      return AdminPage(
+        title: widget.staffMode ? 'Staff profile' : 'Admin profile',
+        section: AdminSection.profile,
+        child: Builder(builder: _buildBody),
+      );
+    }
     return Scaffold(
-      appBar: AppBar(title: const Text('Profile')),
-      body: SafeArea(child: _buildBody()),
+      extendBody: true,
+      body: CinemaGlassBackground(
+        key: _glassBackgroundKey,
+        child: CinemaBackground(
+          child: SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                Padding(
+                  padding: pagePadding(context, AppSpacing.lg),
+                  child: const CinemaPageHeader(title: 'Account settings'),
+                ),
+                Expanded(child: Builder(builder: _buildBody)),
+              ],
+            ),
+          ),
+        ),
+      ),
+      // The website has its navigation at the top.
+      bottomNavigationBar: isDesktopLayout(context)
+          ? null
+          : CinemaNavigationBar(
+              selectedIndex: 2,
+              backgroundKey: _glassBackgroundKey,
+            ),
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(BuildContext context) {
     if (_isLoading) {
       return const LoadingState(message: 'Loading profile...');
     }
@@ -136,75 +238,145 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
     }
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSpacing.xl),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 640),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              CircleAvatar(
-                radius: 40,
-                backgroundColor: AppColors.surfaceSoft,
-                child: Text(
-                  user.displayName.substring(0, 1).toUpperCase(),
-                  style: AppTextStyles.display,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              Text(
-                user.displayName,
-                style: AppTextStyles.heading1,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                user.email,
-                style: AppTextStyles.bodySmall,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: AppSpacing.xl),
-              _InfoCard(
-                rows: [
-                  ('Phone', user.phone ?? 'Not provided'),
-                  ('Email verified', user.emailVerified ? 'Yes' : 'No'),
-                  ('Role', user.roles.map(_roleLabel).join(', ')),
-                  ('Member since', formatDate(user.createdAt)),
-                ],
-              ),
-              if (_errorMessage != null) ...[
-                const SizedBox(height: AppSpacing.md),
-                Text(
-                  'Showing saved details: $_errorMessage',
-                  style: AppTextStyles.caption,
-                ),
-              ],
-              const SizedBox(height: AppSpacing.xl),
-              AppButton.secondary(
-                label: 'My bookings',
-                leadingIcon: Icons.confirmation_number_outlined,
-                onPressed: () =>
-                    Navigator.pushNamed(context, AppRoutes.myBookings),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              AppButton.secondary(
-                label: 'Notifications',
-                leadingIcon: Icons.notifications_none_outlined,
-                onPressed: () =>
-                    Navigator.pushNamed(context, AppRoutes.notifications),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              AppButton.danger(
-                label: 'Sign out',
-                leadingIcon: Icons.logout,
-                isLoading: _isLoggingOut,
-                onPressed: _isLoggingOut ? null : _logout,
-              ),
-            ],
+    final identity = <Widget>[
+      Center(
+        child: Container(
+          padding: const EdgeInsets.all(3),
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              colors: [AppColors.primary, AppColors.accent],
+            ),
+          ),
+          child: CircleAvatar(
+            radius: 40,
+            backgroundColor: AppColors.background,
+            child: Text(
+              user.displayName.substring(0, 1).toUpperCase(),
+              style: AppTextStyles.display,
+            ),
           ),
         ),
       ),
+      const SizedBox(height: AppSpacing.lg),
+      Text(
+        user.displayName,
+        style: AppTextStyles.heading1,
+        textAlign: TextAlign.center,
+      ),
+      const SizedBox(height: AppSpacing.xs),
+      Text(
+        user.email,
+        style: AppTextStyles.bodySmall,
+        textAlign: TextAlign.center,
+      ),
+    ];
+    final card = _card;
+    final details = <Widget>[
+      if (card != null) ...[
+        MembershipCard(
+          card: card,
+          onHistory: () => Navigator.pushNamed(context, AppRoutes.pointHistory),
+        ),
+        const SizedBox(height: AppSpacing.xl),
+      ],
+      _InfoCard(
+        rows: [
+          ('Full name', user.displayName),
+          ('Email', user.email),
+          ('Phone', user.phone ?? 'Not provided'),
+          ('Email verified', user.emailVerified ? 'Yes' : 'No'),
+          ('Role', user.roles.map(_roleLabel).join(', ')),
+          ('Member since', formatDate(user.createdAt)),
+        ],
+      ),
+      if (_errorMessage != null) ...[
+        const SizedBox(height: AppSpacing.md),
+        Text(
+          'Showing saved details: $_errorMessage',
+          style: AppTextStyles.caption,
+        ),
+      ],
+    ];
+    final buttons = <Widget>[
+      AppButton.secondary(
+        key: const Key('editProfile'),
+        label: 'Edit profile',
+        leadingIcon: Icons.edit_outlined,
+        onPressed: () => _editProfile(user),
+      ),
+      const SizedBox(height: AppSpacing.md),
+      AppButton.secondary(
+        key: const Key('changePassword'),
+        label: 'Change password',
+        leadingIcon: Icons.lock_outline,
+        onPressed: () => _changePassword(user),
+      ),
+      const SizedBox(height: AppSpacing.md),
+      if (!widget.adminMode && !widget.staffMode) ...[
+        AppButton.secondary(
+          label: 'Payment history',
+          leadingIcon: Icons.receipt_long_outlined,
+          onPressed: () =>
+              Navigator.pushNamed(context, AppRoutes.paymentHistory),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        AppButton.secondary(
+          label: 'My bookings',
+          leadingIcon: Icons.confirmation_number_outlined,
+          onPressed: () => Navigator.pushNamed(context, AppRoutes.myBookings),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        AppButton.secondary(
+          label: 'Notifications',
+          leadingIcon: Icons.notifications_none_outlined,
+          onPressed: () =>
+              Navigator.pushNamed(context, AppRoutes.notifications),
+        ),
+        const SizedBox(height: AppSpacing.md),
+      ],
+      AppButton.danger(
+        label: 'Sign out',
+        leadingIcon: Icons.logout,
+        isLoading: _isLoggingOut,
+        onPressed: _isLoggingOut ? null : _logout,
+      ),
+    ];
+
+    return SingleChildScrollView(
+      padding: pagePadding(
+        context,
+        AppSpacing.xl,
+      ).copyWith(bottom: AppSpacing.xl + MediaQuery.paddingOf(context).bottom),
+      child: isDesktopLayout(context)
+          // Website: who is signed in and the account menu on the left, the
+          // details on the right.
+          ? ResponsiveColumns(
+              sideOnLeft: true,
+              sideWidth: 340,
+              side: [
+                CinemaPanel(
+                  surfaceOpacity: 0.8,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: identity,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xl),
+                ...buttons,
+              ],
+              main: details,
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ...identity,
+                const SizedBox(height: AppSpacing.xl),
+                ...details,
+                const SizedBox(height: AppSpacing.xl),
+                ...buttons,
+              ],
+            ),
     );
   }
 
@@ -225,36 +397,29 @@ class _InfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: AppRadius.borderRadiusMd,
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          children: [
-            for (final (label, value) in rows)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(label, style: AppTextStyles.bodySmall),
-                    const SizedBox(width: AppSpacing.md),
-                    Flexible(
-                      child: Text(
-                        value,
-                        style: AppTextStyles.body,
-                        textAlign: TextAlign.right,
-                      ),
-                    ),
-                  ],
-                ),
+    return CinemaPanel(
+      surfaceOpacity: 0.8,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'My profile',
+            style: AppTextStyles.title.copyWith(color: AppColors.primary),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          for (final (label, value) in rows)
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.md),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label.toUpperCase(), style: AppTextStyles.caption),
+                  const SizedBox(height: AppSpacing.xs),
+                  SelectableText(value, style: AppTextStyles.body),
+                ],
               ),
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }

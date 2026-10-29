@@ -28,5 +28,9 @@ namespace BookingService.Repositories.Interfaces
         Task UpdateAsync(Notification notification);
 
         Task DeleteAsync(Notification notification);
+
+        Task<int> MarkAllReadAsync(long userId, DateTime readAt);
+
+        Task<int> CountUnreadAsync(long userId);
     }
 }

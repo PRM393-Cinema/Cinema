@@ -101,6 +101,10 @@ public partial class ShowtimeDbContext : DbContext
                 .HasMaxLength(20)
                 .HasDefaultValueSql("'OPEN'::character varying")
                 .HasColumnName("status");
+            entity.Property(e => e.Format)
+                .HasMaxLength(10)
+                .HasDefaultValue("2D")
+                .HasColumnName("format");
 
             entity.HasOne(d => d.Room).WithMany(p => p.Showtimes)
                 .HasForeignKey(d => d.RoomId)

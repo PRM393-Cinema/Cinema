@@ -1,18 +1,32 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/routes/app_routes.dart';
+import '../../../app/theme/app_colors.dart';
+import '../../../app/theme/app_radius.dart';
 import '../../../app/theme/app_spacing.dart';
+import '../../../app/theme/app_text_styles.dart';
 import '../../../core/session/session_state.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../core/utils/account_validators.dart';
+import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_text_field.dart';
+import '../../../core/widgets/top_notice.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../auth_error_messages.dart';
 import '../widgets/auth_scaffold.dart';
+import '../widgets/auth_success_dialog.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({required this.authRepository, super.key});
+  const LoginScreen({
+    required this.authRepository,
+    this.allowRegister = true,
+    super.key,
+  });
 
   final AuthRepository authRepository;
+
+  // The admin website hides sign-up: admins create staff accounts.
+  final bool allowRegister;
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -56,23 +70,84 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       SessionProvider.of(context).setAuthenticated(response.user);
+      final isAdmin = response.user.roles.contains('ROLE_ADMIN');
+      final isStaff = !isAdmin && response.user.roles.contains('ROLE_STAFF');
+
+      if (isAdmin || isStaff) {
+        showTopNotice(
+          Overlay.of(context, rootOverlay: true),
+          'Đăng nhập thành công.',
+        );
+      } else {
+        await showGeneralDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          barrierLabel: 'Login successful',
+          barrierColor: Colors.black.withValues(alpha: 0.72),
+          transitionDuration: MediaQuery.disableAnimationsOf(context)
+              ? Duration.zero
+              : const Duration(milliseconds: 180),
+          pageBuilder: (_, _, _) => const Material(
+            type: MaterialType.transparency,
+            child: AuthSuccessDialog(
+              title: 'Signed in!',
+              message: 'Welcome back.\nYour next movie is waiting.',
+              footer: 'Taking you to your cinema…',
+            ),
+          ),
+          transitionBuilder: (_, animation, _, child) =>
+              FadeTransition(opacity: animation, child: child),
+        );
+        if (!mounted) return;
+      }
 
       final args =
           ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
       final pendingRoute = args?['pendingRoute'] as String?;
       final pendingArguments = args?['pendingArguments'];
 
-      if (pendingRoute != null) {
+      if (isAdmin) {
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          pendingRoute?.startsWith('/admin/') == true
+              ? pendingRoute!
+              : AppRoutes.adminDashboard,
+          (_) => false,
+          arguments: pendingArguments,
+        );
+      } else if (isStaff) {
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          pendingRoute?.startsWith('/staff/') == true
+              ? pendingRoute!
+              : AppRoutes.staffDashboard,
+          (_) => false,
+          arguments: pendingArguments,
+        );
+      } else if (pendingRoute != null && pendingRoute != AppRoutes.home) {
         Navigator.pushReplacementNamed(
           context,
           pendingRoute,
           arguments: pendingArguments,
         );
       } else {
-        Navigator.pushReplacementNamed(context, AppRoutes.home);
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          AppRoutes.home,
+          (_) => false,
+        );
       }
     } on ApiException catch (error) {
-      _showError(authErrorMessage(error));
+      if (error.requiresSignInAgain) {
+        if (!mounted) return;
+        setState(() => _isLoading = false);
+        showTopNotice(
+          Overlay.of(context, rootOverlay: true),
+          authErrorMessage(error),
+        );
+      } else {
+        _showError(authErrorMessage(error));
+      }
     } on FormatException {
       _showError('The server returned an invalid response.');
     } catch (_) {
@@ -91,117 +166,153 @@ class _LoginScreenState extends State<LoginScreen> {
     });
   }
 
+  void _openForgotPassword() {
+    Navigator.pushNamed(context, AppRoutes.forgotPassword);
+  }
+
   @override
-  Widget build(BuildContext context) => AuthScaffold(
-    title: 'Welcome back',
-    subtitle: 'Sign in to continue your cinema experience.',
-    backToHome: true,
-    child: Form(
-      key: _formKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          AuthFieldSurface(
-            child: AppTextField(
-              label: 'Email',
-              hint: 'Email',
-              isRequired: true,
-              controller: _emailController,
-              keyboardType: TextInputType.emailAddress,
-              enabled: !_isLoading,
-              prefixIcon: const Icon(Icons.mail_outline),
-              validator: _validateEmail,
+  Widget build(BuildContext context) {
+    return AuthScaffold(
+      showBack: widget.allowRegister || Navigator.canPop(context),
+      title: 'Welcome back',
+      titleKey: const Key('loginTitle'),
+      subtitle: 'Sign in to continue your cinema experience.',
+      backToHome: true,
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AuthFieldSurface(
+              child: AppTextField(
+                key: const Key('loginEmailField'),
+                label: 'Email',
+                hint: 'Enter your email',
+                isRequired: true,
+                prefixIcon: const Icon(Icons.mail_outline),
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                enabled: !_isLoading,
+                validator: validateEmail,
+              ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          AuthFieldSurface(
-            child: AppTextField(
-              label: 'Password',
-              hint: 'Password',
-              isRequired: true,
-              controller: _passwordController,
-              obscureText: _obscurePassword,
-              enabled: !_isLoading,
-              prefixIcon: const Icon(Icons.lock_outline),
-              validator: _validatePassword,
-              onChanged: (value) {
-                if (value.isEmpty && !_obscurePassword) {
-                  setState(() => _obscurePassword = true);
-                }
-              },
-              suffixIcon: IconButton(
-                tooltip: _obscurePassword ? 'Show password' : 'Hide password',
+            const SizedBox(height: AppSpacing.lg),
+            AuthFieldSurface(
+              child: AppTextField(
+                key: const Key('loginPasswordField'),
+                label: 'Password',
+                hint: 'Enter your password',
+                isRequired: true,
+                prefixIcon: const Icon(Icons.lock_outline),
+                controller: _passwordController,
+                obscureText: _obscurePassword,
+                enabled: !_isLoading,
+                validator: validateSignInPassword,
+                suffixIcon: IconButton(
+                  tooltip: _obscurePassword ? 'Show password' : 'Hide password',
+                  onPressed: _isLoading
+                      ? null
+                      : () {
+                          setState(() => _obscurePassword = !_obscurePassword);
+                        },
+                  icon: Icon(
+                    _obscurePassword
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: _isLoading ? null : _openForgotPassword,
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.primary,
+                  textStyle: AppTextStyles.bodySmall,
+                ),
+                child: const Text('Forgot password?'),
+              ),
+            ),
+            if (_errorMessage != null) ...[
+              const SizedBox(height: AppSpacing.lg),
+              _LoginError(message: _errorMessage!),
+            ],
+            const SizedBox(height: AppSpacing.xl),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: AppRadius.borderRadiusMd,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.24),
+                    blurRadius: 24,
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
+              child: AppButton(
+                label: 'Sign in',
+                trailingIcon: Icons.arrow_forward_rounded,
+                useGradient: true,
+                isLoading: _isLoading,
+                onPressed: _isLoading ? null : _login,
+              ),
+            ),
+            if (widget.allowRegister) ...[
+              const SizedBox(height: AppSpacing.md),
+              AppButton.secondary(
+                label: 'Create an account',
                 onPressed: _isLoading
                     ? null
-                    : () =>
-                          setState(() => _obscurePassword = !_obscurePassword),
-                icon: Icon(
-                  _obscurePassword
-                      ? Icons.visibility_outlined
-                      : Icons.visibility_off_outlined,
-                ),
+                    : () => Navigator.pushNamed(context, AppRoutes.register),
               ),
-            ),
-          ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFFFF3048),
-                padding: const EdgeInsets.only(
-                  top: AppSpacing.sm,
-                  bottom: AppSpacing.sm,
-                ),
-                minimumSize: const Size(0, 44),
-                textStyle: Theme.of(context).textTheme.bodyLarge!
-                    .copyWith(fontWeight: FontWeight.w500),
-              ),
-              onPressed: _isLoading
-                  ? null
-                  : () =>
-                        Navigator.pushNamed(context, AppRoutes.forgotPassword),
-              child: const Text('Forgot password?'),
-            ),
-          ),
-          if (_errorMessage != null) ...[
-            const SizedBox(height: AppSpacing.md),
-            AuthStatusMessage.error(message: _errorMessage!),
+            ],
           ],
-          const SizedBox(height: 12),
-          AuthButton(
-            label: 'Sign in',
-            isLoading: _isLoading,
-            onPressed: _isLoading ? null : _login,
-          ),
-          const SizedBox(height: AppSpacing.md),
-          AuthButton(
-            label: 'Create an account',
-            secondary: true,
-            onPressed: _isLoading
-                ? null
-                : () => Navigator.pushNamed(context, AppRoutes.register),
-          ),
-          const SizedBox(height: AppSpacing.xl),
-        ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
 
-String? _validateEmail(String? value) {
-  final email = value?.trim() ?? '';
-  if (email.isEmpty) {
-    return 'Email is required.';
-  }
-  if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(email)) {
-    return 'Please enter a valid email address.';
-  }
-  return null;
-}
+class _LoginError extends StatelessWidget {
+  const _LoginError({required this.message});
 
-String? _validatePassword(String? value) {
-  if (value == null || value.isEmpty) {
-    return 'Password is required.';
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      liveRegion: true,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: AppColors.error.withValues(alpha: 0.12),
+          borderRadius: AppRadius.borderRadiusMd,
+          border: Border.all(color: AppColors.error),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(
+                Icons.error_outline,
+                color: AppColors.error,
+                size: AppSpacing.xl,
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  message,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
-  return null;
 }

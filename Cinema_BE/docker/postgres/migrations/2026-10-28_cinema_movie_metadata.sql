@@ -1,0 +1,7 @@
+\set ON_ERROR_STOP on
+\connect cinema_movie_db
+
+BEGIN;
+ALTER TABLE movies ADD COLUMN IF NOT EXISTS director VARCHAR(150);
+ALTER TABLE movies ADD COLUMN IF NOT EXISTS cast_members VARCHAR(500);
+COMMIT;
