@@ -1,0 +1,17 @@
+\begin{table}[t]
+\caption{Verification Executed on October 28, 2026}\label{tab:tests}
+\centering\footnotesize
+\begin{tabularx}{\columnwidth}{@{}YY@{}}\toprule
+Check and method & Observed result / status\\\midrule
+BookingService isolated unit filter & PASS: 17 tests, zero failed\\
+ApiGateway test project & PASS: 21 tests, zero failed\\
+AuthService build & PASS: zero errors/warnings\\
+MovieService build & PASS: zero errors; four nullable warnings\\
+Flutter analysis & 1 informational lint; no errors/warnings\\
+Flutter unit/widget suite & PASS: 209 tests after package restore\\
+PostgreSQL/RabbitMQ integration suites & BLOCKED: Docker daemon unavailable\\
+SQL/migration execution & NOT EXECUTED: no running database\\
+Live PayOS, SMTP, deployed acceptance & NOT EXECUTED: external services not exercised\\
+Customer/admin browser builds & PASS: both entry points compile\\\bottomrule
+\end{tabularx}
+\end{table}

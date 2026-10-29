@@ -1,0 +1,47 @@
+# CosmoQ Cinema — Web IEEE report
+
+This independent paper uses `IEEEtran` conference format. `main.tex` is the entry point;
+`references.bib` contains IEEE references; `figures/*.tex` are reproducible TikZ diagrams.
+All source references use repository snapshot `55642353331f7119c16d4fef05f54bfc559cae8b` and database snapshot `e455d297c76b14e3fd6aa8c0af4bb11f77ec6a2b`.
+The initial draft followed the supplied IEEE requirements. The presentation revision consulted the subsequently supplied Dike.pdf for visual hierarchy only; its project content and technical claims were not imported.
+
+## Compile
+
+From this directory, run either:
+
+```powershell
+tectonic --keep-logs --keep-intermediates main.tex
+```
+
+or, with a full TeX installation:
+
+```powershell
+pdflatex -interaction=nonstopmode -halt-on-error main.tex
+bibtex main
+pdflatex -interaction=nonstopmode -halt-on-error main.tex
+pdflatex -interaction=nonstopmode -halt-on-error main.tex
+```
+
+The parent `ieee-common-build.ps1` builds both reports. An isolated Tectonic executable
+was downloaded under `tmp/ieee-tools`; it is a report-generation tool, not an app dependency.
+Required TeX packages: IEEEtran, fontenc, cite, amsmath, amssymb, graphicx, booktabs,
+array, tabularx, TikZ, listings, xcolor, url, hyperref, balance. No shell escape is needed.
+
+See `../ieee-evidence.md` for claim-to-source mapping and review limitations.
+Verification results are bounded by the documented environment and test doubles.
+
+## Final build and review
+
+Compiled successfully with Tectonic 0.17.0: 7 pages, 17 cited references, 3 figures and 4 tables. The final build has no overfull boxes, missing glyphs, font substitutions, or undefined citations/references. Ordinary underfull justification diagnostics remain. Pages were rendered using Poppler for visual review.
+
+Verified outcomes: 209 Flutter tests, 17 isolated BookingService unit tests, 21 ApiGateway tests; both Web entry points compile. Analysis retains 1 informational lint; MovieService has 4 nullable warnings. Docker-dependent suites, live PayOS/SMTP, migrations, and physical-device/release acceptance were not executed. See the evidence ledger for boundaries.
+
+## Presentation revision
+
+- Compact centered title/author block retains all five student IDs and advisor details.
+- A two-column vector architecture figure separates service/database ownership from named SMTP, RabbitMQ, and PayOS bindings, and shows BookingService-to-MovieService HTTP access.
+- Selected technical paragraphs use bold labels and concise lists; table headers and verification statuses are emphasized.
+- Source-equivalent code listings use line numbers and restrained syntax colors. Figure fills and rules use a consistent muted palette.
+- Final column breaks keep the Web acknowledgment intact and the Mobile bibliography split between entries. Recheck those manual breaks after substantive content changes.
+
+This revision does not rerun application tests or change their previously recorded results. The pre-revision files are preserved under `tmp/ieee-before-polish`.

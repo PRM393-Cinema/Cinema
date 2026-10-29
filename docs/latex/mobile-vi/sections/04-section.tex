@@ -1,0 +1,14 @@
+\clearpage
+\section{Mô tả tổng thể}\label{sec:srs-4}
+\begin{Verbatim}
+Flutter main.dart (Customer + phone check-in)
+                | REST/JSON + JWT
+        ApiGateway / YARP :5000
+          |           |             |
+     AuthService  MovieService  BookingService
+       :5100        :5168          :5063
+          |           |             |
+       PostgreSQL (6 databases) + RabbitMQ/outbox
+                                | PayOS + SMTP
+\end{Verbatim}
+Ba service nghiệp vụ thay thiết kế sáu service ban đầu: \texttt{Auth\allowbreak{}Service} sở hữu danh tính; \texttt{Movie\allowbreak{}Service} sở hữu phim/\allowbreak{}phòng/\allowbreak{}ghế/\allowbreak{}suất; \texttt{Booking\allowbreak{}Service} sở hữu vé, bắp nước, khuyến mãi, điểm, đánh giá, thanh toán/\allowbreak{}hoàn tiền và thông báo. Tham chiếu xuyên database là \texttt{ID} logic, không phải khoá ngoại.

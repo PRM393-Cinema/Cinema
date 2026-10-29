@@ -1,0 +1,13 @@
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=4mm]
+\node[box,text width=72mm] (s) {Browse movie / choose show / select local seats};
+\node[box,below=of s,text width=72mm] (b) {Submit booking: server prices order, locks reservations,\\commits PENDING booking and ten-minute holds};
+\node[box,below=of b,text width=72mm] (p) {Request PayOS link / open external checkout};
+\node[box,below=of p,text width=72mm] (v) {Browser return / booking polling / backend webhook};
+\node[box,below=of v,text width=72mm] (r) {Backend reconciliation: confirm booking, or handle\\expiry / conflict / refund request; client reloads result};
+\draw[arr] (s)--(b);\draw[arr] (b)--(p);\draw[arr] (p)--(v);\draw[arr] (v)--(r);
+\end{tikzpicture}
+\caption{Web reservation and checkout control flow. No client redirect or timer is itself proof of payment.}
+\label{fig:flow}
+\end{figure}

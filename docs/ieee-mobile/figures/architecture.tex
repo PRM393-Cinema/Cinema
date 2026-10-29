@@ -1,0 +1,53 @@
+\begin{figure*}[t]
+\centering
+\begin{tikzpicture}[x=1mm,y=1mm,
+ layer/.style={font=\sffamily\scriptsize\bfseries,text=ReportMuted,anchor=west},
+ component/.style={draw=ReportInk,rounded corners=2pt,fill=white,
+ align=center,font=\footnotesize,inner sep=3pt},
+ connection/.style={-{Latex[length=2mm]},draw=ReportInk,line width=0.55pt}]
+% Each horizontal band has a single purpose; external bindings never run through a database.
+\fill[ReportTint,rounded corners=3pt] (0,8) rectangle (170,-11);
+\fill[ReportTint,rounded corners=3pt] (0,-15) rectangle (170,-37);
+\fill[ReportTint,rounded corners=3pt] (0,-41) rectangle (170,-79);
+\fill[ReportTint,rounded corners=3pt] (0,-83) rectangle (170,-108);
+\node[layer] at (3,4) {CLIENT};
+\node[component,text width=112mm,minimum height=10mm] (client) at (85,-3)
+ {\textbf{Flutter Mobile}\\Customer screens, remote repositories and native plugin calls};
+\node[layer] at (3,-19) {API ENTRY};
+\node[component,text width=112mm,minimum height=10mm] (gateway) at (85,-29)
+ {\textbf{YARP API Gateway}\\JWT validation, role policies, account-status checks};
+\node[layer] at (3,-45) {BACKEND SERVICES AND OWNED DATABASES};
+\node[component,text width=46mm,minimum height=10mm] (auth) at (29,-55)
+ {\textbf{AuthService}\\Accounts, OTPs, access and refresh tokens};
+\node[component,text width=46mm,minimum height=10mm] (movie) at (85,-55)
+ {\textbf{MovieService}\\Movies, rooms, seats and showtimes};
+\node[component,text width=46mm,minimum height=10mm] (booking) at (141,-55)
+ {\textbf{BookingService}\\Bookings, payments and notifications};
+\node[component,text width=46mm,minimum height=9mm] (authdb) at (29,-71)
+ {PostgreSQL\\\code{auth}};
+\node[component,text width=46mm,minimum height=9mm] (moviedb) at (85,-71)
+ {PostgreSQL\\\code{movie}, \code{showtime}};
+\node[component,text width=46mm,minimum height=9mm] (bookingdb) at (141,-71)
+ {PostgreSQL\\\code{booking}, \code{payment}, \code{notification}};
+\draw[connection] (client)--node[right,font=\scriptsize,fill=white,inner sep=1pt]
+ {JSON / bearer token}(gateway);
+\draw[connection] (gateway.south)--(85,-48)-|(auth.north);
+\draw[connection] (gateway.south)--(movie.north);
+\draw[connection] (gateway.south)--(85,-48)-|(booking.north);
+\draw[connection] (booking.west)--node[above,font=\tiny]{HTTP}(movie.east);
+\draw[connection] (auth)--(authdb);
+\draw[connection] (movie)--(moviedb);
+\draw[connection] (booking)--(bookingdb);
+\node[layer] at (3,-87) {SERVICE INTEGRATIONS};
+\node[component,text width=46mm,minimum height=13mm] at (29,-98)
+ {\textbf{SMTP email}\\Invoked by AuthService\\and BookingService};
+\node[component,text width=46mm,minimum height=13mm] at (85,-98)
+ {\textbf{RabbitMQ events}\\Outbox publishers / consumers\\in MovieService and BookingService};
+\node[component,text width=46mm,minimum height=13mm] at (141,-98)
+ {\textbf{PayOS HTTP API}\\Checkout links and status queries\\from BookingService};
+\end{tikzpicture}
+\caption{Mobile system architecture: the app uses the shared gateway; backend services own persistence and integrations. Solid arrows show client/API and persistence paths.
+The integration cards identify the backend services responsible for each external binding.
+Database labels abbreviate the six \code{cinema\_\ldots\_db} names; all six use one PostgreSQL instance in Compose.}
+\label{fig:architecture}
+\end{figure*}

@@ -1,0 +1,1636 @@
+{
+  "source": "../../Cinema_Mobile_SRS_EN.md",
+  "source_sha256": "da3949b929591b384c59ec4822c7f5e30bc1ced41fc79c62c8b1d9825de7fde5",
+  "sections": 28,
+  "headings": [
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "SOFTWARE REQUIREMENTS SPECIFICATION"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "Cinema — Mobile"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "1. Introduction"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "2. Purpose"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "3. Scope"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "4. Overall Description"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "5. Product Perspective"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "6. User Classes / Actors"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "7. Role & Permission"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "8. Business Rules"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "9. Functional Requirements"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-AUTH-01 — Register"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-AUTH-02 — Sign in"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-AUTH-03 — JWT claims"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-AUTH-04 — Validate JWT"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-AUTH-05 — Authorize roles"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-AUTH-06 — Unauthenticated and forbidden responses"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-AUTH-07 — Verify email OTP"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-AUTH-08 — Repeat unverified registration"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-AUTH-09 — Recover password"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-AUTH-10 — Refresh and sign out"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-AUTH-11 — Current account"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-AUTH-12 — Lock and role-change enforcement"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-AUTH-13 — Account field validation"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-AUTH-14 — Authentication rate limits"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-AUTH-16 — Edit profile"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-AUTH-17 — Change current password"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-MOV-02 — Movie details"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-MOV-03 — Title search"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-MOV-04 — Active catalogue"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-MOV-08 — Open trailer"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-MOV-09 — Age rating"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-MOV-10 — Now showing and coming soon"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-MOV-11 — Director and cast"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-MOV-12 — Movie reviews"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-SEAT-03 — Read room map"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-SHOW-03 — Showtime and prices"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-SHOW-06 — Open future showtimes"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-SHOW-07 — Showtimes by movie"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-SHOW-08 — Bookable movie showtimes"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-SHOW-13 — Screening format"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-BOOK-01 — Hold booking"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-BOOK-02 — Booking details"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-BOOK-04 — Own ticket history"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-BOOK-05 — Confirm paid booking"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-BOOK-06 — Cancel booking"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-BOOK-07 — Occupied seat IDs"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-BOOK-08 — Concurrent seat conflict"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-BOOK-09 — Sweetbox pair"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-BOOK-10 — Expire unpaid hold"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-BOOK-11 — Refresh customer map"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-BOOK-13 — Concessions with tickets"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-BOOK-15 — Promotion and voucher"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-BOOK-17 — Membership points"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-BOOK-19 — Share and calendar"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-PAY-01 — Create/reuse PayOS link"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-PAY-02 — Verify PayOS"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-PAY-03 — Payment details"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-PAY-04 — Own payment history"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-PAY-06 — Refund access"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-PAY-07 — Signed webhook"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-PAY-08 — Late payment"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-PAY-11 — Automatic payment polling"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-REF-01 — Create refund request"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-REF-05 — Reopen rejected refund"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-REF-06 — Own refund status"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-REF-07 — Unique refund per payment"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-CHK-01 — Ticket QR"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-CHK-02 — Lookup ticket code"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-CHK-03 — Check-in validation"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-CHK-04 — Camera/manual scanner"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-CHK-05 — Display check-in time"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-NOTI-01 — Notification history"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-NOTI-04 — Notification details"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-NOTI-06 — Event emails"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-NOTI-07 — OTP and welcome email"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-NOTI-08 — Showtime reminder"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-NOTI-09 — Read/unread notifications"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-NAV-01 — Route guards and recovery"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-STATE-01 — Loading, error and empty states"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-FR-MEDIA-01 — Platform-specific movie media"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "10. Use Case Specifications"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "UC-MOB-01 — Authentication and account session"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "UC-MOB-02 — Movie catalogue and reviews"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "UC-MOB-03 — Seat map and availability"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "UC-MOB-04 — Showtimes and prices"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "UC-MOB-05 — Booking, concessions, promotions and loyalty"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "UC-MOB-06 — Online payment and reconciliation"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "UC-MOB-07 — Cancellation and manual refund"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "UC-MOB-08 — Ticket lookup and check-in"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "UC-MOB-09 — Notifications and transactional email"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "11. External Interface Requirements"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "12. UI / Screen Requirements"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-SCR-LOGIN — Sign in"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-SCR-REGISTER — Registration"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-SCR-VERIFY — Verify email"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-SCR-FORGOT — Forgot password"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-SCR-RESET — Reset password"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-SCR-HOME — Customer home"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-SCR-MOVIE — Movie details"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-SCR-SEATS — Seat selection"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-SCR-SUMMARY — Booking summary"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-SCR-PAYMENT — Payment"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-SCR-RESULT — Payment result"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-SCR-TICKETS — My tickets"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-SCR-TICKET — Ticket details"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-SCR-PAYHISTORY — Payment history"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-SCR-NOTIFICATIONS — Notifications"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-SCR-NOTIFICATION — Notification details"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-SCR-PROFILE — Account and membership"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-SCR-MGT-LANDING — Management-account landing"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "MOB-SCR-CHECKIN — Ticket check-in"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "13. API Requirements"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "Request field definitions"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "14. Data Requirements"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "15. Business Workflows"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "State contract"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "16. Authentication & Authorization"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "17. Error Handling"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "18. Non-Functional Requirements"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "19. Security Requirements"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "20. Testing Requirements"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "Existing test evidence"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "21. Acceptance Criteria"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "22. Requirements Traceability Matrix"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "23. Constraints"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "24. Out of Scope"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "25. Future Enhancements"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "26. Conclusion"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "27. Implemented vs Requirement"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "28. Evidence and source reconciliation"
+    }
+  ],
+  "blocks": 281,
+  "tables": [
+    {
+      "table": 1,
+      "section": 0,
+      "heading": "Document metadata",
+      "columns": 2,
+      "rows": 5,
+      "cells_sha256": "8fcb7e666defccc6690632ce1d6da2e550f00d870ff43db5341167569b24d4d4"
+    },
+    {
+      "table": 2,
+      "section": 5,
+      "heading": "5. Product Perspective",
+      "columns": 2,
+      "rows": 4,
+      "cells_sha256": "7db8fe49cfd286d638fe18f5483dda9f535739a2faa67635b9bf89cd1a8f078a"
+    },
+    {
+      "table": 3,
+      "section": 6,
+      "heading": "6. User Classes / Actors",
+      "columns": 2,
+      "rows": 5,
+      "cells_sha256": "51266887a57537edc1357b64a45c7ed8356531d7087a9f739282fe93f61118c5"
+    },
+    {
+      "table": 4,
+      "section": 7,
+      "heading": "7. Role & Permission",
+      "columns": 5,
+      "rows": 3,
+      "cells_sha256": "962c37ed99de0b61ceb04279420f086be209e32111c5c6eced9d614209578166"
+    },
+    {
+      "table": 5,
+      "section": 8,
+      "heading": "8. Business Rules",
+      "columns": 2,
+      "rows": 28,
+      "cells_sha256": "9c2f7af327ffefe26f4ac0a6b31586556c9011a1b89d6b20cfca9b408feceed6"
+    },
+    {
+      "table": 6,
+      "section": 9,
+      "heading": "MOB-FR-AUTH-01 — Register",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "82e0edb85d9296e29bad437fea0ff824e5a6f3e85d7715b368894f1e934db941"
+    },
+    {
+      "table": 7,
+      "section": 9,
+      "heading": "MOB-FR-AUTH-02 — Sign in",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "ccc53710aba4b7b39fc14134744365f28a129c978323abcd918a655185766777"
+    },
+    {
+      "table": 8,
+      "section": 9,
+      "heading": "MOB-FR-AUTH-03 — JWT claims",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "c4f1e7dd9d6ccea512a65e0806378257eb76d460ed92693bbed30c4b39f94d92"
+    },
+    {
+      "table": 9,
+      "section": 9,
+      "heading": "MOB-FR-AUTH-04 — Validate JWT",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "522368bc751ae97ede80a3c12090eca76ef1e8dd46f095dad6eb4649447706e1"
+    },
+    {
+      "table": 10,
+      "section": 9,
+      "heading": "MOB-FR-AUTH-05 — Authorize roles",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "8d9bf9f7474e87343a236c9861d289713e515ff3a4a2ccc3f01749fc49b2363b"
+    },
+    {
+      "table": 11,
+      "section": 9,
+      "heading": "MOB-FR-AUTH-06 — Unauthenticated and forbidden responses",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "efbbb4c12839d7405efa8bab6c1a707e932d36bc953e61250b00d9f7a5ccdb28"
+    },
+    {
+      "table": 12,
+      "section": 9,
+      "heading": "MOB-FR-AUTH-07 — Verify email OTP",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "e698121804c505251642de509251a17fd8e02187fe5fc119f24c1fccc10aa4d4"
+    },
+    {
+      "table": 13,
+      "section": 9,
+      "heading": "MOB-FR-AUTH-08 — Repeat unverified registration",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "90c629e6af9456b3ba4d6a56a2338192eeec19b1de1e5e4484b1961bd5289efe"
+    },
+    {
+      "table": 14,
+      "section": 9,
+      "heading": "MOB-FR-AUTH-09 — Recover password",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "d8fc449f5fd82affdca226be19cf75e7a3f006fbecaf263ee29fea32131833f0"
+    },
+    {
+      "table": 15,
+      "section": 9,
+      "heading": "MOB-FR-AUTH-10 — Refresh and sign out",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "24fa3eff5660e1243194f4b0eb2ff9ca4d5a7a90d5e4727207384926118a13c3"
+    },
+    {
+      "table": 16,
+      "section": 9,
+      "heading": "MOB-FR-AUTH-11 — Current account",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "a5c42040c6c10c38afb1b57f8e3124421b38305de276a72ae27243aa4f8b0c9c"
+    },
+    {
+      "table": 17,
+      "section": 9,
+      "heading": "MOB-FR-AUTH-12 — Lock and role-change enforcement",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "c34610bf05d36275e0d90bdd1ce5b3083ac3d9264d8bd61783f5eb4d9b5dd272"
+    },
+    {
+      "table": 18,
+      "section": 9,
+      "heading": "MOB-FR-AUTH-13 — Account field validation",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "1041bd4886f99d7020bf2771e0d552c65889e88a117310301399e4f6b31e76a8"
+    },
+    {
+      "table": 19,
+      "section": 9,
+      "heading": "MOB-FR-AUTH-14 — Authentication rate limits",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "c4e313507eaf36c159cd306487dd4c89235145328ff668e2189e89d61a095803"
+    },
+    {
+      "table": 20,
+      "section": 9,
+      "heading": "MOB-FR-AUTH-16 — Edit profile",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "4dadb924c7258c32ca2d9dd045dd242ba141be497a3b3fe6f41e848850d4f1a0"
+    },
+    {
+      "table": 21,
+      "section": 9,
+      "heading": "MOB-FR-AUTH-17 — Change current password",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "b9e7f331fba72b60189f522d133643afab8778b30b7803726f68623437f460f6"
+    },
+    {
+      "table": 22,
+      "section": 9,
+      "heading": "MOB-FR-MOV-02 — Movie details",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "acd0d3c7692da1db1d9bcb5421d3d6abe143d93b351959b74590bd73bc97ada8"
+    },
+    {
+      "table": 23,
+      "section": 9,
+      "heading": "MOB-FR-MOV-03 — Title search",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "ae86e2bc4dff80868ee862a4c1eb02581b924be5baa95da81596cfdf721dee1e"
+    },
+    {
+      "table": 24,
+      "section": 9,
+      "heading": "MOB-FR-MOV-04 — Active catalogue",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "0e4c1bcdfb2108d6e409b6f7eefe9145f42d9cd853a516c5eb7268d18929480e"
+    },
+    {
+      "table": 25,
+      "section": 9,
+      "heading": "MOB-FR-MOV-08 — Open trailer",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "3cd580207c1d4eb405ae7822ed863f9a67f3f62bb4b2ef55f3dc6222add4d940"
+    },
+    {
+      "table": 26,
+      "section": 9,
+      "heading": "MOB-FR-MOV-09 — Age rating",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "f31188565b1e37f0c78f6d37b173549f4631aea7089dea2befc761b97d17a5df"
+    },
+    {
+      "table": 27,
+      "section": 9,
+      "heading": "MOB-FR-MOV-10 — Now showing and coming soon",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "68d7d0c80a3abc49a8b9f1101d95afa01c8f9d338c1e586f4dcbbd53c9e9d003"
+    },
+    {
+      "table": 28,
+      "section": 9,
+      "heading": "MOB-FR-MOV-11 — Director and cast",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "40722fcd0f3a6f39d06d7f4b5cbd4675dba396df2b6d56a03d6a5b3423e3d3c5"
+    },
+    {
+      "table": 29,
+      "section": 9,
+      "heading": "MOB-FR-MOV-12 — Movie reviews",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "092bf88200ec1178aa4ec0962bc8e05469402ce857dee24031ccee74e57b5b3e"
+    },
+    {
+      "table": 30,
+      "section": 9,
+      "heading": "MOB-FR-SEAT-03 — Read room map",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "0be16ef0c7f788f01051a479dee11db29033616f8360619c18ccc30cc6d53550"
+    },
+    {
+      "table": 31,
+      "section": 9,
+      "heading": "MOB-FR-SHOW-03 — Showtime and prices",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "04d1558c5708c780c8cfe74399e15f2362465c08fb5f19f43fd50ec34fdb1dde"
+    },
+    {
+      "table": 32,
+      "section": 9,
+      "heading": "MOB-FR-SHOW-06 — Open future showtimes",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "cec91cab1d8b5b914fae0a6411edf5ae5bfd7c9cf36b1c7f0a92f44584c6f5bc"
+    },
+    {
+      "table": 33,
+      "section": 9,
+      "heading": "MOB-FR-SHOW-07 — Showtimes by movie",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "44f90fbe8a33aa583e051725a9d81451d88db7efeea5ef184a39ebabfb67903e"
+    },
+    {
+      "table": 34,
+      "section": 9,
+      "heading": "MOB-FR-SHOW-08 — Bookable movie showtimes",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "90539f2edda155aa180a1a91f847379228d63a99d5f7fa481d3d3dc9308e0d53"
+    },
+    {
+      "table": 35,
+      "section": 9,
+      "heading": "MOB-FR-SHOW-13 — Screening format",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "b57841178c6b9ccd70c1980884a79accc907fa93bc263f3811c91e3e0ed1d8dd"
+    },
+    {
+      "table": 36,
+      "section": 9,
+      "heading": "MOB-FR-BOOK-01 — Hold booking",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "cebc987e5115448faf2c362874bf2dfc7929e8cb1efebf78207240d48c310899"
+    },
+    {
+      "table": 37,
+      "section": 9,
+      "heading": "MOB-FR-BOOK-02 — Booking details",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "837cbed6610467fef4e827372365466d3d3f0c8970e9858e6dca7bfbbfbcf15b"
+    },
+    {
+      "table": 38,
+      "section": 9,
+      "heading": "MOB-FR-BOOK-04 — Own ticket history",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "b9287e66b23913d6b615dd0ce0c08a9ede27167fcf721ad1cf30f2cc401191fa"
+    },
+    {
+      "table": 39,
+      "section": 9,
+      "heading": "MOB-FR-BOOK-05 — Confirm paid booking",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "f8e4aacece8c9f31f525392750a9baeecfdabf11f8224a683b93284a59e76515"
+    },
+    {
+      "table": 40,
+      "section": 9,
+      "heading": "MOB-FR-BOOK-06 — Cancel booking",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "32a4e9bb82de748b5629400a0647a550e7b6040af139c00e832d6e4d316dd628"
+    },
+    {
+      "table": 41,
+      "section": 9,
+      "heading": "MOB-FR-BOOK-07 — Occupied seat IDs",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "1344e8665ac3b970cb17c55d381f8fac28b46343704362876be9ea6d2bbb641d"
+    },
+    {
+      "table": 42,
+      "section": 9,
+      "heading": "MOB-FR-BOOK-08 — Concurrent seat conflict",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "51084f048c32417b4241c50cddae5c0ce84c35a1d2221e33aa30559124babc3a"
+    },
+    {
+      "table": 43,
+      "section": 9,
+      "heading": "MOB-FR-BOOK-09 — Sweetbox pair",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "db7e73ab8e273ed1b06481db26636b4303c647593f26aaa7d2fbadb9fa1bb04c"
+    },
+    {
+      "table": 44,
+      "section": 9,
+      "heading": "MOB-FR-BOOK-10 — Expire unpaid hold",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "f884559491d8c3b672e30cb45e2e07e5d548b77cc31070f9fdc60a1f5d222c49"
+    },
+    {
+      "table": 45,
+      "section": 9,
+      "heading": "MOB-FR-BOOK-11 — Refresh customer map",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "3a933434413c9390d834fa275dc8084802ec8ddce36f4d64613d21017bcbb623"
+    },
+    {
+      "table": 46,
+      "section": 9,
+      "heading": "MOB-FR-BOOK-13 — Concessions with tickets",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "91d2e533ec6f3a7c243c763ae0a529d2074f4aee57e3faa70039f959c756892c"
+    },
+    {
+      "table": 47,
+      "section": 9,
+      "heading": "MOB-FR-BOOK-15 — Promotion and voucher",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "169467ff6bde28001aef2f4ad918c338c19b49c8a163c3dc89a01c7849faf194"
+    },
+    {
+      "table": 48,
+      "section": 9,
+      "heading": "MOB-FR-BOOK-17 — Membership points",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "54cd5c24081ffc1b9f256ab3982ff02a58518cc091a7af6fa943c6351d7efbb2"
+    },
+    {
+      "table": 49,
+      "section": 9,
+      "heading": "MOB-FR-BOOK-19 — Share and calendar",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "11a2f3314a3129aaabd8006c0b1e04b83b234ac5ea6932c5ba0abfd7bdf74a19"
+    },
+    {
+      "table": 50,
+      "section": 9,
+      "heading": "MOB-FR-PAY-01 — Create/reuse PayOS link",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "1a89f4176c871992be9c252b8efe9c26d2f712ea51c21a869270fa89614cb360"
+    },
+    {
+      "table": 51,
+      "section": 9,
+      "heading": "MOB-FR-PAY-02 — Verify PayOS",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "d5231fa682937acfab6d9f8524c1c9302873e4e0f8ae55a710cd4b7f961d0860"
+    },
+    {
+      "table": 52,
+      "section": 9,
+      "heading": "MOB-FR-PAY-03 — Payment details",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "2c49c681a809cf4616ed65bedb6c01018e0d0f7cd3978de4a6bdf3657f957b2a"
+    },
+    {
+      "table": 53,
+      "section": 9,
+      "heading": "MOB-FR-PAY-04 — Own payment history",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "b8132808c8850c5d1ca8b72b2ec40ffe7f7cee519077802e8c4a92a95b0a89ff"
+    },
+    {
+      "table": 54,
+      "section": 9,
+      "heading": "MOB-FR-PAY-06 — Refund access",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "1d97231ce9c448babcfe99963e5df920ef990d20d06d368e299303c542c6d9ef"
+    },
+    {
+      "table": 55,
+      "section": 9,
+      "heading": "MOB-FR-PAY-07 — Signed webhook",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "41759b85fba906214a8799359ad25e8db3590ca5d606afee607c53f16deac0b4"
+    },
+    {
+      "table": 56,
+      "section": 9,
+      "heading": "MOB-FR-PAY-08 — Late payment",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "08ee51c9bb6e1a749b2cdd729ebf2c3ca0766ed44b981369539557675476ad46"
+    },
+    {
+      "table": 57,
+      "section": 9,
+      "heading": "MOB-FR-PAY-11 — Automatic payment polling",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "3c92c6bad78b5a7297ee61c0e960e7c762646bc459c865badddbd9667dcf8ffb"
+    },
+    {
+      "table": 58,
+      "section": 9,
+      "heading": "MOB-FR-REF-01 — Create refund request",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "af6067e2059b697c80587aeb8c810f31f742eefe095addd3007cb5ce693f18ba"
+    },
+    {
+      "table": 59,
+      "section": 9,
+      "heading": "MOB-FR-REF-05 — Reopen rejected refund",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "4b00847ab477c62664292f6f96f954ff85fdc88087f8b0241f8dd924c512c826"
+    },
+    {
+      "table": 60,
+      "section": 9,
+      "heading": "MOB-FR-REF-06 — Own refund status",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "d139068c3a8265b90601e55327881cf3d48d6f7094b53c90dad0b4487275831b"
+    },
+    {
+      "table": 61,
+      "section": 9,
+      "heading": "MOB-FR-REF-07 — Unique refund per payment",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "7a70e9e5683c9c704148280473ebb821b5e71c71d5ab80fce0f78b6afa0aed97"
+    },
+    {
+      "table": 62,
+      "section": 9,
+      "heading": "MOB-FR-CHK-01 — Ticket QR",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "e70b3836094fc2d726e72737a4fa74854382489be2eb66b89f6b69384f377e7f"
+    },
+    {
+      "table": 63,
+      "section": 9,
+      "heading": "MOB-FR-CHK-02 — Lookup ticket code",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "23526a3d7c65fbf650937836df4d2630d988493fe2b751dd07f03806d1a791c1"
+    },
+    {
+      "table": 64,
+      "section": 9,
+      "heading": "MOB-FR-CHK-03 — Check-in validation",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "3f8f26f6f4d313b385bf8967ac1e8d74b15323efef2c59c31c81ce10ec76b6da"
+    },
+    {
+      "table": 65,
+      "section": 9,
+      "heading": "MOB-FR-CHK-04 — Camera/manual scanner",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "7184ba1d92225789d016859aea5a79d2e1e76e85d987663931769514ffc1bec3"
+    },
+    {
+      "table": 66,
+      "section": 9,
+      "heading": "MOB-FR-CHK-05 — Display check-in time",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "b6fa4afbdc0e99d4070369f76cd72502fe30f5bc4fec506eb9cc242986ed951e"
+    },
+    {
+      "table": 67,
+      "section": 9,
+      "heading": "MOB-FR-NOTI-01 — Notification history",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "a836b3732d573a2b261391d9a87de9df0fff812d62aae884666413e52911a74d"
+    },
+    {
+      "table": 68,
+      "section": 9,
+      "heading": "MOB-FR-NOTI-04 — Notification details",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "71d598dc6bd9f8138e4ea21b7e74c64c5b8df7d33e02bb4575433656835eb67f"
+    },
+    {
+      "table": 69,
+      "section": 9,
+      "heading": "MOB-FR-NOTI-06 — Event emails",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "0a55a5eb17ca1f308a113aa6a0cac3db3b4306c9bab098c2b624e4d76b1a380f"
+    },
+    {
+      "table": 70,
+      "section": 9,
+      "heading": "MOB-FR-NOTI-07 — OTP and welcome email",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "7ba85039db4766ceff34b865920f98d58d30243f8fb3e663376ba9a1faa0e150"
+    },
+    {
+      "table": 71,
+      "section": 9,
+      "heading": "MOB-FR-NOTI-08 — Showtime reminder",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "255623d8cc691e3b037fd9229a4669d3531cce25dc0dfd03e0a64058e98d6d88"
+    },
+    {
+      "table": 72,
+      "section": 9,
+      "heading": "MOB-FR-NOTI-09 — Read/unread notifications",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "34dd6c960ef0a446013ae2fa27687bd0c0e96e6be3bcfc5715a4ca00987f3091"
+    },
+    {
+      "table": 73,
+      "section": 9,
+      "heading": "MOB-FR-NAV-01 — Route guards and recovery",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "9ba44bfc57f28cdcb237f2ec5a34dd4d82f42d867d77606e606cff075af257eb"
+    },
+    {
+      "table": 74,
+      "section": 9,
+      "heading": "MOB-FR-STATE-01 — Loading, error and empty states",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "2effda17043f7273a490d973e4509dc82901d4fa99c6a8c095bae8056d1d9db6"
+    },
+    {
+      "table": 75,
+      "section": 9,
+      "heading": "MOB-FR-MEDIA-01 — Platform-specific movie media",
+      "columns": 2,
+      "rows": 13,
+      "cells_sha256": "40649ee7720f38cc6e2e837ca43fe2e249347d4746be1402bdaa5824e62c0458"
+    },
+    {
+      "table": 76,
+      "section": 10,
+      "heading": "UC-MOB-01 — Authentication and account session",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "145256eeeb4b65a6e57392912a2dc8b3cc90d5c2a73b40365dd368308fa5748a"
+    },
+    {
+      "table": 77,
+      "section": 10,
+      "heading": "UC-MOB-02 — Movie catalogue and reviews",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "ac57db2bb17433641624e3ae8ba10985e9a182ce62657d24b7613196ff512f7f"
+    },
+    {
+      "table": 78,
+      "section": 10,
+      "heading": "UC-MOB-03 — Seat map and availability",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "859f75b1ee9bc2f98b80cecdb0f0d4501620cc9eb5e4b071d239b8bcb029cfc7"
+    },
+    {
+      "table": 79,
+      "section": 10,
+      "heading": "UC-MOB-04 — Showtimes and prices",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "7f5721286e9a6ecb07b6c90ef1b99d7dc1f0b3f0e8a3450dfc24793e95d3a1d8"
+    },
+    {
+      "table": 80,
+      "section": 10,
+      "heading": "UC-MOB-05 — Booking, concessions, promotions and loyalty",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "8556a09bbd64f0267488f1a24662ef59d29befa926519a2d0413874c790277db"
+    },
+    {
+      "table": 81,
+      "section": 10,
+      "heading": "UC-MOB-06 — Online payment and reconciliation",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "f807ae865a303a3ed9bf93af75354ce7e27ac6582be78c6c1bc3d69ba9c4ba1f"
+    },
+    {
+      "table": 82,
+      "section": 10,
+      "heading": "UC-MOB-07 — Cancellation and manual refund",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "c4b42a26a3e4a4d74c4516c2c39b640254b501a9c57b1bc55db7e17faa67ff42"
+    },
+    {
+      "table": 83,
+      "section": 10,
+      "heading": "UC-MOB-08 — Ticket lookup and check-in",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "d9a78e596a59109b0183a1c7ed57f625eb7fa3eb8a5d07737e72d993b3ad2bad"
+    },
+    {
+      "table": 84,
+      "section": 10,
+      "heading": "UC-MOB-09 — Notifications and transactional email",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "356e8ba54f4b4785163ac75992fdd2c799a1d88e931cc9915381447830743e5d"
+    },
+    {
+      "table": 85,
+      "section": 11,
+      "heading": "11. External Interface Requirements",
+      "columns": 2,
+      "rows": 4,
+      "cells_sha256": "811f4d05a1d08c4d03bfe59829238eca53b1a652dd4b6607787a16b2b60fcb02"
+    },
+    {
+      "table": 86,
+      "section": 12,
+      "heading": "MOB-SCR-LOGIN — Sign in",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "83b0a229e3bba58a27794797b651246179f28117b32a3ebe26020b09e0c17ea3"
+    },
+    {
+      "table": 87,
+      "section": 12,
+      "heading": "MOB-SCR-REGISTER — Registration",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "006684dc845d1f4f67a508a5c85261ca4ab92a35b544f51051208fd117885df3"
+    },
+    {
+      "table": 88,
+      "section": 12,
+      "heading": "MOB-SCR-VERIFY — Verify email",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "e5bbd6a352f18448ea78e031193165754b59a6c89d5d55bd3edc19594d740148"
+    },
+    {
+      "table": 89,
+      "section": 12,
+      "heading": "MOB-SCR-FORGOT — Forgot password",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "7f9f133654eded1296e4ce83f290d4edbe2706edcc12fc060c730c63c7b01c42"
+    },
+    {
+      "table": 90,
+      "section": 12,
+      "heading": "MOB-SCR-RESET — Reset password",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "0d1035a9525d48530c6ee2092d50158c6908f4a31d515be9fccabd299afe15d1"
+    },
+    {
+      "table": 91,
+      "section": 12,
+      "heading": "MOB-SCR-HOME — Customer home",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "27a1c8b1f3e979cbb75cfd7f37b29724b854729123e155768d6765fb1fad81ca"
+    },
+    {
+      "table": 92,
+      "section": 12,
+      "heading": "MOB-SCR-MOVIE — Movie details",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "1f12d1330c4b850af2672362b404a8c425ad4d44de97d96de5368f48750797b8"
+    },
+    {
+      "table": 93,
+      "section": 12,
+      "heading": "MOB-SCR-SEATS — Seat selection",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "0386c33a67ba640939b0b21eedf084cdeae824cb8db067cd703961a0ce9086f7"
+    },
+    {
+      "table": 94,
+      "section": 12,
+      "heading": "MOB-SCR-SUMMARY — Booking summary",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "1894bce0f4286e0fa7216bb441f6a57c2ab986f1a29e9cd2fde5b0043eac19d4"
+    },
+    {
+      "table": 95,
+      "section": 12,
+      "heading": "MOB-SCR-PAYMENT — Payment",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "e60cf4022135667caac50d73f72cb644f3011311ae74c7beebbab74f1b10bb6b"
+    },
+    {
+      "table": 96,
+      "section": 12,
+      "heading": "MOB-SCR-RESULT — Payment result",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "88693e34ee79cdf1ce807824e179320118add00d19fbd241254681a92e20fae0"
+    },
+    {
+      "table": 97,
+      "section": 12,
+      "heading": "MOB-SCR-TICKETS — My tickets",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "fc96612c711f85935f7019b8982783aca3a3649281546713a40cbd90026c23c8"
+    },
+    {
+      "table": 98,
+      "section": 12,
+      "heading": "MOB-SCR-TICKET — Ticket details",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "853c939c2f55f280aafc43a95c0e2115a889b25cdab78c99597dec69eb66fd00"
+    },
+    {
+      "table": 99,
+      "section": 12,
+      "heading": "MOB-SCR-PAYHISTORY — Payment history",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "161a99abd693796248a54ecec36dd880939e82b6326cf22c24ed7818d973962c"
+    },
+    {
+      "table": 100,
+      "section": 12,
+      "heading": "MOB-SCR-NOTIFICATIONS — Notifications",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "0adb485132b03a3e67172fdf917e9fa270333f3b76e1aa524e47aa41e6cddba5"
+    },
+    {
+      "table": 101,
+      "section": 12,
+      "heading": "MOB-SCR-NOTIFICATION — Notification details",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "d22e4265609a0b90472ed4e703d00fd9f922ce070b59cb6ca327c709cada4873"
+    },
+    {
+      "table": 102,
+      "section": 12,
+      "heading": "MOB-SCR-PROFILE — Account and membership",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "64fb59c5dc16a2de4e0961557fc40e93832646b03835e33a41b09cb2ae6b1b35"
+    },
+    {
+      "table": 103,
+      "section": 12,
+      "heading": "MOB-SCR-MGT-LANDING — Management-account landing",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "4613af4c574adbfab112e23f0def284cff4181b65fd50b741069435b88756565"
+    },
+    {
+      "table": 104,
+      "section": 12,
+      "heading": "MOB-SCR-CHECKIN — Ticket check-in",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "8d2f687952e331abf8b0798a0caf27bafeb6222c946bd177610ed1fa3349de3f"
+    },
+    {
+      "table": 105,
+      "section": 13,
+      "heading": "13. API Requirements",
+      "columns": 6,
+      "rows": 42,
+      "cells_sha256": "2cea1e63afed8a3bb13117bd705935e129a2941338e2d74b9858f59d99d93f9d"
+    },
+    {
+      "table": 106,
+      "section": 13,
+      "heading": "Request field definitions",
+      "columns": 3,
+      "rows": 12,
+      "cells_sha256": "6c3835e650bc67211130226ef3a992924e886e9155a0ebc8df728cc6301e3678"
+    },
+    {
+      "table": 107,
+      "section": 14,
+      "heading": "14. Data Requirements",
+      "columns": 3,
+      "rows": 6,
+      "cells_sha256": "66a21cae4bc74a85c475639fc6ee8af62b3ddc8f5f227f018c1fabc4e2afc4e0"
+    },
+    {
+      "table": 108,
+      "section": 15,
+      "heading": "15. Business Workflows",
+      "columns": 2,
+      "rows": 5,
+      "cells_sha256": "a7a3fe0191fa1a24edd9e6738bc90b014473c8d1366db4adeb601e0dff0c8300"
+    },
+    {
+      "table": 109,
+      "section": 15,
+      "heading": "State contract",
+      "columns": 2,
+      "rows": 5,
+      "cells_sha256": "a5f0ba3a2fb3f1d96c989f3532d7b6a4d3ed5e03c7a27858fd3defb2d73359f5"
+    },
+    {
+      "table": 110,
+      "section": 17,
+      "heading": "17. Error Handling",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "685b554178a7b6c1343952846884b880a2391e133beb1debe444b988dbe29e0e"
+    },
+    {
+      "table": 111,
+      "section": 18,
+      "heading": "18. Non-Functional Requirements",
+      "columns": 3,
+      "rows": 21,
+      "cells_sha256": "21cd51a0fbf622fdcc6c526d34bd12699ead1e20fefcbb397a630ed0a759055f"
+    },
+    {
+      "table": 112,
+      "section": 19,
+      "heading": "19. Security Requirements",
+      "columns": 2,
+      "rows": 6,
+      "cells_sha256": "86a2438aadbcecf1649c1ba0457c08180a2bb194d6cd355e4048f0aa9b2a7c24"
+    },
+    {
+      "table": 113,
+      "section": 20,
+      "heading": "20. Testing Requirements",
+      "columns": 2,
+      "rows": 6,
+      "cells_sha256": "23d0a34b8b4daa67f918225ee1fa07080729443b0c8497b1e38ef90c8ea98af4"
+    },
+    {
+      "table": 114,
+      "section": 20,
+      "heading": "Existing test evidence",
+      "columns": 2,
+      "rows": 9,
+      "cells_sha256": "8b4927a740673674677d1365975c0a7caa74a7bf425c2e333646e9c72fce9557"
+    },
+    {
+      "table": 115,
+      "section": 21,
+      "heading": "21. Acceptance Criteria",
+      "columns": 2,
+      "rows": 4,
+      "cells_sha256": "081950316eac5be2142514a81293ff4f6f023260edd68e2bc57ef652cfa1b7b5"
+    },
+    {
+      "table": 116,
+      "section": 22,
+      "heading": "22. Requirements Traceability Matrix",
+      "columns": 6,
+      "rows": 70,
+      "cells_sha256": "d78b488d05930c69bec333176008f939cd28cc635b1f37c3d64897997dc4e2a3"
+    },
+    {
+      "table": 117,
+      "section": 23,
+      "heading": "23. Constraints",
+      "columns": 2,
+      "rows": 5,
+      "cells_sha256": "b6eff1726d361424f40d787e10c191851ac5a0deb0105d082b731a82e6cd55ce"
+    },
+    {
+      "table": 118,
+      "section": 25,
+      "heading": "25. Future Enhancements",
+      "columns": 3,
+      "rows": 3,
+      "cells_sha256": "95ed2b8d6d8e2d4c15e11fa8936db7793205320772c7e4742ea14eade294705a"
+    },
+    {
+      "table": 119,
+      "section": 27,
+      "heading": "27. Implemented vs Requirement",
+      "columns": 5,
+      "rows": 70,
+      "cells_sha256": "fde4b69c019594f0582ddbaf48916d555afec258c5656ba459a309545d30429e"
+    },
+    {
+      "table": 120,
+      "section": 27,
+      "heading": "27. Implemented vs Requirement",
+      "columns": 5,
+      "rows": 3,
+      "cells_sha256": "706db2ff58737103efc93367992a8400e5bdab2b699f2ffe320fc80eeb6848be"
+    },
+    {
+      "table": 121,
+      "section": 28,
+      "heading": "28. Evidence and source reconciliation",
+      "columns": 2,
+      "rows": 10,
+      "cells_sha256": "6b2a6ebff753339d990e80ad7292b34dbb755cfef440d18cb3f69294474741bb"
+    }
+  ],
+  "images": 0,
+  "source_content_sha256": "b756872b336652d0f0637faed2530eff4bed0ffb7f87e5a5eab7b76bddfdb819",
+  "output_pdf": "Cinema_Mobile_SRS_EN.pdf"
+}

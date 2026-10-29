@@ -1,0 +1,29 @@
+\clearpage
+\section{Yêu cầu bảo mật}\label{sec:srs-19}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.20000\SRSWidth}P{0.80000\SRSWidth}@{}}
+\caption{19. Yêu cầu bảo mật}\label{tab:srs-112}\\
+\toprule
+\textbf{\texttt{ID}} & \textbf{Yêu cầu bảo mật và kiểm chứng} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Bảng \thetable{} — tiếp theo}\\[4pt]
+\toprule
+\textbf{\texttt{ID}} & \textbf{Yêu cầu bảo mật và kiểm chứng} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Còn tiếp ở trang sau}\\
+\endfoot
+\bottomrule
+\endlastfoot
+\texttt{MOB-\allowbreak{}SEC-\allowbreak{}01} & Từ chối \texttt{JWT} giả/\allowbreak{}hết hạn/\allowbreak{}sai issuer và vai trò thiếu quyền tại gateway/\allowbreak{}service; thử đổi \texttt{ID} với kiểm tra sở hữu. \\[3pt]
+\texttt{MOB-\allowbreak{}SEC-\allowbreak{}02} & Tính lại giá và kiểm tra cặp ghế/\allowbreak{}menu/\allowbreak{}mã/\allowbreak{}điểm trên server; không tin tổng client hoặc tham số chuyển hướng là đã trả. \\[3pt]
+\texttt{MOB-\allowbreak{}SEC-\allowbreak{}03} & Xác minh \texttt{HMAC} \texttt{Pay\allowbreak{}OS} trước tác động; thử webhook lặp, chữ ký sai, đơn lạ và lệch tiền. Giữ khoá nhà cung cấp trong backend. \\[3pt]
+\texttt{MOB-\allowbreak{}SEC-\allowbreak{}04} & Dùng \texttt{HTTPS} triển khai và giới hạn \texttt{CORS}/\allowbreak{}phơi mạng service riêng. \texttt{HTTP} phát triển không chứng minh \texttt{TLS} production. \\[3pt]
+\texttt{MOB-\allowbreak{}SEC-\allowbreak{}05} & Dùng lớp lưu bảo mật nền tảng; không nhúng secret backend vào client. Xoá/\allowbreak{}thu hồi thông tin khi đăng xuất/\allowbreak{}đặt lại và xử lý lưu trữ không đọc được như chưa đăng nhập. \\[3pt]
+\texttt{MOB-\allowbreak{}SEC-\allowbreak{}06} & Mã hoá nội dung người trong email; không lộ stack trace/\allowbreak{}secret. Quên mật khẩu chung không có nghĩa mọi nơi chống dò email. \\[3pt]
+\end{longtable}
+\endgroup

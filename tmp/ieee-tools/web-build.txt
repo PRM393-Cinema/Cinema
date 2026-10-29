@@ -1,0 +1,163 @@
+note: Running TeX ...
+Fontconfig error: Cannot load default config file: No such file: (null)
+warning: main.tex:76: Underfull \hbox (badness 4805) in paragraph at lines 67--76
+note: downloading cmr8.tfm
+note: downloading cmr6.tfm
+note: downloading cmmi8.tfm
+note: downloading cmmi6.tfm
+note: downloading cmsy8.tfm
+note: downloading cmsy6.tfm
+note: downloading cmex8.tfm
+note: downloading cmex7.tfm
+note: downloading umsa.fd
+note: downloading msam10.tfm
+note: downloading msam7.tfm
+note: downloading msam5.tfm
+note: downloading umsb.fd
+note: downloading msbm10.tfm
+note: downloading msbm7.tfm
+note: downloading msbm5.tfm
+warning: main.tex:155: Underfull \hbox (badness 10000) in paragraph at lines 146--155
+warning: main.tex:155: Underfull \hbox (badness 10000) in paragraph at lines 146--155
+warning: main.tex:155: Underfull \hbox (badness 10000) in paragraph at lines 146--155
+warning: main.tex:155: Underfull \hbox (badness 2951) in paragraph at lines 146--155
+warning: main.tex:165: Underfull \hbox (badness 10000) in paragraph at lines 157--165
+warning: main.tex:165: Underfull \hbox (badness 10000) in paragraph at lines 157--165
+warning: main.tex:165: Underfull \hbox (badness 10000) in paragraph at lines 157--165
+warning: main.tex:165: Underfull \hbox (badness 10000) in paragraph at lines 157--165
+warning: main.tex:223: Underfull \hbox (badness 1629) in paragraph at lines 219--223
+warning: main.tex:270: Underfull \hbox (badness 1635) in paragraph at lines 261--270
+warning: main.tex:301: Overfull \hbox (19.02383pt too wide) in paragraph at lines 301--301
+warning: main.tex:301: Overfull \hbox (23.82384pt too wide) in paragraph at lines 301--301
+warning: main.tex:312: Underfull \hbox (badness 10000) in paragraph at lines 305--312
+warning: main.tex:312: Underfull \hbox (badness 3815) in paragraph at lines 305--312
+warning: main.tex:450: Underfull \hbox (badness 10000) in paragraph at lines 441--450
+warning: main.tex:450: Underfull \hbox (badness 10000) in paragraph at lines 441--450
+warning: main.tex:450: Underfull \hbox (badness 1546) in paragraph at lines 441--450
+warning: main.tex:450: Underfull \hbox (badness 2221) in paragraph at lines 441--450
+note: Running BibTeX on main.aux ...
+note: downloading IEEEtran.bst
+note: Rerunning TeX because bibtex was run ...
+warning: main.tex:76: Underfull \hbox (badness 4805) in paragraph at lines 67--76
+warning: main.tex:155: Underfull \hbox (badness 10000) in paragraph at lines 146--155
+warning: main.tex:155: Underfull \hbox (badness 10000) in paragraph at lines 146--155
+warning: main.tex:155: Underfull \hbox (badness 10000) in paragraph at lines 146--155
+warning: main.tex:155: Underfull \hbox (badness 2951) in paragraph at lines 146--155
+warning: main.tex:165: Underfull \hbox (badness 10000) in paragraph at lines 157--165
+warning: main.tex:165: Underfull \hbox (badness 10000) in paragraph at lines 157--165
+warning: main.tex:165: Underfull \hbox (badness 10000) in paragraph at lines 157--165
+warning: main.tex:165: Underfull \hbox (badness 10000) in paragraph at lines 157--165
+warning: main.tex:270: Underfull \hbox (badness 1635) in paragraph at lines 261--270
+warning: main.tex:301: Overfull \hbox (19.02383pt too wide) in paragraph at lines 301--301
+warning: main.tex:301: Overfull \hbox (23.82384pt too wide) in paragraph at lines 301--301
+warning: main.tex:312: Underfull \hbox (badness 10000) in paragraph at lines 305--312
+warning: main.tex:312: Underfull \hbox (badness 3815) in paragraph at lines 305--312
+warning: main.tex:450: Underfull \hbox (badness 10000) in paragraph at lines 441--450
+warning: main.tex:450: Underfull \hbox (badness 10000) in paragraph at lines 441--450
+warning: main.tex:450: Underfull \hbox (badness 1546) in paragraph at lines 441--450
+warning: main.tex:450: Underfull \hbox (badness 2221) in paragraph at lines 441--450
+warning: main.bbl:29: Underfull \hbox (badness 5119) in paragraph at lines 25--29
+warning: main.bbl:35: Underfull \hbox (badness 3000) in paragraph at lines 31--35
+warning: main.bbl:35: Underfull \hbox (badness 10000) in paragraph at lines 31--35
+warning: main.bbl:41: Underfull \hbox (badness 2837) in paragraph at lines 37--41
+warning: main.bbl:41: Underfull \hbox (badness 10000) in paragraph at lines 37--41
+warning: main.bbl:47: Underfull \hbox (badness 10000) in paragraph at lines 43--47
+warning: main.bbl:47: Underfull \hbox (badness 10000) in paragraph at lines 43--47
+warning: main.bbl:47: Underfull \hbox (badness 10000) in paragraph at lines 43--47
+warning: main.bbl:47: Underfull \hbox (badness 10000) in paragraph at lines 43--47
+warning: main.bbl:53: Underfull \hbox (badness 10000) in paragraph at lines 49--53
+warning: main.bbl:59: Underfull \hbox (badness 10000) in paragraph at lines 55--59
+warning: main.bbl:65: Underfull \hbox (badness 10000) in paragraph at lines 61--65
+warning: main.bbl:65: Underfull \hbox (badness 10000) in paragraph at lines 61--65
+warning: main.bbl:65: Underfull \hbox (badness 10000) in paragraph at lines 61--65
+warning: main.bbl:65: Underfull \hbox (badness 10000) in paragraph at lines 61--65
+warning: main.bbl:69: Underfull \hbox (badness 10000) in paragraph at lines 67--69
+warning: main.bbl:79: Underfull \hbox (badness 10000) in paragraph at lines 75--79
+warning: main.bbl:79: Underfull \hbox (badness 4647) in paragraph at lines 75--79
+warning: main.bbl:79: Underfull \hbox (badness 10000) in paragraph at lines 75--79
+warning: main.bbl:79: Underfull \hbox (badness 10000) in paragraph at lines 75--79
+warning: main.bbl:84: Underfull \hbox (badness 10000) in paragraph at lines 81--84
+warning: main.bbl:103: Underfull \hbox (badness 10000) in paragraph at lines 99--103
+warning: main.bbl:103: Underfull \hbox (badness 10000) in paragraph at lines 99--103
+warning: main.bbl:103: Underfull \hbox (badness 10000) in paragraph at lines 99--103
+warning: main.bbl:103: Underfull \hbox (badness 6725) in paragraph at lines 99--103
+warning: main.bbl:108: Underfull \hbox (badness 7540) in paragraph at lines 105--108
+note: Rerunning TeX because "main.aux" changed ...
+warning: main.tex:76: Underfull \hbox (badness 4805) in paragraph at lines 67--76
+warning: main.tex:155: Underfull \hbox (badness 10000) in paragraph at lines 146--155
+warning: main.tex:155: Underfull \hbox (badness 10000) in paragraph at lines 146--155
+warning: main.tex:155: Underfull \hbox (badness 10000) in paragraph at lines 146--155
+warning: main.tex:155: Underfull \hbox (badness 2951) in paragraph at lines 146--155
+warning: main.tex:165: Underfull \hbox (badness 10000) in paragraph at lines 157--165
+warning: main.tex:165: Underfull \hbox (badness 10000) in paragraph at lines 157--165
+warning: main.tex:165: Underfull \hbox (badness 10000) in paragraph at lines 157--165
+warning: main.tex:165: Underfull \hbox (badness 10000) in paragraph at lines 157--165
+warning: main.tex:270: Underfull \hbox (badness 1635) in paragraph at lines 261--270
+warning: main.tex:301: Overfull \hbox (19.02383pt too wide) in paragraph at lines 301--301
+warning: main.tex:301: Overfull \hbox (23.82384pt too wide) in paragraph at lines 301--301
+warning: main.tex:312: Underfull \hbox (badness 10000) in paragraph at lines 305--312
+warning: main.tex:312: Underfull \hbox (badness 3815) in paragraph at lines 305--312
+warning: main.tex:450: Underfull \hbox (badness 10000) in paragraph at lines 441--450
+warning: main.tex:450: Underfull \hbox (badness 10000) in paragraph at lines 441--450
+warning: main.tex:450: Underfull \hbox (badness 1546) in paragraph at lines 441--450
+warning: main.tex:450: Underfull \hbox (badness 2221) in paragraph at lines 441--450
+warning: main.bbl:29: Underfull \hbox (badness 5119) in paragraph at lines 25--29
+warning: main.bbl:35: Underfull \hbox (badness 3000) in paragraph at lines 31--35
+warning: main.bbl:35: Underfull \hbox (badness 10000) in paragraph at lines 31--35
+warning: main.bbl:41: Underfull \hbox (badness 2837) in paragraph at lines 37--41
+warning: main.bbl:41: Underfull \hbox (badness 10000) in paragraph at lines 37--41
+warning: main.bbl:47: Underfull \hbox (badness 10000) in paragraph at lines 43--47
+warning: main.bbl:47: Underfull \hbox (badness 10000) in paragraph at lines 43--47
+warning: main.bbl:47: Underfull \hbox (badness 10000) in paragraph at lines 43--47
+warning: main.bbl:47: Underfull \hbox (badness 10000) in paragraph at lines 43--47
+warning: main.bbl:53: Underfull \hbox (badness 10000) in paragraph at lines 49--53
+warning: main.bbl:59: Underfull \hbox (badness 10000) in paragraph at lines 55--59
+warning: main.bbl:65: Underfull \hbox (badness 10000) in paragraph at lines 61--65
+warning: main.bbl:65: Underfull \hbox (badness 10000) in paragraph at lines 61--65
+warning: main.bbl:65: Underfull \hbox (badness 10000) in paragraph at lines 61--65
+warning: main.bbl:65: Underfull \hbox (badness 10000) in paragraph at lines 61--65
+warning: main.bbl:69: Underfull \hbox (badness 10000) in paragraph at lines 67--69
+warning: main.bbl:79: Underfull \hbox (badness 10000) in paragraph at lines 75--79
+warning: main.bbl:79: Underfull \hbox (badness 4647) in paragraph at lines 75--79
+warning: main.bbl:79: Underfull \hbox (badness 10000) in paragraph at lines 75--79
+warning: main.bbl:79: Underfull \hbox (badness 10000) in paragraph at lines 75--79
+warning: main.bbl:84: Underfull \hbox (badness 10000) in paragraph at lines 81--84
+warning: main.bbl:103: Underfull \hbox (badness 10000) in paragraph at lines 99--103
+warning: main.bbl:103: Underfull \hbox (badness 10000) in paragraph at lines 99--103
+warning: main.bbl:103: Underfull \hbox (badness 10000) in paragraph at lines 99--103
+warning: main.bbl:103: Underfull \hbox (badness 6725) in paragraph at lines 99--103
+warning: main.bbl:108: Underfull \hbox (badness 7540) in paragraph at lines 105--108
+note: Running xdvipdfmx ...
+warning: warnings were issued by the TeX engine; use --print and/or --keep-logs for details.
+note: downloading pdftex.map
+note: downloading kanjix.map
+note: downloading ckx.map
+note: downloading texglyphlist.txt
+note: downloading pdfglyphlist.txt
+note: downloading glyphlist.txt
+note: downloading ptmr8t.vf
+note: downloading ptmr8r.tfm
+note: downloading 8r.enc
+note: downloading utmr8a.pfb
+note: downloading ptmbi8t.vf
+note: downloading ptmbi8r.tfm
+note: downloading utmbi8a.pfb
+note: downloading ptmb8t.vf
+note: downloading ptmb8r.tfm
+note: downloading utmb8a.pfb
+note: downloading ptmrc8t.vf
+note: downloading pcrr8t.vf
+note: downloading pcrr8r.tfm
+note: downloading ucrr8a.pfb
+note: downloading ptmri8t.vf
+note: downloading ptmri8r.tfm
+note: downloading utmri8a.pfb
+note: downloading cmmi10.pfb
+note: downloading cmr10.pfb
+note: downloading cmsy10.pfb
+note: Writing `docs/ieee-web\main.blg` (379 B)
+note: Writing `docs/ieee-web\main.pdf` (75.4150390625 KiB)
+note: Writing `docs/ieee-web\main.out` (6.0302734375 KiB)
+note: Writing `docs/ieee-web\main.log` (27.5087890625 KiB)
+note: Writing `docs/ieee-web\main.aux` (8.6005859375 KiB)
+note: Writing `docs/ieee-web\main.bbl` (4.6533203125 KiB)

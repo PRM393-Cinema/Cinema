@@ -1,0 +1,53 @@
+\clearpage
+\section{Business Rules}\label{sec:srs-8}
+\begingroup
+\fontsize{9.5}{12}\selectfont
+\setlength{\SRSWidth}{\dimexpr\linewidth-2\tabcolsep\relax}
+\begin{longtable}{@{}P{0.23000\SRSWidth}P{0.77000\SRSWidth}@{}}
+\caption{8. Business Rules}\label{tab:srs-5}\\
+\toprule
+\textbf{\texttt{ID}} & \textbf{Rule} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{@{}l}{\small\itshape Table \thetable{} — continued}\\[4pt]
+\toprule
+\textbf{\texttt{ID}} & \textbf{Rule} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r@{}}{\footnotesize\itshape Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}01} & Customer accounts must verify their email with an \texttt{OTP} before signing in. Accounts created by an Admin need no \texttt{OTP}. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}02} & Every protected \texttt{API} uses \texttt{JWT}; both the gateway and the service check it. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}03} & Access depends on the role; Customers cannot use management APIs. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}04} & Each seat belongs to one room and its position (row + number) is unique in that room. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}05} & A showtime belongs to one movie and one room, and starts before it ends. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}06} & A room never has two showtimes at overlapping times (\texttt{409}). \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}07} & A seat of a showtime belongs to at most one active booking (held or sold). \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}08} & A booking has one showtime and its seats, and belongs to a customer account, except walk-in tickets sold at the counter. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}09} & A payment belongs to a booking; booking/\allowbreak{}payment/\allowbreak{}refund transitions must follow the state contract in section 15. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}10} & A \texttt{Pay\allowbreak{}OS} webhook must carry a valid \texttt{HMAC}-\texttt{SHA256} signature before any of its data is used. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}11} & Events are written to the outbox in the same transaction as the data and are sent only after commit. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}12} & Calls to other services or \texttt{Pay\allowbreak{}OS} use limited retries and a circuit breaker. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}13} & An email failure or a stopped \texttt{Rabbit\allowbreak{}MQ} never breaks a booking or payment. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}14} & Seats are held for 10 minutes; an unpaid booking then becomes \texttt{EXPIRED} and its seats are released. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}15} & Seat price: the showtime price is the standard seat price; \texttt{VIP} adds 20\% and sweetbox 30\% per seat; the surcharge is rounded to 1,000 \texttt{VND}. The server computes prices and never takes them from the client. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}16} & Sweetbox seats are always booked, changed and sold as a pair. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}17} & A customer can cancel a paid ticket for a 100\% refund until 2 hours before the show; later they must contact the cinema. Staff and Admin can cancel at any time. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}18} & A payment has at most one refund request. Refunds are paid by manual bank transfer and recorded with the transfer reference. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}19} & When a showtime is cancelled, all its active bookings are cancelled; paid ones get a refund request. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}20} & Late payment (booking already expired): if the seats are still free the ticket is confirmed; if they were sold to someone else, a 100\% refund request is created. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}21} & Only \texttt{CONFIRME\allowbreak{}D} tickets can be checked in, once each, from 3 hours before to 2 hours after the start time. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}24} & Locking an account or changing its roles takes effect on the next request, even while the old token is still valid. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}25} & Forgot-password returns 200 regardless of email existence; incorrect login email/\allowbreak{}password share a message. Registration/\allowbreak{}resend may reveal account state, so system-wide non-enumeration is not claimed. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}26} & Inactive movies disappear from browsing while existing tickets remain. Phone clients cannot edit room layouts. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}27} & A promotion reduces tickets only, up to 90\%, rounded down to 1,000 \texttt{VND}; one best automatic promotion or an entered eligible code applies. Count usage on successful payment. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}28} & Point value is 1,000 \texttt{VND}; redeem at most 50\% after promotion; \texttt{MEMBER}/\allowbreak{}\texttt{VIP}/\allowbreak{}\texttt{VVIP} spend thresholds are 0/\allowbreak{}2,000,000/\allowbreak{}5,000,000 \texttt{VND} and earn rates 5/\allowbreak{}7/\allowbreak{}10\%. Reverse/\allowbreak{}release point effects according to booking cancellation/\allowbreak{}expiry/\allowbreak{}refund. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}29} & A booking has at most ten distinct active concession items, quantity 1–20 each; persist purchase-time name and unit price, and include them in payment and refund totals. \\[3pt]
+\texttt{MOB-\allowbreak{}BR-\allowbreak{}30} & Format price adds 0/\allowbreak{}20,000/\allowbreak{}40,000 \texttt{VND} for 2D/\allowbreak{}3D/\allowbreak{}\texttt{IMAX} before type surcharges; \texttt{NORMAL}/\allowbreak{}\texttt{VIP}/\allowbreak{}\texttt{SWEETBOX\allowbreak{}} prices are returned by the server. \\[3pt]
+\end{longtable}
+\endgroup
+
+External-operator rules specify shared-backend effects, not additional phone screens. Time limits are current defaults and may be overridden by deployment configuration.
