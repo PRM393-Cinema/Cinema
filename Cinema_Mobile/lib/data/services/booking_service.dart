@@ -39,6 +39,11 @@ class BookingService {
   }
 
   // The average, the stars and the newest reviews of a movie (public).
+  // The signed-in customer's own ratings, with the movie titles.
+  Future<List<MovieReview>> getMyReviews() async => readMapList(
+    await _apiClient.get('/api/v1/reviews/mine', authenticated: true),
+  ).map(MovieReview.fromJson).toList();
+
   Future<MovieReviews> getMovieReviews(int movieId, {int page = 1}) async =>
       MovieReviews.fromJson(
         readMap(

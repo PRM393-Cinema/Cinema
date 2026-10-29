@@ -387,6 +387,12 @@ class FakeBookingRepository implements BookingRepository {
   final savedReviews = <({int bookingId, int rating, String comment})>[];
   final deletedReviews = <int>[];
 
+  // The ratings "My ratings" lists.
+  List<MovieReview> myReviews = [];
+
+  @override
+  Future<List<MovieReview>> getMyReviews() async => myReviews;
+
   @override
   Future<BookingReview> getBookingReview(int bookingId) async =>
       bookingReviews[bookingId] ??

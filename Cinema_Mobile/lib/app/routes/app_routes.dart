@@ -31,6 +31,7 @@ abstract final class AppRoutes {
   static const adminCreateUser = '/admin/users/new';
   static String adminUser(int id) => '/admin/users/$id';
   static const myBookings = '/bookings';
+  static const myRatings = '/ratings';
   static const notifications = '/notifications';
   static const profile = '/profile';
   static const paymentHistory = '/payments';

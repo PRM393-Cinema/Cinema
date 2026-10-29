@@ -32,6 +32,9 @@ abstract interface class BookingRepository {
   // Reviews of a ticket's movie: allowed once the ticket was checked in.
   Future<BookingReview> getBookingReview(int bookingId);
 
+  // Every rating the signed-in customer wrote.
+  Future<List<MovieReview>> getMyReviews();
+
   Future<MovieReview> saveReview({
     required int bookingId,
     required int rating,
@@ -113,6 +116,9 @@ class RemoteBookingRepository implements BookingRepository {
   @override
   Future<BookingReview> getBookingReview(int bookingId) =>
       _bookingService.getBookingReview(bookingId);
+
+  @override
+  Future<List<MovieReview>> getMyReviews() => _bookingService.getMyReviews();
 
   @override
   Future<MovieReview> saveReview({
