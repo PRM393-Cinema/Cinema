@@ -33,6 +33,7 @@ bld/
 *.userprefs
 
 ## File tạm & cache của VS/MSBuild
+__pycache__/
 *.cache
 *.tmp
 *.tmp_proj
