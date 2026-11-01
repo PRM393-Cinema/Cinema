@@ -159,8 +159,13 @@ class RemoteBookingRepository implements BookingRepository {
 
   @override
   Future<List<Booking>> getMyBookings(int userId) async {
-    final result = await _bookingService.getBookingsByUser(userId);
-    return result.items;
+    var result = await _bookingService.getBookingsByUser(userId);
+    final bookings = [...result.items];
+    for (var page = 2; page <= result.totalPages; page++) {
+      result = await _bookingService.getBookingsByUser(userId, page: page);
+      bookings.addAll(result.items);
+    }
+    return bookings;
   }
 
   @override

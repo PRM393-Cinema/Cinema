@@ -376,9 +376,9 @@ class _PaymentScreenState extends State<PaymentScreen>
         const SizedBox(height: AppSpacing.sm),
         TextButton(
           onPressed: isBusy ? null : () => _cancelBooking(booking),
-          child: const Text(
+          child: Text(
             'Cancel booking',
-            style: TextStyle(color: AppColors.error),
+            style: TextStyle(color: AppPalette.of(context).error),
           ),
         ),
       ],
@@ -499,11 +499,12 @@ class _PaymentSteps extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 12,
-                  backgroundColor: AppColors.primary.withValues(alpha: 0.12),
+                  backgroundColor: AppPalette.of(context).primary
+                      .withValues(alpha: 0.12),
                   child: Text(
                     '${index + 1}',
                     style: AppTextStyles.caption.copyWith(
-                      color: AppColors.primary,
+                      color: AppPalette.of(context).primary,
                     ),
                   ),
                 ),
@@ -560,9 +561,9 @@ class _BookingCard extends StatelessWidget {
               key: const Key('paymentPoints'),
               style: AppTextStyles.bodySmall,
             ),
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
-            child: Divider(height: 1, color: AppColors.border),
+            child: Divider(height: 1, color: AppPalette.of(context).border),
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -574,7 +575,7 @@ class _BookingCard extends StatelessWidget {
                   formatVnd(booking.totalAmount),
                   textAlign: TextAlign.end,
                   style: AppTextStyles.heading2.copyWith(
-                    color: AppColors.primary,
+                    color: AppPalette.of(context).primary,
                   ),
                 ),
               ),
@@ -594,7 +595,9 @@ class _MessageBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isError ? AppColors.error : AppColors.textSecondary;
+    final color = isError
+        ? AppPalette.of(context).error
+        : AppPalette.of(context).textSecondary;
 
     return DecoratedBox(
       decoration: BoxDecoration(

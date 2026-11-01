@@ -31,9 +31,9 @@ class BookingCard extends StatelessWidget {
       borderRadius: AppRadius.borderRadiusMd,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: AppPalette.of(context).surface,
           borderRadius: AppRadius.borderRadiusMd,
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: AppPalette.of(context).border),
         ),
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.lg),

@@ -99,9 +99,9 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
               children: [
                 Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.notifications_outlined,
-                      color: AppColors.primary,
+                      color: AppPalette.of(context).primary,
                       size: 24,
                     ),
                     const SizedBox(width: AppSpacing.md),
@@ -122,9 +122,12 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
                     style: AppTextStyles.bodySmall,
                   ),
                 ],
-                const Padding(
+                Padding(
                   padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
-                  child: Divider(height: 1, color: AppColors.border),
+                  child: Divider(
+                    height: 1,
+                    color: AppPalette.of(context).border,
+                  ),
                 ),
                 _NotificationBody(content: notification.bodyContent),
                 if (notification.bookingId != null) ...[
@@ -200,9 +203,9 @@ class _NotificationBody extends StatelessWidget {
                 return Container(
                   padding: const EdgeInsets.all(AppSpacing.lg),
                   decoration: BoxDecoration(
-                    color: AppColors.surfaceSoft,
+                    color: AppPalette.of(context).surfaceSoft,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.border),
+                    border: Border.all(color: AppPalette.of(context).border),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -223,7 +226,7 @@ class _NotificationBody extends StatelessWidget {
                                 'Số tiền hoàn',
                               ].contains(fields[index]!.group(1))
                               ? AppTextStyles.heading2.copyWith(
-                                  color: AppColors.primary,
+                                  color: AppPalette.of(context).primary,
                                 )
                               : AppTextStyles.body.copyWith(
                                   fontWeight: FontWeight.w600,

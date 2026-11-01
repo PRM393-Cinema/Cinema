@@ -155,74 +155,92 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('web lens updates while scrolling without repaint feedback', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(390, 260);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-    final backgroundKey = GlobalKey();
-    final captureKey = GlobalKey();
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: ThemeData.dark(),
-        home: RepaintBoundary(
-          key: captureKey,
-          child: Scaffold(
-            extendBody: true,
-            body: CinemaGlassBackground(
-              key: backgroundKey,
-              child: ListView(
-                padding: EdgeInsets.zero,
-                children: const [
-                  SizedBox(
-                    height: 300,
-                    child: ColoredBox(color: Color(0xFFDC4020)),
+  for (final brightness in Brightness.values) {
+    testWidgets(
+      '$brightness lens updates while scrolling without repaint feedback',
+      (tester) async {
+        tester.view.physicalSize = const Size(390, 260);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        final backgroundKey = GlobalKey();
+        final captureKey = GlobalKey();
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: ThemeData(brightness: brightness),
+            home: RepaintBoundary(
+              key: captureKey,
+              child: Scaffold(
+                extendBody: true,
+                body: CinemaGlassBackground(
+                  key: backgroundKey,
+                  child: ListView(
+                    padding: EdgeInsets.zero,
+                    children: const [
+                      SizedBox(
+                        height: 300,
+                        child: ColoredBox(color: Color(0xFFDC4020)),
+                      ),
+                      SizedBox(
+                        height: 600,
+                        child: ColoredBox(color: Color(0xFF208040)),
+                      ),
+                    ],
                   ),
-                  SizedBox(
-                    height: 600,
-                    child: ColoredBox(color: Color(0xFF208040)),
-                  ),
-                ],
+                ),
+                bottomNavigationBar: CinemaNavigationBar(
+                  selectedIndex: 0,
+                  backgroundKey: backgroundKey,
+                ),
               ),
             ),
-            bottomNavigationBar: CinemaNavigationBar(
-              selectedIndex: 0,
-              backgroundKey: backgroundKey,
-            ),
           ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await _waitForLens(tester);
-    final initialPainter = tester.widget<CustomPaint>(_lensFinder).painter;
-
-    Future<int> redMinusGreen() async {
-      final glass = tester.getRect(find.byType(BackdropFilter).first);
-      return (await tester.runAsync(() async {
-        final boundary =
-            captureKey.currentContext!.findRenderObject()!
-                as RenderRepaintBoundary;
-        final image = await boundary.toImage();
-        final pixels = await image.toByteData(
-          format: ui.ImageByteFormat.rawRgba,
         );
-        image.dispose();
-        final index = ((glass.top.toInt() + 34) * 390 + 260) * 4;
-        return pixels!.getUint8(index) - pixels.getUint8(index + 1);
-      }))!;
-    }
+        await tester.pumpAndSettle();
+        await _waitForLens(tester);
+        expect(
+          find.byWidgetPredicate(
+            (widget) =>
+                widget is CustomPaint &&
+                widget.painter.runtimeType.toString() ==
+                    '_LiquidGlassRimPainter',
+          ),
+          findsNWidgets(2),
+        );
+        final initialPainter = tester.widget<CustomPaint>(_lensFinder).painter;
 
-    expect(await redMinusGreen(), greaterThan(60));
-    await tester.drag(find.byType(ListView), const Offset(0, -170));
-    await tester.pumpAndSettle();
-    await _waitForLens(tester, after: initialPainter);
-    expect(await redMinusGreen(), lessThan(-35));
-    expect(tester.binding.hasScheduledFrame, isFalse);
-    expect(tester.takeException(), isNull);
-  });
+        Future<int> redMinusGreen() async {
+          final glass = tester.getRect(find.byType(BackdropFilter).first);
+          return (await tester.runAsync(() async {
+            final boundary =
+                captureKey.currentContext!.findRenderObject()!
+                    as RenderRepaintBoundary;
+            final image = await boundary.toImage();
+            final pixels = await image.toByteData(
+              format: ui.ImageByteFormat.rawRgba,
+            );
+            image.dispose();
+            final index = ((glass.top.toInt() + 34) * 390 + 260) * 4;
+            return pixels!.getUint8(index) - pixels.getUint8(index + 1);
+          }))!;
+        }
+
+        expect(
+          await redMinusGreen(),
+          greaterThan(brightness == Brightness.light ? 25 : 60),
+        );
+        await tester.drag(find.byType(ListView), const Offset(0, -170));
+        await tester.pumpAndSettle();
+        await _waitForLens(tester, after: initialPainter);
+        expect(
+          await redMinusGreen(),
+          lessThan(brightness == Brightness.light ? -10 : -35),
+        );
+        expect(tester.binding.hasScheduledFrame, isFalse);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
 }
 
 final _lensFinder = find.byWidgetPredicate(

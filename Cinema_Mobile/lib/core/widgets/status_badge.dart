@@ -20,17 +20,17 @@ class StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = switch (variant) {
-      StatusBadgeVariant.success => AppColors.success,
-      StatusBadgeVariant.warning => AppColors.warning,
-      StatusBadgeVariant.error => AppColors.error,
-      StatusBadgeVariant.neutral => AppColors.textSecondary,
+      StatusBadgeVariant.success => AppPalette.of(context).success,
+      StatusBadgeVariant.warning => AppPalette.of(context).warning,
+      StatusBadgeVariant.error => AppPalette.of(context).error,
+      StatusBadgeVariant.neutral => AppPalette.of(context).textSecondary,
     };
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: AppColors.surfaceSoft,
+        color: AppPalette.of(context).surfaceSoft,
         borderRadius: AppRadius.borderRadiusSm,
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppPalette.of(context).border),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(

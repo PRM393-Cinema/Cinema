@@ -88,7 +88,7 @@ class _PointHistoryScreenState extends State<PointHistoryScreen> {
                       Text(
                         '${card.points} points',
                         style: AppTextStyles.heading1.copyWith(
-                          color: AppColors.primary,
+                          color: AppPalette.of(context).primary,
                         ),
                       ),
                       const SizedBox(height: AppSpacing.sm),

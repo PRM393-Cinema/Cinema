@@ -434,7 +434,7 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
                   Text(
                     _error!,
                     style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.error,
+                      color: AppPalette.of(context).error,
                     ),
                   ),
               ],
@@ -489,7 +489,9 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
     const SizedBox(height: AppSpacing.xs),
     Text(
       formatVnd(refund.amount),
-      style: AppTextStyles.heading1.copyWith(color: AppColors.primary),
+      style: AppTextStyles.heading1.copyWith(
+        color: AppPalette.of(context).primary,
+      ),
     ),
     const SizedBox(height: AppSpacing.md),
     Align(
@@ -509,9 +511,9 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
     ),
     const SizedBox(height: AppSpacing.md),
     SelectableText(refund.refundCode, style: AppTextStyles.bodySmall),
-    const Padding(
+    Padding(
       padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
-      child: Divider(height: 1, color: AppColors.border),
+      child: Divider(height: 1, color: AppPalette.of(context).border),
     ),
     _detailField(
       Icons.local_activity_outlined,
@@ -547,9 +549,9 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
         'Contact the customer to confirm their bank details before transferring money.',
         style: AppTextStyles.bodySmall,
       ),
-    const Padding(
+    Padding(
       padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
-      child: Divider(height: 1, color: AppColors.border),
+      child: Divider(height: 1, color: AppPalette.of(context).border),
     ),
     _detailField(
       Icons.schedule_outlined,
@@ -602,7 +604,7 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
         'Booking: ${booking.bookingCode}',
         style: AppTextStyles.bodySmall,
       ),
-      const Divider(height: AppSpacing.xl, color: AppColors.border),
+      Divider(height: AppSpacing.xl, color: AppPalette.of(context).border),
       _detailField(
         Icons.schedule_outlined,
         'Showtime',
@@ -651,12 +653,14 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
             ? 'Not checked in'
             : formatDateTime(booking.checkedInAt!),
       ),
-      const Divider(height: AppSpacing.lg, color: AppColors.border),
+      Divider(height: AppSpacing.lg, color: AppPalette.of(context).border),
       const Text('Total amount', style: AppTextStyles.bodySmall),
       const SizedBox(height: AppSpacing.xs),
       Text(
         formatVnd(booking.totalAmount),
-        style: AppTextStyles.heading1.copyWith(color: AppColors.primary),
+        style: AppTextStyles.heading1.copyWith(
+          color: AppPalette.of(context).primary,
+        ),
       ),
     ];
   }
@@ -677,7 +681,9 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
       const Text('Amount', style: AppTextStyles.bodySmall),
       Text(
         formatVnd(payment.amount),
-        style: AppTextStyles.heading1.copyWith(color: AppColors.primary),
+        style: AppTextStyles.heading1.copyWith(
+          color: AppPalette.of(context).primary,
+        ),
       ),
       const SizedBox(height: AppSpacing.sm),
       Align(
@@ -689,7 +695,7 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
         'Payment: ${payment.paymentCode}',
         style: AppTextStyles.bodySmall,
       ),
-      const Divider(height: AppSpacing.xl, color: AppColors.border),
+      Divider(height: AppSpacing.xl, color: AppPalette.of(context).border),
       _detailField(
         Icons.confirmation_number_outlined,
         'Booking',
@@ -742,7 +748,7 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, color: AppColors.primary, size: 22),
+        Icon(icon, color: AppPalette.of(context).primary, size: 22),
         const SizedBox(width: AppSpacing.md),
         Expanded(
           child: Column(
@@ -1022,7 +1028,7 @@ class _SeatEditMode extends StatelessWidget {
           avatar: Icon(
             Icons.format_paint_outlined,
             size: 16,
-            color: seatTypeColors(seatType).$2,
+            color: seatTypeColors(context, seatType).$2,
           ),
           label: Text('Paint ${seatTypeLabel(seatType)}'),
           selected: type == seatType,
@@ -1053,7 +1059,9 @@ class _LiveStatus extends StatelessWidget {
         Icon(
           Icons.circle,
           size: 10,
-          color: failed ? AppColors.warning : AppColors.success,
+          color: failed
+              ? AppPalette.of(context).warning
+              : AppPalette.of(context).success,
         ),
         const SizedBox(width: AppSpacing.sm),
         Flexible(child: Text(text, style: AppTextStyles.caption)),

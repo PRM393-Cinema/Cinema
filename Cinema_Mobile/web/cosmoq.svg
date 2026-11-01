@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>CosmoQ Cinema</title>
+  <defs>
+    <linearGradient id="bg" x2="1" y2="1">
+      <stop stop-color="#172231"/><stop offset="1" stop-color="#0B0D12"/>
+    </linearGradient>
+    <linearGradient id="q" x2="1" y2="1">
+      <stop stop-color="#00E5EC"/><stop offset="1" stop-color="#009BD8"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+  <circle cx="31" cy="29" r="18" fill="none" stroke="url(#q)" stroke-width="6"/>
+  <path d="m42 41 10 11" fill="none" stroke="#00C9E4" stroke-width="7" stroke-linecap="round"/>
+  <path d="M27 21v16l13-8Z" fill="#F5FAFF"/>
+</svg>

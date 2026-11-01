@@ -237,8 +237,8 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                                   ? Icons.person_outline_rounded
                                   : Icons.person_off_outlined,
                               color: user.enabled
-                                  ? AppColors.primary
-                                  : AppColors.error,
+                                  ? AppPalette.of(context).primary
+                                  : AppPalette.of(context).error,
                             ),
                             const SizedBox(width: AppSpacing.md),
                             Expanded(
@@ -262,9 +262,9 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                                 ],
                               ),
                             ),
-                            const Icon(
+                            Icon(
                               Icons.chevron_right_rounded,
-                              color: AppColors.textSecondary,
+                              color: AppPalette.of(context).textSecondary,
                             ),
                           ],
                         ),
@@ -443,8 +443,8 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
                           user.enabled ? 'Active' : 'Locked',
                           style: AppTextStyles.body.copyWith(
                             color: user.enabled
-                                ? AppColors.primary
-                                : AppColors.error,
+                                ? AppPalette.of(context).primary
+                                : AppPalette.of(context).error,
                           ),
                         ),
                       ],
@@ -506,7 +506,7 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
                       child: Text(
                         _message!,
                         style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.error,
+                          color: AppPalette.of(context).error,
                         ),
                       ),
                     ),
@@ -685,7 +685,7 @@ class _AdminCreateUserScreenState extends State<AdminCreateUserScreen> {
                       Text(
                         'Select one role.',
                         style: AppTextStyles.caption.copyWith(
-                          color: AppColors.error,
+                          color: AppPalette.of(context).error,
                         ),
                       ),
                     if (_message != null)
@@ -694,7 +694,7 @@ class _AdminCreateUserScreenState extends State<AdminCreateUserScreen> {
                         child: Text(
                           _message!,
                           style: AppTextStyles.bodySmall.copyWith(
-                            color: AppColors.error,
+                            color: AppPalette.of(context).error,
                           ),
                         ),
                       ),

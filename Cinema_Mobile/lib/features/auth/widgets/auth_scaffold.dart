@@ -7,6 +7,7 @@ import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_radius.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
+import '../../../app/theme/theme_switch.dart';
 
 class AuthScaffold extends StatelessWidget {
   const AuthScaffold({
@@ -36,21 +37,27 @@ class AuthScaffold extends StatelessWidget {
         horizontal: AppSpacing.xl,
         vertical: AppSpacing.md,
       ),
-      prefixIconColor: AppColors.textPrimary,
-      hintStyle: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
-      labelStyle: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
-      floatingLabelStyle: AppTextStyles.caption.copyWith(
-        color: AppColors.primary,
+      prefixIconColor: AppPalette.of(context).textPrimary,
+      hintStyle: AppTextStyles.body.copyWith(
+        color: AppPalette.of(context).textSecondary,
       ),
-      border: _glassBorder(Colors.white.withValues(alpha: 0.22)),
-      enabledBorder: _glassBorder(Colors.white.withValues(alpha: 0.24)),
-      disabledBorder: _glassBorder(Colors.white.withValues(alpha: 0.12)),
-      focusedBorder: _glassBorder(AppColors.primary),
-      errorBorder: _glassBorder(AppColors.error),
-      focusedErrorBorder: _glassBorder(AppColors.error),
+      labelStyle: AppTextStyles.body.copyWith(
+        color: AppPalette.of(context).textSecondary,
+      ),
+      floatingLabelStyle: AppTextStyles.caption.copyWith(
+        color: AppPalette.of(context).primary,
+      ),
+      border: _glassBorder(AppPalette.of(context).border),
+      enabledBorder: _glassBorder(AppPalette.of(context).border),
+      disabledBorder: _glassBorder(
+        AppPalette.of(context).border.withValues(alpha: 0.5),
+      ),
+      focusedBorder: _glassBorder(AppPalette.of(context).primary),
+      errorBorder: _glassBorder(AppPalette.of(context).error),
+      focusedErrorBorder: _glassBorder(AppPalette.of(context).error),
     );
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppPalette.of(context).background,
       body: SafeArea(
         child: Center(
           child: SizedBox(
@@ -72,6 +79,7 @@ class AuthScaffold extends StatelessWidget {
                       child: ClipRect(
                         child: CustomPaint(
                           painter: CinemaBackdrop(
+                            colors: AppPalette.of(context),
                             logoCenter: Offset(
                               constraints.maxWidth / 2,
                               topSpace + 36,
@@ -109,13 +117,12 @@ class AuthScaffold extends StatelessWidget {
                                     width: 24,
                                     height: 3,
                                     decoration: BoxDecoration(
-                                      color: AppColors.primary,
+                                      color: AppPalette.of(context).primary,
                                       borderRadius: BorderRadius.circular(4),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: AppColors.primary.withValues(
-                                            alpha: 0.7,
-                                          ),
+                                          color: AppPalette.of(context).primary
+                                              .withValues(alpha: 0.7),
                                           blurRadius: 16,
                                           spreadRadius: 2,
                                         ),
@@ -138,7 +145,7 @@ class AuthScaffold extends StatelessWidget {
                                 Text(
                                   subtitle,
                                   style: AppTextStyles.bodySmall.copyWith(
-                                    color: AppColors.textSecondary,
+                                    color: AppPalette.of(context).textSecondary,
                                     height: 1.4,
                                   ),
                                   textAlign: TextAlign.center,
@@ -151,6 +158,7 @@ class AuthScaffold extends StatelessWidget {
                         ),
                       ),
                     ),
+                    const Positioned(top: 8, right: 8, child: ThemeSwitch()),
                     if (showBack)
                       Positioned(
                         top: 8,
@@ -164,7 +172,8 @@ class AuthScaffold extends StatelessWidget {
                             ),
                             label: const Text('Back'),
                             style: TextButton.styleFrom(
-                              foregroundColor: AppColors.textPrimary,
+                              foregroundColor: AppPalette.of(context)
+                                  .textPrimary,
                               minimumSize: const Size(48, 48),
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 8,
@@ -206,15 +215,15 @@ class AuthFieldSurface extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => DecoratedBox(
-    decoration: const BoxDecoration(
+    decoration: BoxDecoration(
       borderRadius: BorderRadius.all(Radius.circular(AppRadius.lg)),
       gradient: LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
-          AppColors.surfaceSoft,
-          AppColors.surface,
-          AppColors.surfaceSoft,
+          AppPalette.of(context).surfaceSoft,
+          AppPalette.of(context).surface,
+          AppPalette.of(context).surfaceSoft,
         ],
         stops: [0, 0.7, 1],
       ),
@@ -236,16 +245,19 @@ class _BrandMark extends StatelessWidget {
           width: compact ? 56 : 72,
           height: compact ? 56 : 72,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
+            gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [AppColors.surfaceSoft, AppColors.background],
+              colors: [
+                AppPalette.of(context).surfaceSoft,
+                AppPalette.of(context).background,
+              ],
             ),
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.32)),
+            border: Border.all(color: AppPalette.of(context).border),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.28),
+                color: AppPalette.of(context).primary.withValues(alpha: 0.28),
                 blurRadius: 32,
                 spreadRadius: 3,
                 offset: const Offset(0, -8),
@@ -254,7 +266,7 @@ class _BrandMark extends StatelessWidget {
           ),
           child: Icon(
             Icons.local_movies_outlined,
-            color: AppColors.primary,
+            color: AppPalette.of(context).primary,
             size: compact ? 34 : 44,
           ),
         ),

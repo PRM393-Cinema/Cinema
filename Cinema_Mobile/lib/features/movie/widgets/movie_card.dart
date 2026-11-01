@@ -31,6 +31,7 @@ class MovieCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppPalette.of(context);
     return InkWell(
       onTap: onTap,
       borderRadius: AppRadius.borderRadiusMd,
@@ -42,8 +43,19 @@ class MovieCard extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: AppRadius.borderRadiusMd,
                 border: Border.all(
-                  color: AppColors.border.withValues(alpha: 0.5),
+                  color: colors.border.withValues(
+                    alpha: colors.isLight ? 1 : 0.5,
+                  ),
                 ),
+                boxShadow: colors.isLight
+                    ? [
+                        BoxShadow(
+                          color: colors.textPrimary.withValues(alpha: 0.06),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
+                    : null,
               ),
               child: Stack(
                 fit: StackFit.expand,
@@ -68,7 +80,7 @@ class MovieCard extends StatelessWidget {
                       right: AppSpacing.sm,
                       child: DecoratedBox(
                         decoration: BoxDecoration(
-                          color: AppColors.accent,
+                          color: AppPalette.of(context).accent,
                           borderRadius: AppRadius.borderRadiusSm,
                         ),
                         child: Padding(
@@ -79,7 +91,7 @@ class MovieCard extends StatelessWidget {
                           child: Text(
                             text,
                             style: AppTextStyles.caption.copyWith(
-                              color: AppColors.background,
+                              color: AppPalette.of(context).background,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
@@ -93,7 +105,12 @@ class MovieCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.sm),
           Text(
             title,
-            style: AppTextStyles.title,
+            style: colors.isLight
+                ? AppTextStyles.title.copyWith(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  )
+                : AppTextStyles.title,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -105,7 +122,7 @@ class MovieCard extends StatelessWidget {
                 if (duration != null) duration,
               ].join(' • '),
               style: AppTextStyles.caption.copyWith(
-                color: AppColors.textSecondary,
+                color: AppPalette.of(context).textSecondary,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

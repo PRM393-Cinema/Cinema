@@ -285,7 +285,7 @@ class _StaffShowtimeEditorScreenState extends State<StaffShowtimeEditorScreen> {
                         child: Text(
                           _error!,
                           style: AppTextStyles.bodySmall.copyWith(
-                            color: AppColors.error,
+                            color: AppPalette.of(context).error,
                           ),
                         ),
                       ),

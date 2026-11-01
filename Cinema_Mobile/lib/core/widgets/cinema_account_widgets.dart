@@ -368,6 +368,21 @@ class _CinemaNavigationBarState extends State<CinemaNavigationBar>
   Widget build(BuildContext context) => AnimatedBuilder(
     animation: _interaction,
     builder: (context, _) {
+      final colors = AppPalette.of(context);
+      final glassColors = [
+        for (final color in const [
+          Color.fromRGBO(255, 255, 255, 0.09),
+          Color.fromRGBO(255, 255, 255, 0.02),
+          Color.fromRGBO(5, 8, 16, 0.24),
+          Color.fromRGBO(5, 8, 16, 0.27),
+          Color.fromRGBO(255, 255, 255, 0.03),
+        ])
+          Color.lerp(
+            color,
+            colors.surface.withValues(alpha: 0.78),
+            colors.lightness,
+          )!,
+      ];
       final pressure = _interaction.value.clamp(0.0, 1.0);
       final deformation = _LiquidNavClipper(
         pressure: pressure,
@@ -390,8 +405,10 @@ class _CinemaNavigationBarState extends State<CinemaNavigationBar>
                 child: PhysicalShape(
                   clipper: deformation,
                   color: Colors.transparent,
-                  shadowColor: Colors.black.withValues(alpha: 0.3),
-                  elevation: 8,
+                  shadowColor: Colors.black.withValues(
+                    alpha: AppPalette.of(context).isLight ? 0.08 : 0.3,
+                  ),
+                  elevation: AppPalette.of(context).isLight ? 2 : 8,
                   clipBehavior: Clip.none,
                   child: RepaintBoundary(
                     key: _glassKey,
@@ -421,19 +438,13 @@ class _CinemaNavigationBarState extends State<CinemaNavigationBar>
                                       ),
                                     ),
                                   ),
-                                const DecoratedBox(
+                                DecoratedBox(
                                   decoration: BoxDecoration(
                                     gradient: LinearGradient(
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomCenter,
-                                      colors: [
-                                        Color.fromRGBO(255, 255, 255, 0.09),
-                                        Color.fromRGBO(255, 255, 255, 0.02),
-                                        Color.fromRGBO(5, 8, 16, 0.24),
-                                        Color.fromRGBO(5, 8, 16, 0.27),
-                                        Color.fromRGBO(255, 255, 255, 0.03),
-                                      ],
-                                      stops: [0, 0.18, 0.45, 0.8, 1],
+                                      colors: glassColors,
+                                      stops: const [0, 0.18, 0.45, 0.8, 1],
                                     ),
                                   ),
                                 ),
@@ -533,8 +544,11 @@ class _CinemaNavigationBarState extends State<CinemaNavigationBar>
               child: InkWell(
                 onTap: () => _selectDestination(index),
                 borderRadius: BorderRadius.circular(28),
-                focusColor: Colors.white.withValues(alpha: 0.12),
-                splashColor: AppColors.primary.withValues(alpha: 0.12),
+                focusColor: AppPalette.of(context).isLight
+                    ? AppPalette.of(context).primary.withValues(alpha: 0.12)
+                    : Colors.white.withValues(alpha: 0.12),
+                splashColor: AppPalette.of(context).primary
+                    .withValues(alpha: 0.12),
                 child: Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -542,31 +556,35 @@ class _CinemaNavigationBarState extends State<CinemaNavigationBar>
                       Icon(
                         icon,
                         color: selected
-                            ? AppColors.primary
-                            : AppColors.textPrimary,
+                            ? AppPalette.of(context).primary
+                            : AppPalette.of(context).textPrimary,
                         size: 24,
-                        shadows: const [
-                          Shadow(
-                            color: Color.fromRGBO(0, 0, 0, 0.8),
-                            blurRadius: 2,
-                            offset: Offset(0, 1),
-                          ),
-                        ],
+                        shadows: AppPalette.of(context).isLight
+                            ? null
+                            : const [
+                                Shadow(
+                                  color: Color.fromRGBO(0, 0, 0, 0.8),
+                                  blurRadius: 2,
+                                  offset: Offset(0, 1),
+                                ),
+                              ],
                       ),
                       const SizedBox(height: 2),
                       Text(
                         label,
                         style: TextStyle(
-                          color: AppColors.textPrimary,
+                          color: AppPalette.of(context).textPrimary,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          shadows: const [
-                            Shadow(
-                              color: Color.fromRGBO(0, 0, 0, 0.8),
-                              blurRadius: 2,
-                              offset: Offset(0, 1),
-                            ),
-                          ],
+                          shadows: AppPalette.of(context).isLight
+                              ? null
+                              : const [
+                                  Shadow(
+                                    color: Color.fromRGBO(0, 0, 0, 0.8),
+                                    blurRadius: 2,
+                                    offset: Offset(0, 1),
+                                  ),
+                                ],
                         ),
                       ),
                     ],
@@ -689,67 +707,70 @@ class _LiquidTabCapsule extends StatelessWidget {
   const _LiquidTabCapsule();
 
   @override
-  Widget build(BuildContext context) => DecoratedBox(
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(29),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.14),
-          blurRadius: 7,
-          offset: const Offset(0, 2),
-        ),
-        BoxShadow(
-          color: Colors.white.withValues(alpha: 0.12),
-          blurRadius: 2,
-          offset: const Offset(0, -1),
-        ),
-      ],
-    ),
-    child: ClipRRect(
-      borderRadius: BorderRadius.circular(29),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomRight,
-                colors: [
-                  Colors.white.withValues(alpha: 0.10),
-                  Colors.white.withValues(alpha: 0.035),
-                  AppColors.primary.withValues(alpha: 0.05),
-                  Colors.black.withValues(alpha: 0.035),
-                ],
-                stops: const [0, 0.25, 0.7, 1],
-              ),
-            ),
+  Widget build(BuildContext context) {
+    final colors = AppPalette.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(29),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.14),
+            blurRadius: 7,
+            offset: const Offset(0, 2),
           ),
-          const DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color.fromRGBO(255, 255, 255, 0.06),
-                  Colors.transparent,
-                  Color.fromRGBO(0, 0, 0, 0.1),
-                ],
-                stops: [0, 0.5, 1],
-              ),
-            ),
-          ),
-          Positioned.fill(
-            child: IgnorePointer(
-              child: CustomPaint(
-                painter: const _LiquidGlassRimPainter(radius: 29),
-              ),
-            ),
+          BoxShadow(
+            color: Colors.white.withValues(alpha: 0.12),
+            blurRadius: 2,
+            offset: const Offset(0, -1),
           ),
         ],
       ),
-    ),
-  );
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(29),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white.withValues(alpha: 0.10),
+                    Colors.white.withValues(alpha: 0.035),
+                    colors.primary.withValues(alpha: 0.05),
+                    Colors.black.withValues(alpha: 0.035),
+                  ],
+                  stops: const [0, 0.25, 0.7, 1],
+                ),
+              ),
+            ),
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color.fromRGBO(255, 255, 255, 0.06),
+                    Colors.transparent,
+                    Color.fromRGBO(0, 0, 0, 0.1),
+                  ],
+                  stops: [0, 0.5, 1],
+                ),
+              ),
+            ),
+            Positioned.fill(
+              child: IgnorePointer(
+                child: CustomPaint(
+                  painter: const _LiquidGlassRimPainter(radius: 29),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _LiquidGlassRimPainter extends CustomPainter {
@@ -826,16 +847,25 @@ class CinemaPanel extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: padding,
     decoration: BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          AppColors.surfaceSoft.withValues(alpha: surfaceOpacity),
-          AppColors.surface.withValues(alpha: surfaceOpacity),
-        ],
+      color: AppPalette.of(context).isLight
+          ? AppPalette.of(context).surface.withValues(alpha: surfaceOpacity)
+          : null,
+      gradient: AppPalette.of(context).isLight
+          ? null
+          : LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppPalette.of(context).surfaceSoft
+                    .withValues(alpha: surfaceOpacity),
+                AppPalette.of(context).surface
+                    .withValues(alpha: surfaceOpacity),
+              ],
+            ),
+      borderRadius: BorderRadius.circular(
+        AppPalette.of(context).isLight ? 12 : 20,
       ),
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: AppColors.border),
+      border: Border.all(color: AppPalette.of(context).border),
     ),
     child: child,
   );

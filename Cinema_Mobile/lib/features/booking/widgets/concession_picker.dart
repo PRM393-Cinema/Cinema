@@ -32,7 +32,10 @@ class ConcessionPicker extends StatelessWidget {
       children: [
         for (final (index, item) in items.indexed) ...[
           if (index > 0)
-            const Divider(height: AppSpacing.lg, color: AppColors.border),
+            Divider(
+              height: AppSpacing.lg,
+              color: AppPalette.of(context).border,
+            ),
           _Line(
             item: item,
             quantity: quantities[item.id] ?? 0,
@@ -67,10 +70,10 @@ class _Line extends StatelessWidget {
               ? Container(
                   width: 48,
                   height: 48,
-                  color: AppColors.surfaceSoft,
-                  child: const Icon(
+                  color: AppPalette.of(context).surfaceSoft,
+                  child: Icon(
                     Icons.fastfood_outlined,
-                    color: AppColors.accent,
+                    color: AppPalette.of(context).accent,
                   ),
                 )
               : AppNetworkImage(imageUrl: item.imageUrl, width: 48, height: 48),
@@ -91,7 +94,7 @@ class _Line extends StatelessWidget {
               Text(
                 formatVnd(item.price),
                 style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.primary,
+                  color: AppPalette.of(context).primary,
                 ),
               ),
             ],
@@ -121,7 +124,10 @@ class _Line extends StatelessWidget {
               onChanged == null || quantity >= ConcessionPicker.maxQuantity
               ? null
               : () => onChanged(quantity + 1),
-          icon: const Icon(Icons.add_circle_outline, color: AppColors.primary),
+          icon: Icon(
+            Icons.add_circle_outline,
+            color: AppPalette.of(context).primary,
+          ),
         ),
       ],
     );

@@ -133,24 +133,25 @@ class ShowtimeSeatMap extends StatelessWidget {
 // Free seats keep the light colours of their type; taken seats are solid, so
 // a held seat does not look like a free VIP one.
 (Color fill, Color border, Color text) _colorsOf(
+  BuildContext context,
   _SeatState state,
   String type,
 ) => switch (state) {
-  _SeatState.free => seatTypeColors(type),
+  _SeatState.free => seatTypeColors(context, type),
   _SeatState.held => (
-    AppColors.warning,
-    AppColors.warning,
-    AppColors.background,
+    AppPalette.of(context).warning,
+    AppPalette.of(context).warning,
+    AppPalette.of(context).background,
   ),
   _SeatState.sold => (
-    AppColors.textSecondary,
-    AppColors.textSecondary,
-    AppColors.background,
+    AppPalette.of(context).textSecondary,
+    AppPalette.of(context).textSecondary,
+    AppPalette.of(context).background,
   ),
   _SeatState.checkedIn => (
-    AppColors.success,
-    AppColors.success,
-    AppColors.background,
+    AppPalette.of(context).success,
+    AppPalette.of(context).success,
+    AppPalette.of(context).background,
   ),
 };
 
@@ -172,7 +173,7 @@ class _ShowtimeSeat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (fill, border, text) = _colorsOf(state, seat.type);
+    final (fill, border, text) = _colorsOf(context, state, seat.type);
     final radius = BorderRadius.circular(math.min(AppRadius.sm, size / 5));
     final booking = this.booking;
     final tile = Container(
@@ -224,7 +225,7 @@ class _LegendEntry extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (fill, border, _) = _colorsOf(state, 'NORMAL');
+    final (fill, border, _) = _colorsOf(context, state, 'NORMAL');
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -289,27 +290,31 @@ class ShowtimeCustomerList extends StatelessWidget {
         const SizedBox(height: AppSpacing.sm),
         if (groups.isEmpty)
           const Text('No tickets yet.', style: AppTextStyles.bodySmall),
-        for (final seats in groups) _customer(seats),
+        for (final seats in groups) _customer(context, seats),
       ],
     );
   }
 
-  Widget _customer(List<ShowtimeSeatBooking> seats) {
+  Widget _customer(BuildContext context, List<ShowtimeSeatBooking> seats) {
     final booking = seats.first;
     final checkedInAt = booking.checkedInAt;
     final (icon, color, status) = checkedInAt != null
         ? (
             Icons.how_to_reg,
-            AppColors.success,
+            AppPalette.of(context).success,
             'Checked in ${formatTime(checkedInAt)}',
           )
         : booking.status == BookingStatus.pending
-        ? (Icons.schedule, AppColors.warning, 'Awaiting payment')
+        ? (Icons.schedule, AppPalette.of(context).warning, 'Awaiting payment')
         : booking.status == BookingStatus.refundPending
-        ? (Icons.currency_exchange, AppColors.warning, 'Refund requested')
+        ? (
+            Icons.currency_exchange,
+            AppPalette.of(context).warning,
+            'Refund requested',
+          )
         : (
             Icons.local_activity_outlined,
-            AppColors.textSecondary,
+            AppPalette.of(context).textSecondary,
             'Paid, not in yet',
           );
     return ListTile(

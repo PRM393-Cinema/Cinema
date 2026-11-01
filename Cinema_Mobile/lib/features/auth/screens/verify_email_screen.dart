@@ -228,7 +228,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
               Text(
                 'Code sent to ${_arguments!.email}',
                 style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.primary,
+                  color: AppPalette.of(context).primary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -311,30 +311,29 @@ String? _validateOtp(String? value) {
 class _AuthStatusMessage extends StatelessWidget {
   const _AuthStatusMessage._({
     required this.message,
-    required this.color,
+    required this.isError,
     required this.icon,
   });
 
   const _AuthStatusMessage.error({required String message})
-    : this._(
-        message: message,
-        color: AppColors.error,
-        icon: Icons.error_outline,
-      );
+    : this._(message: message, isError: true, icon: Icons.error_outline);
 
   const _AuthStatusMessage.success({required String message})
     : this._(
         message: message,
-        color: AppColors.success,
+        isError: false,
         icon: Icons.check_circle_outline,
       );
 
   final String message;
-  final Color color;
+  final bool isError;
   final IconData icon;
 
   @override
   Widget build(BuildContext context) {
+    final color = isError
+        ? AppPalette.of(context).error
+        : AppPalette.of(context).success;
     return Semantics(
       liveRegion: true,
       child: DecoratedBox(
@@ -354,7 +353,7 @@ class _AuthStatusMessage extends StatelessWidget {
                 child: Text(
                   message,
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textPrimary,
+                    color: AppPalette.of(context).textPrimary,
                   ),
                 ),
               ),

@@ -165,7 +165,10 @@ class _PromotionBoxState extends State<PromotionBox> {
           Row(
             key: const Key('promotionApplied'),
             children: [
-              const Icon(Icons.local_offer_outlined, color: AppColors.accent),
+              Icon(
+                Icons.local_offer_outlined,
+                color: AppPalette.of(context).accent,
+              ),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Column(
@@ -183,7 +186,9 @@ class _PromotionBoxState extends State<PromotionBox> {
               ),
               Text(
                 '−${formatVnd(quote.discount)}',
-                style: AppTextStyles.title.copyWith(color: AppColors.success),
+                style: AppTextStyles.title.copyWith(
+                  color: AppPalette.of(context).success,
+                ),
               ),
               if (code != null)
                 IconButton(
@@ -224,7 +229,9 @@ class _PromotionBoxState extends State<PromotionBox> {
             child: Text(
               _error!,
               key: const Key('promoCodeError'),
-              style: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppPalette.of(context).error,
+              ),
             ),
           ),
       ],

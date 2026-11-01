@@ -4,10 +4,12 @@ import 'package:flutter/scheduler.dart';
 import '../core/session/roles.dart';
 import '../core/session/session_state.dart';
 import '../core/utils/layout.dart';
+import '../core/widgets/cinema_background.dart';
 import 'routes/app_routes.dart';
 import 'theme/app_colors.dart';
 import 'theme/app_spacing.dart';
 import 'theme/app_text_styles.dart';
+import 'theme/theme_switch.dart';
 
 // Name of the page on top of the customer app's navigator, so the website
 // navigation can show where the customer is.
@@ -90,10 +92,16 @@ _Section? _sectionOf(String path) {
 // website navigation bar at the top; the tab bar at the bottom is only used in
 // the app layout. Sign-in pages keep their own full-screen design.
 class CustomerFrame extends StatelessWidget {
-  const CustomerFrame({required this.routes, required this.child, super.key});
+  const CustomerFrame({
+    required this.routes,
+    required this.child,
+    required this.onSignOut,
+    super.key,
+  });
 
   final RouteTracker routes;
   final Widget child;
+  final VoidCallback onSignOut;
 
   @override
   Widget build(BuildContext context) {
@@ -110,54 +118,83 @@ class CustomerFrame extends StatelessWidget {
             isManagementAccount(session.user?.roles);
         if (hidden) return child;
 
-        return Column(
-          children: [
-            _WebHeader(
-              selected: _sectionOf(path),
-              signedIn: session.isAuthenticated,
-              userName: session.user?.displayName,
-              onOpen: (route) {
-                final navigator = routes.navigator;
-                if (navigator == null || route == name) return;
-                // Like the tab bar: sections open on top of Home.
-                navigator.pushNamedAndRemoveUntil(
-                  route,
-                  (page) =>
-                      route != AppRoutes.home &&
-                      page.settings.name == AppRoutes.home,
-                );
-              },
+        return ColoredBox(
+          key: const Key('webFrameBackground'),
+          color: AppPalette.of(context).background,
+          child: CinemaBackground(
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Padding(
+                  padding: EdgeInsets.only(
+                    top: path == AppRoutes.home || path == '/'
+                        ? 0
+                        : _WebHeader.height,
+                  ),
+                  child: MediaQuery.removePadding(
+                    context: context,
+                    removeTop: true,
+                    child: Theme(
+                      data: Theme.of(
+                        context,
+                      ).copyWith(scaffoldBackgroundColor: Colors.transparent),
+                      child: child,
+                    ),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.topCenter,
+                  child: Overlay.wrap(
+                    alwaysSizeToContent: true,
+                    clipBehavior: Clip.none,
+                    child: _WebHeader(
+                      onSignOut: onSignOut,
+                      menuContext: routes.navigator!.overlay!.context,
+                      selected: _sectionOf(path),
+                      signedIn: session.isAuthenticated,
+                      userName: session.user?.displayName,
+                      onOpen: (route) {
+                        final navigator = routes.navigator;
+                        if (navigator == null || route == name) return;
+                        // Like the tab bar: sections open on top of Home.
+                        navigator.pushNamedAndRemoveUntil(
+                          route,
+                          (page) =>
+                              route != AppRoutes.home &&
+                              page.settings.name == AppRoutes.home,
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ],
             ),
-            Expanded(
-              child: MediaQuery.removePadding(
-                context: context,
-                removeTop: true,
-                child: child,
-              ),
-            ),
-          ],
+          ),
         );
       },
     );
   }
 }
 
-// Website navigation bar. It sits above the navigator, so it uses no tooltips
-// or menus (they need the navigator's overlay).
+// The header sits above the navigator; menus use its overlay explicitly.
 class _WebHeader extends StatelessWidget {
   const _WebHeader({
     required this.selected,
     required this.signedIn,
     required this.userName,
     required this.onOpen,
+    required this.onSignOut,
+    required this.menuContext,
   });
 
-  static const height = 68.0;
+  static const height = webHeaderHeight;
 
   final _Section? selected;
   final bool signedIn;
   final String? userName;
   final ValueChanged<String> onOpen;
+  final VoidCallback onSignOut;
+  final BuildContext menuContext;
 
   @override
   Widget build(BuildContext context) {
@@ -165,12 +202,9 @@ class _WebHeader extends StatelessWidget {
 
     return Material(
       key: const Key('webHeader'),
-      color: AppColors.surface.withValues(alpha: 0.92),
+      color: Colors.transparent,
       child: Container(
         height: height,
-        decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: AppColors.border)),
-        ),
         padding: centeredPadding(
           context,
           AppSpacing.lg,
@@ -178,80 +212,164 @@ class _WebHeader extends StatelessWidget {
         ).copyWith(top: 0, bottom: 0),
         child: Row(
           children: [
-            InkWell(
-              key: const Key('webHeaderLogo'),
-              borderRadius: BorderRadius.circular(8),
-              onTap: () => onOpen(AppRoutes.home),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.sm,
-                  vertical: AppSpacing.sm,
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.local_movies, color: AppColors.primary),
-                    const SizedBox(width: AppSpacing.sm),
-                    Text.rich(
-                      const TextSpan(
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: InkWell(
+                    key: const Key('webHeaderLogo'),
+                    hoverColor: Colors.transparent,
+                    focusColor: AppPalette.of(context).primary
+                        .withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: () => onOpen(AppRoutes.home),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppPalette.of(context).background
+                            .withValues(alpha: 0.88),
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.sm,
+                        vertical: AppSpacing.sm,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          TextSpan(
-                            text: 'COSMO',
-                            style: TextStyle(color: AppColors.primary),
+                          Icon(
+                            Icons.local_movies,
+                            color: AppPalette.of(context).primary,
                           ),
-                          TextSpan(text: 'Q'),
-                          TextSpan(
-                            text: '  Cinema',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w500,
-                              letterSpacing: 0,
+                          const SizedBox(width: AppSpacing.sm),
+                          Text.rich(
+                            TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: 'COSMO',
+                                  style: TextStyle(
+                                    color: AppPalette.of(context).primary,
+                                  ),
+                                ),
+                                TextSpan(text: 'Q'),
+                                TextSpan(
+                                  text: '  Cinema',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    letterSpacing: 0,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            style: AppTextStyles.heading2.copyWith(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: AppPalette.of(context).isLight
+                                  ? 0
+                                  : 1,
                             ),
                           ),
                         ],
                       ),
-                      style: AppTextStyles.heading2.copyWith(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1,
-                      ),
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
-            const SizedBox(width: AppSpacing.xl),
             // The links take the free space and scroll sideways rather than
             // overflow on a narrow window.
             Expanded(
+              flex: 3,
               child: Align(
-                alignment: Alignment.centerLeft,
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
+                alignment: Alignment.center,
+                child: Container(
+                  key: const Key('webHeaderNavGroup'),
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: AppPalette.of(context).isLight
+                        ? AppPalette.of(context).surface.withValues(alpha: 0.94)
+                        : AppPalette.of(context).background
+                              .withValues(alpha: 0.88),
+                    borderRadius: BorderRadius.circular(28),
+                    border: AppPalette.of(context).isLight
+                        ? Border.all(color: AppPalette.of(context).border)
+                        : null,
+                  ),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      key: const Key('webHeaderLinks'),
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _HeaderLink(
+                          label: 'Movies',
+                          selected: selected == _Section.movies,
+                          onTap: () => onOpen(AppRoutes.home),
+                        ),
+                        if (signedIn) ...[
+                          _HeaderLink(
+                            label: 'My tickets',
+                            selected: selected == _Section.tickets,
+                            onTap: () => onOpen(AppRoutes.myBookings),
+                          ),
+                          _HeaderLink(
+                            key: const Key('myRatings'),
+                            label: 'Ratings',
+                            selected: selected == _Section.ratings,
+                            onTap: () => onOpen(AppRoutes.myRatings),
+                          ),
+                          _HeaderLink(
+                            label: 'Notifications',
+                            selected: selected == _Section.notifications,
+                            badge: SessionProvider.of(context)
+                                .unreadNotifications,
+                            onTap: () => onOpen(AppRoutes.notifications),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      _HeaderLink(
-                        label: 'Movies',
-                        selected: selected == _Section.movies,
-                        onTap: () => onOpen(AppRoutes.home),
-                      ),
-                      if (signedIn) ...[
-                        _HeaderLink(
-                          label: 'My tickets',
-                          selected: selected == _Section.tickets,
-                          onTap: () => onOpen(AppRoutes.myBookings),
+                      const ThemeSwitch(),
+                      if (signedIn)
+                        _AccountButton(
+                          name: name.isEmpty ? 'Account' : name,
+                          selected: selected == _Section.account,
+                          onOpen: onOpen,
+                          onSignOut: onSignOut,
+                          menuContext: menuContext,
+                        )
+                      else ...[
+                        TextButton(
+                          key: const Key('webHeaderSignIn'),
+                          onPressed: () => onOpen(AppRoutes.login),
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppPalette.of(context).textPrimary,
+                          ),
+                          child: const Text(
+                            'Sign in',
+                            style: AppTextStyles.button,
+                          ),
                         ),
-                        _HeaderLink(
-                          key: const Key('myRatings'),
-                          label: 'Ratings',
-                          selected: selected == _Section.ratings,
-                          onTap: () => onOpen(AppRoutes.myRatings),
-                        ),
-                        _HeaderLink(
-                          label: 'Notifications',
-                          selected: selected == _Section.notifications,
-                          badge: SessionProvider.of(context)
-                              .unreadNotifications,
-                          onTap: () => onOpen(AppRoutes.notifications),
+                        const SizedBox(width: AppSpacing.sm),
+                        FilledButton(
+                          key: const Key('webHeaderRegister'),
+                          onPressed: () => onOpen(AppRoutes.register),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppPalette.of(context).primary,
+                            foregroundColor: AppPalette.of(context).onPrimary,
+                          ),
+                          child: const Text('Create account'),
                         ),
                       ],
                     ],
@@ -259,33 +377,6 @@ class _WebHeader extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: AppSpacing.md),
-            if (signedIn)
-              _AccountButton(
-                name: name.isEmpty ? 'Account' : name,
-                selected: selected == _Section.account,
-                onTap: () => onOpen(AppRoutes.profile),
-              )
-            else ...[
-              TextButton(
-                key: const Key('webHeaderSignIn'),
-                onPressed: () => onOpen(AppRoutes.login),
-                style: TextButton.styleFrom(
-                  foregroundColor: AppColors.textPrimary,
-                ),
-                child: const Text('Sign in', style: AppTextStyles.button),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              FilledButton(
-                key: const Key('webHeaderRegister'),
-                onPressed: () => onOpen(AppRoutes.register),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: AppColors.background,
-                ),
-                child: const Text('Create account'),
-              ),
-            ],
           ],
         ),
       ),
@@ -313,7 +404,7 @@ class _HeaderLink extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
     child: InkWell(
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(24),
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(
@@ -321,11 +412,15 @@ class _HeaderLink extends StatelessWidget {
           vertical: AppSpacing.sm,
         ),
         decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: selected ? AppColors.primary : Colors.transparent,
-              width: 2,
-            ),
+          color: selected && AppPalette.of(context).isLight
+              ? AppPalette.of(context).primary.withValues(alpha: 0.06)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: selected
+                ? AppPalette.of(context).primary
+                : Colors.transparent,
+            width: 1,
           ),
         ),
         child: Badge(
@@ -335,7 +430,9 @@ class _HeaderLink extends StatelessWidget {
           child: Text(
             label,
             style: AppTextStyles.body.copyWith(
-              color: selected ? AppColors.primary : AppColors.textSecondary,
+              color: selected
+                  ? AppPalette.of(context).primary
+                  : AppPalette.of(context).textSecondary,
               fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
             ),
           ),
@@ -345,28 +442,118 @@ class _HeaderLink extends StatelessWidget {
   );
 }
 
-class _AccountButton extends StatelessWidget {
+class _AccountButton extends StatefulWidget {
   const _AccountButton({
     required this.name,
     required this.selected,
-    required this.onTap,
+    required this.onOpen,
+    required this.onSignOut,
+    required this.menuContext,
   });
 
   final String name;
   final bool selected;
-  final VoidCallback onTap;
+  final ValueChanged<String> onOpen;
+  final VoidCallback onSignOut;
+  final BuildContext menuContext;
+
+  @override
+  State<_AccountButton> createState() => _AccountButtonState();
+}
+
+class _AccountButtonState extends State<_AccountButton> {
+  bool _menuOpen = false;
+
+  Future<void> _openMenu(BuildContext context) async {
+    if (_menuOpen) {
+      Navigator.of(widget.menuContext).pop();
+      return;
+    }
+    setState(() => _menuOpen = true);
+    final box = context.findRenderObject()! as RenderBox;
+    final overlay = widget.menuContext.findRenderObject()! as RenderBox;
+    final anchor = Rect.fromPoints(
+      box.localToGlobal(Offset.zero),
+      box.localToGlobal(box.size.bottomRight(Offset.zero)),
+    ).shift(-overlay.localToGlobal(Offset.zero));
+    final selected = await showMenu<String>(
+      context: widget.menuContext,
+      position: RelativeRect.fromRect(
+        Rect.fromLTWH(
+          anchor.left,
+          (anchor.bottom + 8).clamp(0, overlay.size.height),
+          anchor.width,
+          0,
+        ),
+        Offset.zero & overlay.size,
+      ),
+      constraints: const BoxConstraints.tightFor(width: 264),
+      menuPadding: const EdgeInsets.all(AppSpacing.sm),
+      color: AppPalette.of(context).surfaceSoft,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: AppPalette.of(context).border),
+      ),
+      items: [
+        for (final entry in [
+          (AppRoutes.profile, Icons.person_outline, 'Account settings'),
+          (
+            AppRoutes.paymentHistory,
+            Icons.receipt_long_outlined,
+            'Payment history',
+          ),
+          ('signOut', Icons.logout_rounded, 'Sign out'),
+        ])
+          PopupMenuItem(
+            value: entry.$1,
+            height: 48,
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            textStyle: AppTextStyles.body,
+            child: Row(
+              children: [
+                Icon(
+                  entry.$2,
+                  size: 20,
+                  color: entry.$1 == 'signOut'
+                      ? AppPalette.of(context).error
+                      : AppPalette.of(context).primary,
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(child: Text(entry.$3)),
+              ],
+            ),
+          ),
+      ],
+    );
+    if (!mounted) return;
+    setState(() => _menuOpen = false);
+    if (selected == null) return;
+    if (selected == 'signOut') {
+      widget.onSignOut();
+    } else {
+      widget.onOpen(selected);
+    }
+  }
 
   @override
   Widget build(BuildContext context) => InkWell(
     key: const Key('webHeaderAccount'),
     borderRadius: BorderRadius.circular(24),
-    onTap: onTap,
+    onTap: () => _openMenu(context),
     child: Container(
       padding: const EdgeInsets.fromLTRB(6, 6, AppSpacing.md, 6),
       decoration: BoxDecoration(
+        color: AppPalette.of(context).isLight
+            ? AppPalette.of(context).surface.withValues(alpha: 0.94)
+            : AppPalette.of(context).background.withValues(alpha: 0.88),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: selected ? AppColors.primary : AppColors.border,
+          color: widget.selected || _menuOpen
+              ? AppPalette.of(context).primary
+              : AppPalette.of(context).isLight
+              ? AppPalette.of(context).border
+              : Colors.transparent,
         ),
       ),
       child: Row(
@@ -374,11 +561,12 @@ class _AccountButton extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 15,
-            backgroundColor: AppColors.primary.withValues(alpha: 0.16),
+            backgroundColor: AppPalette.of(context).primary
+                .withValues(alpha: 0.16),
             child: Text(
-              name.characters.first.toUpperCase(),
+              widget.name.characters.first.toUpperCase(),
               style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.primary,
+                color: AppPalette.of(context).primary,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -387,13 +575,25 @@ class _AccountButton extends StatelessWidget {
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 180),
             child: Text(
-              name,
+              widget.name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.textPrimary,
+                color: AppPalette.of(context).textPrimary,
                 fontWeight: FontWeight.w600,
               ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.xs),
+          AnimatedRotation(
+            turns: _menuOpen ? 0.5 : 0,
+            duration: MediaQuery.disableAnimationsOf(context)
+                ? Duration.zero
+                : const Duration(milliseconds: 150),
+            child: Icon(
+              Icons.expand_more_rounded,
+              size: 18,
+              color: AppPalette.of(context).textSecondary,
             ),
           ),
         ],

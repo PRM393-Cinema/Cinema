@@ -219,7 +219,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 child: Text(
                   _errorMessage!,
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.error,
+                    color: AppPalette.of(context).error,
                   ),
                 ),
               ),

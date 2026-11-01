@@ -27,30 +27,74 @@ class SeatLegend extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: AppSpacing.lg,
-      runSpacing: AppSpacing.md,
-      alignment: WrapAlignment.center,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        for (final type in seatTypes)
-          if (types.contains(type))
-            _SeatLegendEntry(
-              label: type == 'SWEETBOX'
-                  ? 'Sweetbox (couple)'
-                  : seatTypeLabel(type),
-              price: _priceLabel(type),
-              state: SeatItemState.available,
-              type: type,
-            ),
-        const _SeatLegendEntry(
-          label: 'Selected',
-          state: SeatItemState.selected,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (final type in seatTypes.where((type) => type != 'SWEETBOX'))
+              if (types.contains(type))
+                Flexible(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.xs,
+                    ),
+                    child: _SeatLegendEntry(
+                      label: seatTypeLabel(type),
+                      price: _priceLabel(type),
+                      state: SeatItemState.available,
+                      type: type,
+                    ),
+                  ),
+                ),
+          ],
         ),
-        // Seats held by other customers are reported together with booked
-        // seats, so both show as unavailable.
-        const _SeatLegendEntry(
-          label: 'Unavailable',
-          state: SeatItemState.booked,
+        if (types.contains('SWEETBOX')) ...[
+          const SizedBox(height: AppSpacing.md),
+          SizedBox(
+            width: double.infinity,
+            child: Wrap(
+              alignment: WrapAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: AppSpacing.sm,
+              children: [
+                const SeatItem(label: '', type: 'SWEETBOX', size: 18),
+                const Text('Sweetbox (couple)', style: AppTextStyles.bodySmall),
+                if (_priceLabel('SWEETBOX') case final price?)
+                  Text(
+                    price,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppPalette.of(context).textPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+        const SizedBox(height: AppSpacing.md),
+        const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Flexible(
+              child: _SeatLegendEntry(
+                label: 'Selected',
+                state: SeatItemState.selected,
+              ),
+            ),
+            SizedBox(width: AppSpacing.lg),
+            // Seats held by other customers are reported together with booked
+            // seats, so both show as unavailable.
+            Flexible(
+              child: _SeatLegendEntry(
+                label: 'Unavailable',
+                state: SeatItemState.booked,
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -81,19 +125,23 @@ class _SeatLegendEntry extends StatelessWidget {
         const SizedBox(width: AppSpacing.sm),
         // Long entries wrap on narrow phones and large text sizes instead of
         // running off the screen.
-        Flexible(child: Text(label, style: AppTextStyles.bodySmall)),
-        if (price case final price?) ...[
-          const SizedBox(width: AppSpacing.xs),
-          Flexible(
-            child: Text(
-              price,
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+        Flexible(
+          child: Wrap(
+            spacing: AppSpacing.xs,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Text(label, style: AppTextStyles.bodySmall),
+              if (price case final price?)
+                Text(
+                  price,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppPalette.of(context).textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+            ],
           ),
-        ],
+        ),
       ],
     );
   }

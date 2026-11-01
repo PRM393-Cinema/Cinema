@@ -304,9 +304,9 @@ class _StaffOperationsScreenState extends State<StaffOperationsScreen> {
                           _subtitle(item),
                           style: AppTextStyles.bodySmall,
                         ),
-                        trailing: const Icon(
+                        trailing: Icon(
                           Icons.chevron_right,
-                          color: AppColors.primary,
+                          color: AppPalette.of(context).primary,
                         ),
                         onTap: () => _open(_route(item)),
                       ),

@@ -98,6 +98,7 @@ void main() {
           (widget) => widget is MoviePreviewCard && widget.movie.id == movie.id,
         );
         await scrollHomeTo(tester, card);
+        await tester.pumpAndSettle();
         final position = tester.getTopLeft(card);
         await tester.tapAt(tester.getTopLeft(card) + const Offset(40, 40));
         await tester.pump();

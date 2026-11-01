@@ -10,6 +10,7 @@ class AppNetworkImage extends StatelessWidget {
     this.height,
     this.fit = BoxFit.cover,
     this.borderRadius,
+    this.webHtmlElementStrategy = WebHtmlElementStrategy.fallback,
     super.key,
   });
 
@@ -18,6 +19,7 @@ class AppNetworkImage extends StatelessWidget {
   final double? height;
   final BoxFit fit;
   final BorderRadius? borderRadius;
+  final WebHtmlElementStrategy webHtmlElementStrategy;
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +30,7 @@ class AppNetworkImage extends StatelessWidget {
             width: width,
             height: height,
             fit: fit,
-            webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
+            webHtmlElementStrategy: webHtmlElementStrategy,
             loadingBuilder: (context, child, loadingProgress) {
               if (loadingProgress == null) {
                 return child;
@@ -59,7 +61,7 @@ class _ImageLoading extends StatelessWidget {
     return Container(
       width: width,
       height: height,
-      color: AppColors.surfaceSoft,
+      color: AppPalette.of(context).surfaceSoft,
       alignment: Alignment.center,
       child: const SizedBox.square(
         dimension: AppSpacing.xl,
@@ -80,9 +82,12 @@ class _ImageFallback extends StatelessWidget {
     return Container(
       width: width,
       height: height,
-      color: AppColors.surfaceSoft,
+      color: AppPalette.of(context).surfaceSoft,
       alignment: Alignment.center,
-      child: const Icon(Icons.movie_outlined, color: AppColors.textSecondary),
+      child: Icon(
+        Icons.movie_outlined,
+        color: AppPalette.of(context).textSecondary,
+      ),
     );
   }
 }

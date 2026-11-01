@@ -86,11 +86,11 @@ class _TopNoticeState extends State<_TopNotice> {
                 liveRegion: true,
                 child: Material(
                   key: const Key('topNotice'),
-                  color: AppColors.surfaceSoft,
+                  color: AppPalette.of(context).surfaceSoft,
                   elevation: 8,
                   shape: RoundedRectangleBorder(
                     borderRadius: AppRadius.borderRadiusMd,
-                    side: const BorderSide(color: AppColors.border),
+                    side: BorderSide(color: AppPalette.of(context).border),
                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(16),
@@ -98,10 +98,10 @@ class _TopNoticeState extends State<_TopNotice> {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const ExcludeSemantics(
+                        ExcludeSemantics(
                           child: Icon(
                             Icons.info_outline,
-                            color: AppColors.primary,
+                            color: AppPalette.of(context).primary,
                           ),
                         ),
                         const SizedBox(width: 12),

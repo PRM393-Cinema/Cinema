@@ -146,7 +146,7 @@ class _MoviePreviewCardState extends State<MoviePreviewCard> {
             ),
             if (_active)
               Material(
-                color: AppColors.surface,
+                color: AppPalette.of(context).surface,
                 borderRadius: AppRadius.borderRadiusMd,
                 clipBehavior: Clip.antiAlias,
                 child: Column(
@@ -185,9 +185,8 @@ class _MoviePreviewCardState extends State<MoviePreviewCard> {
                               if (!_available || _failed)
                                 Center(
                                   child: Container(
-                                    color: AppColors.background.withValues(
-                                      alpha: 0.9,
-                                    ),
+                                    color: AppPalette.of(context).background
+                                        .withValues(alpha: 0.9),
                                     padding: const EdgeInsets.all(8),
                                     child: Column(
                                       mainAxisSize: MainAxisSize.min,

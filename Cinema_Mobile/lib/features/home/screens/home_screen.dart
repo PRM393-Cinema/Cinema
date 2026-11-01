@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
@@ -7,6 +8,7 @@ import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_radius.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
+import '../../../app/theme/theme_switch.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/cinema_background.dart';
@@ -17,6 +19,8 @@ import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_state.dart';
+import '../../../core/widgets/paginated_cards.dart';
+import '../../../core/widgets/scroll_reveal.dart';
 import '../../../data/models/movie.dart';
 import '../../../data/repositories/catalog_repository.dart';
 import '../../movie/widgets/movie_preview_card.dart';
@@ -183,11 +187,11 @@ class _HomeScreenState extends State<HomeScreen> {
               backgroundColor: Colors.transparent,
               elevation: 0,
               title: Text.rich(
-                const TextSpan(
+                TextSpan(
                   children: [
                     TextSpan(
                       text: 'COSMO',
-                      style: TextStyle(color: AppColors.primary),
+                      style: TextStyle(color: AppPalette.of(context).primary),
                     ),
                     TextSpan(text: 'Q'),
                   ],
@@ -196,12 +200,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1,
-                  shadows: [
-                    Shadow(
-                      color: AppColors.primary.withValues(alpha: 0.55),
-                      blurRadius: 10,
-                    ),
-                  ],
+                  shadows: AppPalette.of(context).isLight
+                      ? null
+                      : [
+                          Shadow(
+                            color: AppPalette.of(context).primary
+                                .withValues(alpha: 0.55),
+                            blurRadius: 10,
+                          ),
+                        ],
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.fade,
@@ -209,6 +216,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               actions: session.isAuthenticated
                   ? [
+                      const ThemeSwitch(),
                       IconButton(
                         tooltip: 'My bookings',
                         onPressed: () =>
@@ -244,11 +252,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(width: AppSpacing.sm),
                     ]
                   : [
+                      const ThemeSwitch(),
                       TextButton(
                         onPressed: () =>
                             Navigator.pushNamed(context, AppRoutes.login),
                         style: TextButton.styleFrom(
-                          foregroundColor: AppColors.textPrimary,
+                          foregroundColor: AppPalette.of(context).textPrimary,
                           padding: const EdgeInsets.symmetric(
                             horizontal: AppSpacing.md,
                           ),
@@ -297,129 +306,161 @@ class _HomeScreenState extends State<HomeScreen> {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final isWide = constraints.maxWidth >= 900;
-          return Center(
-            child: ConstrainedBox(
-              // Lined up with the website navigation bar.
-              constraints: const BoxConstraints(
-                maxWidth: pageMaxWidth + 2 * AppSpacing.lg,
-              ),
-              child: ListView(
-                key: const Key('homeScrollView'),
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: EdgeInsets.symmetric(
-                  horizontal: AppSpacing.lg,
-                  vertical: isWide ? AppSpacing.xxl : AppSpacing.lg,
-                ).copyWith(bottom: MediaQuery.paddingOf(context).bottom),
-                children: [
-                  _HomeHeader(isWide: isWide),
-                  const SizedBox(height: AppSpacing.xl),
-                  AppTextField(
-                    key: const Key('movieSearchField'),
-                    label: 'Search movies',
-                    hint: 'Search by title',
-                    prefixIcon: const Icon(Icons.search),
-                    onChanged: _search,
+          return ListView(
+            key: const Key('homeScrollView'),
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding:
+                centeredPadding(
+                  context,
+                  AppSpacing.lg,
+                  maxWidth: pageMaxWidth,
+                ).copyWith(
+                  top: isWide
+                      ? webHeaderHeight + AppSpacing.xxl
+                      : AppSpacing.lg,
+                  bottom: MediaQuery.paddingOf(context).bottom + AppSpacing.xl,
+                ),
+            children: [
+              if (!isWide) ...[
+                _HomeHeader(isWide: isWide),
+                const SizedBox(height: AppSpacing.xl),
+              ],
+              if (isWide)
+                const Text(
+                  'Your next cinema night',
+                  style: AppTextStyles.heading1,
+                )
+              else
+                AppTextField(
+                  key: const Key('movieSearchField'),
+                  label: 'Search movies',
+                  hint: 'Search by title',
+                  prefixIcon: const Icon(Icons.search),
+                  onChanged: _search,
+                ),
+              const SizedBox(height: AppSpacing.xxl),
+              if (featuredMovie != null && isWide) ...[
+                ScrollReveal(
+                  child: _FeaturedCarousel(
+                    movies: visibleMovies,
+                    onOpen: _openMovie,
                   ),
-                  const SizedBox(height: AppSpacing.xxl),
-                  if (featuredMovie != null && isWide) ...[
-                    _FeaturedMovie(
-                      movie: featuredMovie,
-                      isWide: isWide,
-                      onTap: () => _openMovie(featuredMovie),
+                ),
+                const SizedBox(height: AppSpacing.xxl),
+              ],
+              ScrollReveal(
+                key: const Key('homeFiltersReveal'),
+                child: Wrap(
+                  key: const Key('homeFilters'),
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: AppSpacing.md,
+                  runSpacing: AppSpacing.md,
+                  children: [
+                    if (isWide)
+                      SizedBox(
+                        width:
+                            constraints.maxWidth.clamp(
+                              0,
+                              pageMaxWidth + 2 * AppSpacing.lg,
+                            ) -
+                            2 * AppSpacing.lg -
+                            220 -
+                            (_genres.isNotEmpty ? 280 + AppSpacing.md : 0) -
+                            AppSpacing.md,
+                        child: AppTextField(
+                          key: const Key('movieSearchField'),
+                          label: 'Search movies',
+                          hint: 'Search by title',
+                          prefixIcon: const Icon(Icons.search),
+                          onChanged: _search,
+                        ),
+                      ),
+                    SizedBox(
+                      width: constraints.maxWidth < 600
+                          ? (constraints.maxWidth -
+                                    2 * AppSpacing.lg -
+                                    AppSpacing.md) /
+                                2
+                          : 220,
+                      child: _HomeFilter<bool>(
+                        key: const Key('showingFilter'),
+                        label: 'Showing',
+                        icon: Icons.movie_outlined,
+                        value: _comingSoon,
+                        options: const [
+                          (false, 'Now showing'),
+                          (true, 'Coming soon'),
+                        ],
+                        onSelected: _showTab,
+                      ),
                     ),
-                    const SizedBox(height: AppSpacing.xxl),
-                  ],
-                  Wrap(
-                    spacing: AppSpacing.md,
-                    runSpacing: AppSpacing.md,
-                    children: [
+                    if (_genres.isNotEmpty)
                       SizedBox(
                         width: constraints.maxWidth < 600
                             ? (constraints.maxWidth -
                                       2 * AppSpacing.lg -
                                       AppSpacing.md) /
                                   2
-                            : 220,
-                        child: _HomeFilter<bool>(
-                          key: const Key('showingFilter'),
-                          label: 'Showing',
-                          icon: Icons.movie_outlined,
-                          value: _comingSoon,
-                          options: const [
-                            (false, 'Now showing'),
-                            (true, 'Coming soon'),
+                            : 280,
+                        child: _HomeFilter<String>(
+                          key: const Key('genreFilter'),
+                          label: 'Genre',
+                          icon: Icons.filter_list_rounded,
+                          value: _genre ?? '',
+                          options: [
+                            ('', 'All genres'),
+                            for (final genre in _genres) (genre, genre),
                           ],
-                          onSelected: _showTab,
+                          onSelected: (value) =>
+                              _filterGenre(value.isEmpty ? null : value),
                         ),
                       ),
-                      if (_genres.isNotEmpty)
-                        SizedBox(
-                          width: constraints.maxWidth < 600
-                              ? (constraints.maxWidth -
-                                        2 * AppSpacing.lg -
-                                        AppSpacing.md) /
-                                    2
-                              : 280,
-                          child: _HomeFilter<String>(
-                            key: const Key('genreFilter'),
-                            label: 'Genre',
-                            icon: Icons.filter_list_rounded,
-                            value: _genre ?? '',
-                            options: [
-                              ('', 'All genres'),
-                              for (final genre in _genres) (genre, genre),
-                            ],
-                            onSelected: (value) =>
-                                _filterGenre(value.isEmpty ? null : value),
-                          ),
-                        ),
-                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: Text(
+                      _comingSoon ? 'Coming Soon' : 'Now Showing',
+                      style: AppTextStyles.heading2,
+                    ),
                   ),
-                  const SizedBox(height: AppSpacing.xl),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          _comingSoon ? 'Coming Soon' : 'Now Showing',
-                          style: AppTextStyles.heading2,
-                        ),
+                  if (isWide)
+                    Text(
+                      '${visibleMovies.length} films',
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppPalette.of(context).textSecondary,
                       ),
-                      if (isWide)
-                        Text(
-                          '${visibleMovies.length} films',
-                          style: AppTextStyles.caption.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  if (_errorMessage != null)
-                    ErrorState(
-                      title: 'Unable to load movies',
-                      message: _errorMessage!,
-                      onRetry: _loadMovies,
-                    )
-                  else if (visibleMovies.isEmpty)
-                    _genre == null && _query.trim().isEmpty
-                        ? EmptyState(
-                            icon: Icons.movie_outlined,
-                            title: _comingSoon
-                                ? 'Nothing announced yet'
-                                : 'No movies showing',
-                            message: 'Please check back later.',
-                          )
-                        : const EmptyState(
-                            icon: Icons.search_off_outlined,
-                            title: 'No movies found',
-                            message: 'Try another title or genre.',
-                          )
-                  else
-                    _MovieGrid(movies: visibleMovies, onMovieTap: _openMovie),
+                    ),
                 ],
               ),
-            ),
+              const SizedBox(height: AppSpacing.lg),
+              if (_errorMessage != null)
+                ErrorState(
+                  title: 'Unable to load movies',
+                  message: _errorMessage!,
+                  onRetry: _loadMovies,
+                )
+              else if (visibleMovies.isEmpty)
+                _genre == null && _query.trim().isEmpty
+                    ? EmptyState(
+                        icon: Icons.movie_outlined,
+                        title: _comingSoon
+                            ? 'Nothing announced yet'
+                            : 'No movies showing',
+                        message: 'Please check back later.',
+                      )
+                    : const EmptyState(
+                        icon: Icons.search_off_outlined,
+                        title: 'No movies found',
+                        message: 'Try another title or genre.',
+                      )
+              else
+                _MovieGrid(movies: visibleMovies, onMovieTap: _openMovie),
+            ],
           );
         },
       ),
@@ -458,14 +499,14 @@ class _HomeFilter<T> extends StatelessWidget {
           .$2;
       return Theme(
         data: Theme.of(context).copyWith(
-          focusColor: AppColors.primary.withValues(alpha: 0.1),
-          hoverColor: AppColors.primary.withValues(alpha: 0.06),
+          focusColor: AppPalette.of(context).primary.withValues(alpha: 0.1),
+          hoverColor: AppPalette.of(context).primary.withValues(alpha: 0.06),
         ),
         child: PopupMenuButton<T>(
           tooltip: 'Filter by ${label.toLowerCase()}',
           position: PopupMenuPosition.under,
           offset: const Offset(0, 6),
-          color: AppColors.surfaceSoft,
+          color: AppPalette.of(context).surfaceSoft,
           surfaceTintColor: Colors.transparent,
           constraints: BoxConstraints(
             minWidth: constraints.maxWidth,
@@ -474,7 +515,7 @@ class _HomeFilter<T> extends StatelessWidget {
           ),
           shape: RoundedRectangleBorder(
             borderRadius: AppRadius.borderRadiusMd,
-            side: const BorderSide(color: AppColors.border),
+            side: BorderSide(color: AppPalette.of(context).border),
           ),
           onSelected: onSelected,
           itemBuilder: (_) => [
@@ -494,8 +535,8 @@ class _HomeFilter<T> extends StatelessWidget {
                           text,
                           style: AppTextStyles.body.copyWith(
                             color: option == value
-                                ? AppColors.primary
-                                : AppColors.textPrimary,
+                                ? AppPalette.of(context).primary
+                                : AppPalette.of(context).textPrimary,
                             fontWeight: option == value
                                 ? FontWeight.w600
                                 : FontWeight.w400,
@@ -504,9 +545,9 @@ class _HomeFilter<T> extends StatelessWidget {
                       ),
                       if (option == value) ...[
                         const SizedBox(width: AppSpacing.xs),
-                        const Icon(
+                        Icon(
                           Icons.check_rounded,
-                          color: AppColors.primary,
+                          color: AppPalette.of(context).primary,
                           size: 20,
                         ),
                       ],
@@ -552,14 +593,16 @@ class _HomeHeader extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.05),
+            color: AppPalette.of(context).primary.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+            border: Border.all(
+              color: AppPalette.of(context).primary.withValues(alpha: 0.2),
+            ),
           ),
           child: Text(
             'Experience Premium Cinema',
             style: AppTextStyles.caption.copyWith(
-              color: AppColors.primary,
+              color: AppPalette.of(context).primary,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -572,13 +615,16 @@ class _HomeHeader extends StatelessWidget {
               TextSpan(
                 text: 'CosmoQ',
                 style: TextStyle(
-                  color: AppColors.primary,
-                  shadows: [
-                    Shadow(
-                      color: AppColors.primary.withValues(alpha: 0.4),
-                      blurRadius: 14,
-                    ),
-                  ],
+                  color: AppPalette.of(context).primary,
+                  shadows: AppPalette.of(context).isLight
+                      ? null
+                      : [
+                          Shadow(
+                            color: AppPalette.of(context).primary
+                                .withValues(alpha: 0.4),
+                            blurRadius: 14,
+                          ),
+                        ],
                 ),
               ),
               const TextSpan(text: ' Cinema'),
@@ -587,7 +633,7 @@ class _HomeHeader extends StatelessWidget {
           style: AppTextStyles.heading1.copyWith(
             fontSize: isWide ? 42 : 28,
             fontWeight: FontWeight.w800,
-            letterSpacing: -0.8,
+            letterSpacing: AppPalette.of(context).isLight ? 0 : -0.8,
             height: 1.2,
           ),
           textAlign: TextAlign.center,
@@ -608,22 +654,238 @@ class _HomeHeader extends StatelessWidget {
           height: 2,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(2),
-            gradient: const LinearGradient(
-              colors: [
-                Colors.transparent,
-                AppColors.primary,
-                Colors.transparent,
-              ],
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.2),
-                blurRadius: 10,
-              ),
-            ],
+            color: AppPalette.of(context).isLight
+                ? AppPalette.of(context).border
+                : null,
+            gradient: AppPalette.of(context).isLight
+                ? null
+                : LinearGradient(
+                    colors: [
+                      Colors.transparent,
+                      AppPalette.of(context).primary,
+                      Colors.transparent,
+                    ],
+                  ),
+            boxShadow: AppPalette.of(context).isLight
+                ? null
+                : [
+                    BoxShadow(
+                      color: AppPalette.of(context).primary
+                          .withValues(alpha: 0.2),
+                      blurRadius: 10,
+                    ),
+                  ],
           ),
         ),
       ],
+    ),
+  );
+}
+
+class _FeaturedCarousel extends StatefulWidget {
+  const _FeaturedCarousel({required this.movies, required this.onOpen});
+  final List<Movie> movies;
+  final ValueChanged<Movie> onOpen;
+
+  @override
+  State<_FeaturedCarousel> createState() => _FeaturedCarouselState();
+}
+
+class _FeaturedCarouselState extends State<_FeaturedCarousel>
+    with WidgetsBindingObserver {
+  final _pages = PageController();
+  Timer? _timer;
+  int _index = 0;
+  bool _focused = false;
+  bool _dragging = false;
+  bool _resumed = true;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _schedule();
+  }
+
+  void _schedule() {
+    _timer?.cancel();
+    if (widget.movies.length < 2 ||
+        _focused ||
+        _dragging ||
+        !_resumed ||
+        MediaQuery.disableAnimationsOf(context)) {
+      return;
+    }
+    _timer = Timer(const Duration(seconds: 5), () {
+      if (!mounted) return;
+      if (ModalRoute.of(context)?.isCurrent != false) _move(1);
+      _schedule();
+    });
+  }
+
+  void _move(int direction) {
+    if (!_pages.hasClients) return;
+    final next = (_index + direction) % widget.movies.length;
+    if (MediaQuery.disableAnimationsOf(context) || (next - _index).abs() > 1) {
+      _pages.jumpToPage(next);
+    } else {
+      _pages.animateToPage(
+        next,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOutCubic,
+      );
+    }
+    _schedule();
+  }
+
+  @override
+  void didUpdateWidget(covariant _FeaturedCarousel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_index >= widget.movies.length) {
+      _index = 0;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _pages.hasClients) _pages.jumpToPage(0);
+      });
+    }
+    _schedule();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _resumed = state == AppLifecycleState.resumed;
+    _schedule();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _timer?.cancel();
+    _pages.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Focus(
+    onKeyEvent: (_, _) {
+      _focused = true;
+      _schedule();
+      return KeyEventResult.ignored;
+    },
+    onFocusChange: (value) {
+      _focused = value;
+      _schedule();
+    },
+    child: Listener(
+      onPointerDown: (_) {
+        _dragging = true;
+        _schedule();
+      },
+      onPointerUp: (_) {
+        _dragging = false;
+        _focused = false;
+        _schedule();
+      },
+      onPointerCancel: (_) {
+        _dragging = false;
+        _focused = false;
+        _schedule();
+      },
+      child: SizedBox(
+        key: const Key('featuredCarousel'),
+        height: MediaQuery.textScalerOf(context).scale(1) > 1.3 ? 420 : 320,
+        child: Stack(
+          children: [
+            PageView.builder(
+              controller: _pages,
+              itemCount: widget.movies.length,
+              onPageChanged: (index) {
+                setState(() => _index = index);
+                _schedule();
+              },
+              itemBuilder: (_, index) => _FeaturedMovie(
+                movie: widget.movies[index],
+                isWide: true,
+                onTap: () => widget.onOpen(widget.movies[index]),
+              ),
+            ),
+            if (widget.movies.length > 1)
+              for (final direction in [-1, 1])
+                Align(
+                  alignment: direction < 0
+                      ? Alignment.centerLeft
+                      : Alignment.centerRight,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                    ),
+                    child: IconButton(
+                      tooltip: direction < 0
+                          ? 'Previous featured movie'
+                          : 'Next featured movie',
+                      style: ButtonStyle(
+                        minimumSize: const WidgetStatePropertyAll(
+                          Size.square(48),
+                        ),
+                        backgroundColor: WidgetStateProperty.resolveWith(
+                          (states) =>
+                              AppPalette.of(context).isLight &&
+                                  direction > 0 &&
+                                  states.any(
+                                    (state) => const {
+                                      WidgetState.hovered,
+                                      WidgetState.focused,
+                                      WidgetState.pressed,
+                                    }.contains(state),
+                                  )
+                              ? Colors.black.withValues(alpha: 0.48)
+                              : Colors.transparent,
+                        ),
+                        overlayColor: WidgetStateProperty.resolveWith(
+                          (states) => states.contains(WidgetState.focused)
+                              ? AppPalette.of(context).primary
+                                    .withValues(alpha: 0.12)
+                              : Colors.transparent,
+                        ),
+                        foregroundColor: WidgetStateProperty.resolveWith(
+                          (states) =>
+                              (AppPalette.of(context).isLight && direction > 0
+                                      ? Colors.white
+                                      : AppPalette.of(context).textPrimary)
+                                  .withValues(
+                                    alpha:
+                                        states.any(
+                                          (state) => const {
+                                            WidgetState.hovered,
+                                            WidgetState.focused,
+                                            WidgetState.pressed,
+                                          }.contains(state),
+                                        )
+                                        ? 1
+                                        : 0.25,
+                                  ),
+                        ),
+                        animationDuration:
+                            MediaQuery.disableAnimationsOf(context)
+                            ? Duration.zero
+                            : const Duration(milliseconds: 180),
+                      ),
+                      onPressed: () => _move(direction),
+                      icon: Icon(
+                        direction < 0
+                            ? Icons.chevron_left_rounded
+                            : Icons.chevron_right_rounded,
+                      ),
+                    ),
+                  ),
+                ),
+          ],
+        ),
+      ),
     ),
   );
 }
@@ -641,6 +903,111 @@ class _FeaturedMovie extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (isWide) {
+      return SizedBox(
+        key: const Key('desktopFeaturedMovie'),
+        child: SizedBox(
+          height: MediaQuery.textScalerOf(context).scale(1) > 1.3 ? 420 : 320,
+          child: Row(
+            children: [
+              Expanded(
+                flex: 6,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 72,
+                    vertical: AppSpacing.xl,
+                  ),
+                  child: SingleChildScrollView(
+                    child: _FeaturedMovieContent(movie: movie, onTap: onTap),
+                  ),
+                ),
+              ),
+              Expanded(
+                flex: 5,
+                child: Stack(
+                  key: const Key('featuredPoster'),
+                  fit: StackFit.expand,
+                  children: [
+                    // Fade alpha instead of painting theme colors over the art.
+                    for (final blurred in [true, false])
+                      ShaderMask(
+                        blendMode: BlendMode.dstIn,
+                        shaderCallback: (bounds) => LinearGradient(
+                          colors: const [
+                            Colors.transparent,
+                            Colors.transparent,
+                            Colors.white,
+                            Colors.white,
+                            Colors.transparent,
+                            Colors.transparent,
+                          ],
+                          stops: [
+                            0,
+                            0.02,
+                            blurred ? 0.07 : 0.13,
+                            blurred ? 0.93 : 0.91,
+                            0.98,
+                            1,
+                          ],
+                        ).createShader(bounds),
+                        child: ShaderMask(
+                          blendMode: BlendMode.dstIn,
+                          shaderCallback: (bounds) => LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: const [
+                              Colors.transparent,
+                              Colors.transparent,
+                              Colors.white,
+                              Colors.white,
+                              Colors.transparent,
+                              Colors.transparent,
+                            ],
+                            stops: [
+                              0,
+                              0.025,
+                              blurred ? 0.06 : 0.10,
+                              blurred ? 0.94 : 0.90,
+                              0.975,
+                              1,
+                            ],
+                          ).createShader(bounds),
+                          child: Opacity(
+                            opacity: blurred ? 0.35 : 1,
+                            // Keep image pixels inside the mask at fractional DPR.
+                            child: Padding(
+                              padding: const EdgeInsets.all(2),
+                              child: ClipRect(
+                                child: ImageFiltered(
+                                  key: ValueKey(
+                                    blurred
+                                        ? 'featuredPosterBackdrop'
+                                        : 'featuredPosterForeground',
+                                  ),
+                                  enabled: blurred,
+                                  imageFilter: ui.ImageFilter.blur(
+                                    sigmaX: 18,
+                                    sigmaY: 18,
+                                  ),
+                                  child: AppNetworkImage(
+                                    imageUrl: movie.posterUrl,
+                                    webHtmlElementStrategy:
+                                        WebHtmlElementStrategy.never,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     return GestureDetector(
       onTap: onTap,
       child: ClipRRect(
@@ -659,8 +1026,8 @@ class _FeaturedMovie extends StatelessWidget {
                     end: Alignment.bottomCenter,
                     colors: [
                       Colors.transparent,
-                      AppColors.background.withValues(alpha: 0.6),
-                      AppColors.background,
+                      AppPalette.of(context).background.withValues(alpha: 0.6),
+                      AppPalette.of(context).background,
                     ],
                     stops: const [0.4, 0.8, 1.0],
                   ),
@@ -694,9 +1061,14 @@ class _FeaturedMovieContent extends StatelessWidget {
       children: [
         DecoratedBox(
           decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.2),
+            color: AppPalette.of(context).primary
+                .withValues(alpha: AppPalette.of(context).isLight ? 0.08 : 0.2),
             borderRadius: AppRadius.borderRadiusSm,
-            border: Border.all(color: AppColors.primary.withValues(alpha: 0.5)),
+            border: Border.all(
+              color: AppPalette.of(context).primary.withValues(
+                alpha: AppPalette.of(context).isLight ? 0.2 : 0.5,
+              ),
+            ),
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(
@@ -705,14 +1077,20 @@ class _FeaturedMovieContent extends StatelessWidget {
             ),
             child: Text(
               'FEATURED',
-              style: AppTextStyles.caption.copyWith(color: AppColors.primary),
+              style: AppTextStyles.caption.copyWith(
+                color: AppPalette.of(context).primary,
+              ),
             ),
           ),
         ),
         const SizedBox(height: AppSpacing.md),
         Text(
           movie.title,
-          style: AppTextStyles.display.copyWith(color: Colors.white),
+          style: AppTextStyles.display.copyWith(
+            color: AppPalette.of(context).textPrimary,
+            fontSize: AppPalette.of(context).isLight ? 34 : 38,
+            height: 1.15,
+          ),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
@@ -724,28 +1102,49 @@ class _FeaturedMovieContent extends StatelessWidget {
             Flexible(
               child: Text(
                 '${movie.genre} • ${movie.durationText}',
-                style: AppTextStyles.body.copyWith(color: Colors.white70),
+                style: AppTextStyles.body.copyWith(
+                  color: AppPalette.of(context).textSecondary,
+                ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: AppSpacing.xl),
-        Row(
-          children: [
-            Expanded(
-              child: AppButton(
-                label: 'Book Now',
-                onPressed: onTap, // Tap the same route
-              ),
+        const SizedBox(height: AppSpacing.lg),
+        if (isDesktopLayout(context)) ...[
+          Text(
+            movie.description,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.bodySmall.copyWith(
+              height: 1.5,
+              color: AppPalette.of(context).isLight
+                  ? AppPalette.of(context).textSecondary
+                  : null,
             ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: AppButton.secondary(
-                label: 'View Details',
-                onPressed: onTap,
+          ),
+          const SizedBox(height: AppSpacing.xl),
+        ],
+        ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: isDesktopLayout(context) ? 380 : double.infinity,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: AppButton(
+                  label: 'Book Now',
+                  onPressed: onTap, // Tap the same route
+                ),
               ),
-            ),
-          ],
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: AppButton.secondary(
+                  label: 'View Details',
+                  onPressed: onTap,
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -810,25 +1209,20 @@ class _MovieGridState extends State<_MovieGrid> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
-      clipBehavior: Clip.none,
-      padding: EdgeInsets.zero,
+    return PaginatedCards(
       itemCount: widget.movies.length,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 260,
-        mainAxisExtent: 340,
-        crossAxisSpacing: AppSpacing.lg,
-        mainAxisSpacing: AppSpacing.xl,
-      ),
+      mobileColumns: 2,
+      resetKey: Object.hashAll(widget.movies.map((movie) => movie.id)),
       itemBuilder: (context, index) {
         final movie = widget.movies[index];
-        return MoviePreviewCard(
-          key: ValueKey(movie.id),
-          movie: movie,
-          active: _active,
-          onOpen: () => widget.onMovieTap(movie),
+        return SizedBox(
+          height: 340,
+          child: MoviePreviewCard(
+            key: ValueKey(movie.id),
+            movie: movie,
+            active: _active,
+            onOpen: () => widget.onMovieTap(movie),
+          ),
         );
       },
     );

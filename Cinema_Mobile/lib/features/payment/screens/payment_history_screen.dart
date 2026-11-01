@@ -110,32 +110,32 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
           final (label, color, icon) = switch (payment.status) {
             PaymentStatus.success => (
               'Paid',
-              AppColors.success,
+              AppPalette.of(context).success,
               Icons.check_circle_outline,
             ),
             PaymentStatus.pending => (
               'Pending',
-              AppColors.warning,
+              AppPalette.of(context).warning,
               Icons.schedule_outlined,
             ),
             PaymentStatus.failed => (
               'Failed',
-              AppColors.error,
+              AppPalette.of(context).error,
               Icons.error_outline,
             ),
             PaymentStatus.refundPending => (
               'Refund pending',
-              AppColors.warning,
+              AppPalette.of(context).warning,
               Icons.hourglass_top_rounded,
             ),
             PaymentStatus.refunded => (
               'Refunded',
-              AppColors.primary,
+              AppPalette.of(context).primary,
               Icons.undo_rounded,
             ),
             PaymentStatus.unknown => (
               'Unknown',
-              AppColors.textSecondary,
+              AppPalette.of(context).textSecondary,
               Icons.help_outline,
             ),
           };
@@ -199,7 +199,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                   Text(
                     formatVnd(payment.amount),
                     style: AppTextStyles.display.copyWith(
-                      color: AppColors.primary,
+                      color: AppPalette.of(context).primary,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.sm),
@@ -214,9 +214,12 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                     formatDateTime(payment.createdAt),
                     style: AppTextStyles.bodySmall,
                   ),
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
-                    child: Divider(height: 1, color: AppColors.border),
+                    child: Divider(
+                      height: 1,
+                      color: AppPalette.of(context).border,
+                    ),
                   ),
                   Text('Payment method', style: AppTextStyles.bodySmall),
                   const SizedBox(height: AppSpacing.xs),
@@ -243,9 +246,9 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                   const SizedBox(height: AppSpacing.lg),
                   Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.confirmation_number_outlined,
-                        color: AppColors.primary,
+                        color: AppPalette.of(context).primary,
                         size: 20,
                       ),
                       const SizedBox(width: AppSpacing.sm),
@@ -253,14 +256,14 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                         child: Text(
                           'View booking #${payment.bookingId}',
                           style: AppTextStyles.body.copyWith(
-                            color: AppColors.primary,
+                            color: AppPalette.of(context).primary,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
-                      const Icon(
+                      Icon(
                         Icons.chevron_right_rounded,
-                        color: AppColors.primary,
+                        color: AppPalette.of(context).primary,
                       ),
                     ],
                   ),

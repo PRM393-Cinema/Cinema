@@ -26,12 +26,14 @@ class ShowtimeChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final foregroundColor = isAvailable
-        ? AppColors.textPrimary
-        : AppColors.textSecondary;
-    final borderColor = isSelected ? AppColors.primary : AppColors.border;
+        ? AppPalette.of(context).textPrimary
+        : AppPalette.of(context).textSecondary;
+    final borderColor = isSelected
+        ? AppPalette.of(context).primary
+        : AppPalette.of(context).border;
     final backgroundColor = isSelected
-        ? AppColors.primary.withValues(alpha: 0.14)
-        : AppColors.surfaceSoft.withValues(alpha: 0.65);
+        ? AppPalette.of(context).primary.withValues(alpha: 0.14)
+        : AppPalette.of(context).surfaceSoft.withValues(alpha: 0.65);
 
     return InkWell(
       onTap: isAvailable ? onTap : null,
@@ -46,7 +48,7 @@ class ShowtimeChip extends StatelessWidget {
             end: Alignment.bottomRight,
             colors: [
               backgroundColor,
-              AppColors.surface.withValues(alpha: 0.55),
+              AppPalette.of(context).surface.withValues(alpha: 0.55),
             ],
           ),
           borderRadius: AppRadius.borderRadiusMd,
@@ -63,7 +65,9 @@ class ShowtimeChip extends StatelessWidget {
               Text(
                 time,
                 style: AppTextStyles.button.copyWith(
-                  color: isSelected ? AppColors.primary : foregroundColor,
+                  color: isSelected
+                      ? AppPalette.of(context).primary
+                      : foregroundColor,
                 ),
               ),
               if (room != null) ...[

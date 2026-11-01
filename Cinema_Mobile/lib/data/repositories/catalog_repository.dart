@@ -53,12 +53,22 @@ class RemoteCatalogRepository implements CatalogRepository {
     String? genre,
     String? keyword,
   }) async {
-    final result = await _movies.browseMovies(
+    var result = await _movies.browseMovies(
       comingSoon: comingSoon,
       genre: genre,
       keyword: keyword,
     );
-    return result.items;
+    final movies = [...result.items];
+    for (var page = 2; page <= result.totalPages; page++) {
+      result = await _movies.browseMovies(
+        comingSoon: comingSoon,
+        genre: genre,
+        keyword: keyword,
+        page: page,
+      );
+      movies.addAll(result.items);
+    }
+    return movies;
   }
 
   @override

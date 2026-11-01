@@ -34,17 +34,23 @@ String seatPriceLabel(Showtime showtime, {Iterable<String>? types}) {
 
 // The colours of a free seat of [type], the same on the customer seat map and
 // on the room map of the admin website.
-(Color fill, Color border, Color text) seatTypeColors(String type) =>
-    switch (type.toUpperCase()) {
-      'VIP' => (
-        AppColors.warning.withValues(alpha: 0.18),
-        AppColors.warning,
-        AppColors.warning,
-      ),
-      'SWEETBOX' => (
-        sweetboxColor.withValues(alpha: 0.18),
-        sweetboxColor,
-        sweetboxColor,
-      ),
-      _ => (AppColors.surface, AppColors.border, AppColors.textPrimary),
-    };
+(Color fill, Color border, Color text) seatTypeColors(
+  BuildContext context,
+  String type,
+) => switch (type.toUpperCase()) {
+  'VIP' => (
+    AppPalette.of(context).warning.withValues(alpha: 0.18),
+    AppPalette.of(context).warning,
+    AppPalette.of(context).warning,
+  ),
+  'SWEETBOX' => (
+    sweetboxColor.withValues(alpha: 0.18),
+    sweetboxColor,
+    sweetboxColor,
+  ),
+  _ => (
+    AppPalette.of(context).surface,
+    AppPalette.of(context).border,
+    AppPalette.of(context).textPrimary,
+  ),
+};

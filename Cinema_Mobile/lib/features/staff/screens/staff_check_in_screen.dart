@@ -202,9 +202,9 @@ class _CheckInPanelState extends State<CheckInPanel> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.block_outlined,
-                    color: AppColors.error,
+                    color: AppPalette.of(context).error,
                     size: 40,
                   ),
                   const SizedBox(height: AppSpacing.md),
@@ -301,7 +301,7 @@ class _CheckInPanelState extends State<CheckInPanel> {
           const SizedBox(height: AppSpacing.lg),
           _Banner(
             icon: Icons.error_outline,
-            color: AppColors.error,
+            color: AppPalette.of(context).error,
             message: error,
           ),
         ],
@@ -418,7 +418,7 @@ class _TicketResult extends StatelessWidget {
             justCheckedIn
                 ? _Banner(
                     icon: Icons.verified_rounded,
-                    color: AppColors.success,
+                    color: AppPalette.of(context).success,
                     message:
                         'Checked in. Let the customer in'
                         '${room == null ? '' : ' to $room'}: '
@@ -426,7 +426,7 @@ class _TicketResult extends StatelessWidget {
                   )
                 : _Banner(
                     icon: Icons.warning_amber_rounded,
-                    color: AppColors.warning,
+                    color: AppPalette.of(context).warning,
                     message:
                         'This ticket was already used: checked in '
                         '${formatDateTime(checkedInAt)}.',
@@ -443,7 +443,7 @@ class _TicketResult extends StatelessWidget {
           else
             _Banner(
               icon: Icons.block,
-              color: AppColors.error,
+              color: AppPalette.of(context).error,
               message: switch (booking.status) {
                 BookingStatus.pending => 'This ticket has not been paid yet.',
                 BookingStatus.refundPending => 'A refund was requested for this ticket, so it cannot be used.',
@@ -469,7 +469,7 @@ class _Fact extends StatelessWidget {
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 18, color: AppColors.textSecondary),
+        Icon(icon, size: 18, color: AppPalette.of(context).textSecondary),
         const SizedBox(width: AppSpacing.sm),
         SizedBox(width: 72, child: Text(label, style: AppTextStyles.bodySmall)),
         Expanded(
@@ -590,7 +590,10 @@ class _TicketScannerPageState extends State<_TicketScannerPage> {
             width: 240,
             height: 240,
             decoration: BoxDecoration(
-              border: Border.all(color: AppColors.primary, width: 3),
+              border: Border.all(
+                color: AppPalette.of(context).primary,
+                width: 3,
+              ),
               borderRadius: BorderRadius.circular(16),
             ),
           ),

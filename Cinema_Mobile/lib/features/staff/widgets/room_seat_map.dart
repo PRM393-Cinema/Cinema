@@ -207,7 +207,7 @@ class _RoomSeat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (fill, border, text) = seatTypeColors(preview ?? seat.type);
+    final (fill, border, text) = seatTypeColors(context, preview ?? seat.type);
     final radius = BorderRadius.circular(math.min(AppRadius.sm, size / 5));
     final tile = AnimatedContainer(
       duration: const Duration(milliseconds: 400),
@@ -218,13 +218,13 @@ class _RoomSeat extends StatelessWidget {
         color: fill,
         borderRadius: radius,
         border: Border.all(
-          color: highlighted ? AppColors.primary : border,
+          color: highlighted ? AppPalette.of(context).primary : border,
           width: highlighted ? 2 : 1,
         ),
         boxShadow: highlighted
             ? [
                 BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.6),
+                  color: AppPalette.of(context).primary.withValues(alpha: 0.6),
                   blurRadius: 10,
                 ),
               ]
@@ -328,7 +328,7 @@ class _LegendEntry extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (fill, border, _) = seatTypeColors(type);
+    final (fill, border, _) = seatTypeColors(context, type);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -339,7 +339,7 @@ class _LegendEntry extends StatelessWidget {
             color: fill,
             borderRadius: BorderRadius.circular(4),
             border: Border.all(
-              color: highlighted ? AppColors.primary : border,
+              color: highlighted ? AppPalette.of(context).primary : border,
               width: highlighted ? 2 : 1,
             ),
           ),
@@ -598,8 +598,8 @@ class _SeatCountDialogState extends State<SeatCountDialog> {
                   key: const Key('seatCountPreview'),
                   style: AppTextStyles.bodySmall.copyWith(
                     color: plan?.error != null
-                        ? AppColors.error
-                        : AppColors.textPrimary,
+                        ? AppPalette.of(context).error
+                        : AppPalette.of(context).textPrimary,
                   ),
                 ),
                 if (_error != null) ...[
@@ -608,7 +608,7 @@ class _SeatCountDialogState extends State<SeatCountDialog> {
                     _error!,
                     key: const Key('seatCountError'),
                     style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.error,
+                      color: AppPalette.of(context).error,
                     ),
                   ),
                 ],

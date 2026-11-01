@@ -35,7 +35,7 @@ class SeatItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = _SeatStyle.fromState(state, type);
+    final style = _SeatStyle.fromState(context, state, type);
     final borderRadius = BorderRadius.circular(
       math.min(AppRadius.sm, size / 5),
     );
@@ -52,15 +52,26 @@ class SeatItem extends StatelessWidget {
         child: SizedBox.square(
           dimension: size,
           child: Center(
-            child: Text(
-              label,
-              style: AppTextStyles.caption.copyWith(
-                color: style.foreground,
-                fontSize: size < 36 ? 10 : null,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
+            child: state == SeatItemState.booked
+                ? Semantics(
+                    label: label.isEmpty
+                        ? 'Unavailable'
+                        : '$label, unavailable',
+                    child: Icon(
+                      Icons.close_rounded,
+                      size: size * 0.65,
+                      color: AppPalette.of(context).error,
+                    ),
+                  )
+                : Text(
+                    label,
+                    style: AppTextStyles.caption.copyWith(
+                      color: style.foreground,
+                      fontSize: size < 36 ? 10 : null,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
           ),
         ),
       ),
@@ -75,28 +86,32 @@ class _SeatStyle {
     required this.border,
   });
 
-  factory _SeatStyle.fromState(SeatItemState state, String type) {
-    final (fill, border, text) = seatTypeColors(type);
+  factory _SeatStyle.fromState(
+    BuildContext context,
+    SeatItemState state,
+    String type,
+  ) {
+    final (fill, border, text) = seatTypeColors(context, type);
     return switch (state) {
       SeatItemState.available => _SeatStyle(
         background: fill,
         foreground: text,
         border: border,
       ),
-      SeatItemState.selected => const _SeatStyle(
-        background: AppColors.primary,
-        foreground: AppColors.onPrimary,
-        border: AppColors.primary,
+      SeatItemState.selected => _SeatStyle(
+        background: AppPalette.of(context).primary,
+        foreground: AppPalette.of(context).onPrimary,
+        border: AppPalette.of(context).primary,
       ),
-      SeatItemState.held => const _SeatStyle(
-        background: AppColors.surfaceSoft,
-        foreground: AppColors.textSecondary,
-        border: AppColors.warning, // distinct visual for held
+      SeatItemState.held => _SeatStyle(
+        background: AppPalette.of(context).surfaceSoft,
+        foreground: AppPalette.of(context).textSecondary,
+        border: AppPalette.of(context).warning, // distinct visual for held
       ),
-      SeatItemState.booked => const _SeatStyle(
-        background: AppColors.surfaceSoft,
-        foreground: AppColors.textSecondary,
-        border: AppColors.surfaceSoft,
+      SeatItemState.booked => _SeatStyle(
+        background: AppPalette.of(context).surface,
+        foreground: AppPalette.of(context).error,
+        border: AppPalette.of(context).error,
       ),
     };
   }

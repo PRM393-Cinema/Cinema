@@ -9,7 +9,7 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/session/session_state.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/utils/layout.dart';
-import '../../../core/widgets/responsive_columns.dart';
+import '../../../core/widgets/paginated_cards.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/cinema_background.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
@@ -122,10 +122,11 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Padding(
-                    padding: pagePadding(context, AppSpacing.lg),
-                    child: const CinemaPageHeader(title: 'My Bookings'),
-                  ),
+                  if (!isDesktopLayout(context))
+                    Padding(
+                      padding: pagePadding(context, AppSpacing.lg),
+                      child: const CinemaPageHeader(title: 'My Bookings'),
+                    ),
                   Padding(
                     padding: pagePadding(
                       context,
@@ -142,7 +143,8 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                         ),
                         child: DecoratedBox(
                           decoration: BoxDecoration(
-                            color: AppColors.surface.withValues(alpha: 0.55),
+                            color: AppPalette.of(context).surface
+                                .withValues(alpha: 0.55),
                             borderRadius: BorderRadius.circular(18),
                             border: Border.all(
                               color: Colors.white.withValues(alpha: 0.08),
@@ -155,18 +157,17 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                               dividerHeight: 0,
                               indicatorSize: TabBarIndicatorSize.tab,
                               indicator: BoxDecoration(
-                                color: AppColors.primary.withValues(
-                                  alpha: 0.10,
-                                ),
+                                color: AppPalette.of(context).primary
+                                    .withValues(alpha: 0.10),
                                 borderRadius: BorderRadius.circular(14),
                                 border: Border.all(
-                                  color: AppColors.primary.withValues(
-                                    alpha: 0.24,
-                                  ),
+                                  color: AppPalette.of(context).primary
+                                      .withValues(alpha: 0.24),
                                 ),
                               ),
-                              labelColor: AppColors.primary,
-                              unselectedLabelColor: AppColors.textSecondary,
+                              labelColor: AppPalette.of(context).primary,
+                              unselectedLabelColor: AppPalette.of(context)
+                                  .textSecondary,
                               tabs: const [
                                 Tab(text: 'Active', height: 44),
                                 Tab(text: 'History', height: 44),
@@ -177,6 +178,17 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                       ),
                     ),
                   ),
+                  if (isDesktopLayout(context) && !_isLoading)
+                    Padding(
+                      padding: pagePadding(
+                        context,
+                        AppSpacing.md,
+                      ).copyWith(top: 0),
+                      child: Text(
+                        '${formatCount(activeBookings.length, 'active booking')} · ${formatCount(historyBookings.length, 'past booking')}',
+                        style: AppTextStyles.bodySmall,
+                      ),
+                    ),
                   Expanded(child: _buildBody(activeBookings, historyBookings)),
                 ],
               ),
@@ -258,15 +270,13 @@ class _BookingList extends StatelessWidget {
                 bottom: AppSpacing.md + MediaQuery.paddingOf(context).bottom,
               ),
               children: [
-                // Two columns of tickets on the website, one in the app.
-                CardColumns(
-                  children: [
-                    for (final booking in bookings)
-                      _BookingCard(
-                        booking: booking,
-                        onTap: () => onTap(booking),
-                      ),
-                  ],
+                PaginatedCards(
+                  equalHeights: isDesktopLayout(context),
+                  itemCount: bookings.length,
+                  itemBuilder: (_, index) => _BookingCard(
+                    booking: bookings[index],
+                    onTap: () => onTap(bookings[index]),
+                  ),
                 ),
               ],
             ),
@@ -285,102 +295,168 @@ class _BookingCard extends StatelessWidget {
     final String showTimeStr = booking.showTime != null
         ? formatDateTime(booking.showTime!)
         : 'Time TBA';
+    final desktop = isDesktopLayout(context);
 
-    return InkWell(
-      onTap: onTap,
-      borderRadius: AppRadius.borderRadiusMd,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [AppColors.surfaceSoft, AppColors.surface],
+    return SizedBox(
+      key: ValueKey('bookingCard-${booking.id}'),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: AppRadius.borderRadiusMd,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppPalette.of(context).surfaceSoft,
+                AppPalette.of(context).surface,
+              ],
+            ),
+            borderRadius: AppRadius.borderRadiusMd,
+            border: Border.all(color: AppPalette.of(context).border),
           ),
-          borderRadius: AppRadius.borderRadiusMd,
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      booking.movieTitle ?? 'Unknown Movie',
-                      style: AppTextStyles.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  BookingStatusBadge(
-                    status: booking.status,
-                    checkedIn: booking.isCheckedIn,
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Row(
-                children: [
-                  const Icon(
-                    Icons.schedule_outlined,
-                    size: 18,
-                    color: AppColors.accent,
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(child: Text(showTimeStr, style: AppTextStyles.body)),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  const Text('Seats:', style: AppTextStyles.bodySmall),
-                  for (final seat in booking.seats)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
                       child: Text(
-                        seat.seatLabel,
-                        style: AppTextStyles.caption.copyWith(
-                          color: AppColors.primary,
+                        booking.movieTitle ?? 'Unknown Movie',
+                        style: AppTextStyles.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    BookingStatusBadge(
+                      status: booking.status,
+                      checkedIn: booking.isCheckedIn,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                if (isDesktopLayout(context)) ...[
+                  Text(
+                    formatCount(booking.seats.length, 'ticket'),
+                    style: AppTextStyles.bodySmall,
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                ],
+                Row(
+                  children: [
+                    Icon(
+                      Icons.schedule_outlined,
+                      size: 18,
+                      color: AppPalette.of(context).accent,
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        showTimeStr,
+                        style: AppTextStyles.body,
+                        maxLines: desktop ? 1 : null,
+                        overflow: desktop ? TextOverflow.ellipsis : null,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Tooltip(
+                  message: booking.seats
+                      .map((seat) => seat.seatLabel)
+                      .join(', '),
+                  child: Text.rich(
+                    key: ValueKey('bookingSeats-${booking.id}'),
+                    TextSpan(
+                      children: [
+                        const TextSpan(
+                          text: 'Seats: ',
+                          style: AppTextStyles.bodySmall,
+                        ),
+                        for (final seat in booking.seats)
+                          WidgetSpan(
+                            alignment: PlaceholderAlignment.middle,
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                right: 6,
+                                bottom: 6,
+                              ),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 3,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppPalette.of(context).primary
+                                      .withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  seat.seatLabel,
+                                  style: AppTextStyles.caption.copyWith(
+                                    color: AppPalette.of(context).primary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (desktop) const Spacer(),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
+                  child: Divider(height: 1),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Code: ${booking.bookingCode}',
+                        style: AppTextStyles.caption,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Text(
+                      formatVnd(booking.totalAmount),
+                      style: AppTextStyles.title.copyWith(
+                        color: AppPalette.of(context).primary,
+                      ),
+                    ),
+                  ],
+                ),
+                if (isDesktopLayout(context)) ...[
+                  const SizedBox(height: AppSpacing.lg),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'View booking',
+                          style: TextStyle(
+                            color: AppPalette.of(context).primary,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
-                    ),
-                ],
-              ),
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
-                child: Divider(height: 1),
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Code: ${booking.bookingCode}',
-                      style: AppTextStyles.caption,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  Text(
-                    formatVnd(booking.totalAmount),
-                    style: AppTextStyles.title.copyWith(
-                      color: AppColors.primary,
-                    ),
+                      SizedBox(width: AppSpacing.sm),
+                      Icon(
+                        Icons.arrow_forward_rounded,
+                        size: 18,
+                        color: AppPalette.of(context).primary,
+                      ),
+                    ],
                   ),
                 ],
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

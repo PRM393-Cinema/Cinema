@@ -37,7 +37,7 @@ class ShowtimeSection extends StatelessWidget {
           Text(
             formatDayHeading(entry.key),
             style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.textPrimary,
+              color: AppPalette.of(context).textPrimary,
               fontWeight: FontWeight.w600,
             ),
           ),

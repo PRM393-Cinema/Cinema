@@ -22,8 +22,10 @@ class SeatHoldTimer extends StatelessWidget {
         expired ||
         (remaining != null && remaining! < const Duration(minutes: 2));
     final color = expired
-        ? AppColors.error
-        : (isUrgent ? AppColors.warning : AppColors.primary);
+        ? AppPalette.of(context).error
+        : (isUrgent
+              ? AppPalette.of(context).warning
+              : AppPalette.of(context).primary);
 
     final text = expired
         ? 'Your seat hold has expired. Please book again.'

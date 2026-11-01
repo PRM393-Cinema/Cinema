@@ -278,7 +278,7 @@ class _StaffCounterCheckoutScreenState
                         _error!,
                         key: const Key('checkoutError'),
                         style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.error,
+                          color: AppPalette.of(context).error,
                         ),
                       ),
                     ),
@@ -295,7 +295,9 @@ class _StaffCounterCheckoutScreenState
         Text(
           'Seats held for ${formatCountdown(remaining)}',
           key: const Key('holdCountdown'),
-          style: AppTextStyles.bodySmall.copyWith(color: AppColors.warning),
+          style: AppTextStyles.bodySmall.copyWith(
+            color: AppPalette.of(context).warning,
+          ),
         ),
       const SizedBox(height: AppSpacing.md),
       AppTextField(
@@ -378,7 +380,9 @@ class _StaffCounterCheckoutScreenState
                 : 'Short by ${formatVnd(-change)}',
             key: const Key('cashChange'),
             style: AppTextStyles.heading2.copyWith(
-              color: change >= 0 ? AppColors.success : AppColors.error,
+              color: change >= 0
+                  ? AppPalette.of(context).success
+                  : AppPalette.of(context).error,
             ),
           ),
         const SizedBox(height: AppSpacing.lg),
@@ -441,7 +445,9 @@ class _StaffCounterCheckoutScreenState
         const SizedBox(height: AppSpacing.md),
         Text(
           formatVnd(booking.totalAmount),
-          style: AppTextStyles.heading2.copyWith(color: AppColors.primary),
+          style: AppTextStyles.heading2.copyWith(
+            color: AppPalette.of(context).primary,
+          ),
         ),
         const SizedBox(height: AppSpacing.xs),
         Text(
@@ -492,9 +498,9 @@ class _StaffCounterCheckoutScreenState
           children: [
             Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.check_circle_rounded,
-                  color: AppColors.success,
+                  color: AppPalette.of(context).success,
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Text(
@@ -508,7 +514,9 @@ class _StaffCounterCheckoutScreenState
               Text(
                 'Give back ${formatVnd(change)} in change.',
                 key: const Key('changeToGive'),
-                style: AppTextStyles.title.copyWith(color: AppColors.success),
+                style: AppTextStyles.title.copyWith(
+                  color: AppPalette.of(context).success,
+                ),
               ),
             ],
             const SizedBox(height: AppSpacing.md),
@@ -665,12 +673,14 @@ class _BookingSummary extends StatelessWidget {
             ].join(' • '),
             style: AppTextStyles.bodySmall,
           ),
-          const Divider(height: AppSpacing.xl, color: AppColors.border),
+          Divider(height: AppSpacing.xl, color: AppPalette.of(context).border),
           const Text('Total', style: AppTextStyles.bodySmall),
           Text(
             formatVnd(booking.totalAmount),
             key: const Key('checkoutTotal'),
-            style: AppTextStyles.heading1.copyWith(color: AppColors.primary),
+            style: AppTextStyles.heading1.copyWith(
+              color: AppPalette.of(context).primary,
+            ),
           ),
         ],
       ),

@@ -69,6 +69,14 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
+  fonts:
+    - family: BookingInter
+      fonts:
+        - asset: assets/fonts/booking-details/Inter.ttf
+    - family: BookingLucide
+      fonts:
+        - asset: assets/fonts/booking-details/lucide.ttf
+
   shaders:
     - shaders/liquid_refraction.frag
 

@@ -50,9 +50,9 @@ class _StaffOnlyScreenState extends State<StaffOnlyScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.lock_outline,
-                      color: AppColors.primary,
+                      color: AppPalette.of(context).primary,
                       size: 48,
                     ),
                     const SizedBox(height: AppSpacing.lg),

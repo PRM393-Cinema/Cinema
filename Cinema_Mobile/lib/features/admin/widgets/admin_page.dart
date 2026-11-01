@@ -4,6 +4,7 @@ import '../../../app/routes/app_routes.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
+import '../../../app/theme/theme_switch.dart';
 import '../../../core/session/roles.dart';
 import '../../../core/session/session_state.dart';
 import '../../../core/widgets/cinema_background.dart';
@@ -177,10 +178,10 @@ class AdminPage extends StatelessWidget {
                       onOpen: open,
                     ),
                   ),
-                  const VerticalDivider(
+                  VerticalDivider(
                     width: 1,
                     thickness: 1,
-                    color: AppColors.border,
+                    color: AppPalette.of(context).border,
                   ),
                   Expanded(child: page),
                 ],
@@ -269,6 +270,7 @@ class _PageBody extends StatelessWidget {
                     ),
                   ),
                   ...actions,
+                  const ThemeSwitch(),
                 ],
               ),
             ),
@@ -302,31 +304,33 @@ class _NavigationSide extends StatelessWidget {
     builder: (context, constraints) => SingleChildScrollView(
       child: ConstrainedBox(
         constraints: BoxConstraints(minHeight: constraints.maxHeight),
-        child: IntrinsicHeight(child: _rail()),
+        child: IntrinsicHeight(child: _rail(context)),
       ),
     ),
   );
 
-  Widget _rail() {
+  Widget _rail(BuildContext context) {
     return NavigationRail(
       extended: extended,
       minWidth: AdminPage._railWidth,
       minExtendedWidth: AdminPage._extendedRailWidth,
-      backgroundColor: AppColors.surface.withValues(alpha: 0.72),
+      backgroundColor: AppPalette.of(context).surface.withValues(alpha: 0.72),
       selectedIndex: selected < 0 ? null : selected,
       onDestinationSelected: onOpen,
       labelType: extended
           ? NavigationRailLabelType.none
           : NavigationRailLabelType.all,
-      indicatorColor: AppColors.primary.withValues(alpha: 0.16),
-      selectedIconTheme: const IconThemeData(color: AppColors.primary),
-      unselectedIconTheme: const IconThemeData(color: AppColors.textSecondary),
+      indicatorColor: AppPalette.of(context).primary.withValues(alpha: 0.16),
+      selectedIconTheme: IconThemeData(color: AppPalette.of(context).primary),
+      unselectedIconTheme: IconThemeData(
+        color: AppPalette.of(context).textSecondary,
+      ),
       selectedLabelTextStyle: AppTextStyles.bodySmall.copyWith(
-        color: AppColors.primary,
+        color: AppPalette.of(context).primary,
         fontWeight: FontWeight.w600,
       ),
       unselectedLabelTextStyle: AppTextStyles.bodySmall.copyWith(
-        color: AppColors.textSecondary,
+        color: AppPalette.of(context).textSecondary,
       ),
       leading: Padding(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
@@ -359,7 +363,7 @@ class _NavigationDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppPalette.of(context).surface,
       child: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.md),
@@ -373,9 +377,9 @@ class _NavigationDrawer extends StatelessWidget {
                 leading: Icon(destination.icon),
                 title: Text(destination.label),
                 selected: index == selected,
-                selectedColor: AppColors.primary,
-                iconColor: AppColors.textSecondary,
-                textColor: AppColors.textPrimary,
+                selectedColor: AppPalette.of(context).primary,
+                iconColor: AppPalette.of(context).textSecondary,
+                textColor: AppPalette.of(context).textPrimary,
                 onTap: () {
                   Navigator.pop(context);
                   onOpen(index);
@@ -399,15 +403,20 @@ class _Brand extends StatelessWidget {
     final badge = Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.1),
+        color: AppPalette.of(context).primary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
         admin ? 'ADMIN' : 'STAFF',
-        style: AppTextStyles.caption.copyWith(color: AppColors.primary),
+        style: AppTextStyles.caption.copyWith(
+          color: AppPalette.of(context).primary,
+        ),
       ),
     );
-    const icon = Icon(Icons.local_movies, color: AppColors.primary);
+    final icon = Icon(
+      Icons.local_movies,
+      color: AppPalette.of(context).primary,
+    );
 
     if (!extended) {
       return Column(
@@ -426,7 +435,7 @@ class _Brand extends StatelessWidget {
         Text(
           'COSMOQ',
           style: AppTextStyles.title.copyWith(
-            color: AppColors.primary,
+            color: AppPalette.of(context).primary,
             letterSpacing: 2,
           ),
         ),

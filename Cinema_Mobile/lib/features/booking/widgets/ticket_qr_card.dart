@@ -29,10 +29,10 @@ class TicketQrCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.qr_code_2_rounded,
                 size: 20,
-                color: AppColors.textSecondary,
+                color: AppPalette.of(context).textSecondary,
               ),
               const SizedBox(width: AppSpacing.sm),
               Expanded(child: Text('Your ticket', style: AppTextStyles.title)),
@@ -73,17 +73,17 @@ class TicketQrCard extends StatelessWidget {
               'Show this QR code at the cinema to check in.',
               textAlign: TextAlign.center,
               style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.textPrimary,
+                color: AppPalette.of(context).textPrimary,
               ),
             )
           else
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
+                Icon(
                   Icons.verified_rounded,
                   size: 18,
-                  color: AppColors.success,
+                  color: AppPalette.of(context).success,
                 ),
                 const SizedBox(width: AppSpacing.xs),
                 Flexible(
@@ -91,7 +91,7 @@ class TicketQrCard extends StatelessWidget {
                     'Checked in ${formatDateTime(checkedInAt)}',
                     textAlign: TextAlign.center,
                     style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.success,
+                      color: AppPalette.of(context).success,
                       fontWeight: FontWeight.w600,
                     ),
                   ),

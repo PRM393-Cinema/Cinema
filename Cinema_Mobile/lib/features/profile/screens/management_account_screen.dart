@@ -72,9 +72,9 @@ class _ManagementAccountScreenState extends State<ManagementAccountScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.admin_panel_settings_outlined,
-                    color: AppColors.primary,
+                    color: AppPalette.of(context).primary,
                     size: 48,
                   ),
                   const SizedBox(height: AppSpacing.lg),
@@ -99,7 +99,7 @@ class _ManagementAccountScreenState extends State<ManagementAccountScreen> {
                     SelectableText(
                       url,
                       style: AppTextStyles.body.copyWith(
-                        color: AppColors.primary,
+                        color: AppPalette.of(context).primary,
                       ),
                       textAlign: TextAlign.center,
                     ),

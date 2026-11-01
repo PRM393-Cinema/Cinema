@@ -136,7 +136,7 @@ class _AdminSnacksScreenState extends State<AdminSnacksScreen> {
                 child: Text(
                   _message!,
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.error,
+                    color: AppPalette.of(context).error,
                   ),
                 ),
               ),
@@ -192,10 +192,10 @@ class _SnackCard extends StatelessWidget {
                 ? Container(
                     width: 56,
                     height: 56,
-                    color: AppColors.surfaceSoft,
-                    child: const Icon(
+                    color: AppPalette.of(context).surfaceSoft,
+                    child: Icon(
                       Icons.fastfood_outlined,
-                      color: AppColors.accent,
+                      color: AppPalette.of(context).accent,
                     ),
                   )
                 : AppNetworkImage(
@@ -218,7 +218,7 @@ class _SnackCard extends StatelessWidget {
                     Text(
                       formatVnd(item.price),
                       style: AppTextStyles.body.copyWith(
-                        color: AppColors.primary,
+                        color: AppPalette.of(context).primary,
                       ),
                     ),
                     const SizedBox(width: AppSpacing.sm),
@@ -406,7 +406,7 @@ class _SnackFormDialogState extends State<_SnackFormDialog> {
                       child: Text(
                         _error!,
                         style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.error,
+                          color: AppPalette.of(context).error,
                         ),
                       ),
                     ),

@@ -51,16 +51,20 @@ class AppButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = _ButtonColors.fromVariant(variant);
-    final showGradient = useGradient && !_isDisabled;
+    final colors = _ButtonColors.fromVariant(context, variant);
+    final showGradient =
+        useGradient && !_isDisabled && !AppPalette.of(context).isLight;
 
     return SizedBox(
       height: AppSpacing.xxxl,
       child: DecoratedBox(
         decoration: BoxDecoration(
           gradient: showGradient
-              ? const LinearGradient(
-                  colors: [AppColors.primary, AppColors.primaryDark],
+              ? LinearGradient(
+                  colors: [
+                    AppPalette.of(context).primary,
+                    AppPalette.of(context).primaryDark,
+                  ],
                 )
               : null,
           borderRadius: AppRadius.borderRadiusMd,
@@ -72,12 +76,12 @@ class AppButton extends StatelessWidget {
                 ? Colors.transparent
                 : colors.background,
             foregroundColor: showGradient
-                ? AppColors.background
+                ? AppPalette.of(context).onPrimary
                 : colors.foreground,
             disabledBackgroundColor: variant == AppButtonVariant.secondary
-                ? AppColors.surface
-                : AppColors.surfaceSoft,
-            disabledForegroundColor: AppColors.textSecondary,
+                ? AppPalette.of(context).surface
+                : AppPalette.of(context).surfaceSoft,
+            disabledForegroundColor: AppPalette.of(context).textSecondary,
             shadowColor: Colors.transparent,
             elevation: 0,
             side: BorderSide(
@@ -149,22 +153,25 @@ class _ButtonColors {
     required this.border,
   });
 
-  factory _ButtonColors.fromVariant(AppButtonVariant variant) {
+  factory _ButtonColors.fromVariant(
+    BuildContext context,
+    AppButtonVariant variant,
+  ) {
     return switch (variant) {
-      AppButtonVariant.primary => const _ButtonColors(
-        background: AppColors.primary,
-        foreground: AppColors.onPrimary,
-        border: AppColors.primary,
+      AppButtonVariant.primary => _ButtonColors(
+        background: AppPalette.of(context).primary,
+        foreground: AppPalette.of(context).onPrimary,
+        border: AppPalette.of(context).primary,
       ),
-      AppButtonVariant.secondary => const _ButtonColors(
-        background: AppColors.surface,
-        foreground: AppColors.textPrimary,
-        border: AppColors.border,
+      AppButtonVariant.secondary => _ButtonColors(
+        background: AppPalette.of(context).surface,
+        foreground: AppPalette.of(context).textPrimary,
+        border: AppPalette.of(context).border,
       ),
-      AppButtonVariant.danger => const _ButtonColors(
-        background: AppColors.error,
-        foreground: AppColors.textPrimary,
-        border: AppColors.error,
+      AppButtonVariant.danger => _ButtonColors(
+        background: AppPalette.of(context).error,
+        foreground: Theme.of(context).colorScheme.onError,
+        border: AppPalette.of(context).error,
       ),
     };
   }

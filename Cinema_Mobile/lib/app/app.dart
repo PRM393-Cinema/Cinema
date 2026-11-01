@@ -41,6 +41,29 @@ class CinemaApp extends StatefulWidget {
 
 class _CinemaAppState extends State<CinemaApp> {
   final _routes = RouteTracker();
+  bool _signingOut = false;
+
+  Future<void> _signOut() async {
+    if (_signingOut) return;
+    _signingOut = true;
+    try {
+      await widget.authRepository.logout();
+      if (!mounted) return;
+      SessionProvider.of(context).clear();
+      _routes.navigator?.pushNamedAndRemoveUntil(AppRoutes.home, (_) => false);
+    } catch (_) {
+      final overlay = _routes.navigator?.overlay;
+      if (mounted && overlay != null) {
+        ScaffoldMessenger.of(overlay.context).showSnackBar(
+          const SnackBar(
+            content: Text('Unable to sign out. Please try again.'),
+          ),
+        );
+      }
+    } finally {
+      _signingOut = false;
+    }
+  }
 
   @override
   void dispose() {
@@ -63,8 +86,11 @@ class _CinemaAppState extends State<CinemaApp> {
       title: 'CosmoQ Cinema',
       initialRoute: widget.initialRoute,
       navigatorObservers: [_routes],
-      builder: (context, child) =>
-          CustomerFrame(routes: _routes, child: child ?? const SizedBox()),
+      builder: (context, child) => CustomerFrame(
+        routes: _routes,
+        onSignOut: _signOut,
+        child: child ?? const SizedBox(),
+      ),
       onGenerateRoute: router.onGenerateRoute,
       onGenerateInitialRoutes: (name) => router.onGenerateInitialRoutes(
         payOsReturn == null

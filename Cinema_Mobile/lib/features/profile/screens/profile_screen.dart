@@ -147,7 +147,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppPalette.of(context).surface,
         title: const Text('Sign out?', style: AppTextStyles.title),
         content: const Text(
           'You can sign in again at any time.',
@@ -156,16 +156,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text(
+            child: Text(
               'Stay signed in',
-              style: TextStyle(color: AppColors.textSecondary),
+              style: TextStyle(color: AppPalette.of(context).textSecondary),
             ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text(
+            child: Text(
               'Sign out',
-              style: TextStyle(color: AppColors.error),
+              style: TextStyle(color: AppPalette.of(context).error),
             ),
           ),
         ],
@@ -242,15 +242,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
       Center(
         child: Container(
           padding: const EdgeInsets.all(3),
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: LinearGradient(
-              colors: [AppColors.primary, AppColors.accent],
+              colors: [
+                AppPalette.of(context).primary,
+                AppPalette.of(context).accent,
+              ],
             ),
           ),
           child: CircleAvatar(
             radius: 40,
-            backgroundColor: AppColors.background,
+            backgroundColor: AppPalette.of(context).background,
             child: Text(
               user.displayName.substring(0, 1).toUpperCase(),
               style: AppTextStyles.display,
@@ -404,7 +407,9 @@ class _InfoCard extends StatelessWidget {
         children: [
           Text(
             'My profile',
-            style: AppTextStyles.title.copyWith(color: AppColors.primary),
+            style: AppTextStyles.title.copyWith(
+              color: AppPalette.of(context).primary,
+            ),
           ),
           const SizedBox(height: AppSpacing.lg),
           for (final (label, value) in rows)

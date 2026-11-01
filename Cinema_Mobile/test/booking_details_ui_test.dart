@@ -103,7 +103,10 @@ void main() {
         const Offset(0, -700),
       );
       await tester.pumpAndSettle();
-      expect(find.text(formatVnd(booking.totalAmount)), findsOneWidget);
+      expect(
+        tester.widget<Text>(find.byKey(const Key('bookingTotal'))).data,
+        formatVnd(booking.totalAmount),
+      );
       expect(find.text('Created'), findsOneWidget);
       expect(find.text('Cancel & request refund'), findsNothing);
       expect(find.text('Pay Now'), findsNothing);

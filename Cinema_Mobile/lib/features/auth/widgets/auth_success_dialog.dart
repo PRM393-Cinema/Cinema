@@ -28,8 +28,9 @@ class AuthSuccessDialog extends StatefulWidget {
 
 class _AuthSuccessDialogState extends State<AuthSuccessDialog>
     with SingleTickerProviderStateMixin {
-  Color get _accent =>
-      widget.isCancellation ? AppColors.error : AppColors.primary;
+  Color get _accent => widget.isCancellation
+      ? AppPalette.of(context).error
+      : AppPalette.of(context).primary;
   late final _animation = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 1000),
@@ -106,10 +107,13 @@ class _AuthSuccessDialogState extends State<AuthSuccessDialog>
               margin: const EdgeInsets.all(AppSpacing.xl),
               padding: const EdgeInsets.all(AppSpacing.xxl),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
+                gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [AppColors.surfaceSoft, AppColors.background],
+                  colors: [
+                    AppPalette.of(context).surfaceSoft,
+                    AppPalette.of(context).background,
+                  ],
                 ),
                 borderRadius: BorderRadius.circular(28),
                 border: Border.all(color: _accent.withValues(alpha: 0.35)),
@@ -132,6 +136,7 @@ class _AuthSuccessDialogState extends State<AuthSuccessDialog>
                         painter: _SuccessCheckPainter(
                           _animation,
                           widget.isCancellation,
+                          _accent,
                         ),
                       ),
                     ),
@@ -165,11 +170,12 @@ class _AuthSuccessDialogState extends State<AuthSuccessDialog>
 }
 
 class _SuccessCheckPainter extends CustomPainter {
-  _SuccessCheckPainter(this.animation, this.isCancellation)
+  _SuccessCheckPainter(this.animation, this.isCancellation, this.color)
     : super(repaint: animation);
 
   final Animation<double> animation;
   final bool isCancellation;
+  final Color color;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -180,7 +186,7 @@ class _SuccessCheckPainter extends CustomPainter {
     canvas.save();
     canvas.scale(size.width / 100, size.height / 100);
     final pen = Paint()
-      ..color = isCancellation ? AppColors.error : AppColors.primary
+      ..color = color
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3
       ..strokeCap = StrokeCap.round
@@ -220,5 +226,6 @@ class _SuccessCheckPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _SuccessCheckPainter oldDelegate) =>
       oldDelegate.animation != animation ||
+      oldDelegate.color != color ||
       oldDelegate.isCancellation != isCancellation;
 }

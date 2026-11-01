@@ -255,7 +255,7 @@ class _OutcomeHeader extends StatelessWidget {
     final (icon, color, title, message) = switch (outcome) {
       _Outcome.confirmed => (
         Icons.check_circle_outline,
-        AppColors.primary,
+        AppPalette.of(context).primary,
         'Payment successful',
         email == null
             ? 'Your booking is confirmed. Your tickets have been emailed to you.'
@@ -263,7 +263,7 @@ class _OutcomeHeader extends StatelessWidget {
       ),
       _Outcome.refund => (
         Icons.info_outline,
-        AppColors.warning,
+        AppPalette.of(context).warning,
         'Payment received',
         'Your seats were released before the payment arrived, so a full refund '
             'of ${formatVnd(booking.totalAmount)} has been requested. '
@@ -271,13 +271,13 @@ class _OutcomeHeader extends StatelessWidget {
       ),
       _Outcome.pending => (
         Icons.hourglass_top_outlined,
-        AppColors.warning,
+        AppPalette.of(context).warning,
         'Waiting for payment',
         'PayOS has not confirmed your payment yet. If you have paid, check again in a moment.',
       ),
       _Outcome.failed => (
         Icons.cancel_outlined,
-        AppColors.error,
+        AppPalette.of(context).error,
         'Payment not completed',
         booking.status == BookingStatus.expired
             ? 'The seat hold expired before the payment was completed.'
@@ -352,13 +352,15 @@ class _TicketCard extends StatelessWidget {
               Text(
                 'Earned ${booking.pointsEarned} points',
                 style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.accent,
+                  color: AppPalette.of(context).accent,
                 ),
               ),
             const SizedBox(height: AppSpacing.md),
             Text(
               formatVnd(booking.totalAmount),
-              style: AppTextStyles.title.copyWith(color: AppColors.primary),
+              style: AppTextStyles.title.copyWith(
+                color: AppPalette.of(context).primary,
+              ),
             ),
           ],
         ),

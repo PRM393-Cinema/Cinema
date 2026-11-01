@@ -170,6 +170,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
       final error = _movieError;
       return CinemaPage(
         title: 'Movie Detail',
+        showHeader: !isDesktopLayout(context),
         child: _isLoadingMovie
             ? const LoadingState(message: 'Loading movie...')
             : error != null
@@ -189,7 +190,9 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
 
     return Scaffold(
       extendBody: true,
-      appBar: AppBar(title: const Text('Movie Detail')),
+      appBar: isDesktopLayout(context)
+          ? null
+          : AppBar(title: const Text('Movie Detail')),
       body: CinemaBackground(
         child: SafeArea(
           bottom: false,
@@ -230,11 +233,11 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                               ),
                             ),
                             const SizedBox(height: AppSpacing.xxl),
-                            const Row(
+                            Row(
                               children: [
                                 Icon(
                                   Icons.schedule_rounded,
-                                  color: AppColors.primary,
+                                  color: AppPalette.of(context).primary,
                                 ),
                                 SizedBox(width: AppSpacing.sm),
                                 Flexible(
@@ -533,7 +536,7 @@ class _SelectionBar extends StatelessWidget {
                             '${formatTime(selected.startTime)} • '
                             '${selected.roomLabel}',
                             style: AppTextStyles.bodySmall.copyWith(
-                              color: AppColors.textPrimary,
+                              color: AppPalette.of(context).textPrimary,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,

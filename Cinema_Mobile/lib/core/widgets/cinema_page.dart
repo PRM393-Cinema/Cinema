@@ -11,10 +11,14 @@ class CinemaPage extends StatelessWidget {
     required this.child,
     this.actions = const [],
     this.width = PageWidth.form,
+    this.subtitle,
+    this.showHeader = true,
     super.key,
   });
 
   final String title;
+  final String? subtitle;
+  final bool showHeader;
   final Widget child;
   final List<Widget> actions;
 
@@ -27,10 +31,15 @@ class CinemaPage extends StatelessWidget {
       child: SafeArea(
         child: Column(
           children: [
-            Padding(
-              padding: widthPadding(context, AppSpacing.lg, width),
-              child: CinemaPageHeader(title: title, actions: actions),
-            ),
+            if (showHeader)
+              Padding(
+                padding: widthPadding(context, AppSpacing.lg, width),
+                child: CinemaPageHeader(
+                  title: title,
+                  subtitle: subtitle,
+                  actions: actions,
+                ),
+              ),
             Expanded(child: child),
           ],
         ),
@@ -43,10 +52,12 @@ class CinemaPageHeader extends StatelessWidget {
   const CinemaPageHeader({
     required this.title,
     this.actions = const [],
+    this.subtitle,
     super.key,
   });
 
   final String title;
+  final String? subtitle;
   final List<Widget> actions;
 
   @override
@@ -56,7 +67,24 @@ class CinemaPageHeader extends StatelessWidget {
         const BackButton(),
         const SizedBox(width: AppSpacing.sm),
       ],
-      Expanded(child: Text(title, style: AppTextStyles.heading2)),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              title,
+              style: subtitle != null && isDesktopLayout(context)
+                  ? AppTextStyles.heading1
+                  : AppTextStyles.heading2,
+            ),
+            if (subtitle != null && isDesktopLayout(context)) ...[
+              const SizedBox(height: AppSpacing.sm),
+              Text(subtitle!, style: AppTextStyles.bodySmall),
+            ],
+          ],
+        ),
+      ),
       ...actions,
     ],
   );

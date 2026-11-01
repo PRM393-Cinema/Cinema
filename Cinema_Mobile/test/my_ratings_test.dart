@@ -39,6 +39,58 @@ List<MovieReview> _reviews() => [
 void main() {
   setUp(() => FlutterSecureStorage.setMockInitialValues({}));
 
+  for (final width in [900.0, 1440.0]) {
+    for (final scale in [1.0, 1.5]) {
+      testWidgets(
+        'Rating cards have equal size with long text at $width / $scale',
+        (tester) async {
+          tester.view.physicalSize = Size(width, 1200);
+          tester.view.devicePixelRatio = 1;
+          tester.platformDispatcher.textScaleFactorTestValue = scale;
+          addTearDown(tester.view.reset);
+          addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+          final title = List.filled(12, 'Long movie title').join(' ');
+          final comment = List.filled(30, 'A very long review.').join(' ');
+          await tester.pumpWidget(
+            buildTestApp(
+              authenticated: true,
+              initialRoute: AppRoutes.myRatings,
+              bookingRepository: FakeBookingRepository()
+                ..myReviews = [
+                  MovieReview.fromJson(_review(1, 'Short', 4)),
+                  MovieReview.fromJson({
+                    ..._review(2, title, 5),
+                    'comment': comment,
+                    'reviewerName': 'A very long customer name',
+                  }),
+                ],
+            ),
+          );
+          await pumpRoute(tester);
+          final short = tester.getSize(
+            find.byKey(const ValueKey('ratingCard-1')),
+          );
+          final long = tester.getSize(
+            find.byKey(const ValueKey('ratingCard-2')),
+          );
+          expect(short, long);
+          expect(tester.widget<Text>(find.text(title)).maxLines, 1);
+          expect(
+            tester.widget<Text>(find.text(title)).overflow,
+            TextOverflow.ellipsis,
+          );
+          expect(tester.widget<Text>(find.text(comment)).maxLines, 3);
+          expect(
+            tester.widget<Text>(find.text(comment)).overflow,
+            TextOverflow.ellipsis,
+          );
+          expect(find.byTooltip(comment), findsOneWidget);
+          expect(tester.takeException(), isNull);
+        },
+      );
+    }
+  }
+
   test(
     'My ratings reads the existing mine endpoint including movie titles',
     () async {
@@ -85,6 +137,15 @@ void main() {
       await pumpRoute(tester);
       expect(find.text('3 ratings · Newest first'), findsOneWidget);
       expect(find.text('Oppenheimer'), findsOneWidget);
+      if (width >= 900) {
+        final first = tester.getRect(find.text('Oppenheimer'));
+        final second = tester.getRect(find.text('Interstellar'));
+        final third = tester.getRect(find.text('Inception'));
+        expect(first.top, closeTo(second.top, 1));
+        expect(first.left, lessThan(second.left));
+        expect(third.top, closeTo(first.top, 1));
+        expect(third.left, greaterThan(second.left));
+      }
       final searchTop = tester
           .getTopLeft(find.byKey(const Key('ratingMovieFilter')))
           .dy;

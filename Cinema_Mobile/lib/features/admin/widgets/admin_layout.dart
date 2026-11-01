@@ -52,7 +52,7 @@ class StatTiles extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(icon, color: AppColors.primary),
+                    Icon(icon, color: AppPalette.of(context).primary),
                     const SizedBox(height: AppSpacing.md),
                     FittedBox(
                       fit: BoxFit.scaleDown,

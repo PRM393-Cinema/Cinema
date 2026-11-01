@@ -196,8 +196,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               ? Icons.person_outline
                               : Icons.person_off_outlined,
                           color: user.enabled
-                              ? AppColors.primary
-                              : AppColors.error,
+                              ? AppPalette.of(context).primary
+                              : AppPalette.of(context).error,
                         ),
                         title: Text(
                           user.displayName,

@@ -371,7 +371,8 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                                             formatVnd(totalPrice),
                                             style: AppTextStyles.heading2
                                                 .copyWith(
-                                                  color: AppColors.primary,
+                                                  color: AppPalette.of(context)
+                                                      .primary,
                                                 ),
                                           ),
                                         ],
@@ -460,7 +461,8 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                                             ' • $selectedLabels',
                                             style: AppTextStyles.bodySmall
                                                 .copyWith(
-                                                  color: AppColors.textPrimary,
+                                                  color: AppPalette.of(context)
+                                                      .textPrimary,
                                                 ),
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
@@ -474,7 +476,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                                     child: Text(
                                       formatVnd(totalPrice),
                                       style: AppTextStyles.heading2.copyWith(
-                                        color: AppColors.primary,
+                                        color: AppPalette.of(context).primary,
                                       ),
                                     ),
                                   ),
@@ -541,7 +543,7 @@ class _SelectedSeatRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (_, border, text) = seatTypeColors(seat.type);
+    final (_, border, text) = seatTypeColors(context, seat.type);
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.sm),
       child: Row(
@@ -553,15 +555,15 @@ class _SelectedSeatRow extends StatelessWidget {
               vertical: AppSpacing.xs,
             ),
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.12),
+              color: AppPalette.of(context).primary.withValues(alpha: 0.12),
               borderRadius: AppRadius.borderRadiusSm,
-              border: Border.all(color: AppColors.primary),
+              border: Border.all(color: AppPalette.of(context).primary),
             ),
             child: Text(
               seat.label,
               textAlign: TextAlign.center,
               style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.primary,
+                color: AppPalette.of(context).primary,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -631,7 +633,7 @@ class _ShowtimeSummary extends StatelessWidget {
                   '${formatDayHeading(showtime.startTime)} • '
                   '${formatTime(showtime.startTime)}',
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textPrimary,
+                    color: AppPalette.of(context).textPrimary,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xs),

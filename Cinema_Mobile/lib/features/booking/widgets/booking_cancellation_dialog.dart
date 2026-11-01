@@ -33,7 +33,9 @@ class BookingCancellationDialog extends StatelessWidget {
                     ? Icons.currency_exchange_outlined
                     : Icons.cancel_outlined,
                 size: 64,
-                color: requestRefund ? AppColors.primary : AppColors.error,
+                color: requestRefund
+                    ? AppPalette.of(context).primary
+                    : AppPalette.of(context).error,
               ),
               const SizedBox(height: AppSpacing.lg),
               Text(

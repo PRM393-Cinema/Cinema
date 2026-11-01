@@ -189,7 +189,9 @@ class _RowLabel extends StatelessWidget {
       child: Text(
         label,
         style: AppTextStyles.bodySmall.copyWith(
-          color: onTap == null ? AppColors.textPrimary : AppColors.primary,
+          color: onTap == null
+              ? AppPalette.of(context).textPrimary
+              : AppPalette.of(context).primary,
           fontWeight: FontWeight.w600,
         ),
         textAlign: TextAlign.center,
@@ -217,7 +219,10 @@ class SeatScreenIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        CustomPaint(size: Size(width, 24), painter: _ScreenCurvePainter()),
+        CustomPaint(
+          size: Size(width, 24),
+          painter: _ScreenCurvePainter(AppPalette.of(context).primary),
+        ),
         const SizedBox(height: AppSpacing.sm),
         const Text('SCREEN', style: AppTextStyles.caption),
       ],
@@ -226,10 +231,12 @@ class SeatScreenIndicator extends StatelessWidget {
 }
 
 class _ScreenCurvePainter extends CustomPainter {
+  _ScreenCurvePainter(this.color);
+  final Color color;
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = AppColors.primary.withAlpha(128)
+      ..color = color.withAlpha(128)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3.0;
 
@@ -241,5 +248,6 @@ class _ScreenCurvePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _ScreenCurvePainter oldDelegate) =>
+      oldDelegate.color != color;
 }

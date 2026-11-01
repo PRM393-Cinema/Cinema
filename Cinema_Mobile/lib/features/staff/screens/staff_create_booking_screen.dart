@@ -420,9 +420,9 @@ class _StaffCreateBookingScreenState extends State<StaffCreateBookingScreen> {
                         Row(
                           key: const Key('memberSummary'),
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.verified_user_outlined,
-                              color: AppColors.success,
+                              color: AppPalette.of(context).success,
                             ),
                             const SizedBox(width: AppSpacing.sm),
                             Expanded(
@@ -653,7 +653,7 @@ class _StaffCreateBookingScreenState extends State<StaffCreateBookingScreen> {
                   child: Text(
                     _error!,
                     style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.error,
+                      color: AppPalette.of(context).error,
                     ),
                   ),
                 ),

@@ -179,12 +179,12 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
     final agreed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppPalette.of(context).surface,
         surfaceTintColor: Colors.transparent,
         insetPadding: const EdgeInsets.all(AppSpacing.xl),
         shape: RoundedRectangleBorder(
           borderRadius: AppRadius.borderRadiusXl,
-          side: const BorderSide(color: AppColors.border),
+          side: BorderSide(color: AppPalette.of(context).border),
         ),
         scrollable: true,
         titlePadding: const EdgeInsets.all(AppSpacing.xl),
@@ -224,7 +224,7 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                 Container(
                   padding: const EdgeInsets.all(AppSpacing.lg),
                   decoration: BoxDecoration(
-                    color: AppColors.surfaceSoft,
+                    color: AppPalette.of(context).surfaceSoft,
                     borderRadius: AppRadius.borderRadiusMd,
                   ),
                   child: Text(
@@ -243,7 +243,7 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
               Expanded(
                 child: TextButton(
                   style: TextButton.styleFrom(
-                    foregroundColor: AppColors.textSecondary,
+                    foregroundColor: AppPalette.of(context).textSecondary,
                     minimumSize: const Size(0, AppSpacing.xxxl),
                   ),
                   onPressed: () => Navigator.pop(dialogContext, false),
@@ -348,7 +348,7 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppPalette.of(context).surface,
         title: const Text(
           'Seats no longer available',
           style: AppTextStyles.title,
@@ -589,7 +589,7 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                     '−${formatVnd(giftDiscount)}',
                     key: const Key('summaryGifts'),
                     style: AppTextStyles.body.copyWith(
-                      color: AppColors.success,
+                      color: AppPalette.of(context).success,
                     ),
                   ),
                 ],
@@ -610,7 +610,7 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                     '−${formatVnd(discount)}',
                     key: const Key('summaryDiscount'),
                     style: AppTextStyles.body.copyWith(
-                      color: AppColors.success,
+                      color: AppPalette.of(context).success,
                     ),
                   ),
                 ],
@@ -631,7 +631,7 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                     '−${formatVnd(usePoints * pointValue)}',
                     key: const Key('summaryPoints'),
                     style: AppTextStyles.body.copyWith(
-                      color: AppColors.success,
+                      color: AppPalette.of(context).success,
                     ),
                   ),
                 ],
@@ -655,9 +655,9 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                 ],
               ),
             ),
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
-            child: Divider(height: 1, color: AppColors.border),
+            child: Divider(height: 1, color: AppPalette.of(context).border),
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -666,7 +666,7 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
               Text(
                 formatVnd(orderAmount - usePoints * pointValue),
                 style: AppTextStyles.heading2.copyWith(
-                  color: AppColors.primary,
+                  color: AppPalette.of(context).primary,
                 ),
               ),
             ],
@@ -816,7 +816,7 @@ class _DetailRow extends StatelessWidget {
       padding: const EdgeInsets.only(top: AppSpacing.sm),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: AppColors.textSecondary),
+          Icon(icon, size: 20, color: AppPalette.of(context).textSecondary),
           const SizedBox(width: AppSpacing.sm),
           Expanded(child: Text(text, style: AppTextStyles.body)),
         ],
@@ -834,16 +834,16 @@ class _ErrorBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: AppColors.error.withValues(alpha: 0.12),
+        color: AppPalette.of(context).error.withValues(alpha: 0.12),
         borderRadius: AppRadius.borderRadiusMd,
-        border: Border.all(color: AppColors.error),
+        border: Border.all(color: AppPalette.of(context).error),
       ),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.error_outline, color: AppColors.error),
+            Icon(Icons.error_outline, color: AppPalette.of(context).error),
             const SizedBox(width: AppSpacing.sm),
             Expanded(child: Text(message, style: AppTextStyles.bodySmall)),
           ],

@@ -31,7 +31,7 @@ class StarRating extends StatelessWidget {
           Icon(
             star <= full ? Icons.star_rounded : Icons.star_outline_rounded,
             size: size,
-            color: AppColors.warning,
+            color: AppPalette.of(context).warning,
           ),
       ],
     );
@@ -60,7 +60,7 @@ class StarPicker extends StatelessWidget {
             icon: Icon(
               star <= value ? Icons.star_rounded : Icons.star_outline_rounded,
               size: 34,
-              color: AppColors.warning,
+              color: AppPalette.of(context).warning,
             ),
           ),
       ],
@@ -240,7 +240,9 @@ class _Summary extends StatelessWidget {
               Text(
                 reviews.average.toStringAsFixed(1),
                 key: const Key('reviewAverage'),
-                style: AppTextStyles.display.copyWith(color: AppColors.warning),
+                style: AppTextStyles.display.copyWith(
+                  color: AppPalette.of(context).warning,
+                ),
               ),
               StarRating(rating: reviews.average),
               const SizedBox(height: AppSpacing.xs),
@@ -272,8 +274,9 @@ class _Summary extends StatelessWidget {
                                   ? 0
                                   : reviews.stars[star - 1] / most,
                               minHeight: 6,
-                              backgroundColor: AppColors.surfaceSoft,
-                              color: AppColors.warning,
+                              backgroundColor: AppPalette.of(context)
+                                  .surfaceSoft,
+                              color: AppPalette.of(context).warning,
                             ),
                           ),
                         ),
@@ -290,10 +293,16 @@ class _Summary extends StatelessWidget {
 }
 
 class ReviewTile extends StatelessWidget {
-  const ReviewTile({required this.review, this.trailing, super.key});
+  const ReviewTile({
+    required this.review,
+    this.trailing,
+    this.compact = false,
+    super.key,
+  });
 
   final MovieReview review;
   final Widget? trailing;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -309,6 +318,8 @@ class ReviewTile extends StatelessWidget {
                     ? '${review.reviewerName} (you)'
                     : review.reviewerName,
                 style: AppTextStyles.title,
+                maxLines: compact ? 1 : null,
+                overflow: compact ? TextOverflow.ellipsis : null,
               ),
             ),
             StarRating(rating: review.rating.toDouble(), size: 16),
@@ -318,10 +329,20 @@ class ReviewTile extends StatelessWidget {
         Text(
           '${formatDate(review.updatedAt)}${review.edited ? ' · edited' : ''}',
           style: AppTextStyles.bodySmall,
+          maxLines: compact ? 1 : null,
+          overflow: compact ? TextOverflow.ellipsis : null,
         ),
         if (review.comment case final comment?) ...[
           const SizedBox(height: AppSpacing.xs),
-          Text(comment, style: AppTextStyles.body),
+          Tooltip(
+            message: compact ? comment : '',
+            child: Text(
+              comment,
+              style: AppTextStyles.body.copyWith(height: compact ? 1.5 : null),
+              maxLines: compact ? 3 : null,
+              overflow: compact ? TextOverflow.ellipsis : null,
+            ),
+          ),
         ],
       ],
     );
@@ -398,7 +419,7 @@ class _TicketReviewButtonState extends State<TicketReviewButton> {
     final sure = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppPalette.of(context).surface,
         title: const Text('Delete your review?'),
         actions: [
           TextButton(
@@ -408,9 +429,9 @@ class _TicketReviewButtonState extends State<TicketReviewButton> {
           TextButton(
             key: const Key('confirmDeleteReview'),
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text(
+            child: Text(
               'Delete',
-              style: TextStyle(color: AppColors.error),
+              style: TextStyle(color: AppPalette.of(context).error),
             ),
           ),
         ],
@@ -459,7 +480,7 @@ class _TicketReviewButtonState extends State<TicketReviewButton> {
     final edit = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppPalette.of(context).surface,
         title: const Text('Movie review'),
         scrollable: true,
         content: ReviewTile(review: review),
@@ -471,9 +492,9 @@ class _TicketReviewButtonState extends State<TicketReviewButton> {
           TextButton(
             key: const Key('deleteReview'),
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text(
+            child: Text(
               'Delete',
-              style: TextStyle(color: AppColors.error),
+              style: TextStyle(color: AppPalette.of(context).error),
             ),
           ),
           TextButton(
@@ -547,7 +568,7 @@ class _ReviewDialogState extends State<_ReviewDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppPalette.of(context).surface,
       title: Text('Rate ${widget.movieTitle}'),
       content: SingleChildScrollView(
         child: Column(
@@ -571,7 +592,9 @@ class _ReviewDialogState extends State<_ReviewDialog> {
               const SizedBox(height: AppSpacing.sm),
               Text(
                 _error!,
-                style: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppPalette.of(context).error,
+                ),
               ),
             ],
           ],

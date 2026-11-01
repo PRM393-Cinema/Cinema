@@ -6,6 +6,7 @@ import 'package:flutter/widgets.dart';
 // at the top and pages in several columns. Narrower windows (phones) keep the
 // app layout with the tab bar at the bottom.
 const double desktopBreakpoint = 900;
+const double webHeaderHeight = 68;
 
 bool isDesktopLayout(BuildContext context) =>
     MediaQuery.sizeOf(context).width >= desktopBreakpoint;

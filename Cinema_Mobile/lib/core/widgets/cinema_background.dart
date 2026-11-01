@@ -9,48 +9,109 @@ class CinemaBackground extends StatelessWidget {
   const CinemaBackground({required this.child, super.key});
   final Widget child;
   @override
-  Widget build(BuildContext context) => LayoutBuilder(
-    builder: (context, constraints) => Stack(
-      fit: StackFit.expand,
-      children: [
-        Positioned.fill(
-          child: IgnorePointer(
-            child: Opacity(
-              opacity: 0.28,
-              child: ClipRect(
-                child: CustomPaint(
-                  painter: CinemaBackdrop(
-                    logoCenter: Offset(constraints.maxWidth / 2, 72),
+  Widget build(BuildContext context) {
+    // The desktop frame paints one continuous backdrop behind its header and pages.
+    if (context.findAncestorWidgetOfExactType<CinemaBackground>() != null) {
+      return child;
+    }
+    return LayoutBuilder(
+      builder: (context, constraints) => Stack(
+        fit: StackFit.expand,
+        children: [
+          Positioned.fill(
+            child: IgnorePointer(
+              child: Opacity(
+                opacity: 0.28 + 0.72 * AppPalette.of(context).lightness,
+                child: ClipRect(
+                  child: CustomPaint(
+                    painter: CinemaBackdrop(
+                      colors: AppPalette.of(context),
+                      logoCenter: Offset(constraints.maxWidth / 2, 72),
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
-        child,
-      ],
-    ),
-  );
+          child,
+        ],
+      ),
+    );
+  }
 }
 
 class CinemaBackdrop extends CustomPainter {
-  const CinemaBackdrop({required this.logoCenter});
+  const CinemaBackdrop({
+    required this.logoCenter,
+    this.colors = const AppPalette(isLight: false),
+  });
 
   final Offset logoCenter;
+  final AppPalette colors;
 
   @override
   void paint(Canvas canvas, Size size) {
+    final bounds = Offset.zero & size;
+    canvas.drawRect(bounds, Paint()..color = colors.background);
+    if (colors.lightness < 1) {
+      canvas.saveLayer(
+        bounds,
+        Paint()..color = Colors.white.withValues(alpha: 1 - colors.lightness),
+      );
+      _paintDark(canvas, size);
+      canvas.restore();
+    }
+    if (colors.lightness > 0) {
+      canvas.saveLayer(
+        bounds,
+        Paint()..color = Colors.white.withValues(alpha: colors.lightness),
+      );
+      _paintLight(canvas, size);
+      canvas.restore();
+    }
+  }
+
+  void _paintLight(Canvas canvas, Size size) {
+    const motifs = [
+      (Icons.movie_creation_outlined, 0.05, 0.19, -0.18),
+      (Icons.local_movies_outlined, 0.94, 0.12, 0.18),
+      (Icons.confirmation_number_outlined, 0.08, 0.52, -0.22),
+      (Icons.videocam_outlined, 0.93, 0.58, 0.15),
+      (Icons.theaters_outlined, 0.16, 0.87, 0.12),
+      (Icons.movie_filter_outlined, 0.84, 0.91, -0.14),
+    ];
+    final iconSize = size.width < 600 ? 44.0 : 72.0;
+    for (final (icon, x, y, angle) in motifs) {
+      final text = TextPainter(
+        text: TextSpan(
+          text: String.fromCharCode(icon.codePoint),
+          style: TextStyle(
+            fontFamily: icon.fontFamily,
+            package: icon.fontPackage,
+            fontSize: iconSize,
+            color: colors.primary.withValues(alpha: 0.14),
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      canvas
+        ..save()
+        ..translate(size.width * x, size.height * y)
+        ..rotate(angle);
+      text.paint(canvas, Offset(-text.width / 2, -text.height / 2));
+      canvas.restore();
+      text.dispose();
+    }
+  }
+
+  void _paintDark(Canvas canvas, Size size) {
     canvas.drawRect(
       Offset.zero & size,
       Paint()
-        ..shader = const LinearGradient(
+        ..shader = LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            AppColors.background,
-            AppColors.background,
-            AppColors.surface,
-          ],
+          colors: [colors.background, colors.background, colors.surface],
           stops: [0, 0.62, 1],
         ).createShader(Offset.zero & size),
     );
@@ -63,7 +124,7 @@ class CinemaBackdrop extends CustomPainter {
         width: size.width * 0.5,
         height: size.width * 0.42,
       ),
-      AppColors.primary.withValues(alpha: 0.56),
+      colors.primary.withValues(alpha: 0.56),
     );
     _paintStage(canvas, size);
   }
@@ -95,7 +156,7 @@ class CinemaBackdrop extends CustomPainter {
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = ribbonWidth + 6
-        ..color = AppColors.primary.withValues(alpha: 0.5)
+        ..color = colors.primary.withValues(alpha: 0.5)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 14),
     );
     canvas.drawPath(
@@ -103,21 +164,17 @@ class CinemaBackdrop extends CustomPainter {
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = ribbonWidth + 1.5
-        ..color = AppColors.primary.withValues(alpha: 0.75),
+        ..color = colors.primary.withValues(alpha: 0.75),
     );
     canvas.drawPath(
       ribbon,
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = ribbonWidth
-        ..shader = const LinearGradient(
+        ..shader = LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            AppColors.surfaceSoft,
-            AppColors.background,
-            AppColors.surfaceSoft,
-          ],
+          colors: [colors.surfaceSoft, colors.background, colors.surfaceSoft],
         ).createShader(filmBounds),
     );
     final metric = ribbon.computeMetrics().first;
@@ -136,7 +193,7 @@ class CinemaBackdrop extends CustomPainter {
         tangent.position - normal * (ribbonWidth * 0.29),
         tangent.position + normal * (ribbonWidth * 0.29),
         Paint()
-          ..color = AppColors.border
+          ..color = colors.border
           ..strokeWidth = 3,
       );
     }
@@ -173,7 +230,7 @@ class CinemaBackdrop extends CustomPainter {
         Rect.fromCenter(center: Offset.zero, width: 9, height: 5),
         const Radius.circular(0.6),
       );
-      canvas.drawRRect(hole, Paint()..color = AppColors.background);
+      canvas.drawRRect(hole, Paint()..color = colors.background);
       canvas.drawRRect(
         hole,
         Paint()
@@ -195,10 +252,10 @@ class CinemaBackdrop extends CustomPainter {
     canvas.drawRect(
       stageArea,
       Paint()
-        ..shader = const LinearGradient(
+        ..shader = LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Colors.transparent, AppColors.background],
+          colors: [Colors.transparent, colors.background],
         ).createShader(stageArea),
     );
     _paintGlow(
@@ -208,7 +265,7 @@ class CinemaBackdrop extends CustomPainter {
         width: size.width * 1.05,
         height: size.height * 0.16,
       ),
-      AppColors.primary.withValues(alpha: 0.33),
+      colors.primary.withValues(alpha: 0.33),
     );
     for (final x in [0.06, 0.94]) {
       _paintGlow(
@@ -218,7 +275,7 @@ class CinemaBackdrop extends CustomPainter {
           width: size.width * 0.13,
           height: size.height * 0.22,
         ),
-        AppColors.primary.withValues(alpha: 0.46),
+        colors.primary.withValues(alpha: 0.46),
       );
       _paintGlow(
         canvas,
@@ -227,7 +284,7 @@ class CinemaBackdrop extends CustomPainter {
           width: size.width * 0.28,
           height: size.height * 0.035,
         ),
-        AppColors.primary.withValues(alpha: 0.75),
+        colors.primary.withValues(alpha: 0.75),
       );
     }
     _paintGlow(
@@ -237,7 +294,7 @@ class CinemaBackdrop extends CustomPainter {
         width: size.width * 0.48,
         height: size.height * 0.05,
       ),
-      AppColors.primary.withValues(alpha: 0.58),
+      colors.primary.withValues(alpha: 0.58),
     );
     final horizon = Path()
       ..moveTo(0, size.height * 0.905)
@@ -251,7 +308,7 @@ class CinemaBackdrop extends CustomPainter {
       horizon,
       Paint()
         ..style = PaintingStyle.stroke
-        ..color = AppColors.primary.withValues(alpha: 0.44)
+        ..color = colors.primary.withValues(alpha: 0.44)
         ..strokeWidth = 1.4
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
     );
@@ -280,5 +337,6 @@ class CinemaBackdrop extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CinemaBackdrop oldDelegate) =>
-      oldDelegate.logoCenter != logoCenter;
+      oldDelegate.logoCenter != logoCenter ||
+      oldDelegate.colors.lightness != colors.lightness;
 }

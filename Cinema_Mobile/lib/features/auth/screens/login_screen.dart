@@ -229,7 +229,7 @@ class _LoginScreenState extends State<LoginScreen> {
               child: TextButton(
                 onPressed: _isLoading ? null : _openForgotPassword,
                 style: TextButton.styleFrom(
-                  foregroundColor: AppColors.primary,
+                  foregroundColor: AppPalette.of(context).primary,
                   textStyle: AppTextStyles.bodySmall,
                 ),
                 child: const Text('Forgot password?'),
@@ -245,7 +245,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 borderRadius: AppRadius.borderRadiusMd,
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.24),
+                    color: AppPalette.of(context).primary
+                        .withValues(alpha: 0.24),
                     blurRadius: 24,
                     spreadRadius: 1,
                   ),
@@ -286,18 +287,18 @@ class _LoginError extends StatelessWidget {
       liveRegion: true,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: AppColors.error.withValues(alpha: 0.12),
+          color: AppPalette.of(context).error.withValues(alpha: 0.12),
           borderRadius: AppRadius.borderRadiusMd,
-          border: Border.all(color: AppColors.error),
+          border: Border.all(color: AppPalette.of(context).error),
         ),
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.md),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(
+              Icon(
                 Icons.error_outline,
-                color: AppColors.error,
+                color: AppPalette.of(context).error,
                 size: AppSpacing.xl,
               ),
               const SizedBox(width: AppSpacing.sm),
@@ -305,7 +306,7 @@ class _LoginError extends StatelessWidget {
                 child: Text(
                   message,
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textPrimary,
+                    color: AppPalette.of(context).textPrimary,
                   ),
                 ),
               ),

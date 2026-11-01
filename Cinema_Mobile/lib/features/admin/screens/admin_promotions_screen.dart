@@ -132,7 +132,7 @@ class _AdminPromotionsScreenState extends State<AdminPromotionsScreen> {
                 child: Text(
                   _message!,
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.error,
+                    color: AppPalette.of(context).error,
                   ),
                 ),
               ),
@@ -230,11 +230,15 @@ class _PromotionCard extends StatelessWidget {
                   promotion.code == null
                       ? 'Automatic'
                       : 'Code ${promotion.code}',
-                  style: AppTextStyles.body.copyWith(color: AppColors.accent),
+                  style: AppTextStyles.body.copyWith(
+                    color: AppPalette.of(context).accent,
+                  ),
                 ),
                 Text(
                   promotion.discountText,
-                  style: AppTextStyles.body.copyWith(color: AppColors.primary),
+                  style: AppTextStyles.body.copyWith(
+                    color: AppPalette.of(context).primary,
+                  ),
                 ),
                 Text(promotion.conditionsText, style: AppTextStyles.bodySmall),
                 Text(
@@ -390,7 +394,7 @@ class _PromotionFormDialogState extends State<_PromotionFormDialog> {
   @override
   Widget build(BuildContext context) {
     final dateStyle = AppTextStyles.bodySmall.copyWith(
-      color: AppColors.textPrimary,
+      color: AppPalette.of(context).textPrimary,
     );
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -601,7 +605,7 @@ class _PromotionFormDialogState extends State<_PromotionFormDialog> {
                       child: Text(
                         _error!,
                         style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.error,
+                          color: AppPalette.of(context).error,
                         ),
                       ),
                     ),

@@ -259,7 +259,10 @@ class _RoomCard extends StatelessWidget {
     surfaceOpacity: 0.8,
     child: Row(
       children: [
-        const Icon(Icons.meeting_room_outlined, color: AppColors.primary),
+        Icon(
+          Icons.meeting_room_outlined,
+          color: AppPalette.of(context).primary,
+        ),
         const SizedBox(width: AppSpacing.md),
         Expanded(
           child: Column(
@@ -295,7 +298,10 @@ class _RoomCard extends StatelessWidget {
           IconButton(
             key: Key('deleteRoom-${room.id}'),
             tooltip: 'Delete',
-            icon: const Icon(Icons.delete_outline, color: AppColors.error),
+            icon: Icon(
+              Icons.delete_outline,
+              color: AppPalette.of(context).error,
+            ),
             onPressed: onDelete,
           ),
         ],
@@ -451,7 +457,7 @@ class _RoomFormDialogState extends State<_RoomFormDialog> {
                       _error!,
                       key: const Key('roomFormError'),
                       style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.error,
+                        color: AppPalette.of(context).error,
                       ),
                     ),
                   ],

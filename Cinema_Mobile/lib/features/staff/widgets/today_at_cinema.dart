@@ -214,7 +214,9 @@ class _TodayAtCinemaState extends State<TodayAtCinema> {
         else if (data == null)
           Text(
             'Today’s figures could not be loaded: $error',
-            style: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppPalette.of(context).error,
+            ),
           )
         else ...[
           StatTiles(key: const Key('todayStats'), tiles: data.tiles),
@@ -427,7 +429,7 @@ class _ShowtimeCard extends StatelessWidget {
                       Text(
                         value,
                         style: AppTextStyles.heading2.copyWith(
-                          color: AppColors.primary,
+                          color: AppPalette.of(context).primary,
                         ),
                       ),
                       Text(label, style: AppTextStyles.caption),

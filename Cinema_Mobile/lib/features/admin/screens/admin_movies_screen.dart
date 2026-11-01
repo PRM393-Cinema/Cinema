@@ -357,7 +357,9 @@ class _MovieCard extends StatelessWidget {
                 showing
                     ? Icons.visibility_off_outlined
                     : Icons.visibility_outlined,
-                color: showing ? AppColors.error : AppColors.success,
+                color: showing
+                    ? AppPalette.of(context).error
+                    : AppPalette.of(context).success,
               ),
               onPressed: onSetShowing == null
                   ? null
@@ -717,7 +719,7 @@ class _MovieFormDialogState extends State<_MovieFormDialog> {
                       _error!,
                       key: const Key('movieFormError'),
                       style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.error,
+                        color: AppPalette.of(context).error,
                       ),
                     ),
                   ],
@@ -830,7 +832,7 @@ class _ReviewsDialogState extends State<_ReviewsDialog> {
                   child: Text(
                     _error!,
                     style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.error,
+                      color: AppPalette.of(context).error,
                     ),
                   ),
                 ),
@@ -860,9 +862,9 @@ class _ReviewsDialogState extends State<_ReviewsDialog> {
                                   onPressed: _busyId == null
                                       ? () => _delete(review)
                                       : null,
-                                  icon: const Icon(
+                                  icon: Icon(
                                     Icons.delete_outline,
-                                    color: AppColors.error,
+                                    color: AppPalette.of(context).error,
                                   ),
                                 ),
                         ),

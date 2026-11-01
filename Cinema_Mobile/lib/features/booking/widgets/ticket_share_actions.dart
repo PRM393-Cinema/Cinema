@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/top_notice.dart';
@@ -124,19 +123,21 @@ class _TicketShareActionsState extends State<TicketShareActions> {
         OutlinedButton.icon(
           key: const Key('shareTicket'),
           onPressed: _share,
-          icon: const Icon(Icons.ios_share_rounded),
+          icon: const Icon(
+            IconData(0xe159, fontFamily: 'BookingLucide'),
+            size: 16,
+          ),
           label: const Text('Share ticket'),
         ),
         if (upcoming)
           OutlinedButton.icon(
             key: const Key('addToCalendar'),
             onPressed: _busy ? null : _addToCalendar,
-            icon: const Icon(Icons.event_available_outlined),
-            label: const Text('Add to calendar'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.warning,
-              side: const BorderSide(color: AppColors.warning),
+            icon: const Icon(
+              IconData(0xe2bb, fontFamily: 'BookingLucide'),
+              size: 16,
             ),
+            label: const Text('Add to calendar'),
           ),
       ],
     );

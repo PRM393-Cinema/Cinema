@@ -144,7 +144,7 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
                 child: Text(
                   _message!,
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.error,
+                    color: AppPalette.of(context).error,
                   ),
                 ),
               ),
@@ -243,7 +243,7 @@ class _MemberRow extends StatelessWidget {
                   Text(
                     '${card.points} pts',
                     style: AppTextStyles.title.copyWith(
-                      color: AppColors.primary,
+                      color: AppPalette.of(context).primary,
                     ),
                   ),
                 ],
@@ -393,7 +393,7 @@ class _MemberDialogState extends State<_MemberDialog> {
                       child: Text(
                         _error!,
                         style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.error,
+                          color: AppPalette.of(context).error,
                         ),
                       ),
                     ),

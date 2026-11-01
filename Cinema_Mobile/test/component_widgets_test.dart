@@ -78,7 +78,8 @@ void main() {
     expect(find.text('A1'), findsOneWidget);
     expect(find.text('A2'), findsOneWidget);
     expect(find.text('A3'), findsOneWidget);
-    expect(find.text('A4'), findsOneWidget);
+    expect(find.byIcon(Icons.close_rounded), findsOneWidget);
+    expect(find.bySemanticsLabel('A4, unavailable'), findsOneWidget);
   });
 
   testWidgets('Text on the primary color stays readable', (

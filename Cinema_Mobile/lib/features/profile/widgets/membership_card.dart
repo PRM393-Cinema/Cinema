@@ -16,10 +16,16 @@ class TierBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+    final color = switch (tier) {
+      MemberTier.member => palette.textSecondary,
+      MemberTier.vip => palette.warning,
+      MemberTier.vvip => palette.accent,
+    };
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: tier.color.withValues(alpha: 0.15),
-        border: Border.all(color: tier.color),
+        color: color.withValues(alpha: 0.15),
+        border: Border.all(color: color),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Padding(
@@ -27,7 +33,7 @@ class TierBadge extends StatelessWidget {
         child: Text(
           tier.label,
           style: AppTextStyles.caption.copyWith(
-            color: tier.color,
+            color: color,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -65,9 +71,9 @@ class MembershipCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.card_membership_outlined,
-                color: AppColors.accent,
+                color: AppPalette.of(context).accent,
               ),
               const SizedBox(width: AppSpacing.sm),
               const Expanded(
@@ -80,7 +86,9 @@ class MembershipCard extends StatelessWidget {
           Text(
             '${card.points} points',
             key: const Key('memberPoints'),
-            style: AppTextStyles.heading2.copyWith(color: AppColors.primary),
+            style: AppTextStyles.heading2.copyWith(
+              color: AppPalette.of(context).primary,
+            ),
           ),
           Text(
             '${formatVnd(card.pointsValue)} · Earn ${card.earnRatePercent.round()}% back',
@@ -93,7 +101,7 @@ class MembershipCard extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: progress,
                 minHeight: 6,
-                backgroundColor: AppColors.surfaceSoft,
+                backgroundColor: AppPalette.of(context).surfaceSoft,
                 color: next.color,
               ),
             ),
@@ -178,7 +186,9 @@ class PointsLine extends StatelessWidget {
           Text(
             line.pointsText,
             style: AppTextStyles.title.copyWith(
-              color: line.points >= 0 ? AppColors.success : AppColors.error,
+              color: line.points >= 0
+                  ? AppPalette.of(context).success
+                  : AppPalette.of(context).error,
             ),
           ),
         ],

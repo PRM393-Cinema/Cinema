@@ -137,7 +137,16 @@ void main() {
       expect(find.text(formatVnd(90000)), findsOneWidget);
 
       // A2 is taken by another booking and cannot be selected.
-      await tester.tap(find.text('2').first);
+      await tester.tap(
+        find
+            .byWidgetPredicate(
+              (widget) =>
+                  widget is SeatItem &&
+                  widget.label == '2' &&
+                  widget.state == SeatItemState.booked,
+            )
+            .first,
+      );
       await tester.pump();
       expect(find.text('1 seat(s)'), findsOneWidget);
 
@@ -769,10 +778,7 @@ void main() {
       expect(find.text('Refund pending'), findsOneWidget);
       await tester.pump(const Duration(seconds: 2));
       await pumpRoute(tester);
-      expect(
-        find.text('Refund of ${formatVnd(180000)} in progress'),
-        findsOneWidget,
-      );
+      expect(find.text('Refund Pending'), findsOneWidget);
       expect(bookings.bookings.single.status, BookingStatus.refundPending);
       expect(find.text('Request refund'), findsNothing);
       Navigator.of(tester.element(find.text('Booking Detail'))).pop();

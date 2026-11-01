@@ -38,6 +38,7 @@ class MovieService {
     bool comingSoon = false,
     String? genre,
     String? keyword,
+    int page = 1,
     int size = maxPageSize,
   }) async {
     final response = await _apiClient.get(
@@ -46,6 +47,7 @@ class MovieService {
         'when': comingSoon ? 'soon' : 'now',
         'genre': genre,
         'keyword': keyword,
+        'page': page,
         'size': size,
       },
     );

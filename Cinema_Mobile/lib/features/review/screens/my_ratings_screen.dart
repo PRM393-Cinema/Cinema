@@ -14,6 +14,7 @@ import '../../../core/widgets/cinema_page.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_state.dart';
+import '../../../core/widgets/paginated_cards.dart';
 import '../../../data/models/review.dart';
 import '../../../data/repositories/booking_repository.dart';
 import '../widgets/review_widgets.dart';
@@ -70,8 +71,12 @@ class _MyRatingsScreenState extends State<MyRatingsScreen> {
   }
 
   @override
-  Widget build(BuildContext context) =>
-      CinemaPage(title: 'My ratings', width: PageWidth.reading, child: _body());
+  Widget build(BuildContext context) => CinemaPage(
+    title: 'My ratings',
+    showHeader: !isDesktopLayout(context),
+    width: isDesktopLayout(context) ? PageWidth.page : PageWidth.reading,
+    child: _body(),
+  );
 
   Widget _body() {
     if (_loading) return const LoadingState(message: 'Loading ratings...');
@@ -83,6 +88,7 @@ class _MyRatingsScreenState extends State<MyRatingsScreen> {
       );
     }
     final query = _movieFilter.text.trim().toLowerCase();
+    final desktop = isDesktopLayout(context);
     final visible = _reviews
         .where(
           (review) =>
@@ -94,8 +100,12 @@ class _MyRatingsScreenState extends State<MyRatingsScreen> {
       onRefresh: _load,
       child: ListView.separated(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: widthPadding(context, AppSpacing.lg, PageWidth.reading),
-        itemCount: visible.isEmpty ? 2 : visible.length + 1,
+        padding: widthPadding(
+          context,
+          AppSpacing.lg,
+          desktop ? PageWidth.page : PageWidth.reading,
+        ),
+        itemCount: 2,
         separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.lg),
         itemBuilder: (context, index) {
           if (index == 0) {
@@ -114,8 +124,10 @@ class _MyRatingsScreenState extends State<MyRatingsScreen> {
                     );
                     final rating = Theme(
                       data: Theme.of(context).copyWith(
-                        focusColor: AppColors.primary.withValues(alpha: 0.10),
-                        hoverColor: AppColors.primary.withValues(alpha: 0.06),
+                        focusColor: AppPalette.of(context).primary
+                            .withValues(alpha: 0.10),
+                        hoverColor: AppPalette.of(context).primary
+                            .withValues(alpha: 0.06),
                       ),
                       child: LayoutBuilder(
                         builder: (context, fieldConstraints) =>
@@ -124,14 +136,16 @@ class _MyRatingsScreenState extends State<MyRatingsScreen> {
                               initialValue: _stars ?? 0,
                               tooltip: 'Filter by rating',
                               position: PopupMenuPosition.under,
-                              color: AppColors.surfaceSoft,
+                              color: AppPalette.of(context).surfaceSoft,
                               surfaceTintColor: Colors.transparent,
                               constraints: BoxConstraints.tightFor(
                                 width: fieldConstraints.maxWidth,
                               ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: AppRadius.borderRadiusMd,
-                                side: const BorderSide(color: AppColors.border),
+                                side: BorderSide(
+                                  color: AppPalette.of(context).border,
+                                ),
                               ),
                               itemBuilder: (_) => [
                                 for (final value in [0, 5, 4, 3, 2, 1])
@@ -147,8 +161,10 @@ class _MyRatingsScreenState extends State<MyRatingsScreen> {
                                                 : Icons.star_rounded,
                                             size: 20,
                                             color: value == 0
-                                                ? AppColors.textSecondary
-                                                : AppColors.warning,
+                                                ? AppPalette.of(context)
+                                                      .textSecondary
+                                                : AppPalette.of(context)
+                                                      .warning,
                                           ),
                                           const SizedBox(width: AppSpacing.md),
                                           Expanded(
@@ -160,8 +176,10 @@ class _MyRatingsScreenState extends State<MyRatingsScreen> {
                                                   .copyWith(
                                                     color:
                                                         value == (_stars ?? 0)
-                                                        ? AppColors.primary
-                                                        : AppColors.textPrimary,
+                                                        ? AppPalette.of(context)
+                                                              .primary
+                                                        : AppPalette.of(context)
+                                                              .textPrimary,
                                                     fontWeight:
                                                         value == (_stars ?? 0)
                                                         ? FontWeight.w600
@@ -173,10 +191,11 @@ class _MyRatingsScreenState extends State<MyRatingsScreen> {
                                             const SizedBox(
                                               width: AppSpacing.sm,
                                             ),
-                                            const Icon(
+                                            Icon(
                                               Icons.check_rounded,
                                               size: 20,
-                                              color: AppColors.primary,
+                                              color: AppPalette.of(context)
+                                                  .primary,
                                             ),
                                           ],
                                         ],
@@ -246,24 +265,45 @@ class _MyRatingsScreenState extends State<MyRatingsScreen> {
                   : 'Try another movie name or star rating.',
             );
           }
-          final review = visible[index - 1];
-          return CinemaPanel(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextButton(
-                  onPressed: () => Navigator.pushNamed(
-                    context,
-                    AppRoutes.movieDetail(review.movieId),
-                  ),
-                  child: Text(review.movieLabel, style: AppTextStyles.title),
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                ReviewTile(review: review),
-              ],
-            ),
+          return PaginatedCards(
+            itemCount: visible.length,
+            resetKey: (query, _stars),
+            itemBuilder: (_, index) => _ratingCard(visible[index]),
           );
         },
+      ),
+    );
+  }
+
+  Widget _ratingCard(MovieReview review) {
+    final desktop = isDesktopLayout(context);
+    return SizedBox(
+      key: ValueKey('ratingCard-${review.id}'),
+      height: desktop ? 240 * MediaQuery.textScalerOf(context).scale(1) : null,
+      child: CinemaPanel(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextButton(
+              onPressed: () => Navigator.pushNamed(
+                context,
+                AppRoutes.movieDetail(review.movieId),
+              ),
+              child: Tooltip(
+                message: review.movieLabel,
+                child: Text(
+                  review.movieLabel,
+                  style: AppTextStyles.title,
+                  maxLines: desktop ? 1 : null,
+                  overflow: desktop ? TextOverflow.ellipsis : null,
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            ReviewTile(review: review, compact: desktop),
+          ],
+        ),
       ),
     );
   }
