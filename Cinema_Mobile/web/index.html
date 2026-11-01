@@ -36,6 +36,13 @@
     <meta name="theme-color" content="#0B0D12" />
     <title>CosmoQ Cinema</title>
     <link rel="manifest" href="manifest.json" />
+    <style>
+      /* Flutter draws tap feedback; the browser otherwise highlights its whole view. */
+      flutter-view,
+      flutter-view * {
+        -webkit-tap-highlight-color: transparent;
+      }
+    </style>
   </head>
   <body>
     <!--
