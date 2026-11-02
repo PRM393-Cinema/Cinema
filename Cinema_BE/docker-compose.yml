@@ -131,6 +131,8 @@ services:
       ConnectionStrings__MovieDb: Host=postgres;Port=5432;Database=cinema_movie_db;Username=postgres;Password=${POSTGRES_PASSWORD}
       ConnectionStrings__ShowtimeDb: Host=postgres;Port=5432;Database=cinema_showtime_db;Username=postgres;Password=${POSTGRES_PASSWORD}
       Jwt__SecretKey: ${JWT_SECRET_KEY}
+      OpenAI__ApiKey: ${OPENAI_API_KEY:-}
+      OpenAI__Model: ${OPENAI_MODEL:-gpt-4.1-mini-2025-04-14}
     ports:
       - "127.0.0.1:5168:8080"
 

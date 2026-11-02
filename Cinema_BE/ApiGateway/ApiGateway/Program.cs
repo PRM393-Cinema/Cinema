@@ -106,6 +106,14 @@ builder.Services.AddRateLimiter(options =>
             QueueLimit = 0
         }));
 
+    options.AddPolicy("chat", context =>
+        RateLimitPartition.GetFixedWindowLimiter(GetClientIp(context), _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 10,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        }));
+
     options.OnRejected = (context, _) =>
     {
         if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))

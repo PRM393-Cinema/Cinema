@@ -7,6 +7,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using MovieService.Configuration;
+using MovieService.Chat;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 using MovieService.Data;
 using MovieService.Exception;
 using MovieService.Health;
@@ -45,6 +48,25 @@ builder.Services.AddScoped<IShowtimeService, ShowtimeService.Service.Impl.Showti
 builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<ISeatService, SeatService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.Configure<ChatOptions>(builder.Configuration.GetSection("OpenAI"));
+builder.Services.AddHttpClient<CinemaChatService>(client => client.Timeout = TimeSpan.FromSeconds(25));
+// Global per-instance budget, in addition to the gateway's per-IP limit.
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddFixedWindowLimiter("chat", limiter =>
+    {
+        limiter.PermitLimit = 30;
+        limiter.Window = TimeSpan.FromMinutes(1);
+        limiter.QueueLimit = 0;
+    });
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        context.HttpContext.Response.Headers.RetryAfter = "60";
+        await Results.Problem(statusCode: 429, detail: "Cinema AI is busy. Please try again in a minute.")
+            .ExecuteAsync(context.HttpContext);
+    };
+});
 
 //====== RABBITMQ: huỷ suất chiếu phát event showtime.cancelled qua outbox (docs/MESSAGING.md) ======
 builder.Services
@@ -187,6 +209,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 
 app.MapControllers();
 
