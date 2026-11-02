@@ -14,10 +14,12 @@ import '../../../core/widgets/cinema_page.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_state.dart';
 import '../../../core/widgets/paginated_cards.dart';
+import '../../../core/widgets/app_text_field.dart';
 
 import '../../../core/widgets/cinema_account_widgets.dart';
 import '../../../data/models/app_notification.dart';
 import '../../../data/repositories/booking_repository.dart';
+import '../widgets/notification_category.dart';
 
 class NotificationListScreen extends StatefulWidget {
   const NotificationListScreen({required this.bookingRepository, super.key});
@@ -34,6 +36,13 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
   bool _isLoading = true;
   bool _isRefreshing = false;
   String? _errorMessage;
+  final _search = TextEditingController();
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
 
   @override
   void didChangeDependencies() {
@@ -169,6 +178,17 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
     }
 
     final unread = _notifications.where((n) => !n.isRead).length;
+    final query = _search.text.trim().toLowerCase();
+    final visible = _notifications
+        .where(
+          (notification) =>
+              '${notification.displayTitle} ${notification.subject} '
+                      '${notification.categoryLabel} ${notification.bookingCode ?? ''} '
+                      '${notification.plainContent}'
+                  .toLowerCase()
+                  .contains(query),
+        )
+        .toList();
     return RefreshIndicator(
       onRefresh: _loadNotifications,
       child: ListView.separated(
@@ -182,28 +202,70 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (!desktop) ...[
-                  Text('Cinema updates', style: AppTextStyles.heading2),
+                if (desktop) ...[
+                  Semantics(
+                    header: true,
+                    child: const Text(
+                      'Notifications',
+                      style: AppTextStyles.heading1,
+                    ),
+                  ),
                   const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    'Booking confirmations, reminders and refund updates.',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppPalette.of(context).textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
                 ],
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
+                AppTextField(
+                  key: const Key('notificationSearch'),
+                  label: 'Search notifications',
+                  hint: 'Title, message or booking code',
+                  controller: _search,
+                  prefixIcon: const Icon(Icons.search_rounded),
+                  suffixIcon: query.isEmpty
+                      ? null
+                      : IconButton(
+                          key: const Key('clearNotificationSearch'),
+                          tooltip: 'Clear search',
+                          onPressed: () => setState(_search.clear),
+                          icon: const Icon(Icons.close_rounded),
+                        ),
+                  onChanged: (_) => setState(() {}),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                SizedBox(
+                  width: double.infinity,
+                  child: Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: AppSpacing.md,
+                    runSpacing: AppSpacing.sm,
+                    children: [
+                      Text(
                         [
-                          formatCount(_notifications.length, 'notification'),
+                          query.isEmpty
+                              ? formatCount(
+                                  _notifications.length,
+                                  'notification',
+                                )
+                              : '${visible.length} of ${formatCount(_notifications.length, 'notification')}',
                           if (unread > 0) '$unread unread',
                         ].join(' · '),
-                        style: AppTextStyles.bodySmall,
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppPalette.of(context).textSecondary,
+                        ),
                       ),
-                    ),
-                    if (unread > 0)
-                      TextButton(
-                        key: const Key('markAllRead'),
-                        onPressed: _markAllRead,
-                        child: const Text('Mark all read'),
-                      ),
-                  ],
+                      if (unread > 0)
+                        TextButton(
+                          key: const Key('markAllRead'),
+                          onPressed: _markAllRead,
+                          child: const Text('Mark all read'),
+                        ),
+                    ],
+                  ),
                 ),
                 if (_errorMessage != null) ...[
                   const SizedBox(height: AppSpacing.sm),
@@ -217,11 +279,19 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
               ],
             );
           }
+          if (visible.isEmpty) {
+            return const EmptyState(
+              icon: Icons.search_off_rounded,
+              title: 'No matching notifications',
+              message: 'Try another title, message or booking code.',
+            );
+          }
           return PaginatedCards(
-            itemCount: _notifications.length,
+            resetKey: query,
+            itemCount: visible.length,
             itemBuilder: (_, index) => _NotificationTile(
-              notification: _notifications[index],
-              onTap: () => _open(_notifications[index]),
+              notification: visible[index],
+              onTap: () => _open(visible[index]),
             ),
           );
         },
@@ -240,6 +310,7 @@ class _NotificationTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final desktop = isDesktopLayout(context);
     final scale = MediaQuery.textScalerOf(context);
+    final colors = AppPalette.of(context);
     return SizedBox(
       key: ValueKey('notificationCard-${notification.id}'),
       height: desktop ? 300 * scale.scale(1) : null,
@@ -249,26 +320,15 @@ class _NotificationTile extends StatelessWidget {
           onTap: onTap,
           borderRadius: AppRadius.borderRadiusMd,
           child: CinemaPanel(
-            surfaceOpacity: 0.8,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Row(
                   children: [
-                    Icon(
-                      Icons.notifications_outlined,
-                      color: AppPalette.of(context).primary,
-                      size: 24,
+                    Flexible(
+                      child: NotificationCategory(notification: notification),
                     ),
-                    const SizedBox(width: AppSpacing.md),
-                    Expanded(
-                      child: Text(
-                        formatDateTime(notification.createdAt),
-                        style: AppTextStyles.bodySmall,
-                        maxLines: desktop ? 1 : null,
-                        overflow: desktop ? TextOverflow.ellipsis : null,
-                      ),
-                    ),
+                    const SizedBox(width: AppSpacing.sm),
                     if (!notification.isRead) ...[
                       const SizedBox(width: AppSpacing.sm),
                       Semantics(
@@ -278,54 +338,94 @@ class _NotificationTile extends StatelessWidget {
                           width: 8,
                           height: 8,
                           decoration: BoxDecoration(
-                            color: AppPalette.of(context).accent,
+                            color: colors.accent,
                             shape: BoxShape.circle,
                           ),
                         ),
                       ),
                     ],
-                    const SizedBox(width: AppSpacing.sm),
-                    Icon(
-                      Icons.chevron_right_rounded,
-                      color: AppPalette.of(context).textSecondary,
-                    ),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 SizedBox(
-                  height: desktop ? scale.scale(22) * 1.3 * 2 : null,
-                  child: Text(
-                    notification.displayTitle,
-                    key: ValueKey('notificationTitle-${notification.id}'),
-                    style: AppTextStyles.heading2.copyWith(height: 1.3),
-                    maxLines: desktop ? 2 : null,
-                    overflow: desktop ? TextOverflow.ellipsis : null,
+                  height: desktop ? scale.scale(18) * 1.3 * 2 : null,
+                  child: Semantics(
+                    header: true,
+                    child: Text(
+                      notification.displayTitle,
+                      key: ValueKey('notificationTitle-${notification.id}'),
+                      style: AppTextStyles.title.copyWith(
+                        height: 1.3,
+                        color: colors.textPrimary,
+                      ),
+                      maxLines: desktop ? 2 : null,
+                      overflow: desktop ? TextOverflow.ellipsis : null,
+                    ),
                   ),
                 ),
-                if (notification.bookingCode != null) ...[
-                  const SizedBox(height: AppSpacing.sm),
+                if (notification.previewText.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.md),
                   Text(
-                    notification.bookingCode!,
-                    style: AppTextStyles.bodySmall,
-                    maxLines: desktop ? 1 : null,
-                    overflow: desktop ? TextOverflow.ellipsis : null,
+                    notification.previewText,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      height: 1.5,
+                      color: colors.textSecondary,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
-                if (notification.previewText.isNotEmpty) ...[
+                if (desktop) const Spacer(),
+                if (notification.bookingCode != null) ...[
                   Padding(
-                    padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.md,
+                    ),
                     child: Divider(
                       height: 1,
                       color: AppPalette.of(context).border,
                     ),
                   ),
                   Text(
-                    notification.previewText,
-                    style: AppTextStyles.body.copyWith(height: 1.5),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
+                    'Booking reference',
+                    style: AppTextStyles.caption.copyWith(
+                      color: colors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Tooltip(
+                    message: notification.bookingCode!,
+                    child: Text(
+                      notification.bookingCode!,
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: colors.textSecondary,
+                      ),
+                      maxLines: desktop ? 1 : null,
+                      overflow: desktop ? TextOverflow.ellipsis : null,
+                    ),
                   ),
                 ],
+                const SizedBox(height: AppSpacing.lg),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        formatDateTime(notification.createdAt),
+                        style: AppTextStyles.caption.copyWith(
+                          color: colors.textSecondary,
+                        ),
+                        maxLines: desktop ? 1 : null,
+                        overflow: desktop ? TextOverflow.ellipsis : null,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Icon(
+                      Icons.arrow_forward_rounded,
+                      size: 18,
+                      color: colors.primary,
+                    ),
+                  ],
+                ),
               ],
             ),
           ),

@@ -28,6 +28,49 @@ final expiredNotification = AppNotification(
 );
 
 void main() {
+  testWidgets('Message emphasis preserves spaces, entities and all content', (
+    tester,
+  ) async {
+    final notification = AppNotification(
+      id: 40,
+      subject: 'Refund update BK-TEST-001',
+      type: 'REFUND_REQUESTED',
+      content:
+          '<h2>Refund requested</h2><p>Refund <strong>264,000 VND</strong> for '
+          '<strong>BK-TEST-001</strong> &amp; keep this <b>reference</b>.</p>'
+          '<p>Reference: (A+B). Unknown fields must stay visible.</p>',
+      status: 'SENT',
+      createdAt: DateTime(2026),
+    );
+    await tester.pumpWidget(
+      buildTestApp(
+        authenticated: true,
+        initialRoute: AppRoutes.notificationDetail(40),
+        bookingRepository: FakeBookingRepository(notifications: [notification]),
+      ),
+    );
+    await pumpRoute(tester);
+    expect(find.text('Message'), findsOneWidget);
+    const text = 'Refund 264,000 VND for BK-TEST-001 & keep this reference.';
+    final paragraph = tester.widget<SelectableText>(
+      find
+          .ancestor(of: find.text(text), matching: find.byType(SelectableText))
+          .first,
+    );
+    expect(paragraph.textSpan!.toPlainText(), text);
+    expect(
+      paragraph.textSpan!.children!
+          .whereType<TextSpan>()
+          .where((span) => span.style?.fontWeight == FontWeight.w600)
+          .map((span) => span.text),
+      ['264,000 VND', 'BK-TEST-001', 'reference'],
+    );
+    expect(
+      find.text('Reference: (A+B). Unknown fields must stay visible.'),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
   for (final type in [
     'BOOKING_CONFIRMED',
     'BOOKING_CANCELLED',
