@@ -11,6 +11,15 @@ abstract final class ApiConfig {
     'PAYMENT_RETURN_URL',
   );
 
+  // Health pages of the hosted services, pinged so sleeping ones start (see
+  // ServerWakeUp): --dart-define=WAKE_UP_URLS=https://a/health,https://b/health
+  static const String _wakeUpUrls = String.fromEnvironment('WAKE_UP_URLS');
+
+  static List<Uri> get wakeUpUrls => [
+    for (final url in _wakeUpUrls.split(','))
+      if (url.trim().isNotEmpty) Uri.parse(url.trim()),
+  ];
+
   // Admin website for staff and admin accounts. Override with
   // --dart-define=ADMIN_URL=https://...
   static const String _adminUrlOverride = String.fromEnvironment('ADMIN_URL');

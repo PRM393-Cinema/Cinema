@@ -3,6 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../core/session/session_state.dart';
 import '../core/utils/layout.dart';
+import '../core/widgets/server_starting_notice.dart';
 import '../core/widgets/top_notice.dart';
 import 'routes/app_routes.dart';
 import 'theme/app_theme.dart';
@@ -133,8 +134,12 @@ class _SessionAppState extends State<SessionApp> {
           behavior: const MaterialScrollBehavior().copyWith(
             scrollbars: isDesktopLayout(context),
           ),
-          child:
-              widget.builder?.call(context, child) ?? child ?? const SizedBox(),
+          child: ServerStartingNotice(
+            child:
+                widget.builder?.call(context, child) ??
+                child ??
+                const SizedBox(),
+          ),
         ),
       ),
     );

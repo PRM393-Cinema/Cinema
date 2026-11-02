@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 
 import 'admin/admin_app.dart';
 import 'app/app_dependencies.dart';
+import 'core/network/server_wake_up.dart';
 import 'core/session/session_state.dart';
 import 'data/models/auth_response.dart';
 
 // Admin website: flutter run -d chrome -t lib/main_admin.dart
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Hosted services sleep when idle: start them while the app loads.
+  ServerWakeUp.configured?.wake();
 
   final sessionState = SessionState();
   final dependencies = AppDependencies.remote(session: sessionState);

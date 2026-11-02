@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'access_token_provider.dart';
 import 'api_config.dart';
 import 'api_exception.dart';
+import 'server_wake_up.dart';
 
 class ApiClient {
   ApiClient({
@@ -13,13 +14,18 @@ class ApiClient {
     String? baseUrl,
     this.tokenProvider,
     this.timeout = const Duration(seconds: 15),
+    ServerWakeUp? wakeUp,
   }) : _httpClient = httpClient ?? http.Client(),
-       baseUrl = baseUrl ?? ApiConfig.baseUrl;
+       baseUrl = baseUrl ?? ApiConfig.baseUrl,
+       _wakeUp = wakeUp ?? ServerWakeUp.configured;
 
   final http.Client _httpClient;
   final String baseUrl;
   final Duration timeout;
   final AccessTokenProvider? tokenProvider;
+
+  // Set on hosted deployments whose services sleep when idle.
+  final ServerWakeUp? _wakeUp;
 
   static const sessionCheckInterval = Duration(minutes: 1);
   DateTime? _lastSessionCheck;
@@ -80,7 +86,7 @@ class ApiClient {
     final token = authenticated ? storedToken : null;
 
     try {
-      var response = await _request(method, uri, body, token);
+      var response = await _requestWaking(method, uri, body, token);
 
       // The access token lives for an hour: renew it once with the refresh
       // token and repeat the request before reporting the session as expired.
@@ -95,7 +101,7 @@ class ApiClient {
           );
         }
 
-        response = await _request(method, uri, body, renewedToken);
+        response = await _requestWaking(method, uri, body, renewedToken);
       }
 
       if (authenticated && response.statusCode == 401) {
@@ -150,6 +156,57 @@ class ApiClient {
             key: '$value',
       },
     );
+  }
+
+  // A sleeping service answers 502/503/504 through the gateway, and a sleeping
+  // gateway may not answer before the timeout. With wake-up configured, wake
+  // the services and try again for about a minute instead of failing at once.
+  // The gateway's 503 means no service received the request, so any request
+  // is repeated; other failures only for reads, which are safe to send twice.
+  Future<http.Response> _requestWaking(
+    String method,
+    Uri uri,
+    Object? body,
+    String? bearerToken,
+  ) async {
+    final wakeUp = _wakeUp;
+    if (wakeUp == null) return _request(method, uri, body, bearerToken);
+
+    final read = method == 'GET';
+    final waited = Stopwatch()..start();
+    var waiting = false;
+    try {
+      for (var attempt = 0; ; attempt++) {
+        http.Response? response;
+        ApiException? failure;
+        try {
+          response = await _request(method, uri, body, bearerToken);
+        } on ApiException catch (error) {
+          if (!read) rethrow;
+          failure = error;
+        }
+
+        final status = response?.statusCode;
+        final starting =
+            status == 503 ||
+            (read && (failure != null || status == 502 || status == 504));
+        if (!starting ||
+            attempt >= wakeUp.retryDelays.length ||
+            waited.elapsed >= wakeUp.maxWait) {
+          if (failure != null) throw failure;
+          return response!;
+        }
+
+        if (!waiting) {
+          waiting = true;
+          wakeUp.waiting.value++;
+        }
+        wakeUp.wake();
+        await Future<void>.delayed(wakeUp.retryDelays[attempt]);
+      }
+    } finally {
+      if (waiting) wakeUp.waiting.value--;
+    }
   }
 
   Future<http.Response> _request(
