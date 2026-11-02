@@ -250,6 +250,7 @@ void main() {
           await tester.pump();
           await tester.tap(send);
           await tester.pump();
+          await tester.pump(); // Apply the post-frame scroll in the compact panel.
           expect(requests.single['messages'], [
             {'role': 'user', 'content': 'Gợi ý phim hay'},
           ]);

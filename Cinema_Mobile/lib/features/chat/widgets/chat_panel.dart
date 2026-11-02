@@ -220,7 +220,7 @@ class _ChatPanelState extends State<ChatPanel> {
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
-                  'AI can make mistakes. Messages are sent to OpenAI; avoid personal information.',
+                      'AI may make mistakes. Chats go via OpenRouter to the model provider. Avoid personal data.',
                   style: AppTextStyles.caption.copyWith(
                     color: colors.textSecondary,
                   ),

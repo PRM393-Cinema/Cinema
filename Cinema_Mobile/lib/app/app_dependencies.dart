@@ -49,7 +49,7 @@ class AppDependencies {
       bookingRepository: RemoteBookingRepository(service: bookingService),
       staffService: StaffService(client: client),
       chatService: ChatService(
-        client: ApiClient(timeout: const Duration(seconds: 35)),
+        client: ApiClient(timeout: const Duration(seconds: 75)),
       ),
     );
   }
