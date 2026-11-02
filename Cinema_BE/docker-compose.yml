@@ -134,6 +134,7 @@ services:
       OpenRouter__ApiKey: ${OPENROUTER_API_KEY:-}
       OpenRouter__Model: ${OPENROUTER_MODEL:-openai/gpt-6.1-sol}
       OpenRouter__ReasoningEffort: ${OPENROUTER_REASONING_EFFORT:-medium}
+      CinemaApi__BaseUrl: http://api-gateway:8080/
     ports:
       - "127.0.0.1:5168:8080"
 

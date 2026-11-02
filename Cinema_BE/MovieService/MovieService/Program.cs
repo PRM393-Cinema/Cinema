@@ -49,7 +49,13 @@ builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<ISeatService, SeatService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.Configure<ChatOptions>(builder.Configuration.GetSection("OpenRouter"));
-builder.Services.AddHttpClient<CinemaChatService>(client => client.Timeout = TimeSpan.FromSeconds(60));
+builder.Services.AddScoped<CinemaChatTools>();
+builder.Services.AddHttpClient<CinemaChatService>(client => client.Timeout = TimeSpan.FromSeconds(120));
+builder.Services.AddHttpClient("cinema-account", client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["CinemaApi:BaseUrl"] ?? "http://localhost:5000/");
+    client.Timeout = TimeSpan.FromSeconds(10);
+});
 // Global per-instance budget, in addition to the gateway's per-IP limit.
 builder.Services.AddRateLimiter(options =>
 {

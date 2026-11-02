@@ -137,6 +137,7 @@ public sealed class ChatTests(ChatApiFactory factory) : IClassFixture<ChatApiFac
 public sealed class ChatApiFactory : MovieApiFactory
 {
     public ChatProviderHandler Handler { get; } = new();
+    public ChatAccountHandler Accounts { get; } = new();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -145,6 +146,8 @@ public sealed class ChatApiFactory : MovieApiFactory
         {
             services.Configure<ChatOptions>(options => { options.ApiKey = "test-openai-key"; options.Model = "openai/gpt-6.1-sol"; });
             services.AddHttpClient<CinemaChatService>().ConfigurePrimaryHttpMessageHandler(() => Handler);
+            services.AddHttpClient("cinema-account", client => client.BaseAddress = new Uri("http://gateway.test/"))
+                .ConfigurePrimaryHttpMessageHandler(() => Accounts);
         });
     }
 }
@@ -157,6 +160,7 @@ public sealed class ChatProviderHandler : HttpMessageHandler
     public int Calls { get; private set; }
     public HttpStatusCode Status { get; set; } = HttpStatusCode.OK;
     public string? Output { get; set; }
+    public Queue<string> Outputs { get; } = new();
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
@@ -164,16 +168,34 @@ public sealed class ChatProviderHandler : HttpMessageHandler
         LastBody = await request.Content!.ReadAsStringAsync(cancellationToken);
         LastAuthorization = request.Headers.Authorization?.ToString();
         LastUri = request.RequestUri!.ToString();
+        var output = Outputs.Count > 0 ? Outputs.Dequeue() : Output;
         return new HttpResponseMessage(Status)
         {
-            Content = JsonContent.Create(Output is null ? new
+            Content = JsonContent.Create(output is null ? new
             {
                 status = "completed",
                 output = new object[] {
                     new { type = "reasoning" },
                     new { type = "message", content = new[] { new { type = "output_text", text = "Có phim Kiểm Thử." } } }
                 }
-            } : (object)JsonSerializer.Deserialize<JsonElement>(Output))
+            } : (object)JsonSerializer.Deserialize<JsonElement>(output))
         };
+    }
+}
+
+public sealed class ChatAccountHandler : HttpMessageHandler
+{
+    public int Calls { get; private set; }
+    public string? LastAuthorization { get; private set; }
+    public string? LastPath { get; private set; }
+    public string Output { get; set; } = "[]";
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
+    {
+        Assert.Equal(HttpMethod.Get, request.Method);
+        Calls++;
+        LastPath = request.RequestUri!.PathAndQuery;
+        LastAuthorization = request.Headers.Authorization?.ToString();
+        return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            { Content = new StringContent(Output, System.Text.Encoding.UTF8, "application/json") });
     }
 }

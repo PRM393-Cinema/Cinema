@@ -21,6 +21,8 @@ public class LockedAccountTests
     [InlineData("/api/v1/auth/me")]
     [InlineData("/api/v1/auth/users")]
     [InlineData("/api/v1/bookings/1")]
+    [InlineData("/api/v1/bookings/assistant-summary")]
+    [InlineData("/api/v1/chat/account")]
     public async Task ProtectedRoutes_RejectLockedAccountBeforeForwarding(string path)
     {
         await using var factory = new GatewayFactory();
@@ -33,7 +35,8 @@ public class LockedAccountTests
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer", new JwtSecurityTokenHandler().WriteToken(token));
 
-        using var response = await client.GetAsync(path);
+        using var request = new HttpRequestMessage(path == "/api/v1/chat/account" ? HttpMethod.Post : HttpMethod.Get, path);
+        using var response = await client.SendAsync(request);
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
         using var problem = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync());
         Assert.Equal("ACCOUNT_LOCKED", problem.RootElement.GetProperty("errorCode").GetString());
