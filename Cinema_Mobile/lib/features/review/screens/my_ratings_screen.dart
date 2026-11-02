@@ -112,6 +112,25 @@ class _MyRatingsScreenState extends State<MyRatingsScreen> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (desktop) ...[
+                  Semantics(
+                    header: true,
+                    child: Text(
+                      'My ratings',
+                      style: AppTextStyles.heading1.copyWith(
+                        color: AppPalette.of(context).textPrimary,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    'Revisit the films you\'ve rated.',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppPalette.of(context).textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                ],
                 LayoutBuilder(
                   builder: (context, constraints) {
                     final compact = constraints.maxWidth < 600;
@@ -277,33 +296,112 @@ class _MyRatingsScreenState extends State<MyRatingsScreen> {
 
   Widget _ratingCard(MovieReview review) {
     final desktop = isDesktopLayout(context);
+    final colors = AppPalette.of(context);
     return SizedBox(
       key: ValueKey('ratingCard-${review.id}'),
       height: desktop ? 240 * MediaQuery.textScalerOf(context).scale(1) : null,
       child: CinemaPanel(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextButton(
-              onPressed: () => Navigator.pushNamed(
-                context,
-                AppRoutes.movieDetail(review.movieId),
-              ),
-              child: Tooltip(
-                message: review.movieLabel,
-                child: Text(
-                  review.movieLabel,
-                  style: AppTextStyles.title,
-                  maxLines: desktop ? 1 : null,
-                  overflow: desktop ? TextOverflow.ellipsis : null,
+        padding: EdgeInsets.zero,
+        child: Material(
+          type: MaterialType.transparency,
+          child: Semantics(
+            button: true,
+            label: 'View review of ${review.movieLabel}',
+            child: InkWell(
+              borderRadius: AppRadius.borderRadiusLg,
+              onTap: () => _openReview(review),
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Tooltip(
+                      message: review.movieLabel,
+                      child: Text(
+                        review.movieLabel,
+                        style: AppTextStyles.title.copyWith(
+                          color: colors.primary,
+                        ),
+                        maxLines: desktop ? 1 : 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    ReviewTile(review: review, compact: true),
+                    if (desktop) const Spacer(),
+                    const SizedBox(height: AppSpacing.md),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'View review',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: colors.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Icon(
+                          Icons.arrow_forward_rounded,
+                          size: 18,
+                          color: colors.primary,
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ),
-            const SizedBox(height: AppSpacing.sm),
-            ReviewTile(review: review, compact: desktop),
-          ],
+          ),
         ),
+      ),
+    );
+  }
+
+  void _openReview(MovieReview review) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        key: const Key('ratingReviewDetail'),
+        backgroundColor: AppPalette.of(dialogContext).surface,
+        surfaceTintColor: Colors.transparent,
+        constraints: const BoxConstraints(maxWidth: 640),
+        scrollable: true,
+        title: const Text('Your review'),
+        content: SizedBox(
+          width: 560,
+          child: SelectionArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(review.movieLabel, style: AppTextStyles.heading2),
+                const SizedBox(height: AppSpacing.lg),
+                ReviewTile(review: review),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            key: const Key('closeRatingReview'),
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Close'),
+          ),
+          TextButton.icon(
+            key: const Key('ratingReviewMovie'),
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              Navigator.pushNamed(
+                context,
+                AppRoutes.movieDetail(review.movieId),
+              );
+            },
+            icon: const Icon(Icons.open_in_new_rounded, size: 18),
+            label: const Text('View movie'),
+          ),
+        ],
       ),
     );
   }

@@ -317,7 +317,12 @@ class ReviewTile extends StatelessWidget {
                 review.mine
                     ? '${review.reviewerName} (you)'
                     : review.reviewerName,
-                style: AppTextStyles.title,
+                style: compact
+                    ? AppTextStyles.bodySmall.copyWith(
+                        color: AppPalette.of(context).textSecondary,
+                        fontWeight: FontWeight.w500,
+                      )
+                    : AppTextStyles.title,
                 maxLines: compact ? 1 : null,
                 overflow: compact ? TextOverflow.ellipsis : null,
               ),
@@ -328,20 +333,21 @@ class ReviewTile extends StatelessWidget {
         ),
         Text(
           '${formatDate(review.updatedAt)}${review.edited ? ' · edited' : ''}',
-          style: AppTextStyles.bodySmall,
+          style: compact
+              ? AppTextStyles.caption.copyWith(
+                  color: AppPalette.of(context).textSecondary,
+                )
+              : AppTextStyles.bodySmall,
           maxLines: compact ? 1 : null,
           overflow: compact ? TextOverflow.ellipsis : null,
         ),
         if (review.comment case final comment?) ...[
           const SizedBox(height: AppSpacing.xs),
-          Tooltip(
-            message: compact ? comment : '',
-            child: Text(
-              comment,
-              style: AppTextStyles.body.copyWith(height: compact ? 1.5 : null),
-              maxLines: compact ? 3 : null,
-              overflow: compact ? TextOverflow.ellipsis : null,
-            ),
+          Text(
+            comment,
+            style: AppTextStyles.body.copyWith(height: 1.5),
+            maxLines: compact ? 3 : null,
+            overflow: compact ? TextOverflow.ellipsis : null,
           ),
         ],
       ],

@@ -84,7 +84,7 @@ void main() {
             tester.widget<Text>(find.text(comment)).overflow,
             TextOverflow.ellipsis,
           );
-          expect(find.byTooltip(comment), findsOneWidget);
+          expect(find.text('View review'), findsNWidgets(2));
           expect(tester.takeException(), isNull);
         },
       );
@@ -119,6 +119,92 @@ void main() {
       expect(reviews.first.mine, isTrue);
     },
   );
+
+  for (final size in [
+    const Size(320, 812),
+    const Size(844, 375),
+    const Size(1440, 900),
+  ]) {
+    for (final light in [false, true]) {
+      testWidgets(
+        'Full rating can be read and closed at $size / light=$light',
+        (tester) async {
+          FlutterSecureStorage.setMockInitialValues({
+            'appearance.theme': light ? 'light' : 'dark',
+          });
+          tester.view.physicalSize = size;
+          tester.view.devicePixelRatio = 1;
+          tester.platformDispatcher.textScaleFactorTestValue = 1.5;
+          addTearDown(tester.view.reset);
+          addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+          final title = List.filled(12, 'Long movie title').join(' ');
+          final comment =
+              '${List.filled(30, 'A very long review.').join(' ')} END';
+          await tester.pumpWidget(
+            buildTestApp(
+              authenticated: true,
+              initialRoute: AppRoutes.myRatings,
+              bookingRepository: FakeBookingRepository()
+                ..myReviews = [
+                  MovieReview.fromJson({
+                    ..._review(1, title, 5),
+                    'comment': comment,
+                    'reviewerName': 'A very long customer name',
+                  }),
+                ],
+            ),
+          );
+          await pumpRoute(tester);
+          await tester.enterText(
+            find.byKey(const Key('ratingMovieFilter')),
+            'Long movie',
+          );
+          await _selectStars(tester, 5);
+          final card = find.byKey(const ValueKey('ratingCard-1'));
+          await tester.ensureVisible(card);
+          final open = find.descendant(
+            of: card,
+            matching: find.byType(InkWell),
+          );
+          // Keyboard activation uses the same action as clicking the card.
+          Focus.of(
+            tester.element(
+              find
+                  .descendant(of: open, matching: find.byType(MouseRegion))
+                  .first,
+            ),
+          ).requestFocus();
+          await tester.pump();
+          await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+          await pumpRoute(tester);
+          final detail = find.byKey(const Key('ratingReviewDetail'));
+          expect(detail, findsOneWidget);
+          for (final text in [title, comment]) {
+            final full = tester.widget<Text>(
+              find.descendant(of: detail, matching: find.text(text)),
+            );
+            expect(full.maxLines, isNull);
+            expect(full.overflow, isNull);
+          }
+          final reviewText = find.descendant(
+            of: detail,
+            matching: find.text(comment),
+          );
+          await tester.ensureVisible(reviewText);
+          expect(tester.takeException(), isNull);
+          await tester.tap(find.byKey(const Key('closeRatingReview')));
+          await pumpRoute(tester);
+          expect(detail, findsNothing);
+          await tester.drag(find.byType(ListView), const Offset(0, 2000));
+          await pumpRoute(tester);
+          expect(find.text('5 stars'), findsOneWidget);
+          expect(find.text('Long movie'), findsOneWidget);
+          expect(card, findsOneWidget);
+          expect(tester.takeException(), isNull);
+        },
+      );
+    }
+  }
 
   for (final width in [375.0, 1280.0]) {
     testWidgets('Ratings opens beside tickets at width $width', (tester) async {
@@ -214,6 +300,9 @@ void main() {
     await _selectStars(tester, null);
     expect(find.text('Inception'), findsOneWidget);
     await tester.tap(find.text('Inception'));
+    await pumpRoute(tester);
+    expect(find.byKey(const Key('ratingReviewDetail')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('ratingReviewMovie')));
     await pumpRoute(tester);
     expect(find.text('Movie Detail'), findsOneWidget);
     expect(tester.takeException(), isNull);
