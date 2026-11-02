@@ -19,5 +19,8 @@
         public string MediaType { get; set; } = "image/png";
 
         public byte[] Content { get; set; } = [];
+
+        // Tên file khi ảnh phải gửi thành file đính kèm (Brevo không hỗ trợ ảnh nhúng)
+        public string FileName { get; set; } = "image.png";
     }
 }

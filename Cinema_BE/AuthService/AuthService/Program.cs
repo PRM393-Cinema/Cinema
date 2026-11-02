@@ -68,7 +68,21 @@ builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddScoped<IOtpCodeRepository, OtpCodeRepository>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IOtpService, OtpService>();
-builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
+// Có Brevo:ApiKey thì gửi email qua HTTPS API của Brevo (Render gói free chặn cổng SMTP), không thì qua SMTP
+builder.Services.Configure<BrevoOptions>(builder.Configuration.GetSection("Brevo"));
+var brevo = builder.Configuration.GetSection("Brevo").Get<BrevoOptions>() ?? new BrevoOptions();
+if (brevo.IsConfigured)
+{
+    builder.Services.AddHttpClient<IEmailSender, BrevoEmailSender>(client =>
+    {
+        client.BaseAddress = new Uri(brevo.BaseUrl);
+        client.Timeout = TimeSpan.FromSeconds(brevo.TimeoutSeconds);
+    });
+}
+else
+{
+    builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
+}
 builder.Services.AddScoped<IAuthService, AuthService.Service.AuthService>();
 builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 

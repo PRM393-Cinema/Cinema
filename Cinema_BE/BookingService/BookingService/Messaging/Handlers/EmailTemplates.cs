@@ -32,7 +32,8 @@ namespace BookingService.Messaging.Handlers
             email.InlineImages.Add(new EmailImage
             {
                 ContentId = TicketQr.EmailContentId,
-                Content = TicketQr.Png(data.BookingCode)
+                Content = TicketQr.Png(data.BookingCode),
+                FileName = $"ma-qr-{data.BookingCode}.png"
             });
             return email;
         }
