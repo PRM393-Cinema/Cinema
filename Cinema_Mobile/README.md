@@ -105,6 +105,24 @@ backend CORS policy to allow the deployed web origin: set
 `Cors__AllowedOrigins__0=https://<web host>` on the gateway (an empty list
 allows every origin, which is only meant for local development).
 
+### Hosting where services sleep (Render free plan)
+
+Free Render services sleep after 15 minutes without requests and take up to a
+minute to start. A request the gateway forwards does not wake a sleeping
+service, but a request from the browser or phone does. Pass the services'
+health pages with `WAKE_UP_URLS` (comma separated, on both builds above):
+
+```powershell
+--dart-define=WAKE_UP_URLS=https://<auth>/health,https://<movie>/health,https://<booking>/health,https://<gateway>/health
+```
+
+The app then pings them when it starts, and while a service starts (the
+gateway answers 502/503/504 or does not answer) it shows "Starting the
+server…" and retries for about a minute instead of failing. Reads are retried;
+other requests only after a 503, which means no service received them. Without
+`WAKE_UP_URLS`, as with a local backend, nothing is pinged or retried
+(`lib/core/network/server_wake_up.dart`).
+
 Every screen has its own URL, for example `#/movies/7`, `#/showtimes/12/seats`
 and `#/bookings/34/payment`. Refreshing the page or opening a shared link shows
 the same screen: it loads the movie, showtime or booking by id, with the home
