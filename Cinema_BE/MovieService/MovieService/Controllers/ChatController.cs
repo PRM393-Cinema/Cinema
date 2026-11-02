@@ -15,7 +15,7 @@ public sealed class ChatController(CinemaChatService chat) : ControllerBase
         if (!chat.IsConfigured)
             return Problem(statusCode: 503, detail: "Cinema AI is not configured yet. Please try again later.");
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        timeout.CancelAfter(TimeSpan.FromSeconds(25));
+        timeout.CancelAfter(TimeSpan.FromSeconds(60));
         try
         {
             return Ok(await chat.ReplyAsync(request, timeout.Token));

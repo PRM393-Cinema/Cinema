@@ -43,8 +43,9 @@ public sealed class ChatTests(ChatApiFactory factory) : IClassFixture<ChatApiFac
         using var payload = JsonDocument.Parse(factory.Handler.LastBody!);
         var root = payload.RootElement;
         Assert.False(root.GetProperty("store").GetBoolean());
-        Assert.Equal(900, root.GetProperty("max_output_tokens").GetInt32());
-        Assert.Equal("test-model", root.GetProperty("model").GetString());
+        Assert.Equal(4096, root.GetProperty("max_output_tokens").GetInt32());
+        Assert.Equal("medium", root.GetProperty("reasoning").GetProperty("effort").GetString());
+        Assert.Equal("openai/gpt-6.1-sol", root.GetProperty("model").GetString());
         var prompt = root.GetProperty("instructions").GetString()!;
         Assert.Contains("Phim", prompt);
         Assert.Contains("120000", prompt); // NORMAL 3D: base 100,000 + format 20,000.
@@ -53,7 +54,7 @@ public sealed class ChatTests(ChatApiFactory factory) : IClassFixture<ChatApiFac
         Assert.DoesNotContain("888888", prompt);
         Assert.DoesNotContain("test-openai-key", prompt);
         Assert.Equal("Bearer test-openai-key", factory.Handler.LastAuthorization);
-        Assert.Equal("https://api.openai.com/v1/responses", factory.Handler.LastUri);
+        Assert.Equal("https://openrouter.ai/api/v1/responses", factory.Handler.LastUri);
     }
 
     [Theory]
@@ -142,7 +143,7 @@ public sealed class ChatApiFactory : MovieApiFactory
         base.ConfigureWebHost(builder);
         builder.ConfigureServices(services =>
         {
-            services.Configure<ChatOptions>(options => { options.ApiKey = "test-openai-key"; options.Model = "test-model"; });
+            services.Configure<ChatOptions>(options => { options.ApiKey = "test-openai-key"; options.Model = "openai/gpt-6.1-sol"; });
             services.AddHttpClient<CinemaChatService>().ConfigurePrimaryHttpMessageHandler(() => Handler);
         });
     }

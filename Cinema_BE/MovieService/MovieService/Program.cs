@@ -48,8 +48,8 @@ builder.Services.AddScoped<IShowtimeService, ShowtimeService.Service.Impl.Showti
 builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<ISeatService, SeatService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-builder.Services.Configure<ChatOptions>(builder.Configuration.GetSection("OpenAI"));
-builder.Services.AddHttpClient<CinemaChatService>(client => client.Timeout = TimeSpan.FromSeconds(25));
+builder.Services.Configure<ChatOptions>(builder.Configuration.GetSection("OpenRouter"));
+builder.Services.AddHttpClient<CinemaChatService>(client => client.Timeout = TimeSpan.FromSeconds(60));
 // Global per-instance budget, in addition to the gateway's per-IP limit.
 builder.Services.AddRateLimiter(options =>
 {

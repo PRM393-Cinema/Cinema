@@ -49,16 +49,18 @@ public sealed class CinemaChatService(
                 seatPrices = SeatPrices.Of(session.Price, session.Format)
             })
         });
-        using var outgoing = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/responses");
+        using var outgoing = new HttpRequestMessage(HttpMethod.Post, "https://openrouter.ai/api/v1/responses");
         outgoing.Headers.Authorization = new AuthenticationHeaderValue("Bearer", options.Value.ApiKey);
         outgoing.Content = JsonContent.Create(new
         {
             model = options.Value.Model,
             store = false,
-            max_output_tokens = 900,
+            // Reasoning and visible text share this budget.
+            max_output_tokens = 4096,
+            reasoning = new { effort = options.Value.ReasoningEffort },
             instructions = """
                 You are Cinema AI, the CosmoQ Cinema assistant. Reply in the user's language; default to Vietnamese.
-                Be concise, friendly and useful. Use plain text and short paragraphs, not Markdown tables or HTML.
+                Be concise, friendly and useful. Keep replies under 200 words. Use plain text and short paragraphs, not Markdown tables or HTML.
                 Help with movie recommendations, the supplied showtimes, and navigating the booking process.
                 For current movies, release dates, showtimes and prices, use ONLY the catalogue JSON below.
                 It is a bounded snapshot, so do not claim a film has no showtimes just because none appear here.
