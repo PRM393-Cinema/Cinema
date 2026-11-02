@@ -9,6 +9,11 @@ import '../../../app/theme/app_colors.dart';
 import '../../../core/session/roles.dart';
 import '../../../core/session/session_state.dart';
 import '../../../core/utils/layout.dart';
+import '../../../core/utils/formatters.dart';
+import '../../../core/network/api_exception.dart';
+import '../../../data/models/booking_draft.dart';
+import '../../../data/models/seat.dart';
+import '../../../data/repositories/catalog_repository.dart';
 import '../../../data/services/chat_service.dart';
 import 'chat_panel.dart';
 
@@ -17,12 +22,14 @@ class ChatLauncher extends StatefulWidget {
   const ChatLauncher({
     required this.routes,
     required this.service,
+    required this.catalogRepository,
     required this.child,
     super.key,
   });
 
   final RouteTracker routes;
   final ChatService service;
+  final CatalogRepository catalogRepository;
   final Widget child;
 
   @override
@@ -36,6 +43,7 @@ class _ChatLauncherState extends State<ChatLauncher> {
   bool _hasOpened = false;
   bool _hovered = false;
   bool _focused = false;
+  bool _reviewingBooking = false;
 
   @override
   void dispose() {
@@ -52,6 +60,135 @@ class _ChatLauncherState extends State<ChatLauncher> {
       _hovered = false;
     });
     if (restoreFocus) _buttonFocus.requestFocus();
+  }
+
+  Future<bool> _reviewBooking(ChatBookingProposal proposal) async {
+    final session = SessionProvider.of(context);
+    final userId = session.user?.userId;
+    final navigator = widget.routes.navigator;
+    if (!session.isAuthenticated || navigator == null) return false;
+    FocusManager.instance.primaryFocus?.unfocus();
+    // The launcher sits above the navigator; hide it while its modal is open.
+    setState(() => _reviewingBooking = true);
+    try {
+      if (!proposal.expiresAt.isAfter(DateTime.now())) {
+        throw const FormatException(
+          'This proposal expired. Ask Cinema AI for a fresh proposal.',
+        );
+      }
+      final movie = await widget.catalogRepository.getMovie(proposal.movieId);
+      final showtime = await widget.catalogRepository.getShowtime(
+        proposal.showtimeId,
+      );
+      final seatMap = await widget.catalogRepository.getSeatMap(showtime);
+      final seats = seatMap.seats
+          .where((seat) => proposal.seatIds.contains(seat.id))
+          .toList();
+      final draft = BookingDraft(
+        movie: movie,
+        showtime: showtime,
+        seats: seats,
+      );
+      if (showtime.movieId != movie.id ||
+          showtime.status != 'OPEN' ||
+          !showtime.startTime.isAfter(DateTime.now()) ||
+          seats.length != proposal.seatIds.length ||
+          seats.any(
+            (s) => seatMap.statusOf(s) != SeatReservationStatus.available,
+          ) ||
+          seats.any(
+            (s) => s.isSweetbox && s.sweetboxPartnerIn(seats) == null,
+          ) ||
+          (draft.totalPrice - proposal.total).abs() > 0.01) {
+        throw const FormatException(
+          'Seats, showtime or prices changed. Ask Cinema AI to refresh the proposal.',
+        );
+      }
+      if (!mounted ||
+          session.user?.userId != userId ||
+          !session.isAuthenticated) {
+        return false;
+      }
+      final confirmed = await showDialog<bool>(
+        context: navigator.context,
+        builder: (context) => AlertDialog(
+          title: const Text('Review booking'),
+          scrollable: true,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(movie.title, style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 12),
+              Text(
+                '${formatDateTime(showtime.startTime)} · ${showtime.format}',
+              ),
+              Text('Seats: ${seats.map((s) => s.label).join(', ')}'),
+              const SizedBox(height: 12),
+              Text('Tickets: ${formatVnd(draft.totalPrice)}'),
+              const SizedBox(height: 12),
+              const Text(
+                'Confirm to hold these seats and open checkout. Snacks, discounts and points can be reviewed there. No payment is taken here.',
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              key: const Key('confirmChatBooking'),
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Confirm & hold seats'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true ||
+          !mounted ||
+          !session.isAuthenticated ||
+          session.user?.userId != userId) {
+        return false;
+      }
+      if (!proposal.expiresAt.isAfter(DateTime.now())) {
+        throw const FormatException(
+          'This proposal expired. Please refresh it.',
+        );
+      }
+      _close();
+      // The existing summary performs the real transaction, checks seat conflicts and recalculates prices.
+      navigator.pushNamed(
+        AppRoutes.bookingSummary(showtime.id),
+        arguments: draft,
+      );
+      return true;
+    } on Object catch (error) {
+      if (mounted && navigator.mounted) {
+        await showDialog<void>(
+          context: navigator.context,
+          builder: (context) => AlertDialog(
+            title: const Text('Unable to prepare booking'),
+            content: Text(
+              error is FormatException
+                  ? error.message
+                  : error is ApiException
+                  ? error.message
+                  : 'Unable to check seats. Please try again.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+      return false;
+    } finally {
+      if (mounted) setState(() => _reviewingBooking = false);
+    }
   }
 
   @override
@@ -95,11 +232,11 @@ class _ChatLauncherState extends State<ChatLauncher> {
                     width: math.min(400, constraints.maxWidth - 24),
                     height: math.min(600, availableHeight),
                     child: Offstage(
-                      offstage: !_open,
+                      offstage: !_open || _reviewingBooking,
                       child: TickerMode(
-                        enabled: _open,
+                        enabled: _open && !_reviewingBooking,
                         child: ExcludeFocus(
-                          excluding: !_open,
+                          excluding: !_open || _reviewingBooking,
                           child: CallbackShortcuts(
                             bindings: {
                               const SingleActivator(
@@ -113,8 +250,10 @@ class _ChatLauncherState extends State<ChatLauncher> {
                                 focusNode: _panelFocus,
                                 child: ChatPanel(
                                   key: ValueKey(session.user?.userId),
+                                  userId: session.user?.userId,
                                   service: widget.service,
                                   onClose: _close,
+                                  onReviewBooking: _reviewBooking,
                                 ),
                               ),
                             ),
@@ -123,7 +262,7 @@ class _ChatLauncherState extends State<ChatLauncher> {
                       ),
                     ),
                   ),
-                if (!_open)
+                if (!_open && !_reviewingBooking)
                   Positioned(
                     right: 16,
                     bottom: bottom + (hasBottomNav ? 104 : 0),

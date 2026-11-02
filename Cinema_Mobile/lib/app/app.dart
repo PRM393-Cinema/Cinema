@@ -48,7 +48,7 @@ class _CinemaAppState extends State<CinemaApp> {
   final _routes = RouteTracker();
   late final _chatService =
       widget.chatService ??
-      ChatService(client: ApiClient(timeout: const Duration(seconds: 75)));
+      ChatService(client: ApiClient(timeout: const Duration(seconds: 135)));
   bool _signingOut = false;
 
   Future<void> _signOut() async {
@@ -97,6 +97,7 @@ class _CinemaAppState extends State<CinemaApp> {
       builder: (context, child) => ChatLauncher(
         routes: _routes,
         service: _chatService,
+        catalogRepository: widget.catalogRepository,
         child: CustomerFrame(
           routes: _routes,
           onSignOut: _signOut,
