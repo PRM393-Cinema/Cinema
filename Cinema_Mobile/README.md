@@ -135,7 +135,9 @@ memory, so a refreshed booking summary returns to the seat map.
 
 ## Cinema AI
 
-The Movies page has a **Cinema AI** launcher on desktop and mobile. It answers
+Customer pages have a floating **Cinema AI** chat launcher on desktop and mobile.
+The icon expands on desktop hover or keyboard focus and opens an inline chat panel.
+The conversation stays available when minimized or changing pages. It answers
 movie/showtime questions and explains booking steps using the current public
 catalogue. Configure the OpenAI key only in the backend; see
 [Cinema AI setup](../Cinema_BE/docs/CINEMA_AI.md). No key is bundled in Flutter.

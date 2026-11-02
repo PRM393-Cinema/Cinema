@@ -1,8 +1,10 @@
 # Cinema AI
 
 Cinema AI is a customer assistant for movies, upcoming showtimes and booking help.
-Open **Cinema AI** from the Movies page on web or mobile. Guests can chat without
-signing in. Booking still uses the existing sign-in, seat selection and payment flow.
+Use the floating chat icon on customer pages on web or mobile. On desktop it
+expands on hover or keyboard focus. Chat opens in a compact panel on the current
+page; minimize it or press Escape without losing the conversation. Guests can chat
+without signing in. Booking still uses the existing sign-in, seat selection and payment flow.
 
 ## Configure OpenAI
 
@@ -58,8 +60,9 @@ The model can be changed through configuration if your OpenAI project uses anoth
 
 The browser/mobile app talks only to Cinema. The backend calls OpenAI's Responses API
 over HTTPS with `store: false`. User questions, recent chat turns and the public catalogue
-are sent to OpenAI. No chat database is created; leaving the screen or choosing New chat
-clears its local history. `store: false` disables response storage for later API retrieval;
+are sent to OpenAI. No chat database is created. Conversation history stays in memory
+when minimized or changing customer pages; New chat, an account change or reloading
+the app clears it. `store: false` disables response storage for later API retrieval;
 it is not a promise of zero provider-side retention. Never enter credentials or payment data.
 
 The assistant cannot book, charge, cancel, refund, query personal accounts or execute tools.
