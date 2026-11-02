@@ -1,14 +1,22 @@
 import 'dart:convert';
 
+import 'package:cinema_fe/app/customer_frame.dart';
 import 'package:cinema_fe/app/routes/app_routes.dart';
 import 'package:cinema_fe/app/theme/app_colors.dart';
 import 'package:cinema_fe/core/utils/formatters.dart';
 import 'package:cinema_fe/core/network/api_client.dart';
+import 'package:cinema_fe/core/session/session_state.dart';
+import 'package:cinema_fe/core/widgets/app_button.dart';
 import 'package:cinema_fe/core/widgets/cinema_account_widgets.dart';
 import 'package:cinema_fe/core/widgets/cinema_background.dart';
 import 'package:cinema_fe/data/models/auth_response.dart';
 import 'package:cinema_fe/data/models/booking.dart';
 import 'package:cinema_fe/data/services/staff_service.dart';
+import 'package:cinema_fe/features/auth/screens/login_screen.dart';
+import 'package:cinema_fe/features/booking/screens/my_bookings_screen.dart';
+import 'package:cinema_fe/features/booking/screens/booking_detail_screen.dart';
+import 'package:cinema_fe/features/notification/screens/notification_list_screen.dart';
+import 'package:cinema_fe/features/review/screens/my_ratings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -53,6 +61,34 @@ void main() {
   }
 
   group('Customer website on a computer', () {
+    testWidgets('Header builds before the navigator overlay is attached', (
+      tester,
+    ) async {
+      _useWindow(tester, _computer);
+      final routes = RouteTracker()..current.value = AppRoutes.home;
+      final session = SessionState()..setAuthenticated(customerUser);
+      addTearDown(routes.current.dispose);
+      addTearDown(session.dispose);
+      await tester.pumpWidget(
+        SessionProvider(
+          sessionState: session,
+          child: MaterialApp(
+            home: CustomerFrame(
+              routes: routes,
+              onSignOut: () {},
+              child: const SizedBox.expand(),
+            ),
+          ),
+        ),
+      );
+      expect(routes.navigator, isNull);
+      expect(_header, findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.tap(find.byKey(const Key('webHeaderAccount')));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('Home scrolls behind the floating navigation', (tester) async {
       _useWindow(tester, _computer);
       await tester.pumpWidget(buildTestApp(authenticated: true));
@@ -175,15 +211,17 @@ void main() {
         );
         expect(
           (container.decoration! as BoxDecoration).color,
-          Colors.transparent,
+          label == 'Movies'
+              ? AppColors.primary.withValues(alpha: 0.06)
+              : Colors.transparent,
         );
       }
       final backdrop = find.byWidgetPredicate(
         (widget) => widget is CustomPaint && widget.painter is CinemaBackdrop,
       );
-      expect(backdrop, findsOneWidget);
-      expect(tester.getRect(backdrop).top, 0);
-      expect(tester.getSize(backdrop), _computer);
+      expect(backdrop, findsNWidgets(2));
+      expect(tester.getRect(backdrop.first).top, 0);
+      expect(tester.getSize(backdrop.first), _computer);
       final homeScaffold = find
           .descendant(
             of: find.byKey(const Key('webFrameBackground')),
@@ -237,8 +275,8 @@ void main() {
       await pumpRoute(tester);
       expect(find.text('My Bookings'), findsNothing);
       expect(_header, findsOneWidget);
-      expect(backdrop, findsOneWidget);
-      expect(tester.getSize(backdrop), _computer);
+      expect(backdrop, findsNWidgets(2));
+      expect(tester.getSize(backdrop.first), _computer);
       expect(linkBorder('My tickets').top.color, AppColors.primary);
       expect(linkBorder('Movies').top.color, Colors.transparent);
 
@@ -258,10 +296,17 @@ void main() {
       await pumpRoute(tester);
 
       expect(find.byKey(const Key('webHeaderRegister')), findsOneWidget);
-      expect(
-        find.descendant(of: _header, matching: find.text('My tickets')),
-        findsNothing,
-      );
+      for (final label in [
+        'Movies',
+        'My tickets',
+        'Ratings',
+        'Notifications',
+      ]) {
+        expect(
+          find.descendant(of: _header, matching: find.text(label)),
+          findsOneWidget,
+        );
+      }
 
       await tester.tap(find.byKey(const Key('webHeaderSignIn')));
       await pumpRoute(tester);
@@ -269,6 +314,60 @@ void main() {
       expect(find.byKey(const Key('loginTitle')), findsOneWidget);
       expect(_header, findsNothing);
     });
+
+    for (final destination in [
+      ('My tickets', AppRoutes.myBookings, MyBookingsScreen),
+      ('Ratings', AppRoutes.myRatings, MyRatingsScreen),
+      ('Notifications', AppRoutes.notifications, NotificationListScreen),
+    ]) {
+      testWidgets('Guest header opens ${destination.$1} after login', (
+        tester,
+      ) async {
+        _useWindow(tester, _computer);
+        final session = SessionState();
+        addTearDown(session.dispose);
+        await tester.pumpWidget(buildTestApp(session: session));
+        await pumpRoute(tester);
+        await tester.tap(
+          find.descendant(of: _header, matching: find.text(destination.$1)),
+        );
+        await pumpRoute(tester);
+        expect(find.byKey(const Key('loginTitle')), findsOneWidget);
+        expect(session.isAuthenticated, isFalse);
+        expect(find.byType(destination.$3), findsNothing);
+        expect(
+          ModalRoute.of(tester.element(find.byType(LoginScreen)))!
+              .settings
+              .arguments,
+          containsPair('pendingRoute', destination.$2),
+        );
+        await tester.enterText(
+          find.descendant(
+            of: find.byKey(const Key('loginEmailField')),
+            matching: find.byType(TextFormField),
+          ),
+          'khachhang1@gmail.com',
+        );
+        await tester.enterText(
+          find.descendant(
+            of: find.byKey(const Key('loginPasswordField')),
+            matching: find.byType(TextFormField),
+          ),
+          '123456',
+        );
+        FocusManager.instance.primaryFocus?.unfocus();
+        await tester.pumpAndSettle();
+        final signIn = find.byType(AppButton).first;
+        await tester.ensureVisible(signIn);
+        await tester.tap(signIn);
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 3));
+        await pumpRoute(tester);
+        expect(session.isAuthenticated, isTrue);
+        expect(find.byType(destination.$3), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      });
+    }
 
     testWidgets('Seat map with the order summary next to it', (tester) async {
       _useWindow(tester, _computer);
@@ -292,6 +391,39 @@ void main() {
       final screen = tester.getTopLeft(find.text('SCREEN'));
       expect(summary.dx, greaterThan(screen.dx));
     });
+
+    for (final light in [false, true]) {
+      testWidgets(
+        'Booking detail keeps the shared website background: $light',
+        (tester) async {
+          FlutterSecureStorage.setMockInitialValues({
+            'appearance.theme': light ? 'light' : 'dark',
+          });
+          _useWindow(tester, _computer);
+          await tester.pumpWidget(
+            buildTestApp(
+              authenticated: true,
+              initialRoute: AppRoutes.bookingDetail(101),
+              bookingRepository: FakeBookingRepository(
+                bookings: [bookingFixture()],
+              ),
+            ),
+          );
+          await pumpRoute(tester);
+          final scaffold = tester.widget<Scaffold>(
+            find.descendant(
+              of: find.byType(BookingDetailScreen),
+              matching: find.byType(Scaffold),
+            ),
+          );
+          expect(scaffold.backgroundColor, Colors.transparent);
+          expect(find.byType(CinemaBackdropTransition), findsOneWidget);
+          expect(find.byKey(const Key('bookingInformation')), findsOneWidget);
+          expect(find.byTooltip('Back'), findsNothing);
+          expect(tester.takeException(), isNull);
+        },
+      );
+    }
 
     testWidgets('Booking details in two columns', (tester) async {
       _useWindow(tester, _computer);

@@ -77,13 +77,10 @@ class AuthScaffold extends StatelessWidget {
                   children: [
                     Positioned.fill(
                       child: ClipRect(
-                        child: CustomPaint(
-                          painter: CinemaBackdrop(
-                            colors: AppPalette.of(context),
-                            logoCenter: Offset(
-                              constraints.maxWidth / 2,
-                              topSpace + 36,
-                            ),
+                        child: CinemaBackdropTransition(
+                          logoCenter: Offset(
+                            constraints.maxWidth / 2,
+                            topSpace + 36,
                           ),
                         ),
                       ),
@@ -159,7 +156,7 @@ class AuthScaffold extends StatelessWidget {
                       ),
                     ),
                     const Positioned(top: 8, right: 8, child: ThemeSwitch()),
-                    if (showBack)
+                    if (showBack && !isDesktopLayout(context))
                       Positioned(
                         top: 8,
                         left: gutter - 8,

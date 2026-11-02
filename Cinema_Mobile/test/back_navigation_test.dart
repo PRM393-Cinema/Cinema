@@ -54,12 +54,26 @@ void main() {
         );
         await pumpFrames(tester);
         await tester.pump();
-        expect(find.byTooltip('Back'), findsOneWidget, reason: route);
+        final desktop = size.width >= 900;
+        expect(
+          find.byTooltip('Back'),
+          desktop ? findsNothing : findsOneWidget,
+          reason: route,
+        );
         expect(tester.takeException(), isNull, reason: route);
 
-        await tester.tap(find.byTooltip('Back'));
+        if (desktop) {
+          tester.state<NavigatorState>(find.byType(Navigator).first).pop();
+        } else {
+          await tester.tap(find.byTooltip('Back'));
+        }
         await pumpFrames(tester);
-        expect(find.text('Step Into CosmoQ Cinema'), findsOneWidget);
+        expect(
+          find.text(
+            desktop ? 'Your next cinema night' : 'Step Into CosmoQ Cinema',
+          ),
+          findsOneWidget,
+        );
         expect(find.byTooltip('Back'), findsNothing);
         await tester.pumpWidget(const SizedBox());
       }
@@ -84,6 +98,33 @@ void main() {
     await pumpRoute(tester);
     expect(find.text('Select Seats'), findsOneWidget);
     expect(find.textContaining('A3'), findsOneWidget);
+  });
+
+  testWidgets('Desktop authentication hides Back and keeps form actions', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1440, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    for (final route in [
+      AppRoutes.login,
+      AppRoutes.register,
+      AppRoutes.forgotPassword,
+      AppRoutes.resetPassword,
+      AppRoutes.verifyEmail,
+    ]) {
+      await tester.pumpWidget(buildTestApp(initialRoute: route));
+      await pumpRoute(tester);
+      expect(find.byTooltip('Back'), findsNothing, reason: route);
+      expect(find.byType(Scaffold), findsOneWidget, reason: route);
+      expect(
+        find.byWidgetPredicate((widget) => widget is ButtonStyleButton),
+        findsWidgets,
+        reason: route,
+      );
+      expect(tester.takeException(), isNull, reason: route);
+      await tester.pumpWidget(const SizedBox());
+    }
   });
 
   testWidgets('Authentication pages have a working Back button', (

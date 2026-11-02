@@ -9,6 +9,7 @@ import '../../../core/utils/formatters.dart';
 import '../../../core/utils/layout.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_state.dart';
+import '../../../core/widgets/cinema_page.dart';
 import '../../../data/models/booking.dart';
 import '../../../data/models/payment.dart';
 import '../../../data/repositories/booking_repository.dart';
@@ -284,30 +285,16 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     );
     final hasActions = canPay || canCancel;
     return Scaffold(
+      backgroundColor: desktop ? Colors.transparent : null,
       body: SafeArea(
         child: Column(
           children: [
             Padding(
               padding: pagePadding(context, AppSpacing.lg),
-              child: Row(
-                children: [
-                  if (Navigator.canPop(context)) ...[
-                    IconButton(
-                      tooltip: 'Back',
-                      onPressed: () => Navigator.maybePop(context),
-                      icon: const Icon(BookingDetailIcons.back),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                  ],
-                  Expanded(
-                    child: Text(
-                      'Booking Detail',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
+              child: CinemaPageHeader(
+                title: 'Booking Detail',
+                subtitle: 'Tickets, payment and booking activity.',
+                actions: [
                   if (booking != null)
                     IconButton(
                       tooltip: 'Refresh booking',

@@ -6,6 +6,7 @@ import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/utils/layout.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/cinema_page.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
@@ -139,11 +140,12 @@ class _PaymentResultScreenState extends State<PaymentResultScreen> {
     return CinemaPage(
       title: 'Payment Result',
       actions: [
-        IconButton(
-          tooltip: 'Close',
-          onPressed: _goHome,
-          icon: const Icon(Icons.close),
-        ),
+        if (!isDesktopLayout(context))
+          IconButton(
+            tooltip: 'Close',
+            onPressed: _goHome,
+            icon: const Icon(Icons.close),
+          ),
       ],
       child: _buildBody(),
     );
@@ -212,8 +214,10 @@ class _PaymentResultScreenState extends State<PaymentResultScreen> {
           useGradient: true,
           onPressed: _openMyBookings,
         ),
-        const SizedBox(height: AppSpacing.md),
-        AppButton.secondary(label: 'Back to home', onPressed: _goHome),
+        if (!isDesktopLayout(context)) ...[
+          const SizedBox(height: AppSpacing.md),
+          AppButton.secondary(label: 'Back to home', onPressed: _goHome),
+        ],
       ],
       _Outcome.pending => [
         AppButton(
@@ -232,11 +236,18 @@ class _PaymentResultScreenState extends State<PaymentResultScreen> {
             ),
           ),
         ],
-        const SizedBox(height: AppSpacing.md),
-        AppButton.secondary(label: 'Back to home', onPressed: _goHome),
+        if (!isDesktopLayout(context)) ...[
+          const SizedBox(height: AppSpacing.md),
+          AppButton.secondary(label: 'Back to home', onPressed: _goHome),
+        ],
       ],
       _Outcome.failed => [
-        AppButton(label: 'Back to home', useGradient: true, onPressed: _goHome),
+        if (!isDesktopLayout(context))
+          AppButton(
+            label: 'Back to home',
+            useGradient: true,
+            onPressed: _goHome,
+          ),
       ],
     };
   }
