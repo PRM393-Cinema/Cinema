@@ -31,7 +31,7 @@ Khách dùng app (web hoặc điện thoại). Nhân viên và admin dùng **tra
    | Trình duyệt | `flutter run -d chrome` |
    | Android emulator | `flutter run` (app gọi `http://10.0.2.2:5000`) |
    | Điện thoại thật cùng wifi | `flutter run --dart-define=API_BASE_URL=http://<IP máy>:5000` |
-   | Trang quản trị (nhân viên, admin) | `flutter run -d chrome -t lib/main_admin.dart` |
+   | Trang khách và quản trị cùng cổng 5174 | Build cả hai entry point rồi chạy `python -m http.server 5174 --directory build/web` trong `Cinema_Mobile`; xem [hướng dẫn đầy đủ](Cinema_Mobile/README.md#run-both-websites-on-port-5174-local-preview) |
 
    Tài khoản nhân viên hoặc admin đăng nhập trên app khách chỉ thấy hướng dẫn mở trang quản trị; tài khoản khách mở trang quản trị được chỉ về trang khách.
 
