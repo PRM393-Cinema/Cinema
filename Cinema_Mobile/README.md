@@ -137,9 +137,15 @@ memory, so a refreshed booking summary returns to the seat map.
 
 Customer pages have a floating **Cinema AI** chat launcher on desktop and mobile.
 The icon expands on desktop hover or keyboard focus and opens an inline chat panel.
-The conversation stays available when minimized or changing pages. It answers
-movie/showtime questions and explains booking steps using the current public
-catalogue. Configure the OpenRouter key only in the backend; see
+The conversation stays available when minimized or changing pages. The history button
+reopens saved chats after reload; New chat preserves previous conversations, and each
+chat can be deleted with confirmation. Up to 20 chats (60 messages each) are stored
+locally per account/guest; there is no cross-device sync. It answers
+movie/showtime questions using live search tools. After sign-in it can look up your
+membership, bookings, payments, highest paid bill and spending, or prepare a ticket
+proposal. Review and explicitly confirm before any seat hold; payment stays in PayOS.
+Requested account facts are sent via OpenRouter to the model provider.
+Configure the OpenRouter key only in the backend; see
 [Cinema AI setup](../Cinema_BE/docs/CINEMA_AI.md). No key is bundled in Flutter.
 
 ## Booking and PayOS payment
