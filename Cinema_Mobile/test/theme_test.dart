@@ -8,6 +8,7 @@ import 'package:cinema_fe/core/widgets/app_button.dart';
 import 'package:cinema_fe/core/widgets/cinema_account_widgets.dart';
 import 'package:cinema_fe/core/widgets/cinema_background.dart';
 import 'package:cinema_fe/features/auth/screens/login_screen.dart';
+import 'package:cinema_fe/features/booking/widgets/booking_detail_content.dart';
 import 'package:cinema_fe/features/movie/widgets/movie_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -25,6 +26,65 @@ double contrast(Color a, Color b) {
 
 void main() {
   setUp(() => FlutterSecureStorage.setMockInitialValues({}));
+
+  test(
+    'Booking details interpolate their colors throughout the transition',
+    () {
+      final dark = bookingDetailTheme(AppTheme.darkTheme);
+      final light = bookingDetailTheme(AppTheme.lightTheme);
+      for (final progress in [0.25, 0.49, 0.51, 0.75]) {
+        final middle = bookingDetailTheme(
+          ThemeData.lerp(AppTheme.darkTheme, AppTheme.lightTheme, progress),
+        );
+        expect(
+          middle.scaffoldBackgroundColor,
+          Color.lerp(
+            dark.scaffoldBackgroundColor,
+            light.scaffoldBackgroundColor,
+            progress,
+          ),
+        );
+        expect(
+          middle.colorScheme.primary,
+          Color.lerp(
+            dark.colorScheme.primary,
+            light.colorScheme.primary,
+            progress,
+          ),
+        );
+      }
+    },
+  );
+
+  testWidgets('Theme transition reuses the painted backdrop layers', (
+    tester,
+  ) async {
+    await tester.pumpWidget(buildTestApp(initialRoute: AppRoutes.login));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(ThemeSwitch));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 80));
+    final backgrounds = find.descendant(
+      of: find.byType(CinemaBackdropTransition),
+      matching: find.byType(RepaintBoundary),
+    );
+    expect(backgrounds, findsNWidgets(2));
+    final boundaries = tester
+        .renderObjectList<RenderRepaintBoundary>(backgrounds)
+        .toList();
+    final pictures = boundaries
+        .map((boundary) => (boundary.debugLayer! as OffsetLayer).firstChild)
+        .toList();
+    await tester.pump(const Duration(milliseconds: 80));
+    expect(
+      boundaries
+          .map((boundary) => (boundary.debugLayer! as OffsetLayer).firstChild)
+          .toList(),
+      pictures,
+    );
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  });
 
   test('Palette interpolates every frame and repaints the backdrop', () {
     const dark = AppPalette(isLight: false);
@@ -216,43 +276,52 @@ void main() {
     );
   }
 
-  testWidgets('Light controls use solid surfaces and a clear focus border', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.lightTheme,
-        home: Scaffold(
-          body: CinemaPanel(
-            child: AppButton(
-              label: 'Continue',
-              useGradient: true,
-              onPressed: () {},
+  for (final light in [false, true]) {
+    testWidgets(
+      'Controls use solid surfaces and a clear focus border: light=$light',
+      (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: light ? AppTheme.lightTheme : AppTheme.darkTheme,
+            home: Scaffold(
+              body: CinemaPanel(
+                child: AppButton(
+                  label: 'Continue',
+                  useGradient: true,
+                  onPressed: () {},
+                ),
+              ),
             ),
           ),
-        ),
-      ),
+        );
+        for (final box in tester.widgetList<DecoratedBox>(
+          find.byType(DecoratedBox),
+        )) {
+          final decoration = box.decoration;
+          if (decoration is BoxDecoration && decoration.gradient != null) {
+            expect(decoration.gradient!.colors.toSet().length, 1);
+            expect(
+              decoration.gradient!.colors.first,
+              AppPalette(isLight: light).surface,
+            );
+          }
+        }
+        final style = tester
+            .widget<ElevatedButton>(find.byType(ElevatedButton))
+            .style!;
+        expect(
+          style.backgroundColor!.resolve({}),
+          AppPalette(isLight: light).primary,
+        );
+        final inputs = Theme.of(tester.element(find.byType(CinemaPanel)))
+            .inputDecorationTheme;
+        expect(
+          inputs.focusedBorder!.borderSide.width,
+          greaterThan(inputs.enabledBorder!.borderSide.width),
+        );
+      },
     );
-    for (final box in tester.widgetList<DecoratedBox>(
-      find.byType(DecoratedBox),
-    )) {
-      final decoration = box.decoration;
-      if (decoration is BoxDecoration) expect(decoration.gradient, isNull);
-    }
-    final style = tester
-        .widget<ElevatedButton>(find.byType(ElevatedButton))
-        .style!;
-    expect(
-      style.backgroundColor!.resolve({}),
-      const AppPalette(isLight: true).primary,
-    );
-    final inputs = Theme.of(tester.element(find.byType(CinemaPanel)))
-        .inputDecorationTheme;
-    expect(
-      inputs.focusedBorder!.borderSide.width,
-      greaterThan(inputs.enabledBorder!.borderSide.width),
-    );
-  });
+  }
 
   for (final width in [320.0, 768.0, 1440.0]) {
     testWidgets('Light home keeps search usable at $width', (tester) async {

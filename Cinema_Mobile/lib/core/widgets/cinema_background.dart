@@ -23,11 +23,8 @@ class CinemaBackground extends StatelessWidget {
               child: Opacity(
                 opacity: 0.28 + 0.72 * AppPalette.of(context).lightness,
                 child: ClipRect(
-                  child: CustomPaint(
-                    painter: CinemaBackdrop(
-                      colors: AppPalette.of(context),
-                      logoCenter: Offset(constraints.maxWidth / 2, 72),
-                    ),
+                  child: CinemaBackdropTransition(
+                    logoCenter: Offset(constraints.maxWidth / 2, 72),
                   ),
                 ),
               ),
@@ -38,6 +35,34 @@ class CinemaBackground extends StatelessWidget {
       ),
     );
   }
+}
+
+// Composite cached endpoint paintings instead of repainting the film every frame.
+class CinemaBackdropTransition extends StatelessWidget {
+  const CinemaBackdropTransition({required this.logoCenter, super.key});
+
+  final Offset logoCenter;
+
+  @override
+  Widget build(BuildContext context) => Stack(
+    fit: StackFit.expand,
+    children: [
+      RepaintBoundary(
+        child: CustomPaint(painter: CinemaBackdrop(logoCenter: logoCenter)),
+      ),
+      Opacity(
+        opacity: AppPalette.of(context).lightness,
+        child: RepaintBoundary(
+          child: CustomPaint(
+            painter: CinemaBackdrop(
+              logoCenter: logoCenter,
+              colors: const AppPalette(isLight: true),
+            ),
+          ),
+        ),
+      ),
+    ],
+  );
 }
 
 class CinemaBackdrop extends CustomPainter {
@@ -53,6 +78,14 @@ class CinemaBackdrop extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final bounds = Offset.zero & size;
     canvas.drawRect(bounds, Paint()..color = colors.background);
+    if (colors.lightness == 0) {
+      _paintDark(canvas, size);
+      return;
+    }
+    if (colors.lightness == 1) {
+      _paintLight(canvas, size);
+      return;
+    }
     if (colors.lightness < 1) {
       canvas.saveLayer(
         bounds,

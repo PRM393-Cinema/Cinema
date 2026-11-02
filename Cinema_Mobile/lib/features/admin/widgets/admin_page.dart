@@ -7,6 +7,7 @@ import '../../../app/theme/app_text_styles.dart';
 import '../../../app/theme/theme_switch.dart';
 import '../../../core/session/roles.dart';
 import '../../../core/session/session_state.dart';
+import '../../../core/utils/layout.dart';
 import '../../../core/widgets/cinema_background.dart';
 
 // Sections of the admin website. Staff see Dashboard, Operations, Check-in and
@@ -148,6 +149,7 @@ class AdminPage extends StatelessWidget {
           title: title,
           actions: actions,
           showMenu: compact,
+          compact: section == AdminSection.operations,
           child: child,
         );
 
@@ -221,16 +223,22 @@ class _PageBody extends StatelessWidget {
     required this.actions,
     required this.showMenu,
     required this.child,
+    this.compact = false,
   });
 
   final String title;
   final List<Widget> actions;
   final bool showMenu;
   final Widget child;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
-    final canGoBack = Navigator.canPop(context);
+    final windowWidth =
+        View.of(context).physicalSize.width /
+        MediaQuery.of(context).devicePixelRatio;
+    final canGoBack =
+        windowWidth < desktopBreakpoint && Navigator.canPop(context);
 
     return LayoutBuilder(
       // Pages size and centre themselves from MediaQuery: give them the width
@@ -264,7 +272,9 @@ class _PageBody extends StatelessWidget {
                   Expanded(
                     child: Text(
                       title,
-                      style: AppTextStyles.heading1,
+                      style: compact
+                          ? AppTextStyles.heading2
+                          : AppTextStyles.heading1,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -427,11 +437,12 @@ class _Brand extends StatelessWidget {
         ],
       );
     }
-    return Row(
-      mainAxisSize: MainAxisSize.min,
+    return Wrap(
+      spacing: AppSpacing.sm,
+      runSpacing: AppSpacing.sm,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         icon,
-        const SizedBox(width: AppSpacing.sm),
         Text(
           'COSMOQ',
           style: AppTextStyles.title.copyWith(
@@ -439,7 +450,6 @@ class _Brand extends StatelessWidget {
             letterSpacing: 2,
           ),
         ),
-        const SizedBox(width: AppSpacing.sm),
         badge,
       ],
     );

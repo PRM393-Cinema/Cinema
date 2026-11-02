@@ -36,15 +36,44 @@ flutter run -d chrome -t lib/main_admin.dart
 | Staff   | Dashboard, Operations (bookings, showtimes, rooms and seats, payments, refunds), Profile |
 | Admin   | The staff sections, plus Movies (add, edit, stop showing, show again), Rooms (add with a seat layout, rename, delete a room without showtimes, open the seat map) and Accounts |
 
-Customer accounts are pointed to the customer site, and the sign-in page has no sign-up. To run both apps at once so that their links point to each other, give them fixed ports:
+Customer accounts are pointed to the customer site, and the sign-in page has no sign-up.
+
+### Run both websites on port 5174 (local preview)
+
+From `Cinema_Mobile`, build both entry points and serve the combined folder:
+
+```powershell
+flutter build web --release
+flutter build web --release -t lib/main_admin.dart --base-href /admin/ --output "$PWD\build\web\admin"
+python -m http.server 5174 --directory build/web
+```
+
+Open the customer site at `http://localhost:5174/` and the staff/admin site at
+`http://localhost:5174/admin/`. Keep the backend running on port 5000. Stop any
+older server on 5174 before starting this server. Rebuild both entry points after
+source changes; this static preview does not hot reload.
+
+### Optional: separate Flutter development servers
+
+In VS Code, choose **Cinema Web (customer + admin, separate dev ports)** to start
+two independent Flutter servers in release mode with their links configured.
+Release mode avoids the extra work that debug mode adds to theme animations.
+
+Or run these commands in two terminals:
 
 ```sh
-flutter run -d chrome --web-port 5500 --dart-define=ADMIN_URL=http://localhost:5501/
+flutter run --release -d edge --web-port 5174 --dart-define=ADMIN_URL=http://localhost:5175/
 ```
 
 ```sh
-flutter run -d chrome -t lib/main_admin.dart --web-port 5501 --dart-define=CUSTOMER_URL=http://localhost:5500/
+flutter run --release -d edge -t lib/main_admin.dart --web-port 5175 --dart-define=CUSTOMER_URL=http://localhost:5174/
 ```
+
+Open the customer site at `http://localhost:5174/` and the admin site at
+`http://localhost:5175/`. Without `ADMIN_URL`, the customer app uses `/admin/`
+on its own server. That path requires a separate admin build, as described
+below; `flutter run` only serves the entry point it was given. The two local
+ports have separate browser storage, so sign in again on the admin site.
 
 ## Build for the web
 

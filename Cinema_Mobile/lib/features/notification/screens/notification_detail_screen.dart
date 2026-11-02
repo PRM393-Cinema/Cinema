@@ -18,6 +18,7 @@ import '../../../data/models/app_notification.dart';
 import '../../../data/repositories/booking_repository.dart';
 import '../../../core/session/session_state.dart';
 import '../../review/widgets/review_widgets.dart';
+import '../widgets/notification_category.dart';
 
 class NotificationDetailScreen extends StatefulWidget {
   const NotificationDetailScreen({
@@ -93,33 +94,48 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
         return SingleChildScrollView(
           padding: widthPadding(context, AppSpacing.xl, PageWidth.reading),
           child: CinemaPanel(
-            surfaceOpacity: 0.8,
+            padding: EdgeInsets.all(
+              isDesktopLayout(context) ? AppSpacing.xxl : AppSpacing.lg,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
+                Wrap(
+                  spacing: AppSpacing.lg,
+                  runSpacing: AppSpacing.sm,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    Icon(
-                      Icons.notifications_outlined,
-                      color: AppPalette.of(context).primary,
-                      size: 24,
-                    ),
-                    const SizedBox(width: AppSpacing.md),
-                    Expanded(
-                      child: Text(
-                        formatDateTime(notification.createdAt),
-                        style: AppTextStyles.bodySmall,
+                    NotificationCategory(notification: notification),
+                    Text(
+                      formatDateTime(notification.createdAt),
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppPalette.of(context).textSecondary,
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.lg),
-                Text(title, style: AppTextStyles.heading2),
+                Semantics(
+                  header: true,
+                  child: Text(
+                    title,
+                    style: AppTextStyles.heading1.copyWith(height: 1.3),
+                  ),
+                ),
                 if (bookingCode != null || title != notification.subject) ...[
-                  const SizedBox(height: AppSpacing.sm),
+                  const SizedBox(height: AppSpacing.lg),
+                  Text(
+                    bookingCode != null ? 'Booking reference' : 'Subject',
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppPalette.of(context).textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
                   SelectableText(
                     bookingCode ?? notification.subject,
-                    style: AppTextStyles.bodySmall,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ],
                 Padding(
@@ -129,9 +145,20 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
                     color: AppPalette.of(context).border,
                   ),
                 ),
-                _NotificationBody(content: notification.bodyContent),
+                Semantics(
+                  header: true,
+                  child: const Text('Message', style: AppTextStyles.title),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 680),
+                  child: _NotificationBody(content: notification.bodyContent),
+                ),
                 if (notification.bookingId != null) ...[
-                  const SizedBox(height: AppSpacing.sm),
+                  Divider(
+                    height: AppSpacing.xxl,
+                    color: AppPalette.of(context).border,
+                  ),
                   Wrap(
                     spacing: AppSpacing.sm,
                     runSpacing: AppSpacing.sm,
@@ -171,13 +198,11 @@ class _NotificationBody extends StatelessWidget {
     final paragraphs = content
         .split(RegExp(r'</p\s*>', caseSensitive: false))
         .map(
-          (part) => htmlToPlainText(
-            part.contains(RegExp(r'<[^>]+>'))
-                ? part.replaceAll(RegExp(r'\s+'), ' ')
-                : part,
-          ),
+          (part) => part.contains(RegExp(r'<[^>]+>'))
+              ? part.replaceAll(RegExp(r'\s+'), ' ')
+              : part,
         )
-        .where((part) => part.isNotEmpty);
+        .where((part) => htmlToPlainText(part).isNotEmpty);
     // shortcut: groups current email labels; use structured fields if templates change.
     final fieldPattern = RegExp(
       r'^(Phim|Suất chiếu|Ghế|Bắp nước|Giảm giá|Dùng điểm|Điểm thưởng|Tổng tiền|Số tiền|Số tiền hoàn|Lý do|Mã hoàn tiền|Mã giao dịch chuyển khoản|Mã giao dịch|Phương thức thanh toán|Mã đặt vé|Rạp|Phòng):\s*(.+)$',
@@ -185,20 +210,18 @@ class _NotificationBody extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        for (final paragraph in paragraphs)
+        for (final source in paragraphs)
           Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.lg),
             child: Builder(
               builder: (context) {
+                final paragraph = htmlToPlainText(source);
                 final fields = paragraph
                     .split('\n')
                     .map(fieldPattern.firstMatch)
                     .toList();
                 if (fields.any((field) => field == null)) {
-                  return SelectableText(
-                    paragraph,
-                    style: AppTextStyles.body.copyWith(height: 1.5),
-                  );
+                  return _paragraph(source, paragraph);
                 }
                 return Container(
                   padding: const EdgeInsets.all(AppSpacing.lg),
@@ -214,7 +237,9 @@ class _NotificationBody extends StatelessWidget {
                         if (index > 0) const SizedBox(height: AppSpacing.lg),
                         Text(
                           fields[index]!.group(1)!,
-                          style: AppTextStyles.bodySmall,
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: AppPalette.of(context).textSecondary,
+                          ),
                         ),
                         const SizedBox(height: AppSpacing.xs),
                         SelectableText(
@@ -241,6 +266,38 @@ class _NotificationBody extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+
+  Widget _paragraph(String source, String text) {
+    final values =
+        RegExp(
+              r'<(?:strong|b)\b[^>]*>([\s\S]*?)</(?:strong|b)\s*>',
+              caseSensitive: false,
+            )
+            .allMatches(source)
+            .map((match) => htmlToPlainText(match.group(1)!))
+            .where((value) => value.isNotEmpty)
+            .toSet();
+    final spans = <TextSpan>[];
+    var offset = 0;
+    if (values.isNotEmpty) {
+      final emphasis = RegExp(values.map(RegExp.escape).join('|'));
+      for (final match in emphasis.allMatches(text)) {
+        spans.add(TextSpan(text: text.substring(offset, match.start)));
+        spans.add(
+          TextSpan(
+            text: match.group(0),
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+        );
+        offset = match.end;
+      }
+    }
+    spans.add(TextSpan(text: text.substring(offset)));
+    return SelectableText.rich(
+      TextSpan(children: spans),
+      style: AppTextStyles.body.copyWith(height: 1.65),
     );
   }
 }

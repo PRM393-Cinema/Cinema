@@ -44,6 +44,15 @@ class AppNotification {
 
   bool get isRead => readAt != null;
 
+  String get categoryLabel => switch (type) {
+    'BOOKING_CONFIRMED' ||
+    'BOOKING_CANCELLED' ||
+    'BOOKING_EXPIRED' => 'Booking',
+    'REFUND_REQUESTED' || 'REFUND_COMPLETED' || 'REFUND_REJECTED' => 'Refund',
+    'SHOWTIME_REMINDER' || 'PAYMENT_REMINDER' => 'Reminder',
+    _ => 'Cinema update',
+  };
+
   AppNotification markedRead(DateTime at) => AppNotification(
     id: id,
     bookingId: bookingId,

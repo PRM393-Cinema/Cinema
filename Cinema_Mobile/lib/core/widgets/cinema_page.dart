@@ -63,7 +63,7 @@ class CinemaPageHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Row(
     children: [
-      if (Navigator.canPop(context)) ...[
+      if (!isDesktopLayout(context) && Navigator.canPop(context)) ...[
         const BackButton(),
         const SizedBox(width: AppSpacing.sm),
       ],

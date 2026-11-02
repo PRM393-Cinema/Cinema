@@ -11,25 +11,45 @@ import '../../../data/models/payment.dart';
 
 // Scoped to booking details; the rest of the app keeps its current theme.
 ThemeData bookingDetailTheme(ThemeData base) {
-  final dark = base.brightness == Brightness.dark;
-  final palette = AppPalette(isLight: !dark);
-  final foreground = dark ? const Color(0xFFF1F5F9) : palette.textPrimary;
-  final muted = dark ? const Color(0xFF94A3B8) : palette.textSecondary;
-  final border = dark ? const Color(0xFF28303D) : palette.border;
-  final accent = dark ? const Color(0xFF22C7D8) : palette.primary;
+  final lightness =
+      base.extension<AppPalette>()?.lightness ??
+      (base.brightness == Brightness.light ? 1.0 : 0.0);
+  const palette = AppPalette(isLight: true);
+  final foreground = Color.lerp(
+    const Color(0xFFF1F5F9),
+    palette.textPrimary,
+    lightness,
+  )!;
+  final muted = Color.lerp(
+    const Color(0xFF94A3B8),
+    palette.textSecondary,
+    lightness,
+  )!;
+  final border = Color.lerp(
+    const Color(0xFF28303D),
+    palette.border,
+    lightness,
+  )!;
+  final accent = Color.lerp(
+    const Color(0xFF22C7D8),
+    palette.primary,
+    lightness,
+  )!;
   return base.copyWith(
-    scaffoldBackgroundColor: dark
-        ? const Color(0xFF0B0F14)
-        : palette.background,
+    scaffoldBackgroundColor: Color.lerp(
+      const Color(0xFF0B0F14),
+      palette.background,
+      lightness,
+    ),
     dividerColor: border,
     colorScheme: base.colorScheme.copyWith(
-      surface: dark ? const Color(0xFF141922) : palette.surface,
+      surface: Color.lerp(const Color(0xFF141922), palette.surface, lightness),
       onSurface: foreground,
       onSurfaceVariant: muted,
       outline: border,
       outlineVariant: border,
       primary: accent,
-      onPrimary: dark ? const Color(0xFF0B0F14) : Colors.white,
+      onPrimary: Color.lerp(const Color(0xFF0B0F14), Colors.white, lightness),
     ),
     textTheme: base.textTheme.apply(
       fontFamily: 'BookingInter',

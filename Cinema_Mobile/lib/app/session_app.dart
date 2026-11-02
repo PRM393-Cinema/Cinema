@@ -7,6 +7,7 @@ import '../core/widgets/top_notice.dart';
 import 'routes/app_routes.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_switch.dart';
+import 'theme/theme_transition.dart';
 
 // MaterialApp shared by the customer app and the admin website. When the
 // session ends (expired, account locked, role changed) it opens Sign in and
@@ -62,6 +63,14 @@ class _SessionAppState extends State<SessionApp> {
   }
 
   void _toggleTheme() {
+    transitionTheme(
+      _applyTheme,
+      animate: !MediaQuery.disableAnimationsOf(context),
+    );
+  }
+
+  void _applyTheme() {
+    if (!mounted) return;
     _themeChanged = true;
     setState(
       () => _themeMode = _themeMode == ThemeMode.light
@@ -109,7 +118,8 @@ class _SessionAppState extends State<SessionApp> {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: _themeMode,
-      themeAnimationDuration: MediaQuery.disableAnimationsOf(context)
+      themeAnimationDuration:
+          usesBrowserThemeTransition || MediaQuery.disableAnimationsOf(context)
           ? Duration.zero
           : const Duration(milliseconds: 420),
       themeAnimationCurve: Curves.easeInOutCubic,

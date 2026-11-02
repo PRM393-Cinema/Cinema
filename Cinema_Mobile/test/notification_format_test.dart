@@ -11,6 +11,26 @@ AppNotification notice(String content) => AppNotification(
 );
 
 void main() {
+  test('Known notification types have concise categories and unknown types stay readable', () {
+    for (final (type, category) in [
+      ('BOOKING_CANCELLED', 'Booking'),
+      ('REFUND_REQUESTED', 'Refund'),
+      ('SHOWTIME_REMINDER', 'Reminder'),
+      ('NEWS', 'Cinema update'),
+    ]) {
+      expect(
+        AppNotification(
+          id: 1,
+          subject: 'Update',
+          type: type,
+          content: '',
+          status: 'SENT',
+          createdAt: DateTime(2026),
+        ).categoryLabel,
+        category,
+      );
+    }
+  });
   test(
     'List and detail use the same heading and body without repeating it',
     () {

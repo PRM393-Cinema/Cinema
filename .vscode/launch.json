@@ -3,7 +3,39 @@
     // Hover to view descriptions of existing attributes.
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
+    "compounds": [
+        {
+            "name": "Cinema Web (customer + admin, separate dev ports)",
+            "configurations": ["Cinema Web (customer)", "Cinema Web (admin)"]
+        }
+    ],
     "configurations": [
+        {
+            "name": "Cinema Web (customer)",
+            "cwd": "Cinema_Mobile",
+            "program": "lib/main.dart",
+            "request": "launch",
+            "type": "dart",
+            "deviceId": "edge",
+            "flutterMode": "release",
+            "args": [
+                "--web-port", "5174",
+                "--dart-define=ADMIN_URL=http://localhost:5175/"
+            ]
+        },
+        {
+            "name": "Cinema Web (admin)",
+            "cwd": "Cinema_Mobile",
+            "program": "lib/main_admin.dart",
+            "request": "launch",
+            "type": "dart",
+            "deviceId": "edge",
+            "flutterMode": "release",
+            "args": [
+                "--web-port", "5175",
+                "--dart-define=CUSTOMER_URL=http://localhost:5174/"
+            ]
+        },
         {
             "name": "Cinema_Mobile",
             "cwd": "Cinema_Mobile",

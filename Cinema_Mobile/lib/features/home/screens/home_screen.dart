@@ -633,7 +633,7 @@ class _HomeHeader extends StatelessWidget {
           style: AppTextStyles.heading1.copyWith(
             fontSize: isWide ? 42 : 28,
             fontWeight: FontWeight.w800,
-            letterSpacing: AppPalette.of(context).isLight ? 0 : -0.8,
+            letterSpacing: 0,
             height: 1.2,
           ),
           textAlign: TextAlign.center,
@@ -924,37 +924,16 @@ class _FeaturedMovie extends StatelessWidget {
               ),
               Expanded(
                 flex: 5,
-                child: Stack(
-                  key: const Key('featuredPoster'),
-                  fit: StackFit.expand,
-                  children: [
-                    // Fade alpha instead of painting theme colors over the art.
-                    for (final blurred in [true, false])
-                      ShaderMask(
-                        blendMode: BlendMode.dstIn,
-                        shaderCallback: (bounds) => LinearGradient(
-                          colors: const [
-                            Colors.transparent,
-                            Colors.transparent,
-                            Colors.white,
-                            Colors.white,
-                            Colors.transparent,
-                            Colors.transparent,
-                          ],
-                          stops: [
-                            0,
-                            0.02,
-                            blurred ? 0.07 : 0.13,
-                            blurred ? 0.93 : 0.91,
-                            0.98,
-                            1,
-                          ],
-                        ).createShader(bounds),
-                        child: ShaderMask(
+                child: RepaintBoundary(
+                  child: Stack(
+                    key: const Key('featuredPoster'),
+                    fit: StackFit.expand,
+                    children: [
+                      // Fade alpha instead of painting theme colors over the art.
+                      for (final blurred in [true, false])
+                        ShaderMask(
                           blendMode: BlendMode.dstIn,
                           shaderCallback: (bounds) => LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
                             colors: const [
                               Colors.transparent,
                               Colors.transparent,
@@ -965,42 +944,65 @@ class _FeaturedMovie extends StatelessWidget {
                             ],
                             stops: [
                               0,
-                              0.025,
-                              blurred ? 0.06 : 0.10,
-                              blurred ? 0.94 : 0.90,
-                              0.975,
+                              0.02,
+                              blurred ? 0.07 : 0.13,
+                              blurred ? 0.93 : 0.91,
+                              0.98,
                               1,
                             ],
                           ).createShader(bounds),
-                          child: Opacity(
-                            opacity: blurred ? 0.35 : 1,
-                            // Keep image pixels inside the mask at fractional DPR.
-                            child: Padding(
-                              padding: const EdgeInsets.all(2),
-                              child: ClipRect(
-                                child: ImageFiltered(
-                                  key: ValueKey(
-                                    blurred
-                                        ? 'featuredPosterBackdrop'
-                                        : 'featuredPosterForeground',
-                                  ),
-                                  enabled: blurred,
-                                  imageFilter: ui.ImageFilter.blur(
-                                    sigmaX: 18,
-                                    sigmaY: 18,
-                                  ),
-                                  child: AppNetworkImage(
-                                    imageUrl: movie.posterUrl,
-                                    webHtmlElementStrategy:
-                                        WebHtmlElementStrategy.never,
+                          child: ShaderMask(
+                            blendMode: BlendMode.dstIn,
+                            shaderCallback: (bounds) => LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: const [
+                                Colors.transparent,
+                                Colors.transparent,
+                                Colors.white,
+                                Colors.white,
+                                Colors.transparent,
+                                Colors.transparent,
+                              ],
+                              stops: [
+                                0,
+                                0.025,
+                                blurred ? 0.06 : 0.10,
+                                blurred ? 0.94 : 0.90,
+                                0.975,
+                                1,
+                              ],
+                            ).createShader(bounds),
+                            child: Opacity(
+                              opacity: blurred ? 0.35 : 1,
+                              // Keep image pixels inside the mask at fractional DPR.
+                              child: Padding(
+                                padding: const EdgeInsets.all(2),
+                                child: ClipRect(
+                                  child: ImageFiltered(
+                                    key: ValueKey(
+                                      blurred
+                                          ? 'featuredPosterBackdrop'
+                                          : 'featuredPosterForeground',
+                                    ),
+                                    enabled: blurred,
+                                    imageFilter: ui.ImageFilter.blur(
+                                      sigmaX: 18,
+                                      sigmaY: 18,
+                                    ),
+                                    child: AppNetworkImage(
+                                      imageUrl: movie.posterUrl,
+                                      webHtmlElementStrategy:
+                                          WebHtmlElementStrategy.never,
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -1088,7 +1090,7 @@ class _FeaturedMovieContent extends StatelessWidget {
           movie.title,
           style: AppTextStyles.display.copyWith(
             color: AppPalette.of(context).textPrimary,
-            fontSize: AppPalette.of(context).isLight ? 34 : 38,
+            fontSize: 38,
             height: 1.15,
           ),
           maxLines: 2,
