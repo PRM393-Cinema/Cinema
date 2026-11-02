@@ -43,6 +43,7 @@ class ApiClient {
     Object? body,
     Map<String, Object?>? query,
     bool authenticated = false,
+    bool retryWhenStarting = true,
   }) {
     return _send(
       'POST',
@@ -50,6 +51,7 @@ class ApiClient {
       body: body,
       query: query,
       authenticated: authenticated,
+      retryWhenStarting: retryWhenStarting,
     );
   }
 
@@ -74,6 +76,7 @@ class ApiClient {
     Object? body,
     Map<String, Object?>? query,
     required bool authenticated,
+    bool retryWhenStarting = true,
   }) async {
     final uri = _buildUri(path, query);
     final provider = tokenProvider;
@@ -86,7 +89,13 @@ class ApiClient {
     final token = authenticated ? storedToken : null;
 
     try {
-      var response = await _requestWaking(method, uri, body, token);
+      var response = await _requestWaking(
+        method,
+        uri,
+        body,
+        token,
+        retryWhenStarting: retryWhenStarting,
+      );
 
       // The access token lives for an hour: renew it once with the refresh
       // token and repeat the request before reporting the session as expired.
@@ -101,7 +110,13 @@ class ApiClient {
           );
         }
 
-        response = await _requestWaking(method, uri, body, renewedToken);
+        response = await _requestWaking(
+          method,
+          uri,
+          body,
+          renewedToken,
+          retryWhenStarting: retryWhenStarting,
+        );
       }
 
       if (authenticated && response.statusCode == 401) {
@@ -167,10 +182,13 @@ class ApiClient {
     String method,
     Uri uri,
     Object? body,
-    String? bearerToken,
-  ) async {
+    String? bearerToken, {
+    bool retryWhenStarting = true,
+  }) async {
     final wakeUp = _wakeUp;
-    if (wakeUp == null) return _request(method, uri, body, bearerToken);
+    if (wakeUp == null || !retryWhenStarting) {
+      return _request(method, uri, body, bearerToken);
+    }
 
     final read = method == 'GET';
     final waited = Stopwatch()..start();

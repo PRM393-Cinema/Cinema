@@ -316,6 +316,7 @@ class _MessageBubble extends StatelessWidget {
               const SizedBox(height: AppSpacing.sm),
               SelectableText(
                 message.content,
+                semanticsLabel: message.content,
                 key: ValueKey('chatMessage-$index'),
                 style: AppTextStyles.bodySmall.copyWith(
                   color: colors.textPrimary,

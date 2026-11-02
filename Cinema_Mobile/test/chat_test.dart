@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:cinema_fe/app/routes/app_routes.dart';
 import 'package:cinema_fe/core/network/api_client.dart';
+import 'package:cinema_fe/core/network/server_wake_up.dart';
 import 'package:cinema_fe/data/services/chat_service.dart';
 import 'package:cinema_fe/features/chat/screens/chat_screen.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +16,30 @@ import 'support/test_app.dart';
 
 void main() {
   setUp(() => FlutterSecureStorage.setMockInitialValues({}));
+
+  test(
+    'Chat never automatically repeats a billable request during server wake-up',
+    () async {
+      var calls = 0;
+      final service = ChatService(
+        client: ApiClient(
+          wakeUp: ServerWakeUp(urls: const [], retryDelays: [Duration.zero]),
+          httpClient: MockClient((_) async {
+            calls++;
+            return http.Response(
+              '{"detail":"Cinema AI is not configured yet."}',
+              503,
+            );
+          }),
+        ),
+      );
+      await expectLater(
+        service.reply([const ChatMessage(role: 'user', content: 'Hello')]),
+        throwsException,
+      );
+      expect(calls, 1);
+    },
+  );
 
   for (final light in [false, true]) {
     for (final size in [const Size(1440, 900), const Size(375, 812)]) {

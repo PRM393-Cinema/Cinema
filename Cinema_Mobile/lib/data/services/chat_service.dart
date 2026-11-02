@@ -19,6 +19,8 @@ class ChatService {
     final response = await client.post(
       '/api/v1/chat',
       body: {'messages': messages.map((message) => message.toJson()).toList()},
+      // AI generation can be billed; only retry when the user asks.
+      retryWhenStarting: false,
     );
     if (response is! Map<String, dynamic> ||
         response['message'] is! String ||
