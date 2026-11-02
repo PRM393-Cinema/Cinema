@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_spacing.dart';
@@ -49,6 +50,28 @@ class _ChatPanelState extends State<ChatPanel> {
       _input.clear();
     });
     await _request();
+  }
+
+  void _sendOnEnter() {
+    // Enter must still confirm an active IME composition before sending.
+    final composing = _input.value.composing;
+    if (composing.isValid && !composing.isCollapsed) return;
+    _send(_input.text);
+  }
+
+  void _insertNewline() {
+    if (_sending) return;
+    final value = _input.value;
+    if (value.composing.isValid && !value.composing.isCollapsed) return;
+    final selection = value.selection.isValid
+        ? value.selection
+        : TextSelection.collapsed(offset: value.text.length);
+    final next = value.replaced(selection, '\n');
+    if (next.text.length <= 1000) {
+      _input.value = next.copyWith(
+        selection: TextSelection.collapsed(offset: selection.start + 1),
+      );
+    }
   }
 
   Future<void> _request() async {
@@ -190,37 +213,55 @@ class _ChatPanelState extends State<ChatPanel> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                TextField(
-                  key: const Key('cinemaChatInput'),
-                  controller: _input,
-                  enabled: !_sending,
-                  minLines: 1,
-                  maxLines: 3,
-                  maxLength: 1000,
-                  keyboardType: TextInputType.multiline,
-                  textCapitalization: TextCapitalization.sentences,
-                  decoration: InputDecoration(
-                    labelText: 'Ask Cinema AI',
-                    hintText: 'Find a movie or ask about booking…',
-                    suffixIcon: ValueListenableBuilder<TextEditingValue>(
-                      valueListenable: _input,
-                      builder: (context, value, _) => IconButton(
-                        key: const Key('sendCinemaChat'),
-                        tooltip: 'Send message',
-                        onPressed:
-                            _sending ||
-                                value.text.trim().isEmpty ||
-                                value.text.trim().length > 1000
-                            ? null
-                            : () => _send(value.text),
-                        icon: const Icon(Icons.arrow_upward_rounded),
+                CallbackShortcuts(
+                  bindings: {
+                    const SingleActivator(LogicalKeyboardKey.enter):
+                        _sendOnEnter,
+                    const SingleActivator(LogicalKeyboardKey.numpadEnter):
+                        _sendOnEnter,
+                    const SingleActivator(
+                      LogicalKeyboardKey.enter,
+                      shift: true,
+                    ): _insertNewline,
+                    const SingleActivator(
+                      LogicalKeyboardKey.numpadEnter,
+                      shift: true,
+                    ): _insertNewline,
+                  },
+                  child: TextField(
+                    key: const Key('cinemaChatInput'),
+                    controller: _input,
+                    enabled: !_sending,
+                    minLines: 1,
+                    maxLines: 3,
+                    maxLength: 1000,
+                    keyboardType: TextInputType.multiline,
+                    textInputAction: TextInputAction.send,
+                    onSubmitted: _send,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: InputDecoration(
+                      labelText: 'Ask Cinema AI',
+                      hintText: 'Find a movie or ask about booking…',
+                      suffixIcon: ValueListenableBuilder<TextEditingValue>(
+                        valueListenable: _input,
+                        builder: (context, value, _) => IconButton(
+                          key: const Key('sendCinemaChat'),
+                          tooltip: 'Send message',
+                          onPressed:
+                              _sending ||
+                                  value.text.trim().isEmpty ||
+                                  value.text.trim().length > 1000
+                              ? null
+                              : () => _send(value.text),
+                          icon: const Icon(Icons.arrow_upward_rounded),
+                        ),
                       ),
                     ),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
-                      'AI may make mistakes. Chats go via OpenRouter to the model provider. Avoid personal data.',
+                  'AI may make mistakes. Chats go via OpenRouter to the model provider. Avoid personal data.',
                   style: AppTextStyles.caption.copyWith(
                     color: colors.textSecondary,
                   ),

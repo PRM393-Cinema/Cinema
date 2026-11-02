@@ -27,6 +27,116 @@ Future<void> openChat(WidgetTester tester) async {
 void main() {
   setUp(() => FlutterSecureStorage.setMockInitialValues({}));
 
+  testWidgets(
+    'Enter sends once; Shift Enter inserts a newline; mobile Send submits',
+    (tester) async {
+      tester.view.physicalSize = const Size(1440, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final requests = <Map<String, dynamic>>[];
+      final pending = Completer<http.Response>();
+      final service = ChatService(
+        client: ApiClient(
+          httpClient: MockClient((request) {
+            requests.add(jsonDecode(request.body) as Map<String, dynamic>);
+            return pending.future;
+          }),
+        ),
+      );
+      await tester.pumpWidget(buildTestApp(chatService: service));
+      await pumpRoute(tester);
+      await openChat(tester);
+      final input = find.byKey(const Key('cinemaChatInput'));
+      await tester.tap(input);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pump();
+      expect(requests, isEmpty);
+      final controller = tester.widget<TextField>(input).controller!;
+      await tester.enterText(input, 'a' * 1000);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      expect(controller.text.length, 1000);
+      controller.selection = const TextSelection(
+        baseOffset: 0,
+        extentOffset: 2,
+      );
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      expect(controller.text, '\n${'a' * 998}');
+      expect(controller.selection.baseOffset, 1);
+      await tester.enterText(input, 'First line');
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.pump();
+      expect(controller.text, 'First line\n');
+      expect(requests, isEmpty);
+      await tester.enterText(input, 'First line\nSecond line');
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pump();
+      await tester.pump();
+      expect(requests.length, 1);
+      expect(
+        (requests.single['messages'] as List).single['content'],
+        'First line\nSecond line',
+      );
+      expect(controller.text, isEmpty);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pump();
+      expect(requests.length, 1);
+      pending.complete(http.Response('{"message":"Choose Movies."}', 200));
+      await pumpRoute(tester);
+      await tester.enterText(input, 'From mobile keyboard');
+      await tester.testTextInput.receiveAction(TextInputAction.send);
+      await pumpRoute(tester);
+      expect(requests.length, 2);
+      expect(
+        (requests.last['messages'] as List).last['content'],
+        'From mobile keyboard',
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'Enter confirms composing input before sending; keypad Enter also sends',
+    (tester) async {
+      tester.view.physicalSize = const Size(1440, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      var requests = 0;
+      final service = ChatService(
+        client: ApiClient(
+          httpClient: MockClient((_) async {
+            requests++;
+            return http.Response('{"message":"Hello."}', 200);
+          }),
+        ),
+      );
+      await tester.pumpWidget(buildTestApp(chatService: service));
+      await pumpRoute(tester);
+      await openChat(tester);
+      final input = find.byKey(const Key('cinemaChatInput'));
+      await tester.enterText(input, 'phim');
+      final controller = tester.widget<TextField>(input).controller!;
+      controller.value = const TextEditingValue(
+        text: 'phim',
+        selection: TextSelection.collapsed(offset: 4),
+        composing: TextRange(start: 0, end: 4),
+      );
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pump();
+      expect(requests, 0);
+      controller.value = controller.value.copyWith(composing: TextRange.empty);
+      await tester.sendKeyEvent(LogicalKeyboardKey.numpadEnter);
+      await pumpRoute(tester);
+      expect(requests, 1);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   test(
     'Chat never automatically repeats a billable request during server wake-up',
     () async {
@@ -250,7 +360,8 @@ void main() {
           await tester.pump();
           await tester.tap(send);
           await tester.pump();
-          await tester.pump(); // Apply the post-frame scroll in the compact panel.
+          await tester
+              .pump(); // Apply the post-frame scroll in the compact panel.
           expect(requests.single['messages'], [
             {'role': 'user', 'content': 'Gợi ý phim hay'},
           ]);
