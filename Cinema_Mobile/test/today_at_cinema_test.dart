@@ -91,6 +91,104 @@ void main() {
     );
     expect(find.text('B1 • BK-B • Awaiting payment'), findsOneWidget);
   });
+
+  testWidgets('All showtimes of the day open in a popup with filters', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1280, 2600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      buildAdminTestApp(
+        authenticated: true,
+        user: AuthUser.fromJson({
+          ...customerUser.toJson(),
+          'userId': 1,
+          'roles': ['ROLE_ADMIN'],
+        }),
+        staffService: _api(DateTime.now()),
+        initialRoute: AppRoutes.adminDashboard,
+      ),
+    );
+    await pumpRoute(tester);
+    await tester.ensureVisible(
+      find.byKey(const Key('allShowtimesTodayButton')),
+    );
+    await tester.tap(find.byKey(const Key('allShowtimesTodayButton')));
+    await pumpRoute(tester);
+
+    final dialog = find.byKey(const Key('todayShowtimesDialog'));
+    Finder inDialog(Finder finder) =>
+        find.descendant(of: dialog, matching: finder);
+    Iterable<int> listed() => tester
+        .widgetList<InkWell>(
+          inDialog(
+            find.byWidgetPredicate(
+              (widget) =>
+                  widget.key is ValueKey<String> &&
+                  (widget.key! as ValueKey<String>).value.startsWith(
+                    'todayShowtime-',
+                  ),
+            ),
+          ),
+        )
+        .map(
+          (widget) => int.parse(
+            (widget.key! as ValueKey<String>).value.split('-').last,
+          ),
+        );
+
+    // Every show of the day in start order, including the ones the board
+    // leaves out (8, 9 and 10).
+    expect(listed(), [10, 4, 3, 2, 1, 9, 5, 6, 7, 8]);
+    expect(inDialog(find.text('All (10)')), findsOneWidget);
+    expect(inDialog(find.text('Now showing (1)')), findsOneWidget);
+    expect(inDialog(find.text('Upcoming (4)')), findsOneWidget);
+    expect(inDialog(find.text('Finished (4)')), findsOneWidget);
+    expect(inDialog(find.text('Cancelled (1)')), findsOneWidget);
+    expect(
+      inDialog(find.text('30/120 seats taken • 25 checked in')),
+      findsOneWidget,
+    );
+
+    // Shows with tickets, then only the upcoming ones.
+    await tester.tap(find.byKey(const Key('todayShowtimesWithTickets')));
+    await tester.pump();
+    expect(listed(), [2, 1, 5]);
+    expect(inDialog(find.text('Upcoming (1)')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('todayShowtimesPhase-upcoming')));
+    await tester.pump();
+    expect(listed(), [5]);
+    expect(find.text('1 of 10 showtimes'), findsOneWidget);
+
+    // A title that is not showing today.
+    await tester.tap(find.byKey(const Key('todayShowtimesPhase-all')));
+    await tester.enterText(
+      find.descendant(
+        of: find.byKey(const Key('todayShowtimesSearch')),
+        matching: find.byType(EditableText),
+      ),
+      'Titanic',
+    );
+    await tester.pump();
+    expect(listed(), isEmpty);
+    expect(find.text('No showtimes match these filters.'), findsOneWidget);
+
+    // The movie's own title finds its shows again, and one opens its seats.
+    await tester.enterText(
+      find.descendant(
+        of: find.byKey(const Key('todayShowtimesSearch')),
+        matching: find.byType(EditableText),
+      ),
+      inception.title.toLowerCase(),
+    );
+    await tester.pump();
+    expect(listed(), [2, 1, 5]);
+    await tester.tap(find.byKey(const ValueKey('todayShowtime-1')));
+    await pumpRoute(tester);
+    expect(find.text('Customers (2)'), findsOneWidget);
+  });
 }
 
 // Showtimes around now: 1 is playing, 2, 3, 4 and 10 finished, 5 to 8 come next

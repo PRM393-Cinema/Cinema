@@ -18,6 +18,7 @@ import '../../../data/models/showtime.dart';
 import '../../../data/services/staff_service.dart';
 import '../../admin/widgets/admin_layout.dart';
 import 'staff_feedback.dart';
+import 'today_showtimes_dialog.dart';
 
 enum _Phase { playing, next, finished }
 
@@ -207,6 +208,22 @@ class _TodayAtCinemaState extends State<TodayAtCinema> {
           'showtimes playing now, next and just finished. Open a showtime to '
           'see where its customers sit.',
           style: AppTextStyles.bodySmall,
+        ),
+        const SizedBox(height: AppSpacing.md),
+        // The board only covers the shows around now: list the whole day.
+        Align(
+          alignment: Alignment.centerLeft,
+          child: OutlinedButton.icon(
+            key: const Key('allShowtimesTodayButton'),
+            onPressed: () => showTodayShowtimes(
+              context,
+              service: widget.service,
+              movies: data?.movies ?? const {},
+              rooms: data?.rooms ?? const {},
+            ),
+            icon: const Icon(Icons.view_list_outlined),
+            label: const Text('All showtimes today'),
+          ),
         ),
         const SizedBox(height: AppSpacing.xl),
         if (data == null && error == null)
