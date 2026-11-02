@@ -6,6 +6,8 @@ import '../data/repositories/booking_repository.dart';
 import '../data/repositories/catalog_repository.dart';
 import '../data/services/staff_service.dart';
 import '../data/services/chat_service.dart';
+import '../core/network/api_client.dart';
+import '../features/chat/widgets/chat_launcher.dart';
 import '../features/payment/payment_args.dart';
 import 'customer_frame.dart';
 import 'routes/app_router.dart';
@@ -44,6 +46,9 @@ class CinemaApp extends StatefulWidget {
 
 class _CinemaAppState extends State<CinemaApp> {
   final _routes = RouteTracker();
+  late final _chatService =
+      widget.chatService ??
+      ChatService(client: ApiClient(timeout: const Duration(seconds: 35)));
   bool _signingOut = false;
 
   Future<void> _signOut() async {
@@ -81,7 +86,6 @@ class _CinemaAppState extends State<CinemaApp> {
       catalogRepository: widget.catalogRepository,
       bookingRepository: widget.bookingRepository,
       staffService: widget.staffService,
-      chatService: widget.chatService,
       session: SessionProvider.of(context),
     );
     final payOsReturn = widget.paymentReturn;
@@ -90,10 +94,14 @@ class _CinemaAppState extends State<CinemaApp> {
       title: 'CosmoQ Cinema',
       initialRoute: widget.initialRoute,
       navigatorObservers: [_routes],
-      builder: (context, child) => CustomerFrame(
+      builder: (context, child) => ChatLauncher(
         routes: _routes,
-        onSignOut: _signOut,
-        child: child ?? const SizedBox(),
+        service: _chatService,
+        child: CustomerFrame(
+          routes: _routes,
+          onSignOut: _signOut,
+          child: child ?? const SizedBox(),
+        ),
       ),
       onGenerateRoute: router.onGenerateRoute,
       onGenerateInitialRoutes: (name) => router.onGenerateInitialRoutes(

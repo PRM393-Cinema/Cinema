@@ -7,9 +7,6 @@ import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/booking_repository.dart';
 import '../../data/repositories/catalog_repository.dart';
 import '../../data/services/staff_service.dart';
-import '../../data/services/chat_service.dart';
-import '../../core/network/api_client.dart';
-import '../../features/chat/screens/chat_screen.dart';
 import '../../features/auth/screens/forgot_password_screen.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/register_screen.dart';
@@ -46,7 +43,6 @@ class AppRouter {
     required this.bookingRepository,
     required this.session,
     this.staffService,
-    this.chatService,
   });
 
   final AuthRepository authRepository;
@@ -54,7 +50,6 @@ class AppRouter {
   final BookingRepository bookingRepository;
   final SessionState session;
   final StaffService? staffService;
-  final ChatService? chatService;
 
   Route<dynamic> onGenerateRoute(RouteSettings settings) {
     final match = _match(settings);
@@ -131,17 +126,6 @@ class AppRouter {
     }
 
     switch (uri.path) {
-      case AppRoutes.chat:
-        return _RouteMatch(
-          settings,
-          (_) => ChatScreen(
-            service:
-                chatService ??
-                ChatService(
-                  client: ApiClient(timeout: const Duration(seconds: 35)),
-                ),
-          ),
-        );
       case '/':
       case AppRoutes.home:
         return _landing();
