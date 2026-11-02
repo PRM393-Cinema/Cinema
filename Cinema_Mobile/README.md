@@ -133,6 +133,13 @@ memory, so a refreshed booking summary returns to the seat map.
 - Debug and profile Android builds allow plain HTTP (`android/app/src/debug/AndroidManifest.xml`). Release builds should talk to an HTTPS backend.
 - A physical phone must be on the same network as the backend machine; the gateway listens on port 5000 for the LAN.
 
+## Cinema AI
+
+The Movies page has a **Cinema AI** launcher on desktop and mobile. It answers
+movie/showtime questions and explains booking steps using the current public
+catalogue. Configure the OpenAI key only in the backend; see
+[Cinema AI setup](../Cinema_BE/docs/CINEMA_AI.md). No key is bundled in Flutter.
+
 ## Booking and PayOS payment
 
 1. **Confirm Booking** calls `POST /api/v1/bookings`: the booking is `PENDING` and the seats are held for 10 minutes.
