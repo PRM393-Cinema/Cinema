@@ -10,6 +10,7 @@ import '../../../core/session/session_state.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/utils/layout.dart';
 import '../../../core/widgets/paginated_cards.dart';
+import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/cinema_background.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
@@ -30,10 +31,17 @@ class MyBookingsScreen extends StatefulWidget {
 
 class _MyBookingsScreenState extends State<MyBookingsScreen> {
   final _glassBackgroundKey = GlobalKey();
+  final _search = TextEditingController();
   List<Booking> _bookings = const [];
   bool _isLoading = true;
   bool _hasStarted = false;
   String? _errorMessage;
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
 
   @override
   void didChangeDependencies() {
@@ -107,8 +115,14 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    final activeBookings = _bookings.where((b) => _isActive(b, now)).toList();
-    final historyBookings = _bookings.where((b) => !_isActive(b, now)).toList();
+    final query = _search.text.trim().toLowerCase();
+    final matching = _bookings.where(
+      (booking) => '${booking.movieTitle ?? ''} ${booking.bookingCode}'
+          .toLowerCase()
+          .contains(query),
+    );
+    final activeBookings = matching.where((b) => _isActive(b, now)).toList();
+    final historyBookings = matching.where((b) => !_isActive(b, now)).toList();
 
     return DefaultTabController(
       length: 2,
@@ -127,6 +141,25 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                       padding: pagePadding(context, AppSpacing.lg),
                       child: const CinemaPageHeader(title: 'My Bookings'),
                     ),
+                  Padding(
+                    padding: pagePadding(context, AppSpacing.md),
+                    child: AppTextField(
+                      key: const Key('bookingSearch'),
+                      label: 'Search bookings',
+                      hint: 'Movie title or booking code',
+                      controller: _search,
+                      prefixIcon: const Icon(Icons.search_rounded),
+                      suffixIcon: _search.text.isEmpty
+                          ? null
+                          : IconButton(
+                              key: const Key('clearBookingSearch'),
+                              tooltip: 'Clear search',
+                              onPressed: () => setState(_search.clear),
+                              icon: const Icon(Icons.close_rounded),
+                            ),
+                      onChanged: (_) => setState(() {}),
+                    ),
+                  ),
                   Padding(
                     padding: pagePadding(
                       context,
@@ -189,7 +222,9 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                         style: AppTextStyles.bodySmall,
                       ),
                     ),
-                  Expanded(child: _buildBody(activeBookings, historyBookings)),
+                  Expanded(
+                    child: _buildBody(activeBookings, historyBookings, query),
+                  ),
                 ],
               ),
             ),
@@ -206,7 +241,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
     );
   }
 
-  Widget _buildBody(List<Booking> active, List<Booking> history) {
+  Widget _buildBody(List<Booking> active, List<Booking> history, String query) {
     if (_isLoading) {
       return const LoadingState(message: 'Loading bookings...');
     }
@@ -223,11 +258,13 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
       children: [
         _BookingList(
           bookings: active,
+          searchQuery: query,
           onRefresh: _loadBookings,
           onTap: _openBooking,
         ),
         _BookingList(
           bookings: history,
+          searchQuery: query,
           onRefresh: _loadBookings,
           onTap: _openBooking,
         ),
@@ -239,11 +276,13 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
 class _BookingList extends StatelessWidget {
   const _BookingList({
     required this.bookings,
+    required this.searchQuery,
     required this.onRefresh,
     required this.onTap,
   });
 
   final List<Booking> bookings;
+  final String searchQuery;
   final Future<void> Function() onRefresh;
   final ValueChanged<Booking> onTap;
 
@@ -254,11 +293,13 @@ class _BookingList extends StatelessWidget {
       child: bookings.isEmpty
           ? ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              children: const [
-                SizedBox(height: AppSpacing.xxxl * 2),
+              children: [
+                const SizedBox(height: AppSpacing.xxxl * 2),
                 Center(
                   child: Text(
-                    'No bookings found.',
+                    searchQuery.isEmpty
+                        ? 'No bookings found.'
+                        : 'No matching bookings.',
                     style: AppTextStyles.bodySmall,
                   ),
                 ),
@@ -271,6 +312,7 @@ class _BookingList extends StatelessWidget {
               ),
               children: [
                 PaginatedCards(
+                  resetKey: searchQuery,
                   equalHeights: isDesktopLayout(context),
                   itemCount: bookings.length,
                   itemBuilder: (_, index) => _BookingCard(
@@ -414,19 +456,19 @@ class _BookingCard extends StatelessWidget {
                   padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
                   child: Divider(height: 1),
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Expanded(
-                      child: Text(
-                        'Code: ${booking.bookingCode}',
-                        style: AppTextStyles.caption,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                    Text(
+                      'Code: ${booking.bookingCode}',
+                      style: AppTextStyles.caption,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
+                    const SizedBox(height: AppSpacing.xs),
                     Text(
                       formatVnd(booking.totalAmount),
+                      textAlign: TextAlign.end,
                       style: AppTextStyles.title.copyWith(
                         color: AppPalette.of(context).primary,
                       ),
