@@ -70,6 +70,27 @@ public class BookingFlowTests
     }
 
     [Fact]
+    public async Task RepeatedCustomerConfirmation_CreatesOnlyOneHold_EvenWhenRequestsOverlap()
+    {
+        var showtime = _factory.Showtimes.AddShowtime(DateTime.Now.AddDays(2));
+        var seat = NewSeat();
+        var request = new { showtimeId = showtime.Id, seats = new[] { new { seatId = seat } } };
+        var responses = await Task.WhenAll(
+            _customerA.PostAsJsonAsync("/api/v1/bookings", request),
+            _customerA.PostAsJsonAsync("/api/v1/bookings", request));
+        try
+        {
+            Assert.Single(responses, r => r.StatusCode == HttpStatusCode.Created);
+            Assert.Single(responses, r => r.StatusCode == HttpStatusCode.Conflict);
+            using var retry = await _customerA.PostAsJsonAsync("/api/v1/bookings", request);
+            Assert.Equal(HttpStatusCode.Conflict, retry.StatusCode);
+            Assert.Equal(1, await _factory.QueryAsync<BookingDbContext, int>(db =>
+                db.Bookings.CountAsync(b => b.ShowtimeId == showtime.Id && b.Status == "PENDING")));
+        }
+        finally { foreach (var response in responses) response.Dispose(); }
+    }
+
+    [Fact]
     public async Task SignedWebhook_ConfirmsBooking_AndStoresPayer()
     {
         var showtime = _factory.Showtimes.AddShowtime(DateTime.Now.AddDays(2));
