@@ -43,6 +43,20 @@
       flutter-view * {
         -webkit-tap-highlight-color: transparent;
       }
+      ::view-transition-group(root) {
+        animation-duration: 240ms;
+        animation-timing-function: ease-in-out;
+      }
+      ::view-transition {
+        pointer-events: none;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        ::view-transition-group(root),
+        ::view-transition-old(root),
+        ::view-transition-new(root) {
+          animation: none;
+        }
+      }
     </style>
   </head>
   <body>

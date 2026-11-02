@@ -105,12 +105,10 @@ class MovieCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.sm),
           Text(
             title,
-            style: colors.isLight
-                ? AppTextStyles.title.copyWith(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  )
-                : AppTextStyles.title,
+            style: AppTextStyles.title.copyWith(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),

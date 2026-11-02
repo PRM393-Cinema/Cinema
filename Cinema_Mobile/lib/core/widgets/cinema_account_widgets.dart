@@ -369,19 +369,12 @@ class _CinemaNavigationBarState extends State<CinemaNavigationBar>
     animation: _interaction,
     builder: (context, _) {
       final colors = AppPalette.of(context);
-      final glassColors = [
-        for (final color in const [
-          Color.fromRGBO(255, 255, 255, 0.09),
-          Color.fromRGBO(255, 255, 255, 0.02),
-          Color.fromRGBO(5, 8, 16, 0.24),
-          Color.fromRGBO(5, 8, 16, 0.27),
-          Color.fromRGBO(255, 255, 255, 0.03),
-        ])
-          Color.lerp(
-            color,
-            colors.surface.withValues(alpha: 0.78),
-            colors.lightness,
-          )!,
+      const glassColors = [
+        Color.fromRGBO(255, 255, 255, 0.09),
+        Color.fromRGBO(255, 255, 255, 0.02),
+        Color.fromRGBO(5, 8, 16, 0.24),
+        Color.fromRGBO(5, 8, 16, 0.27),
+        Color.fromRGBO(255, 255, 255, 0.03),
       ];
       final pressure = _interaction.value.clamp(0.0, 1.0);
       final deformation = _LiquidNavClipper(
@@ -406,9 +399,9 @@ class _CinemaNavigationBarState extends State<CinemaNavigationBar>
                   clipper: deformation,
                   color: Colors.transparent,
                   shadowColor: Colors.black.withValues(
-                    alpha: AppPalette.of(context).isLight ? 0.08 : 0.3,
+                    alpha: 0.3 - 0.22 * colors.lightness,
                   ),
-                  elevation: AppPalette.of(context).isLight ? 2 : 8,
+                  elevation: 8,
                   clipBehavior: Clip.none,
                   child: RepaintBoundary(
                     key: _glassKey,
@@ -544,9 +537,8 @@ class _CinemaNavigationBarState extends State<CinemaNavigationBar>
               child: InkWell(
                 onTap: () => _selectDestination(index),
                 borderRadius: BorderRadius.circular(28),
-                focusColor: AppPalette.of(context).isLight
-                    ? AppPalette.of(context).primary.withValues(alpha: 0.12)
-                    : Colors.white.withValues(alpha: 0.12),
+                focusColor: AppPalette.of(context).primary
+                    .withValues(alpha: 0.12),
                 splashColor: AppPalette.of(context).primary
                     .withValues(alpha: 0.12),
                 child: Center(
@@ -559,15 +551,16 @@ class _CinemaNavigationBarState extends State<CinemaNavigationBar>
                             ? AppPalette.of(context).primary
                             : AppPalette.of(context).textPrimary,
                         size: 24,
-                        shadows: AppPalette.of(context).isLight
-                            ? null
-                            : const [
-                                Shadow(
-                                  color: Color.fromRGBO(0, 0, 0, 0.8),
-                                  blurRadius: 2,
-                                  offset: Offset(0, 1),
-                                ),
-                              ],
+                        shadows: [
+                          Shadow(
+                            color: Colors.black.withValues(
+                              alpha:
+                                  0.8 * (1 - AppPalette.of(context).lightness),
+                            ),
+                            blurRadius: 2,
+                            offset: Offset(0, 1),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 2),
                       Text(
@@ -576,15 +569,17 @@ class _CinemaNavigationBarState extends State<CinemaNavigationBar>
                           color: AppPalette.of(context).textPrimary,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          shadows: AppPalette.of(context).isLight
-                              ? null
-                              : const [
-                                  Shadow(
-                                    color: Color.fromRGBO(0, 0, 0, 0.8),
-                                    blurRadius: 2,
-                                    offset: Offset(0, 1),
-                                  ),
-                                ],
+                          shadows: [
+                            Shadow(
+                              color: Colors.black.withValues(
+                                alpha:
+                                    0.8 *
+                                    (1 - AppPalette.of(context).lightness),
+                              ),
+                              blurRadius: 2,
+                              offset: Offset(0, 1),
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -844,29 +839,13 @@ class CinemaPanel extends StatelessWidget {
   final EdgeInsetsGeometry padding;
   final double surfaceOpacity;
   @override
-  Widget build(BuildContext context) => Container(
-    padding: padding,
-    decoration: BoxDecoration(
-      color: AppPalette.of(context).isLight
-          ? AppPalette.of(context).surface.withValues(alpha: surfaceOpacity)
-          : null,
-      gradient: AppPalette.of(context).isLight
-          ? null
-          : LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppPalette.of(context).surfaceSoft
-                    .withValues(alpha: surfaceOpacity),
-                AppPalette.of(context).surface
-                    .withValues(alpha: surfaceOpacity),
-              ],
-            ),
-      borderRadius: BorderRadius.circular(
-        AppPalette.of(context).isLight ? 12 : 20,
-      ),
-      border: Border.all(color: AppPalette.of(context).border),
+  Widget build(BuildContext context) => Material(
+    color: AppPalette.of(context).surface.withValues(alpha: surfaceOpacity),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+      side: BorderSide(color: AppPalette.of(context).border),
     ),
-    child: child,
+    clipBehavior: Clip.antiAlias,
+    child: Padding(padding: padding, child: child),
   );
 }

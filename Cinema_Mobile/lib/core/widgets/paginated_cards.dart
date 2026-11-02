@@ -6,7 +6,6 @@ import '../../app/theme/app_colors.dart';
 import '../../app/theme/app_spacing.dart';
 import '../../app/theme/app_text_styles.dart';
 import '../utils/layout.dart';
-import 'scroll_reveal.dart';
 
 // shortcut: paginate loaded records; use server paging for large histories.
 class PaginatedCards extends StatefulWidget {
@@ -85,7 +84,7 @@ class _PaginatedCardsState extends State<PaginatedCards> {
       children: [
         for (var row = start; row < end; row += columns) ...[
           if (row > start) const SizedBox(height: AppSpacing.xl),
-          ScrollReveal(
+          KeyedSubtree(
             key: ValueKey((widget.resetKey, _page, row)),
             child: widget.equalHeights
                 ? IntrinsicHeight(child: cardRow(row))

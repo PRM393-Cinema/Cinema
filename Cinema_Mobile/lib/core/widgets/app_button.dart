@@ -45,6 +45,7 @@ class AppButton extends StatelessWidget {
   final bool isLoading;
   final IconData? leadingIcon;
   final IconData? trailingIcon;
+  // Kept for existing callers; both themes now use solid controls.
   final bool useGradient;
 
   bool get _isDisabled => onPressed == null || isLoading;
@@ -52,53 +53,29 @@ class AppButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = _ButtonColors.fromVariant(context, variant);
-    final showGradient =
-        useGradient && !_isDisabled && !AppPalette.of(context).isLight;
-
     return SizedBox(
       height: AppSpacing.xxxl,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: showGradient
-              ? LinearGradient(
-                  colors: [
-                    AppPalette.of(context).primary,
-                    AppPalette.of(context).primaryDark,
-                  ],
-                )
-              : null,
-          borderRadius: AppRadius.borderRadiusMd,
+      child: ElevatedButton(
+        onPressed: _isDisabled ? null : onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: colors.background,
+          foregroundColor: colors.foreground,
+          disabledBackgroundColor: variant == AppButtonVariant.secondary
+              ? AppPalette.of(context).surface
+              : AppPalette.of(context).surfaceSoft,
+          disabledForegroundColor: AppPalette.of(context).textSecondary,
+          shadowColor: Colors.transparent,
+          elevation: 0,
+          side: BorderSide(color: colors.border),
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.borderRadiusMd),
+          textStyle: AppTextStyles.button,
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
         ),
-        child: ElevatedButton(
-          onPressed: _isDisabled ? null : onPressed,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: showGradient
-                ? Colors.transparent
-                : colors.background,
-            foregroundColor: showGradient
-                ? AppPalette.of(context).onPrimary
-                : colors.foreground,
-            disabledBackgroundColor: variant == AppButtonVariant.secondary
-                ? AppPalette.of(context).surface
-                : AppPalette.of(context).surfaceSoft,
-            disabledForegroundColor: AppPalette.of(context).textSecondary,
-            shadowColor: Colors.transparent,
-            elevation: 0,
-            side: BorderSide(
-              color: showGradient ? Colors.transparent : colors.border,
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: AppRadius.borderRadiusMd,
-            ),
-            textStyle: AppTextStyles.button,
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-          ),
-          child: _ButtonContent(
-            label: label,
-            isLoading: isLoading,
-            leadingIcon: leadingIcon,
-            trailingIcon: trailingIcon,
-          ),
+        child: _ButtonContent(
+          label: label,
+          isLoading: isLoading,
+          leadingIcon: leadingIcon,
+          trailingIcon: trailingIcon,
         ),
       ),
     );

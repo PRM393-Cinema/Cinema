@@ -6,8 +6,8 @@ import 'app_spacing.dart';
 import 'app_text_styles.dart';
 
 abstract final class AppTheme {
-  static ThemeData get darkTheme => _build(Brightness.dark);
-  static ThemeData get lightTheme => _build(Brightness.light);
+  static final ThemeData darkTheme = _build(Brightness.dark);
+  static final ThemeData lightTheme = _build(Brightness.light);
 
   static ThemeData _build(Brightness brightness) {
     final colors = AppPalette(isLight: brightness == Brightness.light);
@@ -34,12 +34,8 @@ abstract final class AppTheme {
       brightness: brightness,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: colors.background,
-      hoverColor: colors.isLight
-          ? colors.primary.withValues(alpha: 0.05)
-          : null,
-      focusColor: colors.isLight
-          ? colors.primary.withValues(alpha: 0.12)
-          : null,
+      hoverColor: colors.primary.withValues(alpha: 0.05),
+      focusColor: colors.primary.withValues(alpha: 0.12),
       textTheme: const TextTheme(
         displayLarge: AppTextStyles.display,
         headlineLarge: AppTextStyles.heading1,
@@ -81,10 +77,7 @@ abstract final class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: AppRadius.borderRadiusMd,
-          borderSide: BorderSide(
-            color: colors.primary,
-            width: colors.isLight ? 2 : 1,
-          ),
+          borderSide: BorderSide(color: colors.primary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: AppRadius.borderRadiusMd,
@@ -111,9 +104,7 @@ abstract final class AppTheme {
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: colors.isLight
-              ? AppRadius.borderRadiusMd
-              : AppRadius.borderRadiusLg,
+          borderRadius: AppRadius.borderRadiusMd,
           side: BorderSide(color: colors.border),
         ),
       ),
