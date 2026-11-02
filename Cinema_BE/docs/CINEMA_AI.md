@@ -5,6 +5,31 @@ Use the floating chat icon on customer pages on web or mobile. On desktop it
 expands on hover or keyboard focus. Chat opens in a compact panel on the current
 page; minimize it or press Escape without losing the conversation. Guests can chat
 without signing in. Booking still uses the existing sign-in, seat selection and payment flow.
+Press Enter to send a message; Shift+Enter inserts a newline. The mobile keyboard's
+Send action also submits. Empty messages and duplicate sends while waiting are blocked.
+
+## Current capabilities
+
+| Area | What works today | Example question |
+| --- | --- | --- |
+| Movie advice | Recommend or compare films using the supplied public title, genre, language, age rating, duration, release date and short description. | “Gợi ý phim hành động dưới 2 tiếng.” |
+| Showtimes | Explain future OPEN showtimes, room, format and seat-type prices in the supplied seven-day snapshot. | “Interstellar có suất nào sắp tới, ghế VIP giá bao nhiêu?” |
+| Booking help | Explain the existing movie → showtime → sign-in → seats → summary → payment flow. | “Tôi đặt vé như thế nào?” |
+| Conversation | Follow recent questions, reply in the user's language, and preserve the chat while minimized or changing customer pages. | “Trong hai phim vừa nêu, phim nào ngắn hơn?” |
+| Interface | Guest access, both themes, mobile/desktop popup, selectable answers, retry, New chat and keyboard controls. | Enter sends; Shift+Enter adds a newline. |
+
+The assistant has no tools that can change Cinema data. It cannot reserve seats,
+create/pay/cancel a booking, process a refund, check a private account, or verify
+that a specific seat is still available. It cannot browse the web or see all of the
+database: context is limited to 30 active films, 80 OPEN showtimes in the next seven
+days and at most 11 recent chat messages within 12,000 characters. Missing records
+do not establish that a film or showtime is unavailable. The actual booking screens
+are authoritative, and recommendations depend on the model rather than fixed rules.
+
+Film descriptions are shortened to 300 characters. Older chat turns are dropped
+from model context; reloading the app, changing accounts or choosing New chat clears
+local conversation history. There is no permanent chat history, image/file upload,
+voice interface, live seat inventory, private booking lookup or web search.
 
 ## Configure OpenRouter
 
