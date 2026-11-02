@@ -5,6 +5,7 @@ import '../data/repositories/booking_repository.dart';
 import '../data/repositories/catalog_repository.dart';
 import '../data/services/auth_service.dart';
 import '../data/services/booking_service.dart';
+import '../data/services/chat_service.dart';
 import '../data/services/movie_service.dart';
 import '../data/services/staff_service.dart';
 import '../data/storage/auth_token_storage.dart';
@@ -16,6 +17,7 @@ class AppDependencies {
     required this.catalogRepository,
     required this.bookingRepository,
     required this.staffService,
+    required this.chatService,
   });
 
   // Repositories backed by the API gateway. Token renewals and expiry are
@@ -46,6 +48,9 @@ class AppDependencies {
       ),
       bookingRepository: RemoteBookingRepository(service: bookingService),
       staffService: StaffService(client: client),
+      chatService: ChatService(
+        client: ApiClient(timeout: const Duration(seconds: 35)),
+      ),
     );
   }
 
@@ -53,4 +58,5 @@ class AppDependencies {
   final CatalogRepository catalogRepository;
   final BookingRepository bookingRepository;
   final StaffService staffService;
+  final ChatService chatService;
 }

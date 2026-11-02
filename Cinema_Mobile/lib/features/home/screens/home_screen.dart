@@ -279,6 +279,16 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        key: const Key('openCinemaChat'),
+        tooltip: 'Ask Cinema AI',
+        onPressed: () => Navigator.pushNamed(context, AppRoutes.chat),
+        backgroundColor: AppPalette.of(context).primary,
+        foregroundColor: AppPalette.of(context).onPrimary,
+        elevation: 2,
+        icon: const Icon(Icons.chat_bubble_outline_rounded),
+        label: const Text('Cinema AI'),
+      ),
       bottomNavigationBar: desktop
           ? null
           : CinemaNavigationBar(

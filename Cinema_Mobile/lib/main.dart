@@ -35,6 +35,7 @@ void main() async {
         catalogRepository: dependencies.catalogRepository,
         bookingRepository: dependencies.bookingRepository,
         staffService: dependencies.staffService,
+        chatService: dependencies.chatService,
         // On web PayOS redirects back to the app with the order in the URL.
         paymentReturn: kIsWeb ? PayOsReturn.fromUri(Uri.base) : null,
       ),
