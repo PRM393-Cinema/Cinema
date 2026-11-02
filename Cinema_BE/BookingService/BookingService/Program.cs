@@ -116,7 +116,22 @@ builder.Services.AddAuthorization(options =>
         policy => policy.RequireRole("ADMIN", "ROLE_ADMIN"));
 });
 
-builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
+// Có Brevo:ApiKey thì gửi email qua HTTPS API của Brevo (Render gói free chặn cổng SMTP), không thì qua SMTP
+builder.Services.Configure<BrevoOptions>(
+    builder.Configuration.GetSection("Brevo"));
+var brevo = builder.Configuration.GetSection("Brevo").Get<BrevoOptions>() ?? new BrevoOptions();
+if (brevo.IsConfigured)
+{
+    builder.Services.AddHttpClient<IEmailSender, BrevoEmailSender>(client =>
+    {
+        client.BaseAddress = new Uri(brevo.BaseUrl);
+        client.Timeout = TimeSpan.FromSeconds(brevo.TimeoutSeconds);
+    });
+}
+else
+{
+    builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
+}
 
 // MovieService yêu cầu JWT: gọi sang đó kèm token của người dùng đang thao tác
 builder.Services.AddHttpContextAccessor();

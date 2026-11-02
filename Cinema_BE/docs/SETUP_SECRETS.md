@@ -14,9 +14,9 @@
 
 | Service | Thư mục | Cổng http / https | Key cần đặt |
 |---|---|---|---|
-| AuthService | `AuthService/AuthService` | 5100 / 7100 | `ConnectionStrings:DefaultConnection`, `Jwt:SecretKey`<br>Tuỳ chọn: `Smtp:*` |
+| AuthService | `AuthService/AuthService` | 5100 / 7100 | `ConnectionStrings:DefaultConnection`, `Jwt:SecretKey`<br>Tuỳ chọn: `Smtp:*` hoặc `Brevo:*` |
 | MovieService | `MovieService/MovieService` | 5168 / 7253 | `ConnectionStrings:MovieDb`, `ConnectionStrings:ShowtimeDb`, `Jwt:SecretKey` |
-| BookingService | `BookingService/BookingService` | 5063 / 7116 | `ConnectionStrings:BookingDb`, `ConnectionStrings:NotificationDb`, `ConnectionStrings:PaymentDb`, `Jwt:SecretKey`<br>Tuỳ chọn: `PayOS:*`, `Smtp:*` |
+| BookingService | `BookingService/BookingService` | 5063 / 7116 | `ConnectionStrings:BookingDb`, `ConnectionStrings:NotificationDb`, `ConnectionStrings:PaymentDb`, `Jwt:SecretKey`<br>Tuỳ chọn: `PayOS:*`, `Smtp:*` hoặc `Brevo:*` |
 | ApiGateway | `ApiGateway/ApiGateway` | 5000 / 7000 | `Jwt:SecretKey` |
 
 Ghi chú:
@@ -143,7 +143,7 @@ dotnet user-secrets set "PayOS:ChecksumKey" "<checksum_key>" --project BookingSe
 
 Luồng thanh toán, webhook và cách test không cần trả tiền thật: [PAYOS.md](PAYOS.md).
 
-**SMTP (Gmail)**: AuthService và BookingService dùng chung một tài khoản Gmail với **App Password**. Cách tạo App Password và script đặt key cho cả hai service nằm trong [EMAIL_SETUP.md](EMAIL_SETUP.md#3-cấu-hình).
+**SMTP (Gmail)**: AuthService và BookingService dùng chung một tài khoản Gmail với **App Password**. Cách tạo App Password và script đặt key cho cả hai service nằm trong [EMAIL_SETUP.md](EMAIL_SETUP.md#3-cấu-hình). Máy chủ chặn cổng SMTP (vd Render gói free) thì gửi qua Brevo API: [EMAIL_SETUP.md](EMAIL_SETUP.md#bản-deploy-render-gửi-qua-brevo).
 
 ## 7. Database
 

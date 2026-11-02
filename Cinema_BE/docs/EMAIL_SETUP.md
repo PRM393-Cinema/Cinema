@@ -4,6 +4,7 @@
 > - Hệ thống gửi email qua SMTP của Gmail bằng **App Password**, không dùng mật khẩu Gmail thường.
 > - Chỉ người giữ tài khoản Gmail của hệ thống mới tạo App Password, rồi gửi riêng cho người cần. **Không commit, không dán vào group chat.**
 > - Chưa có App Password vẫn dev được: ở môi trường Development, AuthService không gửi email mà **in nội dung email (kèm mã OTP) ra log**.
+> - Bản deploy trên Render (gói free chặn cổng SMTP) gửi email qua **HTTPS API của Brevo**, xem [Bản deploy: gửi qua Brevo](#bản-deploy-render-gửi-qua-brevo).
 
 ---
 
@@ -80,6 +81,27 @@ Sau đó chạy lại AuthService và BookingService.
 - BookingService không có chế độ này: booking vẫn xác nhận được, nhưng notification chuyển `FAILED`.
 - Môi trường khác Development mà thiếu SMTP: API gửi OTP trả **503**.
 
+### Bản deploy (Render): gửi qua Brevo
+
+Từ 26/09/2025, Render chặn cổng SMTP (25, 465, 587) với web service gói free, nên Gmail SMTP không gửi được. Khi có `Brevo:ApiKey`, AuthService và BookingService gửi email qua HTTPS API của [Brevo](https://www.brevo.com) (gói free 300 email/ngày) và bỏ qua các key `Smtp:*`. Không có key thì vẫn dùng SMTP như trên.
+
+1. Tạo tài khoản Brevo (người giữ email hệ thống làm một lần).
+2. **Xác minh người gửi**: Settings → **Senders, Domains & Dedicated IPs** → **Senders** → **Add a sender**, nhập tên và địa chỉ email của hệ thống (vd Gmail ở mục 2), rồi xác nhận bằng mã / link Brevo gửi tới hộp thư đó.
+3. **Tạo API key**: Settings → **SMTP & API** → tab **API Keys** → **Generate a new API key**. Key bắt đầu bằng `xkeysib-` và chỉ hiện một lần. Không nhầm với SMTP key (`xsmtpsib-`).
+4. Đặt key cho **cả hai** service:
+
+| Key (Render: Environment) | User Secrets / `appsettings` | Giá trị |
+|---|---|---|
+| `Brevo__ApiKey` | `Brevo:ApiKey` | API key ở bước 3 |
+| `Brevo__FromEmail` | `Brevo:FromEmail` | Địa chỉ người gửi đã xác minh ở bước 2 |
+| `Brevo__FromName` | `Brevo:FromName` | Tên người gửi, mặc định `Mobile Cinema` |
+
+Trên Render: mở `cinema-auth` rồi `cinema-booking` → **Environment** → thêm các biến trên → **Save, rebuild, and deploy**. Docker: điền `BREVO_API_KEY`, `BREVO_FROM_EMAIL` trong `.env`.
+
+Brevo không hỗ trợ ảnh nhúng (`cid:`), nên mã QR trong email xác nhận đặt vé được gửi thành **file đính kèm** `ma-qr-<mã vé>.png`, chỗ ảnh trong thư ghi tên file đó. Mã đặt vé vẫn nằm ngay dưới để nhân viên nhập tay.
+
+Email gửi từ địa chỉ Gmail qua Brevo dễ vào **Spam**. Muốn tránh thì xác thực một tên miền riêng trong Brevo (mục **Domains**) và gửi bằng địa chỉ của tên miền đó.
+
 ## 4. Luồng cho Flutter (gọi qua gateway `http://localhost:5000`)
 
 ### Đăng ký và xác thực email
@@ -126,7 +148,7 @@ Khi đó chuyển sang màn hình OTP, gọi `resend-verification` để lấy m
 
 ### Email xác nhận đặt vé
 
-BookingService gửi email chi tiết vé ngay khi booking được xác nhận. Email có **mã QR của vé** (ảnh PNG đính kèm dạng `cid:`, hiện ngay trong Gmail / Outlook) cùng mã đặt vé: khách đưa mã này ở quầy, nhân viên quét để check-in.
+BookingService gửi email chi tiết vé ngay khi booking được xác nhận. Email có **mã QR của vé** (ảnh PNG đính kèm dạng `cid:`, hiện ngay trong Gmail / Outlook; gửi qua Brevo thì là file đính kèm) cùng mã đặt vé: khách đưa mã này ở quầy, nhân viên quét để check-in.
 
 - **Khách thanh toán PayOS:** sau khi trả tiền xong, app gọi `POST /api/v1/payments/payos/{orderCode}/verify`. PayOS báo đã nhận tiền thì booking tự chuyển sang CONFIRMED và email vé được gửi về **email trong token** của khách. Muốn gửi tới email khác thì thêm `?recipientEmail=...`. Khách không tự gọi `/bookings/{id}/confirm` được.
 - **Bán tại quầy**: Staff thu tiền mặt bằng `POST /api/v1/payments/cash` (body có `recipientEmail` tuỳ chọn), hoặc khách quét QR chuyển khoản. Email vé gửi tới email khách cho ở quầy, và email này được lưu vào vé để các email huỷ / hoàn tiền sau đó cũng tới. Khách vãng lai không cho email thì không gửi: nhân viên in vé hoặc khách chụp QR trên màn hình.
@@ -172,3 +194,7 @@ Tính năng này thêm cột `users.email_verified` và bảng `otp_codes` (repo
 | `550 5.4.5 Daily user sending limit exceeded` | Gmail giới hạn khoảng 500 email/ngày | Đợi 24 giờ |
 | Người nhận không thấy email | Email rơi vào Spam / Quảng cáo | Đánh dấu "Không phải spam" |
 | Vẫn thấy log `SMTP chưa được cấu hình` dù đã đặt key | Đặt nhầm project, sai tên key, hoặc chưa chạy lại service | Kiểm tra bằng `dotnet user-secrets list --project AuthService/AuthService` |
+| Bản deploy: API gửi OTP trả 503 sau khoảng 10 giây, log có `TaskCanceledException` / timeout | Render gói free chặn cổng SMTP | Gửi qua Brevo ([mục 3](#bản-deploy-render-gửi-qua-brevo)) |
+| `Brevo ... (401): ... Key not found` | Sai API key, hoặc dùng nhầm SMTP key (`xsmtpsib-`) | Tạo API key mới (`xkeysib-`) |
+| `Brevo ... (401): ... unrecognised IP address` | Brevo chặn API key dùng từ IP lạ | Brevo → **Security** → **Authorised IPs**: thêm IP trong log, hoặc tắt chặn IP (IP của Render có thể đổi) |
+| `Brevo ... (400)` kèm lỗi về `sender` | `Brevo:FromEmail` chưa được xác minh trên Brevo | Xác minh người gửi (mục 3, bước 2) |
