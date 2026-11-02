@@ -49,15 +49,18 @@ class MembershipCard extends StatelessWidget {
     required this.card,
     this.historySize = 10,
     this.onHistory,
+    this.compact = false,
     super.key,
   });
 
   final LoyaltyCard card;
   final int historySize;
   final VoidCallback? onHistory;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
+    if (compact) return _buildCompact(context);
     final progress = card.progress;
     final next = card.nextTier;
     final history = card.history.take(historySize).toList();
@@ -151,6 +154,140 @@ class MembershipCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.xs),
             for (final line in history) PointsLine(line: line),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompact(BuildContext context) {
+    final colors = AppPalette.of(context);
+    final progress = card.progress;
+    final next = card.nextTier;
+    return CinemaPanel(
+      key: const Key('membershipCard'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: AppSpacing.md,
+            runSpacing: AppSpacing.sm,
+            children: [
+              Wrap(
+                spacing: AppSpacing.md,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  const Text('Membership', style: AppTextStyles.title),
+                  TierBadge(tier: card.tier),
+                ],
+              ),
+              if (onHistory != null)
+                TextButton.icon(
+                  key: const Key('pointHistory'),
+                  onPressed: onHistory,
+                  style: TextButton.styleFrom(
+                    minimumSize: const Size(0, 44),
+                    visualDensity: VisualDensity.standard,
+                    textStyle: AppTextStyles.bodySmall.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  icon: const Icon(Icons.history_rounded, size: 18),
+                  label: const Text('Point history'),
+                ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final columns = constraints.maxWidth >= 520 ? 2 : 1;
+              final width =
+                  (constraints.maxWidth - AppSpacing.xl * (columns - 1)) /
+                  columns;
+              return Wrap(
+                spacing: AppSpacing.xl,
+                runSpacing: AppSpacing.lg,
+                children: [
+                  SizedBox(
+                    width: width,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Reward points',
+                          style: AppTextStyles.caption.copyWith(
+                            color: colors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          '${card.points} points',
+                          key: const Key('memberPoints'),
+                          style: AppTextStyles.heading2.copyWith(
+                            color: colors.primary,
+                          ),
+                        ),
+                        Text(
+                          '${formatVnd(card.pointsValue)} · Earn ${card.earnRatePercent.round()}% back',
+                          style: AppTextStyles.bodySmall,
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        if (progress != null && next != null) ...[
+                          LinearProgressIndicator(
+                            value: progress,
+                            minHeight: 4,
+                            backgroundColor: colors.surfaceSoft,
+                            color: colors.primary,
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(
+                            '${formatVnd(card.nextTierSpend! - card.lifetimeSpend)} to ${next.label}',
+                            style: AppTextStyles.caption,
+                          ),
+                        ] else
+                          const Text(
+                            'You are at the top tier.',
+                            style: AppTextStyles.caption,
+                          ),
+                      ],
+                    ),
+                  ),
+                  if (card.giftRenewsAt != null)
+                    SizedBox(
+                      width: width,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Membership gifts',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: colors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(
+                            '${card.giftTickets} ${card.tier == MemberTier.vip ? 'VIP seat ticket(s)' : 'ticket(s) of your choice'} · ${card.giftCombos} combo(s)',
+                            style: AppTextStyles.bodySmall,
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(
+                            'Renews ${formatDate(card.giftRenewsAt!)} · Every 6 months',
+                            style: AppTextStyles.caption,
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          const Text(
+                            'Choose seats and combos, then use gifts in Booking Summary.',
+                            style: AppTextStyles.caption,
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
         ],
       ),
     );
