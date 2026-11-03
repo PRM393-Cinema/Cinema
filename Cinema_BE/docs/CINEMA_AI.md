@@ -11,7 +11,9 @@ Press Enter to send a message; Shift+Enter inserts a newline. The mobile keyboar
 Send action also submits. Empty messages and duplicate sends while waiting are blocked.
 Assistant answers render short headings, bold labels and bullet lists as selectable
 text in both themes. HTML and links remain literal text. Recommendations separate
-movie titles, showtimes and costs; old plain-text history remains readable.
+movie titles, showtimes and costs. Long old plain-text bullets gain a bold leading
+label and sentence breaks; currency amounts are emphasized even without Markdown.
+This only changes rendering: saved text and amounts stay unchanged and no AI call is needed.
 
 ## Current capabilities
 

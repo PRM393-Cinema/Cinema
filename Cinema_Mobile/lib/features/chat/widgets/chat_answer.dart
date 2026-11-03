@@ -14,7 +14,9 @@ class ChatAnswer extends StatelessWidget {
     final colors = AppPalette.of(context);
     final spans = <InlineSpan>[];
     final lines = text.replaceAll('\r\n', '\n').split('\n');
-    final bold = RegExp(r'\*\*([^*\n]+)\*\*');
+    final emphasis = RegExp(
+      r'\*\*([^*\n]+)\*\*|\b\d+(?:[.,]\d+)*[ \t]?(?:đ|₫|VND)(?![A-Za-z0-9])',
+    );
     for (var index = 0; index < lines.length; index++) {
       var line = lines[index];
       final heading = RegExp(r'^#{1,3}\s+').firstMatch(line);
@@ -23,14 +25,25 @@ class ChatAnswer extends StatelessWidget {
         line = line.substring(heading.end);
       } else if (bullet != null) {
         line = '•  ${line.substring(bullet.end)}';
+        // Old saved replies have long prose bullets without Markdown; change presentation only.
+        if (line.length > 120 && !line.contains('**')) {
+          final label = RegExp(r'^•  ([^:\n]{1,70}:)\s').firstMatch(line);
+          if (label != null) {
+            line = '**${label.group(1)}**\n${line.substring(label.end)}';
+          }
+          line = line.replaceAllMapped(
+            RegExp(r'([.;]) +(?=\S)'),
+            (match) => '${match.group(1)}\n',
+          );
+        }
       }
       final children = <InlineSpan>[];
       var offset = 0;
-      for (final match in bold.allMatches(line)) {
+      for (final match in emphasis.allMatches(line)) {
         children.add(TextSpan(text: line.substring(offset, match.start)));
         children.add(
           TextSpan(
-            text: match.group(1),
+            text: match.group(1) ?? match.group(0),
             style: const TextStyle(fontWeight: FontWeight.w700),
           ),
         );

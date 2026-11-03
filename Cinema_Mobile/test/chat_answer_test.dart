@@ -3,6 +3,45 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets(
+    'Legacy recommendation splits facts and emphasizes prices without rewriting history',
+    (tester) async {
+      const text =
+          'Mình hiểu budget của hai bạn là 300.000đ nhé!\n\n• Nhẹ nhàng, tình cảm: Bố Già — 09:15 ngày 06/11/2026, 2D. Ghế NORMAL 85.000đ/vé, hai vé 170.000đ; còn 130.000đ trong ngân sách cho bắp nước.';
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(body: ChatAnswer(text: text)),
+        ),
+      );
+      final widget = tester.widget<SelectableText>(find.byType(SelectableText));
+      final rendered = widget.textSpan!.toPlainText();
+      expect(rendered, contains('Nhẹ nhàng, tình cảm:\nBố Già'));
+      expect(rendered, contains('2D.\nGhế NORMAL'));
+      expect(rendered, contains('170.000đ;\ncòn 130.000đ'));
+      expect(widget.semanticsLabel, text);
+      final boldText = <String>[];
+      void collect(TextSpan span) {
+        if (span.style?.fontWeight == FontWeight.w700) {
+          boldText.add(span.toPlainText());
+        }
+        for (final child in span.children ?? <InlineSpan>[]) {
+          if (child is TextSpan) collect(child);
+        }
+      }
+
+      collect(widget.textSpan!);
+      expect(
+        boldText,
+        containsAll([
+          'Nhẹ nhàng, tình cảm:',
+          '300.000đ',
+          '170.000đ',
+          '130.000đ',
+        ]),
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
   for (final mode in ThemeMode.values) {
     testWidgets('Chat answer headings, lists and bold wrap in $mode', (
       tester,
