@@ -4,6 +4,7 @@ import 'package:cinema_fe/core/utils/formatters.dart';
 import 'package:cinema_fe/core/widgets/cinema_background.dart';
 import 'package:cinema_fe/app/theme/theme_switch.dart';
 import 'package:cinema_fe/data/models/loyalty.dart';
+import 'package:cinema_fe/data/models/auth_response.dart';
 import 'package:cinema_fe/features/profile/widgets/membership_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -11,6 +12,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'support/fakes.dart';
+import 'support/fixtures.dart';
 import 'support/test_app.dart';
 
 LoyaltyCard _card({MemberTier tier = MemberTier.vvip}) => LoyaltyCard(
@@ -27,6 +29,80 @@ LoyaltyCard _card({MemberTier tier = MemberTier.vvip}) => LoyaltyCard(
 );
 
 void main() {
+  for (final theme in ['light', 'dark']) {
+    for (final admin in [false, true]) {
+      for (final width in [375.0, 900.0, 1440.0]) {
+        testWidgets('$theme ${admin ? 'admin' : 'staff'} settings at $width', (
+          tester,
+        ) async {
+          FlutterSecureStorage.setMockInitialValues({
+            'appearance.theme': theme,
+          });
+          tester.view.physicalSize = Size(width, 1000);
+          tester.view.devicePixelRatio = 1;
+          addTearDown(tester.view.reset);
+          final user = AuthUser.fromJson({
+            ...customerUser.toJson(),
+            'roles': [admin ? 'ROLE_ADMIN' : 'ROLE_STAFF'],
+          });
+          final auth = FakeAuthRepository(user: user);
+          await tester.pumpWidget(
+            buildAdminTestApp(
+              authenticated: true,
+              user: user,
+              authRepository: auth,
+              initialRoute: admin
+                  ? AppRoutes.adminProfile
+                  : AppRoutes.staffProfile,
+            ),
+          );
+          await pumpRoute(tester);
+          final sidebar = tester.getRect(
+            find.byKey(const Key('accountSettingsSidebar')),
+          );
+          final grid = tester.getRect(
+            find.byKey(const Key('accountProfileGrid')),
+          );
+          if (width == 1440) {
+            expect(sidebar.right, lessThan(grid.left));
+            expect(sidebar.top, grid.top);
+            expect(
+              tester.getTopLeft(find.text('Full name')).dy,
+              tester.getTopLeft(find.text('Email')).dy,
+            );
+            expect(grid.bottom, lessThan(650));
+          } else {
+            expect(sidebar.bottom, lessThan(grid.top));
+            expect(
+              tester.getTopLeft(find.text('Full name')).dy,
+              lessThan(tester.getTopLeft(find.text('Email')).dy),
+            );
+          }
+          expect(find.byType(MembershipCard), findsNothing);
+          expect(find.text('Payment history'), findsNothing);
+          expect(find.text('My bookings'), findsNothing);
+          expect(find.text('Notifications'), findsNothing);
+          expect(tester.takeException(), isNull);
+          await tester.tap(find.byKey(const Key('editProfile')));
+          await pumpRoute(tester);
+          expect(find.byKey(const Key('saveProfile')), findsOneWidget);
+          await tester.tap(find.text('Cancel'));
+          await pumpRoute(tester);
+          await tester.tap(find.byKey(const Key('changePassword')));
+          await pumpRoute(tester);
+          expect(find.byKey(const Key('savePassword')), findsOneWidget);
+          await tester.tap(find.text('Cancel'));
+          await pumpRoute(tester);
+          await tester.tap(find.widgetWithText(TextButton, 'Sign out'));
+          await pumpRoute(tester);
+          await tester.tap(find.text('Stay signed in'));
+          await pumpRoute(tester);
+          expect(auth.logoutCalls, 0);
+          expect(tester.takeException(), isNull);
+        });
+      }
+    }
+  }
   for (final theme in ['light', 'dark']) {
     for (final (size, scale) in [
       (const Size(900, 900), 1.0),
