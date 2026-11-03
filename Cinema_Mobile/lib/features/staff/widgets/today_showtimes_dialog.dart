@@ -276,6 +276,7 @@ class _TodayShowtimesDialogState extends State<TodayShowtimesDialog> {
         child: SingleChildScrollView(
           key: const Key('todayShowtimesBody'),
           controller: _scroll,
+          padding: const EdgeInsets.only(top: AppSpacing.sm),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -299,7 +300,12 @@ class _TodayShowtimesDialogState extends State<TodayShowtimesDialog> {
                     child: InputDecorator(
                       decoration: const InputDecoration(
                         labelText: 'Room',
-                        isDense: true,
+                        isDense: false,
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 12,
+                        ),
+                        constraints: BoxConstraints(minHeight: 48),
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<int?>(
@@ -323,11 +329,30 @@ class _TodayShowtimesDialogState extends State<TodayShowtimesDialog> {
                       ),
                     ),
                   ),
-                  FilterChip(
-                    key: const Key('todayShowtimesWithTickets'),
-                    label: const Text('With tickets'),
-                    selected: _withTickets,
-                    onSelected: (value) => _change(() => _withTickets = value),
+                  Semantics(
+                    toggled: _withTickets,
+                    child: OutlinedButton.icon(
+                      key: const Key('todayShowtimesWithTickets'),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(0, 48),
+                        backgroundColor: _withTickets
+                            ? AppPalette.of(context).primary
+                                  .withValues(alpha: 0.12)
+                            : null,
+                        foregroundColor: _withTickets
+                            ? AppPalette.of(context).primary
+                            : AppPalette.of(context).textSecondary,
+                      ),
+                      onPressed: () =>
+                          _change(() => _withTickets = !_withTickets),
+                      icon: Icon(
+                        _withTickets
+                            ? Icons.check
+                            : Icons.confirmation_number_outlined,
+                        size: 18,
+                      ),
+                      label: const Text('With tickets'),
+                    ),
                   ),
                   if (_search.text.isNotEmpty ||
                       _roomId != null ||

@@ -140,11 +140,12 @@ class _AdminSnacksScreenState extends State<AdminSnacksScreen> {
             filter: InputDecorator(
               decoration: const InputDecoration(
                 labelText: 'Status',
-                isDense: true,
+                isDense: false,
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
                   key: const Key('snackStatusFilter'),
+                  isDense: true,
                   isExpanded: true,
                   value: _active == null
                       ? 'all'

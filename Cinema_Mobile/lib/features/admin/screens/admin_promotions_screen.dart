@@ -147,11 +147,12 @@ class _AdminPromotionsScreenState extends State<AdminPromotionsScreen> {
             filter: InputDecorator(
               decoration: const InputDecoration(
                 labelText: 'Status',
-                isDense: true,
+                isDense: false,
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
                   key: const Key('promotionStatusFilter'),
+                  isDense: true,
                   isExpanded: true,
                   value: _status,
                   items: [

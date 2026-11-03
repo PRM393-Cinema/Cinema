@@ -332,7 +332,15 @@ class _StaffOperationsScreenState extends State<StaffOperationsScreen> {
               style: AppTextStyles.bodySmall.copyWith(
                 color: AppPalette.of(context).textPrimary,
               ),
-              decoration: const InputDecoration(labelText: 'Status'),
+              decoration: const InputDecoration(
+                labelText: 'Status',
+                isDense: false,
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
+                constraints: BoxConstraints(minHeight: 48),
+              ),
               items: [
                 for (final status
                     in _section == 'Bookings'
@@ -373,7 +381,7 @@ class _StaffOperationsScreenState extends State<StaffOperationsScreen> {
                   child: OutlinedButton.icon(
                     key: const Key('operationsDates'),
                     style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(0, 44),
+                      minimumSize: const Size(0, 48),
                       textStyle: AppTextStyles.bodySmall,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(6),
@@ -407,7 +415,7 @@ class _StaffOperationsScreenState extends State<StaffOperationsScreen> {
             FilledButton.icon(
               key: const Key('operationsCreate'),
               style: FilledButton.styleFrom(
-                minimumSize: const Size(0, 44),
+                minimumSize: const Size(0, 48),
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(6),

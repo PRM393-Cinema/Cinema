@@ -186,11 +186,12 @@ class _AdminMoviesScreenState extends State<AdminMoviesScreen> {
               filter: InputDecorator(
                 decoration: const InputDecoration(
                   labelText: 'Status',
-                  isDense: true,
+                  isDense: false,
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
                     key: const Key('movieStatusFilter'),
+                    isDense: true,
                     isExpanded: true,
                     value: _status ?? 'all',
                     items: const [

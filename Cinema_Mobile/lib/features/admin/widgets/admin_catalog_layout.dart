@@ -24,34 +24,46 @@ class AdminCatalogToolbar extends StatelessWidget {
   final double filterWidth;
 
   @override
-  Widget build(BuildContext context) => LayoutBuilder(
-    builder: (context, constraints) {
-      if (constraints.maxWidth < filterWidth + 400) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            search,
-            const SizedBox(height: AppSpacing.md),
-            if (filter != null) ...[
-              filter!,
+  Widget build(BuildContext context) => Theme(
+    data: Theme.of(context).copyWith(
+      inputDecorationTheme: Theme.of(context).inputDecorationTheme.copyWith(
+        isDense: false,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 12,
+        ),
+        constraints: const BoxConstraints(minHeight: 48),
+      ),
+    ),
+    child: LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < filterWidth + 400) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              search,
               const SizedBox(height: AppSpacing.md),
+              if (filter != null) ...[
+                filter!,
+                const SizedBox(height: AppSpacing.md),
+              ],
+              Align(alignment: Alignment.centerLeft, child: action),
             ],
-            Align(alignment: Alignment.centerLeft, child: action),
+          );
+        }
+        return Row(
+          children: [
+            Expanded(child: search),
+            if (filter != null) ...[
+              const SizedBox(width: AppSpacing.md),
+              SizedBox(width: filterWidth, child: filter),
+            ],
+            const SizedBox(width: AppSpacing.lg),
+            action,
           ],
         );
-      }
-      return Row(
-        children: [
-          Expanded(child: search),
-          if (filter != null) ...[
-            const SizedBox(width: AppSpacing.md),
-            SizedBox(width: filterWidth, child: filter),
-          ],
-          const SizedBox(width: AppSpacing.lg),
-          action,
-        ],
-      );
-    },
+      },
+    ),
   );
 }
 

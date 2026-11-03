@@ -145,11 +145,12 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                   child: InputDecorator(
                     decoration: const InputDecoration(
                       labelText: 'Role',
-                      isDense: true,
+                      isDense: false,
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
                         key: const Key('accountRoleFilter'),
+                        isDense: true,
                         isExpanded: true,
                         value: _role ?? 'all',
                         items: [
@@ -180,11 +181,12 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                   child: InputDecorator(
                     decoration: const InputDecoration(
                       labelText: 'Status',
-                      isDense: true,
+                      isDense: false,
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
                         key: const Key('accountStatusFilter'),
+                        isDense: true,
                         isExpanded: true,
                         value: _status,
                         items: const [
