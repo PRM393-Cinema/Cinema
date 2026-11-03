@@ -21,7 +21,7 @@ import '../../../data/models/paged_result.dart';
 import '../../../data/services/staff_service.dart';
 import '../../staff/widgets/staff_feedback.dart';
 import '../../../core/widgets/responsive_columns.dart';
-import '../widgets/admin_layout.dart';
+import '../widgets/admin_catalog_layout.dart';
 import '../widgets/admin_page.dart';
 import '../widgets/admin_pager.dart';
 import '../../../core/widgets/age_rating_badge.dart';
@@ -157,49 +157,53 @@ class _AdminMoviesScreenState extends State<AdminMoviesScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: pagePadding(context, AppSpacing.lg),
           children: [
-            AdminControls(
-              children: [
-                AppButton(
-                  key: const Key('addMovieButton'),
-                  label: 'Add movie',
-                  leadingIcon: Icons.add_rounded,
-                  useGradient: true,
-                  onPressed: busy ? null : () => _edit(),
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                Row(
-                  children: [
-                    Expanded(
-                      child: AppTextField(
-                        key: const Key('movieSearchField'),
-                        label: 'Search titles',
-                        controller: _search,
-                        enabled: !busy,
-                        prefixIcon: const Icon(Icons.search_rounded),
-                      ),
+            AdminCatalogToolbar(
+              action: AppButton(
+                key: const Key('addMovieButton'),
+                label: 'Add movie',
+                leadingIcon: Icons.add_rounded,
+                useGradient: true,
+                onPressed: busy ? null : () => _edit(),
+              ),
+              search: Row(
+                children: [
+                  Expanded(
+                    child: AppTextField(
+                      key: const Key('movieSearchField'),
+                      label: 'Search titles',
+                      controller: _search,
+                      enabled: !busy,
+                      prefixIcon: const Icon(Icons.search_rounded),
                     ),
-                    IconButton(
-                      tooltip: 'Search movies',
-                      onPressed: busy ? null : _searchMovies,
-                      icon: const Icon(Icons.search_rounded),
-                    ),
-                  ],
+                  ),
+                  IconButton(
+                    tooltip: 'Search movies',
+                    onPressed: busy ? null : _searchMovies,
+                    icon: const Icon(Icons.search_rounded),
+                  ),
+                ],
+              ),
+              filter: InputDecorator(
+                decoration: const InputDecoration(
+                  labelText: 'Status',
+                  isDense: true,
                 ),
-                const SizedBox(height: AppSpacing.md),
-                DropdownButton<String>(
-                  key: const Key('movieStatusFilter'),
-                  isExpanded: true,
-                  value: _status ?? 'all',
-                  items: const [
-                    DropdownMenuItem(value: 'all', child: Text('All movies')),
-                    DropdownMenuItem(value: _showing, child: Text('Showing')),
-                    DropdownMenuItem(value: _stopped, child: Text('Stopped')),
-                  ],
-                  onChanged: busy
-                      ? null
-                      : (value) => _filter(value == 'all' ? null : value),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    key: const Key('movieStatusFilter'),
+                    isExpanded: true,
+                    value: _status ?? 'all',
+                    items: const [
+                      DropdownMenuItem(value: 'all', child: Text('All movies')),
+                      DropdownMenuItem(value: _showing, child: Text('Showing')),
+                      DropdownMenuItem(value: _stopped, child: Text('Stopped')),
+                    ],
+                    onChanged: busy
+                        ? null
+                        : (value) => _filter(value == 'all' ? null : value),
+                  ),
                 ),
-              ],
+              ),
             ),
             const SizedBox(height: AppSpacing.lg),
             if (_loading)
@@ -225,30 +229,148 @@ class _AdminMoviesScreenState extends State<AdminMoviesScreen> {
                     style: AppTextStyles.bodySmall,
                   ),
                 ),
-              CardColumns(
-                runSpacing: 0,
-                children: [
-                  for (final movie in result.items)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                      child: _MovieCard(
-                        movie: movie,
-                        busy: _busyId == movie.id,
-                        onEdit: busy ? null : () => _edit(movie),
-                        onReviews: () => showDialog<void>(
-                          context: context,
-                          builder: (_) => _ReviewsDialog(
-                            service: widget.service,
-                            movie: movie,
+              if (result.items.isNotEmpty && isCatalogDesktop(context))
+                AdminCatalogTable(
+                  key: const Key('adminMoviesTable'),
+                  columns: const [
+                    DataColumn(label: Text('Movie')),
+                    DataColumn(label: Text('Duration')),
+                    DataColumn(label: Text('Release date')),
+                    DataColumn(label: Text('Status')),
+                    DataColumn(label: Text('Actions')),
+                  ],
+                  rows: [
+                    for (final movie in result.items)
+                      DataRow(
+                        cells: [
+                          DataCell(
+                            Row(
+                              children: [
+                                AppNetworkImage(
+                                  imageUrl: movie.posterUrl,
+                                  width: 32,
+                                  height: 46,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                const SizedBox(width: AppSpacing.md),
+                                SizedBox(
+                                  width: 220,
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        movie.title,
+                                        style: AppTextStyles.bodySmall.copyWith(
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      Text(
+                                        movie.genre,
+                                        style: AppTextStyles.caption,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: AppSpacing.sm),
+                                AgeRatingBadge(rating: movie.ageRating),
+                              ],
+                            ),
                           ),
-                        ),
-                        onSetShowing: busy
-                            ? null
-                            : (showing) => _setShowing(movie, showing: showing),
+                          DataCell(Text(movie.durationText)),
+                          DataCell(
+                            Text(
+                              movie.releaseDate == null
+                                  ? '—'
+                                  : formatDate(movie.releaseDate!),
+                            ),
+                          ),
+                          DataCell(
+                            StatusBadge(
+                              label: movie.status == _showing
+                                  ? 'Showing'
+                                  : 'Stopped',
+                              variant: movie.status == _showing
+                                  ? StatusBadgeVariant.success
+                                  : StatusBadgeVariant.neutral,
+                            ),
+                          ),
+                          DataCell(
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  key: Key('editMovie-${movie.id}'),
+                                  tooltip: 'Edit',
+                                  onPressed: busy ? null : () => _edit(movie),
+                                  icon: const Icon(Icons.edit_outlined),
+                                ),
+                                IconButton(
+                                  key: Key('movieReviews-${movie.id}'),
+                                  tooltip: 'Reviews',
+                                  onPressed: () => showDialog<void>(
+                                    context: context,
+                                    builder: (_) => _ReviewsDialog(
+                                      service: widget.service,
+                                      movie: movie,
+                                    ),
+                                  ),
+                                  icon: const Icon(Icons.reviews_outlined),
+                                ),
+                                IconButton(
+                                  key: Key('toggleMovie-${movie.id}'),
+                                  tooltip: movie.status == _showing
+                                      ? 'Stop showing'
+                                      : 'Show again',
+                                  onPressed: busy
+                                      ? null
+                                      : () => _setShowing(
+                                          movie,
+                                          showing: movie.status != _showing,
+                                        ),
+                                  icon: Icon(
+                                    movie.status == _showing
+                                        ? Icons.visibility_off_outlined
+                                        : Icons.visibility_outlined,
+                                    color: movie.status == _showing
+                                        ? AppPalette.of(context).error
+                                        : AppPalette.of(context).success,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                ],
-              ),
+                  ],
+                )
+              else
+                CardColumns(
+                  runSpacing: 0,
+                  children: [
+                    for (final movie in result.items)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                        child: _MovieCard(
+                          movie: movie,
+                          busy: _busyId == movie.id,
+                          onEdit: busy ? null : () => _edit(movie),
+                          onReviews: () => showDialog<void>(
+                            context: context,
+                            builder: (_) => _ReviewsDialog(
+                              service: widget.service,
+                              movie: movie,
+                            ),
+                          ),
+                          onSetShowing: busy
+                              ? null
+                              : (showing) =>
+                                    _setShowing(movie, showing: showing),
+                        ),
+                      ),
+                  ],
+                ),
               if (result.totalPages > 1)
                 AdminPager(
                   page: result.pageNumber,

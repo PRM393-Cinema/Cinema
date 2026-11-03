@@ -18,6 +18,7 @@ import '../../../data/models/concession.dart';
 import '../../../data/services/staff_service.dart';
 import '../../staff/widgets/staff_feedback.dart';
 import '../widgets/admin_page.dart';
+import '../widgets/admin_catalog_layout.dart';
 
 // Admin: the snacks and drinks menu sold with tickets. Items are never
 // deleted: a stopped item disappears from the app and orders keep it.
@@ -29,6 +30,8 @@ class AdminSnacksScreen extends StatefulWidget {
 }
 
 class _AdminSnacksScreenState extends State<AdminSnacksScreen> {
+  final _search = TextEditingController();
+  bool? _active;
   List<ConcessionItem>? _items;
   String? _message;
   bool _loading = false;
@@ -38,6 +41,12 @@ class _AdminSnacksScreenState extends State<AdminSnacksScreen> {
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -99,6 +108,15 @@ class _AdminSnacksScreenState extends State<AdminSnacksScreen> {
   Widget build(BuildContext context) {
     final items = _items;
     final busy = _loading || _busyId != null;
+    final visible = items
+        ?.where(
+          (item) =>
+              (_active == null || item.active == _active) &&
+              item.name.toLowerCase().contains(
+                _search.text.trim().toLowerCase(),
+              ),
+        )
+        .toList();
     return AdminPage(
       title: 'Snacks & drinks',
       section: AdminSection.snacks,
@@ -111,9 +129,41 @@ class _AdminSnacksScreenState extends State<AdminSnacksScreen> {
             style: AppTextStyles.bodySmall,
           ),
           const SizedBox(height: AppSpacing.md),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: AppButton(
+          AdminCatalogToolbar(
+            search: AppTextField(
+              key: const Key('snackSearchField'),
+              label: 'Search snacks & drinks',
+              controller: _search,
+              prefixIcon: const Icon(Icons.search),
+              onChanged: (_) => setState(() {}),
+            ),
+            filter: InputDecorator(
+              decoration: const InputDecoration(
+                labelText: 'Status',
+                isDense: true,
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  key: const Key('snackStatusFilter'),
+                  isExpanded: true,
+                  value: _active == null
+                      ? 'all'
+                      : _active!
+                      ? 'active'
+                      : 'stopped',
+                  items: const [
+                    DropdownMenuItem(value: 'all', child: Text('All items')),
+                    DropdownMenuItem(value: 'active', child: Text('On sale')),
+                    DropdownMenuItem(value: 'stopped', child: Text('Stopped')),
+                  ],
+                  onChanged: (value) => setState(
+                    () => _active = value == 'all' ? null : value == 'active',
+                  ),
+                ),
+              ),
+            ),
+            action: AppButton(
+              key: const Key('addSnackButton'),
               label: 'Add item',
               leadingIcon: Icons.add_rounded,
               useGradient: true,
@@ -129,7 +179,12 @@ class _AdminSnacksScreenState extends State<AdminSnacksScreen> {
               message: _message!,
               onRetry: _load,
             )
-          else if (items != null) ...[
+          else if (items != null && visible != null) ...[
+            Text(
+              '${visible.length} of ${items.length} items',
+              style: AppTextStyles.caption,
+            ),
+            const SizedBox(height: AppSpacing.md),
             if (_message != null)
               Padding(
                 padding: const EdgeInsets.only(bottom: AppSpacing.md),
@@ -142,23 +197,116 @@ class _AdminSnacksScreenState extends State<AdminSnacksScreen> {
               ),
             if (items.isEmpty)
               const Text('No items yet.', style: AppTextStyles.bodySmall),
-            CardColumns(
-              runSpacing: 0,
-              children: [
-                for (final item in items)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                    child: _SnackCard(
-                      item: item,
-                      busy: _busyId == item.id,
-                      onEdit: busy ? null : () => _edit(item),
-                      onSetActive: busy
-                          ? null
-                          : (active) => _setActive(item, active),
+            if (items.isNotEmpty && visible.isEmpty)
+              const Text('No matching items.', style: AppTextStyles.bodySmall),
+            if (visible.isNotEmpty && isCatalogDesktop(context))
+              AdminCatalogTable(
+                key: const Key('adminSnacksTable'),
+                columns: const [
+                  DataColumn(label: Text('Item')),
+                  DataColumn(label: Text('Description')),
+                  DataColumn(label: Text('Price'), numeric: true),
+                  DataColumn(label: Text('Status')),
+                  DataColumn(label: Text('Actions')),
+                ],
+                rows: [
+                  for (final item in visible)
+                    DataRow(
+                      cells: [
+                        DataCell(
+                          Row(
+                            key: ValueKey('adminSnack-${item.id}'),
+                            children: [
+                              if (item.imageUrl.isEmpty)
+                                Icon(
+                                  Icons.fastfood_outlined,
+                                  size: 40,
+                                  color: AppPalette.of(context).textSecondary,
+                                )
+                              else
+                                AppNetworkImage(
+                                  imageUrl: item.imageUrl,
+                                  width: 40,
+                                  height: 40,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                              const SizedBox(width: AppSpacing.md),
+                              SizedBox(
+                                width: 200,
+                                child: Text(
+                                  item.name,
+                                  style: AppTextStyles.bodySmall.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        DataCell(
+                          SizedBox(
+                            width: 260,
+                            child: Text(
+                              item.description.isEmpty ? '—' : item.description,
+                            ),
+                          ),
+                        ),
+                        DataCell(Text(formatVnd(item.price))),
+                        DataCell(
+                          StatusBadge(
+                            label: item.active ? 'On sale' : 'Stopped',
+                            variant: item.active
+                                ? StatusBadgeVariant.success
+                                : StatusBadgeVariant.neutral,
+                          ),
+                        ),
+                        DataCell(
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                key: ValueKey('editSnack-${item.id}'),
+                                tooltip: 'Edit ${item.name}',
+                                onPressed: busy ? null : () => _edit(item),
+                                icon: const Icon(Icons.edit_outlined),
+                              ),
+                              Tooltip(
+                                message: item.active
+                                    ? 'Stop selling ${item.name}'
+                                    : 'Sell ${item.name}',
+                                child: Switch(
+                                  key: ValueKey('snackActive-${item.id}'),
+                                  value: item.active,
+                                  onChanged: busy
+                                      ? null
+                                      : (active) => _setActive(item, active),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-              ],
-            ),
+                ],
+              )
+            else
+              CardColumns(
+                runSpacing: 0,
+                children: [
+                  for (final item in visible)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                      child: _SnackCard(
+                        item: item,
+                        busy: _busyId == item.id,
+                        onEdit: busy ? null : () => _edit(item),
+                        onSetActive: busy
+                            ? null
+                            : (active) => _setActive(item, active),
+                      ),
+                    ),
+                ],
+              ),
           ],
         ],
       ),
@@ -213,7 +361,9 @@ class _SnackCard extends StatelessWidget {
                 if (item.description.isNotEmpty)
                   Text(item.description, style: AppTextStyles.bodySmall),
                 const SizedBox(height: AppSpacing.xs),
-                Row(
+                Wrap(
+                  spacing: AppSpacing.sm,
+                  runSpacing: AppSpacing.sm,
                   children: [
                     Text(
                       formatVnd(item.price),
@@ -221,7 +371,6 @@ class _SnackCard extends StatelessWidget {
                         color: AppPalette.of(context).primary,
                       ),
                     ),
-                    const SizedBox(width: AppSpacing.sm),
                     StatusBadge(
                       label: item.active ? 'On sale' : 'Stopped',
                       variant: item.active

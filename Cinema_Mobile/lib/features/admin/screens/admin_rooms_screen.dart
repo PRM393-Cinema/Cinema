@@ -17,7 +17,7 @@ import '../../../data/models/room.dart';
 import '../../../data/services/staff_service.dart';
 import '../../staff/widgets/staff_feedback.dart';
 import '../../../core/widgets/responsive_columns.dart';
-import '../widgets/admin_layout.dart';
+import '../widgets/admin_catalog_layout.dart';
 import '../widgets/admin_page.dart';
 import '../widgets/admin_pager.dart';
 
@@ -155,35 +155,32 @@ class _AdminRoomsScreenState extends State<AdminRoomsScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: pagePadding(context, AppSpacing.lg),
           children: [
-            AdminControls(
-              children: [
-                AppButton(
-                  key: const Key('addRoomButton'),
-                  label: 'Add room',
-                  leadingIcon: Icons.add_rounded,
-                  useGradient: true,
-                  onPressed: busy ? null : _add,
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                Row(
-                  children: [
-                    Expanded(
-                      child: AppTextField(
-                        key: const Key('roomSearchField'),
-                        label: 'Search rooms',
-                        controller: _search,
-                        enabled: !busy,
-                        prefixIcon: const Icon(Icons.search_rounded),
-                      ),
+            AdminCatalogToolbar(
+              action: AppButton(
+                key: const Key('addRoomButton'),
+                label: 'Add room',
+                leadingIcon: Icons.add_rounded,
+                useGradient: true,
+                onPressed: busy ? null : _add,
+              ),
+              search: Row(
+                children: [
+                  Expanded(
+                    child: AppTextField(
+                      key: const Key('roomSearchField'),
+                      label: 'Search rooms',
+                      controller: _search,
+                      enabled: !busy,
+                      prefixIcon: const Icon(Icons.search_rounded),
                     ),
-                    IconButton(
-                      tooltip: 'Search rooms',
-                      onPressed: busy ? null : () => _load(),
-                      icon: const Icon(Icons.search_rounded),
-                    ),
-                  ],
-                ),
-              ],
+                  ),
+                  IconButton(
+                    tooltip: 'Search rooms',
+                    onPressed: busy ? null : () => _load(),
+                    icon: const Icon(Icons.search_rounded),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: AppSpacing.lg),
             if (_loading)
@@ -209,22 +206,81 @@ class _AdminRoomsScreenState extends State<AdminRoomsScreen> {
                     style: AppTextStyles.bodySmall,
                   ),
                 ),
-              CardColumns(
-                runSpacing: 0,
-                children: [
-                  for (final room in result.items)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                      child: _RoomCard(
-                        room: room,
-                        busy: _busyId == room.id,
-                        onSeatMap: busy ? null : () => _openSeatMap(room),
-                        onRename: busy ? null : () => _rename(room),
-                        onDelete: busy ? null : () => _delete(room),
+              if (result.items.isNotEmpty && isCatalogDesktop(context))
+                AdminCatalogTable(
+                  key: const Key('adminRoomsTable'),
+                  columns: const [
+                    DataColumn(label: Text('Room')),
+                    DataColumn(label: Text('Capacity'), numeric: true),
+                    DataColumn(label: Text('Actions')),
+                  ],
+                  rows: [
+                    for (final room in result.items)
+                      DataRow(
+                        cells: [
+                          DataCell(
+                            Text(
+                              room.name,
+                              style: AppTextStyles.bodySmall.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          DataCell(Text('${room.totalSeats} seats')),
+                          DataCell(
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                TextButton.icon(
+                                  key: Key('roomSeats-${room.id}'),
+                                  onPressed: busy
+                                      ? null
+                                      : () => _openSeatMap(room),
+                                  icon: const Icon(
+                                    Icons.event_seat_outlined,
+                                    size: 18,
+                                  ),
+                                  label: const Text('Seat map'),
+                                ),
+                                IconButton(
+                                  key: Key('renameRoom-${room.id}'),
+                                  tooltip: 'Rename',
+                                  onPressed: busy ? null : () => _rename(room),
+                                  icon: const Icon(Icons.edit_outlined),
+                                ),
+                                IconButton(
+                                  key: Key('deleteRoom-${room.id}'),
+                                  tooltip: 'Delete',
+                                  onPressed: busy ? null : () => _delete(room),
+                                  icon: Icon(
+                                    Icons.delete_outline,
+                                    color: AppPalette.of(context).error,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                ],
-              ),
+                  ],
+                )
+              else
+                CardColumns(
+                  runSpacing: 0,
+                  children: [
+                    for (final room in result.items)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                        child: _RoomCard(
+                          room: room,
+                          busy: _busyId == room.id,
+                          onSeatMap: busy ? null : () => _openSeatMap(room),
+                          onRename: busy ? null : () => _rename(room),
+                          onDelete: busy ? null : () => _delete(room),
+                        ),
+                      ),
+                  ],
+                ),
               if (result.totalPages > 1)
                 AdminPager(
                   page: result.pageNumber,
