@@ -468,6 +468,67 @@ void main() {
       expect(find.text('IMAX 1'), findsOneWidget);
     });
 
+    for (final theme in ['dark', 'light']) {
+      for (final size in [
+        const Size(1920, 1080),
+        const Size(375, 844),
+        const Size(844, 390),
+      ]) {
+        testWidgets(
+          '600-seat room fits $theme $size with all seats reachable',
+          (tester) async {
+            FlutterSecureStorage.setMockInitialValues({
+              'appearance.theme': theme,
+            });
+            final api = _FakeApi()
+              ..rooms.add({'id': 3, 'name': 'Large room', 'totalSeats': 600})
+              ..seats[3] = [
+                for (var row = 0; row < 20; row++)
+                  for (var number = 1; number <= 30; number++)
+                    _seat(
+                      row * 30 + number,
+                      3,
+                      String.fromCharCode(65 + row),
+                      number,
+                    ),
+              ];
+            await _openAdmin(tester, api, AppRoutes.staffRecord('rooms', 3));
+            tester.view.physicalSize = size;
+            await pumpRoute(tester);
+            final tools = tester.getRect(
+              find.byKey(const Key('roomLayoutTools')),
+            );
+            final canvasFinder = find.byKey(const Key('roomLayoutCanvas'));
+            if (canvasFinder.evaluate().isEmpty) {
+              await tester.drag(
+                find.byType(ListView).last,
+                const Offset(0, -250),
+              );
+              await pumpRoute(tester);
+            }
+            final canvas = tester.getRect(canvasFinder);
+            if (size.width >= 1400) {
+              expect(tools.top, closeTo(canvas.top, 1));
+              expect(tools.right, lessThan(canvas.left));
+              expect(canvas.width, greaterThan(900));
+            } else {
+              expect(tools.width, closeTo(canvas.width, 1));
+            }
+            expect(find.byKey(const Key('roomSeatSummary')), findsOneWidget);
+            final lastSeat = find.byKey(const ValueKey('roomSeat-A30'));
+            await tester.ensureVisible(lastSeat);
+            await pumpRoute(tester);
+            expect(lastSeat.hitTestable(), findsOneWidget);
+            await tester.tap(lastSeat);
+            await pumpRoute(tester);
+            expect(find.byType(CheckedPopupMenuItem<String>), findsNWidgets(3));
+            expect(api.writes, isEmpty);
+            expect(tester.takeException(), isNull);
+          },
+        );
+      }
+    }
+
     testWidgets('Seats are painted many at a time', (tester) async {
       tester.view.physicalSize = const Size(1440, 1400);
       tester.view.devicePixelRatio = 1;
