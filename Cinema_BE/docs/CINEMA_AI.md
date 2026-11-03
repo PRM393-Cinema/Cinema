@@ -9,6 +9,9 @@ live seat availability and ticket proposals. Every actual booking requires a rev
 and confirmation in the UI, then uses the existing checkout and PayOS flow.
 Press Enter to send a message; Shift+Enter inserts a newline. The mobile keyboard's
 Send action also submits. Empty messages and duplicate sends while waiting are blocked.
+Assistant answers render short headings, bold labels and bullet lists as selectable
+text in both themes. HTML and links remain literal text. Recommendations separate
+movie titles, showtimes and costs; old plain-text history remains readable.
 
 ## Current capabilities
 
