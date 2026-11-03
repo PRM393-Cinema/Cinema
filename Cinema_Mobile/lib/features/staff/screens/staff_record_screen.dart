@@ -9,6 +9,7 @@ import '../../../app/theme/app_text_styles.dart';
 import '../../../core/session/roles.dart';
 import '../../../core/session/session_state.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/utils/layout.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
 import '../../../core/widgets/error_state.dart';
@@ -404,6 +405,7 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
       'bookings' => 'Booking details',
       'payments' => 'Payment details',
       'refunds' => 'Refund details',
+      'rooms' => 'Room layout',
       _ => 'Record details',
     },
     section: AdminSection.operations,
@@ -417,30 +419,163 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
           )
         : RefreshIndicator(
             onRefresh: _busy ? () async {} : _load,
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: staffPadding(context),
-              children: [
-                CinemaPanel(
-                  surfaceOpacity: 0.8,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: _details(_item!),
+            child: _item is Room
+                ? _roomLayout(_item! as Room)
+                : ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: staffPadding(context),
+                    children: [
+                      CinemaPanel(
+                        surfaceOpacity: 0.8,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: _details(_item!),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.xl),
+                      ..._actions(_item!),
+                      if (_error != null)
+                        Text(
+                          _error!,
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: AppPalette.of(context).error,
+                          ),
+                        ),
+                    ],
                   ),
-                ),
-                const SizedBox(height: AppSpacing.xl),
-                ..._actions(_item!),
-                if (_error != null)
-                  Text(
-                    _error!,
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: AppPalette.of(context).error,
-                    ),
-                  ),
-              ],
-            ),
           ),
   );
+
+  Widget _roomLayout(Room room) {
+    final palette = AppPalette.of(context);
+    final tools = CinemaPanel(
+      key: const Key('roomLayoutTools'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'ROOM #${room.id}',
+            style: AppTextStyles.caption.copyWith(color: palette.textSecondary),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(room.name, style: AppTextStyles.heading2),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            '${_seats.isEmpty ? room.totalSeats : _seats.length} seats',
+            style: AppTextStyles.body.copyWith(
+              color: palette.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          if (_seats.isEmpty)
+            OutlinedButton.icon(
+              onPressed: _busy ? null : () => _generate(room),
+              icon: const Icon(Icons.add, size: 18),
+              label: const Text('Generate seat layout'),
+            )
+          else if (isAdminAccount(SessionProvider.of(context).user?.roles))
+            OutlinedButton.icon(
+              onPressed: _busy ? null : () => _changeSeatCount(room),
+              icon: const Icon(Icons.tune, size: 18),
+              label: const Text('Change seat count'),
+            ),
+          if (_seats.isNotEmpty) ...[
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
+              child: Divider(height: 1),
+            ),
+            const Text('Seat editor', style: AppTextStyles.title),
+            const SizedBox(height: AppSpacing.md),
+            _SeatEditMode(
+              type: _paintType,
+              onChanged: _busy
+                  ? null
+                  : (type) => setState(() => _paintType = type),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Text(
+              _paintType == null ? 'Select a seat to change its type.' : 'Paint seats by clicking or dragging. Select a row letter to paint the entire row.',
+              style: AppTextStyles.bodySmall,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              'Sweetbox seats are paired. Rooms with existing showtimes cannot change seat types.',
+              style: AppTextStyles.caption.copyWith(
+                color: palette.textSecondary,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+    final map = CinemaPanel(
+      key: const Key('roomLayoutCanvas'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            spacing: 16,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              const Text('Seating plan', style: AppTextStyles.title),
+              _LiveStatus(updatedAt: _updatedAt, failed: _liveFailed),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          if (_seats.isNotEmpty)
+            RoomSeatMap(
+              seats: _seats,
+              highlighted: _newSeatIds,
+              onTypeSelected: _busy ? null : _setSeatType,
+              paintType: _paintType,
+              onPaint: _busy ? null : _paintSeats,
+            )
+          else
+            const Padding(
+              padding: EdgeInsets.all(AppSpacing.xl),
+              child: Text(
+                'No seats yet. Generate a layout to get started.',
+                textAlign: TextAlign.center,
+              ),
+            ),
+        ],
+      ),
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) => ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: centeredPadding(context, AppSpacing.lg, maxWidth: 1560),
+        children: [
+          if (constraints.maxWidth >= 1100)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(width: 264, child: tools),
+                const SizedBox(width: AppSpacing.lg),
+                Expanded(child: map),
+              ],
+            )
+          else ...[
+            tools,
+            const SizedBox(height: AppSpacing.lg),
+            map,
+          ],
+          if (_error != null)
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.md),
+              child: Text(
+                _error!,
+                style: AppTextStyles.bodySmall.copyWith(color: palette.error),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   List<Widget> _details(Object item) {
     if (item is Booking) return _bookingDetails(item);
     if (item is PaymentInfo) return _paymentDetails(item);
@@ -910,43 +1045,6 @@ class _StaffRecordScreenState extends State<StaffRecordScreen> {
           );
         }, danger: true),
     ],
-    Room r => [
-      if (_seats.isEmpty)
-        _button('Generate seat layout', () => _generate(r))
-      else if (isAdminAccount(SessionProvider.of(context).user?.roles))
-        _button('Change seat count', () => _changeSeatCount(r)),
-      _LiveStatus(updatedAt: _updatedAt, failed: _liveFailed),
-      const SizedBox(height: AppSpacing.md),
-      if (_seats.isNotEmpty) ...[
-        _SeatEditMode(
-          type: _paintType,
-          onChanged: (type) => setState(() => _paintType = type),
-        ),
-        const SizedBox(height: AppSpacing.md),
-        CinemaPanel(
-          surfaceOpacity: 0.8,
-          child: RoomSeatMap(
-            seats: _seats,
-            highlighted: _newSeatIds,
-            onTypeSelected: _busy ? null : _setSeatType,
-            paintType: _paintType,
-            onPaint: _busy ? null : _paintSeats,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.md),
-      ],
-      Text(
-        _paintType == null
-            ? 'Tap a seat to change its type. Seat changes are blocked for '
-                  'rooms with existing showtimes.'
-            : 'Tap or drag across seats, or tap a row letter, to make them '
-                  '${seatTypeLabel(_paintType!)} seats. Sweetbox seats come '
-                  'in pairs. Seat changes are blocked for rooms with existing '
-                  'showtimes.',
-        style: AppTextStyles.caption,
-      ),
-      const SizedBox(height: AppSpacing.md),
-    ],
     PaymentInfo p => [
       _button(
         'View booking',
@@ -1007,7 +1105,7 @@ class _SeatEditMode extends StatelessWidget {
   const _SeatEditMode({required this.type, required this.onChanged});
 
   final String? type;
-  final ValueChanged<String?> onChanged;
+  final ValueChanged<String?>? onChanged;
 
   @override
   Widget build(BuildContext context) => Wrap(
@@ -1015,12 +1113,11 @@ class _SeatEditMode extends StatelessWidget {
     runSpacing: AppSpacing.sm,
     crossAxisAlignment: WrapCrossAlignment.center,
     children: [
-      const Text('Edit seats:', style: AppTextStyles.bodySmall),
       ChoiceChip(
         key: const Key('paintOff'),
         label: const Text('One at a time'),
         selected: type == null,
-        onSelected: (_) => onChanged(null),
+        onSelected: onChanged == null ? null : (_) => onChanged!(null),
       ),
       for (final seatType in seatTypes)
         ChoiceChip(
@@ -1032,7 +1129,7 @@ class _SeatEditMode extends StatelessWidget {
           ),
           label: Text('Paint ${seatTypeLabel(seatType)}'),
           selected: type == seatType,
-          onSelected: (_) => onChanged(seatType),
+          onSelected: onChanged == null ? null : (_) => onChanged!(seatType),
         ),
     ],
   );
@@ -1055,6 +1152,7 @@ class _LiveStatus extends StatelessWidget {
         : 'Live • updated ${two(at.hour)}:${two(at.minute)}:${two(at.second)}';
     return Row(
       key: const Key('roomLiveStatus'),
+      mainAxisSize: MainAxisSize.min,
       children: [
         Icon(
           Icons.circle,

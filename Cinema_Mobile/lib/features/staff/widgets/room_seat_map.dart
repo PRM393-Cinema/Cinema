@@ -52,6 +52,13 @@ class RoomSeatMap extends StatefulWidget {
 
 class _RoomSeatMapState extends State<RoomSeatMap> {
   final _mapKey = GlobalKey();
+  final _scroll = ScrollController();
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
 
   // Seats under the pointer while painting, shown in the new type.
   final _painting = <int>{};
@@ -97,9 +104,17 @@ class _RoomSeatMapState extends State<RoomSeatMap> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final layout = SeatMapLayout.fit(
-          maxWidth: constraints.maxWidth,
-          seatsPerRow: widest,
+        const gap = 8.0;
+        final available =
+            constraints.maxWidth -
+            SeatMapLayout.padding * 2 -
+            (SeatMapLayout.labelWidth + SeatMapLayout.labelGap) * 2 -
+            gap * (math.max(widest, 1) - 1);
+        final layout = SeatMapLayout(
+          seatSize: (available / math.max(widest, 1))
+              .clamp(SeatMapLayout.minSeat, SeatMapLayout.maxSeat)
+              .toDouble(),
+          gap: gap,
         );
         Widget map = Padding(
           key: _mapKey,
@@ -160,16 +175,29 @@ class _RoomSeatMapState extends State<RoomSeatMap> {
               style: AppTextStyles.caption,
               textAlign: TextAlign.center,
             ),
-            // Very wide rooms scroll sideways instead of shrinking seats
-            // below a tappable size (not while painting: a drag paints).
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              physics: _paintMode ? const NeverScrollableScrollPhysics() : null,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minWidth: constraints.maxWidth),
-                child: Center(child: map),
+            const SizedBox(height: AppSpacing.md),
+            // The scrollbar remains usable while dragging on seats paints.
+            Scrollbar(
+              controller: _scroll,
+              thumbVisibility: layout.mapWidth(widest) > constraints.maxWidth,
+              notificationPredicate: (notification) =>
+                  notification.metrics.axis == Axis.horizontal,
+              child: SingleChildScrollView(
+                controller: _scroll,
+                scrollDirection: Axis.horizontal,
+                physics: _paintMode
+                    ? const NeverScrollableScrollPhysics()
+                    : null,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                    child: Center(child: map),
+                  ),
+                ),
               ),
             ),
+            const SizedBox(height: AppSpacing.md),
             _Legend(seats: seats, showNew: widget.highlighted.isNotEmpty),
           ],
         );
