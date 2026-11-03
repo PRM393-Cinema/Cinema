@@ -114,6 +114,21 @@ class _StaffOperationsScreenState extends State<StaffOperationsScreen> {
       firstDate: DateTime(2020),
       lastDate: DateTime(2100),
       initialDateRange: _dates,
+      builder: (context, child) => Center(
+        child: Padding(
+          padding: EdgeInsets.all(
+            MediaQuery.sizeOf(context).width < 600 ? 0 : AppSpacing.md,
+          ),
+          child: ConstrainedBox(
+            key: const Key('operationsDateRangePopup'),
+            constraints: const BoxConstraints(maxWidth: 480, maxHeight: 640),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: child!,
+            ),
+          ),
+        ),
+      ),
     );
     if (dates == null || !mounted) return;
     setState(() {
