@@ -176,6 +176,21 @@ Access tokens last an hour. `ApiClient` renews them with the refresh token on th
 
 ## Checks
 
+The staff dashboard uses compact KPI tiles and live shift charts. The bar chart
+shows sold, held and checked-in seats for showtimes starting today; checked-in seats
+are a subset of sold seats, not an additional ticket category. The donut shows the
+share of today's scheduled showtimes with at least one sold/held seat. No activity
+renders zero values and empty charts rather than sample data.
+
+Now showing, Up next and Just finished use compact side-by-side lists on wide
+screens and stack on small screens. The board still spans the current 12-hour
+window on either side of now, including overnight shows; next/finished show up to
+three entries each. All showtimes today opens the existing searchable daily list.
+Opening a row still shows seats/customers. Data and the one-minute refresh cycle
+use existing staff APIs; no revenue permission or new chart dependency is added.
+The shared Today widget also appears on the admin dashboard. Chart empty/data states,
+both themes, text scaling and existing dashboard flows have focused tests.
+
 Customer notification badges refresh automatically every five seconds while the app
 is visible and the customer is signed in. The open Notifications list refreshes
 silently on the same cycle, including notifications added, read or deleted in another

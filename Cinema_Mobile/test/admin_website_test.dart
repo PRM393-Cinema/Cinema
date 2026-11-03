@@ -107,6 +107,17 @@ void main() {
         ..revenue = 1530000;
       await _openAdmin(tester, api, AppRoutes.adminDashboard);
 
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('businessStats')),
+        250,
+        scrollable: find
+            .descendant(
+              of: find.byType(ListView).first,
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
+      await pumpRoute(tester);
       expect(find.byKey(const Key('businessStats')), findsOneWidget);
       for (final (label, value) in [
         ('Bookings this month', '12'),
