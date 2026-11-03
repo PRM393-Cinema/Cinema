@@ -8,8 +8,6 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/session/session_state.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/utils/layout.dart';
-import '../../../core/widgets/responsive_columns.dart';
-import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
 import '../../../core/widgets/cinema_background.dart';
 import '../../../core/widgets/cinema_page.dart';
@@ -237,153 +235,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
     }
 
-    if (!widget.adminMode && !widget.staffMode) {
-      return _buildSettings(context, user);
-    }
-
-    final identity = <Widget>[
-      Center(
-        child: Container(
-          padding: const EdgeInsets.all(3),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: LinearGradient(
-              colors: [
-                AppPalette.of(context).primary,
-                AppPalette.of(context).accent,
-              ],
-            ),
-          ),
-          child: CircleAvatar(
-            radius: 40,
-            backgroundColor: AppPalette.of(context).background,
-            child: Text(
-              user.displayName.substring(0, 1).toUpperCase(),
-              style: AppTextStyles.display,
-            ),
-          ),
-        ),
-      ),
-      const SizedBox(height: AppSpacing.lg),
-      Text(
-        user.displayName,
-        style: AppTextStyles.heading1,
-        textAlign: TextAlign.center,
-      ),
-      const SizedBox(height: AppSpacing.xs),
-      Text(
-        user.email,
-        style: AppTextStyles.bodySmall,
-        textAlign: TextAlign.center,
-      ),
-    ];
-    final card = _card;
-    final details = <Widget>[
-      if (card != null) ...[
-        MembershipCard(
-          card: card,
-          onHistory: () => Navigator.pushNamed(context, AppRoutes.pointHistory),
-        ),
-        const SizedBox(height: AppSpacing.xl),
-      ],
-      _InfoCard(
-        rows: [
-          ('Full name', user.displayName),
-          ('Email', user.email),
-          ('Phone', user.phone ?? 'Not provided'),
-          ('Email verified', user.emailVerified ? 'Yes' : 'No'),
-          ('Role', user.roles.map(_roleLabel).join(', ')),
-          ('Member since', formatDate(user.createdAt)),
-        ],
-      ),
-      if (_errorMessage != null) ...[
-        const SizedBox(height: AppSpacing.md),
-        Text(
-          'Showing saved details: $_errorMessage',
-          style: AppTextStyles.caption,
-        ),
-      ],
-    ];
-    final buttons = <Widget>[
-      AppButton.secondary(
-        key: const Key('editProfile'),
-        label: 'Edit profile',
-        leadingIcon: Icons.edit_outlined,
-        onPressed: () => _editProfile(user),
-      ),
-      const SizedBox(height: AppSpacing.md),
-      AppButton.secondary(
-        key: const Key('changePassword'),
-        label: 'Change password',
-        leadingIcon: Icons.lock_outline,
-        onPressed: () => _changePassword(user),
-      ),
-      const SizedBox(height: AppSpacing.md),
-      if (!widget.adminMode && !widget.staffMode) ...[
-        AppButton.secondary(
-          label: 'Payment history',
-          leadingIcon: Icons.receipt_long_outlined,
-          onPressed: () =>
-              Navigator.pushNamed(context, AppRoutes.paymentHistory),
-        ),
-        const SizedBox(height: AppSpacing.md),
-        AppButton.secondary(
-          label: 'My bookings',
-          leadingIcon: Icons.confirmation_number_outlined,
-          onPressed: () => Navigator.pushNamed(context, AppRoutes.myBookings),
-        ),
-        const SizedBox(height: AppSpacing.md),
-        AppButton.secondary(
-          label: 'Notifications',
-          leadingIcon: Icons.notifications_none_outlined,
-          onPressed: () =>
-              Navigator.pushNamed(context, AppRoutes.notifications),
-        ),
-        const SizedBox(height: AppSpacing.md),
-      ],
-      AppButton.danger(
-        label: 'Sign out',
-        leadingIcon: Icons.logout,
-        isLoading: _isLoggingOut,
-        onPressed: _isLoggingOut ? null : _logout,
-      ),
-    ];
-
-    return SingleChildScrollView(
-      padding: pagePadding(
-        context,
-        AppSpacing.xl,
-      ).copyWith(bottom: AppSpacing.xl + MediaQuery.paddingOf(context).bottom),
-      child: isDesktopLayout(context)
-          // Website: who is signed in and the account menu on the left, the
-          // details on the right.
-          ? ResponsiveColumns(
-              sideOnLeft: true,
-              sideWidth: 340,
-              side: [
-                CinemaPanel(
-                  surfaceOpacity: 0.8,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: identity,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xl),
-                ...buttons,
-              ],
-              main: details,
-            )
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                ...identity,
-                const SizedBox(height: AppSpacing.xl),
-                ...details,
-                const SizedBox(height: AppSpacing.xl),
-                ...buttons,
-              ],
-            ),
-    );
+    return _buildSettings(context, user);
   }
 
   Widget _buildSettings(BuildContext context, AuthUser user) {
@@ -468,23 +320,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
             icon: Icons.lock_outline,
             onPressed: () => _changePassword(user),
           ),
-          _settingsLink(
-            label: 'Payment history',
-            icon: Icons.receipt_long_outlined,
-            onPressed: () =>
-                Navigator.pushNamed(context, AppRoutes.paymentHistory),
-          ),
-          _settingsLink(
-            label: 'My bookings',
-            icon: Icons.confirmation_number_outlined,
-            onPressed: () => Navigator.pushNamed(context, AppRoutes.myBookings),
-          ),
-          _settingsLink(
-            label: 'Notifications',
-            icon: Icons.notifications_none_outlined,
-            onPressed: () =>
-                Navigator.pushNamed(context, AppRoutes.notifications),
-          ),
+          if (!widget.adminMode && !widget.staffMode) ...[
+            _settingsLink(
+              label: 'Payment history',
+              icon: Icons.receipt_long_outlined,
+              onPressed: () =>
+                  Navigator.pushNamed(context, AppRoutes.paymentHistory),
+            ),
+            _settingsLink(
+              label: 'My bookings',
+              icon: Icons.confirmation_number_outlined,
+              onPressed: () =>
+                  Navigator.pushNamed(context, AppRoutes.myBookings),
+            ),
+            _settingsLink(
+              label: 'Notifications',
+              icon: Icons.notifications_none_outlined,
+              onPressed: () =>
+                  Navigator.pushNamed(context, AppRoutes.notifications),
+            ),
+          ],
           Padding(
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
             child: Divider(height: 1, color: colors.border),
@@ -502,7 +357,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _InfoCard(
-          compact: true,
           rows: [
             ('Full name', user.displayName),
             ('Email', user.email),
@@ -593,87 +447,57 @@ class _ProfileScreenState extends State<ProfileScreen> {
 }
 
 class _InfoCard extends StatelessWidget {
-  const _InfoCard({required this.rows, this.compact = false});
+  const _InfoCard({required this.rows});
 
   final List<(String, String)> rows;
-  final bool compact;
 
   @override
   Widget build(BuildContext context) {
-    if (compact) {
-      final colors = AppPalette.of(context);
-      return CinemaPanel(
-        key: const Key('accountProfileGrid'),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text('My profile', style: AppTextStyles.title),
-            const SizedBox(height: AppSpacing.lg),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final columns = isDesktopLayout(context) ? 2 : 1;
-                final width =
-                    (constraints.maxWidth - AppSpacing.lg * (columns - 1)) /
-                    columns;
-                return Wrap(
-                  spacing: AppSpacing.lg,
-                  runSpacing: AppSpacing.lg,
-                  children: [
-                    for (final (label, value) in rows)
-                      SizedBox(
-                        width: width,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              label,
-                              style: AppTextStyles.caption.copyWith(
-                                color: colors.textSecondary,
-                              ),
-                            ),
-                            const SizedBox(height: AppSpacing.xs),
-                            SelectableText(
-                              value,
-                              style: AppTextStyles.bodySmall.copyWith(
-                                color: colors.textPrimary,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                  ],
-                );
-              },
-            ),
-          ],
-        ),
-      );
-    }
+    final colors = AppPalette.of(context);
     return CinemaPanel(
-      surfaceOpacity: 0.8,
+      key: const Key('accountProfileGrid'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'My profile',
-            style: AppTextStyles.title.copyWith(
-              color: AppPalette.of(context).primary,
-            ),
-          ),
+          const Text('My profile', style: AppTextStyles.title),
           const SizedBox(height: AppSpacing.lg),
-          for (final (label, value) in rows)
-            Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.md),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final columns = isDesktopLayout(context) ? 2 : 1;
+              final width =
+                  (constraints.maxWidth - AppSpacing.lg * (columns - 1)) /
+                  columns;
+              return Wrap(
+                spacing: AppSpacing.lg,
+                runSpacing: AppSpacing.lg,
                 children: [
-                  Text(label.toUpperCase(), style: AppTextStyles.caption),
-                  const SizedBox(height: AppSpacing.xs),
-                  SelectableText(value, style: AppTextStyles.body),
+                  for (final (label, value) in rows)
+                    SizedBox(
+                      width: width,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            label,
+                            style: AppTextStyles.caption.copyWith(
+                              color: colors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          SelectableText(
+                            value,
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: colors.textPrimary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                 ],
-              ),
-            ),
+              );
+            },
+          ),
         ],
       ),
     );
