@@ -201,8 +201,15 @@ void main() {
           ];
           for (final control in controls) {
             expect(control.center.dy, closeTo(controls.first.center.dy, 1));
+            expect(control.height, closeTo(controls.first.height, 1));
           }
           expect(controls.last.width, lessThanOrEqualTo(160));
+          expect(
+            InputDecorator.containerOf(
+              tester.element(find.text('All statuses').first),
+            )!.size.height,
+            closeTo(controls.first.height, 1),
+          );
         }
         for (final (section, count) in [
           ('Bookings', 6),

@@ -95,6 +95,32 @@ void main() {
             ),
           );
           await tester.pumpAndSettle();
+          if (size.width >= 900 && scale == 1) {
+            final search = tester.getRect(
+              find.byKey(const Key('todayShowtimesSearch')),
+            );
+            final filter = tester.getRect(
+              find
+                  .ancestor(
+                    of: find.byKey(const Key('todayShowtimesRoom')),
+                    matching: find.byType(InputDecorator),
+                  )
+                  .first,
+            );
+            final tickets = tester.getRect(
+              find.byKey(const Key('todayShowtimesWithTickets')),
+            );
+            expect(filter.height, closeTo(search.height, 1));
+            expect(
+              InputDecorator.containerOf(
+                tester.element(find.byKey(const Key('todayShowtimesRoom'))),
+              )!.size.height,
+              closeTo(search.height, 1),
+            );
+            expect(tickets.height, closeTo(search.height, 1));
+            expect(filter.top, closeTo(search.top, 1));
+            expect(tickets.top, closeTo(search.top, 1));
+          }
           expect(find.text('Page 1 of 3'), findsOneWidget);
           expect(
             find.byType(DataTable),

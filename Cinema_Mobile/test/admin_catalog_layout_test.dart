@@ -143,6 +143,26 @@ void main() {
           final add = tester.getRect(find.byKey(Key(addKey)));
           final search = tester.getRect(find.byKey(Key(searchKey)));
           expect(add.width, lessThan(250));
+          expect(search.height, closeTo(48, 1));
+          expect(add.height, closeTo(search.height, 1));
+          if (kind != 'Rooms') {
+            final filterKey = kind == 'Movies'
+                ? 'movieStatusFilter'
+                : 'snackStatusFilter';
+            final decorator = find
+                .ancestor(
+                  of: find.byKey(Key(filterKey)),
+                  matching: find.byType(InputDecorator),
+                )
+                .first;
+            expect(tester.getSize(decorator).height, closeTo(search.height, 1));
+            expect(
+              InputDecorator.containerOf(
+                tester.element(find.byKey(Key(filterKey))),
+              )!.size.height,
+              closeTo(search.height, 1),
+            );
+          }
           if (width >= 900) {
             expect(add.center.dy, closeTo(search.center.dy, 3));
             expect(add.left, greaterThan(search.right));
