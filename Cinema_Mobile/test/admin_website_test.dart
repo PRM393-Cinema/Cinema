@@ -265,7 +265,13 @@ void main() {
       await tester.tap(find.byKey(const Key('editMovie-1')));
       await pumpRoute(tester);
       expect(find.text('Edit movie'), findsOneWidget);
-      expect(find.text('Sep 1, 2026'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(Dialog),
+          matching: find.text('Sep 1, 2026'),
+        ),
+        findsOneWidget,
+      );
       await tester.ensureVisible(find.byKey(const Key('saveMovieButton')));
       await tester.tap(find.byKey(const Key('saveMovieButton')));
       await pumpRoute(tester);
