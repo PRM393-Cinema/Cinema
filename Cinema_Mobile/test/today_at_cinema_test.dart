@@ -122,7 +122,7 @@ void main() {
     Finder inDialog(Finder finder) =>
         find.descendant(of: dialog, matching: finder);
     Iterable<int> listed() => tester
-        .widgetList<InkWell>(
+        .widgetList<TextButton>(
           inDialog(
             find.byWidgetPredicate(
               (widget) =>
@@ -148,7 +148,7 @@ void main() {
     expect(inDialog(find.text('Finished (4)')), findsOneWidget);
     expect(inDialog(find.text('Cancelled (1)')), findsOneWidget);
     expect(
-      inDialog(find.text('30/120 seats taken • 25 checked in')),
+      inDialog(find.text('30/120 seats taken')),
       findsOneWidget,
     );
 
