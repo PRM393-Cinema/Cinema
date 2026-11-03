@@ -20,6 +20,7 @@ import '../../../data/services/staff_service.dart';
 import '../../../core/widgets/responsive_columns.dart';
 import '../../admin/widgets/admin_page.dart';
 import '../widgets/staff_feedback.dart';
+import '../widgets/operations_date_filter_dialog.dart';
 
 class StaffOperationsScreen extends StatefulWidget {
   const StaffOperationsScreen({required this.service, super.key});
@@ -109,26 +110,10 @@ class _StaffOperationsScreenState extends State<StaffOperationsScreen> {
   }
 
   Future<void> _pickDates() async {
-    final dates = await showDateRangePicker(
+    final dates = await showDialog<DateTimeRange>(
       context: context,
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2100),
-      initialDateRange: _dates,
-      builder: (context, child) => Center(
-        child: Padding(
-          padding: EdgeInsets.all(
-            MediaQuery.sizeOf(context).width < 600 ? 0 : AppSpacing.md,
-          ),
-          child: ConstrainedBox(
-            key: const Key('operationsDateRangePopup'),
-            constraints: const BoxConstraints(maxWidth: 480, maxHeight: 640),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: child!,
-            ),
-          ),
-        ),
-      ),
+      barrierDismissible: false,
+      builder: (_) => OperationsDateFilterDialog(initialRange: _dates),
     );
     if (dates == null || !mounted) return;
     setState(() {
