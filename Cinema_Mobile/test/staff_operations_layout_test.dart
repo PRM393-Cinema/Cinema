@@ -156,16 +156,21 @@ void main() {
         await tester.ensureVisible(find.byKey(const Key('operationsDates')));
         await tester.tap(find.byKey(const Key('operationsDates')));
         await pumpRoute(tester);
-        final bounds = tester.getRect(find.byType(DateRangePickerDialog));
+        final popup = find.byKey(const Key('operationsDateRangePopup'));
+        final bounds = tester.getRect(popup);
         expect(bounds.width, lessThanOrEqualTo(480));
         expect(bounds.height, lessThanOrEqualTo(640));
         expect(bounds.left, greaterThanOrEqualTo(0));
         expect(bounds.bottom, lessThanOrEqualTo(size.height));
         final before = calls.length;
+        await tester.tapAt(const Offset(1, 1));
+        await pumpRoute(tester);
+        expect(popup, findsOneWidget);
+        expect(calls.length, before);
         await tester.tap(find.byTooltip('Close'));
         await pumpRoute(tester);
         expect(calls.length, before);
-        expect(find.byType(DateRangePickerDialog), findsNothing);
+        expect(popup, findsNothing);
         expect(tester.takeException(), isNull);
       });
     }
@@ -289,6 +294,55 @@ void main() {
     },
   );
 
+  testWidgets(
+    'Date drafts validate, survive calendar cancel and apply explicitly',
+    (tester) async {
+      final calls = <Uri>[];
+      await _open(tester, _service(calls), const Size(1440, 1100), 'dark');
+      final popup = find.byKey(const Key('operationsDateRangePopup'));
+      final from = find.byKey(const Key('dateFilterFrom'));
+      final to = find.byKey(const Key('dateFilterTo'));
+      await tester.tap(find.byKey(const Key('operationsDates')));
+      await pumpRoute(tester);
+      final before = calls.length;
+      await tester.enterText(from, 'invalid');
+      await tester.tap(find.text('Apply'));
+      await pumpRoute(tester);
+      expect(find.text('Enter a valid date'), findsOneWidget);
+      await tester.enterText(from, '11/3/2026');
+      await tester.enterText(to, '11/1/2026');
+      await tester.tap(find.text('Apply'));
+      await pumpRoute(tester);
+      expect(find.text('End date must be on or after start'), findsOneWidget);
+      expect(calls.length, before);
+      await tester.tap(find.text('Today'));
+      await pumpRoute(tester);
+      expect(find.text('End date must be on or after start'), findsNothing);
+      final draft = tester.widget<TextFormField>(from).controller!.text;
+      await tester.tap(find.byTooltip('Choose end date'));
+      await pumpRoute(tester);
+      expect(find.byType(DatePickerDialog), findsOneWidget);
+      await tester.tap(find.text('Cancel').last);
+      await pumpRoute(tester);
+      expect(popup, findsOneWidget);
+      expect(tester.widget<TextFormField>(to).controller!.text, draft);
+      expect(calls.length, before);
+      await tester.tap(find.text('Apply'));
+      await pumpRoute(tester);
+      expect(calls.length, before + 1);
+      final applied = calls.last;
+      await tester.tap(find.byKey(const Key('operationsDates')));
+      await pumpRoute(tester);
+      expect(tester.widget<TextFormField>(from).controller!.text, draft);
+      await tester.tap(find.text('Last 7 days'));
+      await tester.tap(find.text('Cancel'));
+      await pumpRoute(tester);
+      expect(calls.last, applied);
+      expect(calls.length, before + 1);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('Date filters and retry keep the existing server requests', (
     tester,
   ) async {
@@ -309,15 +363,13 @@ void main() {
       if (section == 'Showtimes') await _tab(tester, section);
       await tester.tap(find.byKey(const Key('operationsDates')));
       await pumpRoute(tester);
-      await tester.tap(find.byTooltip('Switch to input'));
-      await pumpRoute(tester);
       final fields = find.descendant(
-        of: find.byType(DateRangePickerDialog),
+        of: find.byKey(const Key('operationsDateRangePopup')),
         matching: find.byType(TextField),
       );
       await tester.enterText(fields.at(0), '11/1/2026');
       await tester.enterText(fields.at(1), '11/3/2026');
-      await tester.tap(find.text('OK'));
+      await tester.tap(find.text('Apply'));
       await pumpRoute(tester);
       expect(
         calls.last.path,
