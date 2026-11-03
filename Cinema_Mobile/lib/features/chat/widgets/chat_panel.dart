@@ -10,6 +10,7 @@ import '../../../core/widgets/cinema_account_widgets.dart';
 import '../../../data/services/chat_service.dart';
 import '../../../data/storage/chat_history_storage.dart';
 import '../../../core/utils/formatters.dart';
+import 'chat_answer.dart';
 
 class ChatPanel extends StatefulWidget {
   const ChatPanel({
@@ -619,15 +620,21 @@ class _MessageBubble extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.sm),
-              SelectableText(
-                message.content,
-                semanticsLabel: message.content,
-                key: ValueKey('chatMessage-$index'),
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: colors.textPrimary,
-                  height: 1.5,
+              if (!user)
+                ChatAnswer(
+                  text: message.content,
+                  key: ValueKey('chatMessage-$index'),
+                )
+              else
+                SelectableText(
+                  message.content,
+                  semanticsLabel: message.content,
+                  key: ValueKey('chatMessage-$index'),
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: colors.textPrimary,
+                    height: 1.5,
+                  ),
                 ),
-              ),
             ],
           ),
         ),

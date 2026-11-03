@@ -1,0 +1,57 @@
+import 'package:cinema_fe/features/chat/widgets/chat_answer.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  for (final mode in ThemeMode.values) {
+    testWidgets('Chat answer headings, lists and bold wrap in $mode', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(375, 812);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      const answer =
+          '### Gợi ý cho hai người\n\n**Bố Già**\n- Suất chiếu: 09:15 · 2D\n- Hai vé: **170.000đ**\n- Còn lại: **130.000đ**\n\nBạn muốn chọn suất nào?';
+      await tester.pumpWidget(
+        MaterialApp(
+          themeMode: mode,
+          darkTheme: ThemeData.dark(),
+          home: Scaffold(
+            body: SizedBox(width: 320, child: ChatAnswer(text: answer)),
+          ),
+        ),
+      );
+      final selectable = tester.widget<SelectableText>(
+        find.byType(SelectableText),
+      );
+      final rendered = selectable.textSpan!.toPlainText();
+      expect(rendered, contains('•  Hai vé: 170.000đ'));
+      expect(rendered, isNot(contains('**')));
+      expect(rendered, isNot(contains('###')));
+      final heading = selectable.textSpan!.children!.first as TextSpan;
+      expect(heading.style!.fontWeight, FontWeight.w700);
+      expect(selectable.semanticsLabel, contains('170.000đ'));
+      expect(tester.takeException(), isNull);
+    });
+  }
+  testWidgets('Plain text and untrusted HTML remain literal selectable text', (
+    tester,
+  ) async {
+    const text =
+        'Old reply\n• 85.000đ/vé\n<script>alert(1)</script>\n**unfinished';
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(body: ChatAnswer(text: text)),
+      ),
+    );
+    expect(
+      tester
+          .widget<SelectableText>(find.byType(SelectableText))
+          .textSpan!
+          .toPlainText(),
+      text.replaceFirst('• ', '•  '),
+    );
+    expect(find.byType(Image), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+}
