@@ -14,7 +14,9 @@ import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/top_notice.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
 import '../../../core/widgets/responsive_columns.dart';
-import '../widgets/admin_layout.dart';
+import '../widgets/admin_catalog_layout.dart';
+import '../widgets/admin_pager.dart';
+import '../../../core/widgets/status_badge.dart';
 import '../widgets/admin_page.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_state.dart';
@@ -108,92 +110,109 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
           AppSpacing.lg,
         ).copyWith(bottom: 112 + MediaQuery.viewPaddingOf(context).bottom),
         children: [
-          AdminControls(
-            children: [
-              AppButton(
-                label: 'Create account',
-                leadingIcon: Icons.person_add_alt_1_rounded,
-                useGradient: true,
-                onPressed: _loading
-                    ? null
-                    : () => _open(AppRoutes.adminCreateUser),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              Row(
-                children: [
-                  Expanded(
-                    child: AppTextField(
-                      label: 'Search name or email',
-                      controller: _search,
-                      enabled: !_loading,
-                      prefixIcon: const Icon(Icons.search_rounded),
+          AdminCatalogToolbar(
+            action: AppButton(
+              key: const Key('createAccountButton'),
+              label: 'Create account',
+              leadingIcon: Icons.person_add_alt_1_rounded,
+              useGradient: true,
+              onPressed: _loading
+                  ? null
+                  : () => _open(AppRoutes.adminCreateUser),
+            ),
+            search: Row(
+              children: [
+                Expanded(
+                  child: AppTextField(
+                    key: const Key('accountSearch'),
+                    label: 'Search name or email',
+                    controller: _search,
+                    enabled: !_loading,
+                    prefixIcon: const Icon(Icons.search_rounded),
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Search accounts',
+                  onPressed: _loading ? null : () => _load(),
+                  icon: const Icon(Icons.search_rounded),
+                ),
+              ],
+            ),
+            filterWidth: 360,
+            filter: Row(
+              children: [
+                Expanded(
+                  child: InputDecorator(
+                    decoration: const InputDecoration(
+                      labelText: 'Role',
+                      isDense: true,
                     ),
-                  ),
-                  IconButton(
-                    tooltip: 'Search accounts',
-                    onPressed: _loading ? null : () => _load(),
-                    icon: const Icon(Icons.search_rounded),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Row(
-                children: [
-                  Expanded(
-                    child: DropdownButton<String>(
-                      isExpanded: true,
-                      value: _role ?? 'all',
-                      items: [
-                        const DropdownMenuItem(
-                          value: 'all',
-                          child: Text('All roles'),
-                        ),
-                        for (final role in _roles)
-                          DropdownMenuItem(
-                            value: role,
-                            child: Text(_roleName(role)),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        key: const Key('accountRoleFilter'),
+                        isExpanded: true,
+                        value: _role ?? 'all',
+                        items: [
+                          const DropdownMenuItem(
+                            value: 'all',
+                            child: Text('All roles'),
                           ),
-                      ],
-                      onChanged: _loading
-                          ? null
-                          : (value) {
-                              setState(
-                                () => _role = value == 'all' ? null : value,
-                              );
-                              _load();
-                            },
+                          for (final role in _roles)
+                            DropdownMenuItem(
+                              value: role,
+                              child: Text(_roleName(role)),
+                            ),
+                        ],
+                        onChanged: _loading
+                            ? null
+                            : (value) {
+                                setState(
+                                  () => _role = value == 'all' ? null : value,
+                                );
+                                _load();
+                              },
+                      ),
                     ),
                   ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: DropdownButton<String>(
-                      isExpanded: true,
-                      value: _status,
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'all',
-                          child: Text('All statuses'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'active',
-                          child: Text('Active'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'locked',
-                          child: Text('Locked'),
-                        ),
-                      ],
-                      onChanged: _loading
-                          ? null
-                          : (value) {
-                              setState(() => _status = value!);
-                              _load();
-                            },
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: InputDecorator(
+                    decoration: const InputDecoration(
+                      labelText: 'Status',
+                      isDense: true,
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        key: const Key('accountStatusFilter'),
+                        isExpanded: true,
+                        value: _status,
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'all',
+                            child: Text('All statuses'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'active',
+                            child: Text('Active'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'locked',
+                            child: Text('Locked'),
+                          ),
+                        ],
+                        onChanged: _loading
+                            ? null
+                            : (value) {
+                                setState(() => _status = value!);
+                                _load();
+                              },
+                      ),
                     ),
                   ),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: AppSpacing.lg),
           if (_loading)
@@ -219,87 +238,114 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                   style: AppTextStyles.bodySmall,
                 ),
               ),
-            CardColumns(
-              runSpacing: 0,
-              children: [
-                for (final user in _result?.items ?? <AuthUser>[])
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(20),
-                      onTap: () => _open(AppRoutes.adminUser(user.userId)),
-                      child: CinemaPanel(
-                        surfaceOpacity: 0.8,
-                        child: Row(
-                          children: [
-                            Icon(
-                              user.enabled
-                                  ? Icons.person_outline_rounded
-                                  : Icons.person_off_outlined,
-                              color: user.enabled
-                                  ? AppPalette.of(context).primary
-                                  : AppPalette.of(context).error,
-                            ),
-                            const SizedBox(width: AppSpacing.md),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    user.displayName,
-                                    style: AppTextStyles.title,
-                                  ),
-                                  const SizedBox(height: AppSpacing.xs),
-                                  Text(
-                                    user.email,
-                                    style: AppTextStyles.bodySmall,
-                                  ),
-                                  const SizedBox(height: AppSpacing.sm),
-                                  Text(
-                                    '${user.roles.map(_roleName).join(', ')} · ${user.enabled ? 'Active' : 'Locked'}',
-                                    style: AppTextStyles.caption,
-                                  ),
-                                ],
+            if ((_result?.items.isNotEmpty ?? false) &&
+                isCatalogDesktop(context))
+              AdminCatalogTable(
+                key: const Key('adminAccountsTable'),
+                columns: const [
+                  DataColumn(label: Text('Account')),
+                  DataColumn(label: Text('Email')),
+                  DataColumn(label: Text('Roles')),
+                  DataColumn(label: Text('Status')),
+                  DataColumn(label: Text('Action')),
+                ],
+                rows: [
+                  for (final user in _result!.items)
+                    DataRow(
+                      cells: [
+                        DataCell(
+                          SizedBox(
+                            width: 190,
+                            child: Text(
+                              user.displayName,
+                              style: AppTextStyles.bodySmall.copyWith(
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                            Icon(
-                              Icons.chevron_right_rounded,
-                              color: AppPalette.of(context).textSecondary,
-                            ),
-                          ],
+                          ),
+                        ),
+                        DataCell(SizedBox(width: 240, child: Text(user.email))),
+                        DataCell(Text(user.roles.map(_roleName).join(', '))),
+                        DataCell(
+                          StatusBadge(
+                            label: user.enabled ? 'Active' : 'Locked',
+                            variant: user.enabled
+                                ? StatusBadgeVariant.success
+                                : StatusBadgeVariant.error,
+                          ),
+                        ),
+                        DataCell(
+                          TextButton(
+                            key: ValueKey('manageAccount-${user.userId}'),
+                            onPressed: () =>
+                                _open(AppRoutes.adminUser(user.userId)),
+                            child: const Text('Manage'),
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              )
+            else
+              CardColumns(
+                runSpacing: 0,
+                children: [
+                  for (final user in _result?.items ?? <AuthUser>[])
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(20),
+                        onTap: () => _open(AppRoutes.adminUser(user.userId)),
+                        child: CinemaPanel(
+                          surfaceOpacity: 0.8,
+                          child: Row(
+                            children: [
+                              Icon(
+                                user.enabled
+                                    ? Icons.person_outline_rounded
+                                    : Icons.person_off_outlined,
+                                color: user.enabled
+                                    ? AppPalette.of(context).primary
+                                    : AppPalette.of(context).error,
+                              ),
+                              const SizedBox(width: AppSpacing.md),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      user.displayName,
+                                      style: AppTextStyles.title,
+                                    ),
+                                    const SizedBox(height: AppSpacing.xs),
+                                    Text(
+                                      user.email,
+                                      style: AppTextStyles.bodySmall,
+                                    ),
+                                    const SizedBox(height: AppSpacing.sm),
+                                    Text(
+                                      '${user.roles.map(_roleName).join(', ')} · ${user.enabled ? 'Active' : 'Locked'}',
+                                      style: AppTextStyles.caption,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Icon(
+                                Icons.chevron_right_rounded,
+                                color: AppPalette.of(context).textSecondary,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-              ],
-            ),
-            if ((_result?.totalPages ?? 0) > 1)
-              Row(
-                children: [
-                  Expanded(
-                    child: AppButton.secondary(
-                      label: 'Previous',
-                      onPressed: _result!.pageNumber > 1
-                          ? () => _load(page: _result!.pageNumber - 1)
-                          : null,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(AppSpacing.md),
-                    child: Text(
-                      '${_result!.pageNumber}/${_result!.totalPages}',
-                      style: AppTextStyles.caption,
-                    ),
-                  ),
-                  Expanded(
-                    child: AppButton.secondary(
-                      label: 'Next',
-                      onPressed: _result!.pageNumber < _result!.totalPages
-                          ? () => _load(page: _result!.pageNumber + 1)
-                          : null,
-                    ),
-                  ),
                 ],
+              ),
+            if ((_result?.totalPages ?? 0) > 1)
+              AdminPager(
+                page: _result!.pageNumber,
+                totalPages: _result!.totalPages,
+                onOpen: _loading ? null : (page) => _load(page: page),
               ),
           ],
         ],

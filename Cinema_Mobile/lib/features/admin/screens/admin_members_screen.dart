@@ -19,6 +19,8 @@ import '../../../data/services/staff_service.dart';
 import '../../profile/widgets/membership_card.dart';
 import '../../staff/widgets/staff_feedback.dart';
 import '../widgets/admin_page.dart';
+import '../widgets/admin_catalog_layout.dart';
+import '../widgets/admin_pager.dart';
 
 // Admin: customer accounts with their points and tier. Open a member to see
 // the history of their points and add or take away points with a reason.
@@ -109,24 +111,34 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
             style: AppTextStyles.bodySmall,
           ),
           const SizedBox(height: AppSpacing.md),
-          Row(
-            children: [
-              Expanded(
-                child: AppTextField(
-                  key: const Key('memberSearch'),
-                  label: 'Search name, email or phone',
-                  controller: _search,
-                  enabled: !_loading,
-                  prefixIcon: const Icon(Icons.search_rounded),
+          AdminCatalogToolbar(
+            action: AppButton.secondary(
+              key: const Key('refreshMembers'),
+              label: 'Refresh',
+              leadingIcon: Icons.refresh,
+              onPressed: _loading
+                  ? null
+                  : () => _load(page: result?.pageNumber ?? 1),
+            ),
+            search: Row(
+              children: [
+                Expanded(
+                  child: AppTextField(
+                    key: const Key('memberSearch'),
+                    label: 'Search name, email or phone',
+                    controller: _search,
+                    enabled: !_loading,
+                    prefixIcon: const Icon(Icons.search_rounded),
+                  ),
                 ),
-              ),
-              IconButton(
-                key: const Key('searchMembers'),
-                tooltip: 'Search members',
-                onPressed: _loading ? null : () => _load(),
-                icon: const Icon(Icons.search_rounded),
-              ),
-            ],
+                IconButton(
+                  key: const Key('searchMembers'),
+                  tooltip: 'Search members',
+                  onPressed: _loading ? null : () => _load(),
+                  icon: const Icon(Icons.search_rounded),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: AppSpacing.lg),
           if (_loading && result == null)
@@ -138,6 +150,11 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
               onRetry: _load,
             )
           else if (result != null) ...[
+            Text(
+              formatCount(result.totalCount, 'member'),
+              style: AppTextStyles.caption,
+            ),
+            const SizedBox(height: AppSpacing.md),
             if (_message != null)
               Padding(
                 padding: const EdgeInsets.only(bottom: AppSpacing.md),
@@ -150,43 +167,94 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
               ),
             if (result.items.isEmpty)
               const Text('No members found.', style: AppTextStyles.bodySmall),
-            for (final user in result.items)
-              Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                child: _MemberRow(
-                  user: user,
-                  card: _cards[user.userId],
-                  onOpen: _loading ? null : () => _open(user),
-                ),
-              ),
-            if (result.totalPages > 1)
-              Row(
-                children: [
-                  Expanded(
-                    child: AppButton.secondary(
-                      label: 'Previous',
-                      onPressed: result.pageNumber > 1 && !_loading
-                          ? () => _load(page: result.pageNumber - 1)
-                          : null,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(AppSpacing.md),
-                    child: Text(
-                      '${result.pageNumber}/${result.totalPages}',
-                      style: AppTextStyles.caption,
-                    ),
-                  ),
-                  Expanded(
-                    child: AppButton.secondary(
-                      label: 'Next',
-                      onPressed:
-                          result.pageNumber < result.totalPages && !_loading
-                          ? () => _load(page: result.pageNumber + 1)
-                          : null,
-                    ),
-                  ),
+            if (result.items.isNotEmpty && isCatalogDesktop(context))
+              AdminCatalogTable(
+                key: const Key('adminMembersTable'),
+                columns: const [
+                  DataColumn(label: Text('Member')),
+                  DataColumn(label: Text('Contact')),
+                  DataColumn(label: Text('Tier')),
+                  DataColumn(label: Text('Points'), numeric: true),
+                  DataColumn(label: Text('Lifetime spend'), numeric: true),
+                  DataColumn(label: Text('Action')),
                 ],
+                rows: [
+                  for (final user in result.items)
+                    DataRow(
+                      cells: [
+                        DataCell(
+                          SizedBox(
+                            width: 180,
+                            child: Text(
+                              user.displayName,
+                              style: AppTextStyles.bodySmall.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                        DataCell(
+                          SizedBox(
+                            width: 230,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(user.email),
+                                if (user.phone != null)
+                                  Text(
+                                    user.phone!,
+                                    style: AppTextStyles.caption,
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        DataCell(
+                          _cards[user.userId] == null
+                              ? const Text('—')
+                              : TierBadge(tier: _cards[user.userId]!.tier),
+                        ),
+                        DataCell(
+                          Text(
+                            _cards[user.userId] == null
+                                ? '—'
+                                : '${_cards[user.userId]!.points} pts',
+                          ),
+                        ),
+                        DataCell(
+                          Text(
+                            _cards[user.userId] == null
+                                ? '—'
+                                : formatVnd(_cards[user.userId]!.lifetimeSpend),
+                          ),
+                        ),
+                        DataCell(
+                          TextButton(
+                            key: ValueKey('member-${user.userId}'),
+                            onPressed: _loading ? null : () => _open(user),
+                            child: const Text('View member'),
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              )
+            else
+              for (final user in result.items)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                  child: _MemberRow(
+                    user: user,
+                    card: _cards[user.userId],
+                    onOpen: _loading ? null : () => _open(user),
+                  ),
+                ),
+            if (result.totalPages > 1)
+              AdminPager(
+                page: result.pageNumber,
+                totalPages: result.totalPages,
+                onOpen: _loading ? null : (page) => _load(page: page),
               ),
           ],
         ],
