@@ -15,18 +15,18 @@ namespace BookingService.Repositories.Impl
             _context = context;
         }
 
-        public async Task<List<(string Status, int Count, decimal Amount)>> SumByStatusAsync(
+        public async Task<List<(DateTime Date, string Status, int Count, decimal Amount)>> SumByDayAndStatusAsync(
             DateTime start,
             DateTime end)
         {
             var rows = await _context.Payments
                 .AsNoTracking()
                 .Where(p => p.CreatedAt >= start && p.CreatedAt <= end)
-                .GroupBy(p => p.Status)
-                .Select(g => new { Status = g.Key, Count = g.Count(), Amount = g.Sum(p => p.Amount) })
+                .GroupBy(p => new { Date = p.CreatedAt.Date, p.Status })
+                .Select(g => new { g.Key.Date, g.Key.Status, Count = g.Count(), Amount = g.Sum(p => p.Amount) })
                 .ToListAsync();
 
-            return rows.Select(r => (r.Status, r.Count, r.Amount)).ToList();
+            return rows.Select(r => (r.Date, r.Status, r.Count, r.Amount)).ToList();
         }
 
         public async Task<PagedList<Payment>> GetAllAsync(

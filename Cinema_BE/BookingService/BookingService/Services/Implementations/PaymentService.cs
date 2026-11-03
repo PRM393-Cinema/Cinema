@@ -120,7 +120,7 @@ namespace BookingService.Services.Implementations
                 throw new BusinessException("End must not be before start.");
             }
 
-            var rows = await _paymentRepository.SumByStatusAsync(start, end);
+            var rows = await _paymentRepository.SumByDayAndStatusAsync(start, end);
             var paid = rows.Where(r => r.Status is "SUCCESS" or "REFUND_PENDING").ToList();
 
             return new PaymentSummaryResponse
@@ -129,7 +129,9 @@ namespace BookingService.Services.Implementations
                 End = end,
                 PaidCount = paid.Sum(r => r.Count),
                 Revenue = paid.Sum(r => r.Amount),
-                RefundedAmount = rows.Where(r => r.Status == "REFUNDED").Sum(r => r.Amount)
+                RefundedAmount = rows.Where(r => r.Status == "REFUNDED").Sum(r => r.Amount),
+                DailyRevenue = paid.GroupBy(r => r.Date).OrderBy(g => g.Key)
+                    .Select(g => new DailyRevenueResponse(g.Key, g.Sum(r => r.Amount))).ToList()
             };
         }
 

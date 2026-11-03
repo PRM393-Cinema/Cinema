@@ -40,7 +40,7 @@ namespace BookingService.Repositories.Interfaces
         Task<bool> ExistsByPaymentCodeAsync(string paymentCode);
 
         // Số tiền theo trạng thái của các thanh toán tạo trong [start, end]
-        Task<List<(string Status, int Count, decimal Amount)>> SumByStatusAsync(DateTime start, DateTime end);
+        Task<List<(DateTime Date, string Status, int Count, decimal Amount)>> SumByDayAndStatusAsync(DateTime start, DateTime end);
 
         Task<Payment> AddAsync(Payment payment);
 

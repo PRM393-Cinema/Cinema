@@ -15,5 +15,9 @@ namespace BookingService.DTOs.Responses
 
         // Tiền đã hoàn lại cho khách (REFUNDED)
         public decimal RefundedAmount { get; set; }
+
+        public List<DailyRevenueResponse> DailyRevenue { get; set; } = [];
     }
+
+    public record DailyRevenueResponse(DateTime Date, decimal Revenue);
 }
