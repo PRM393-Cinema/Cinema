@@ -25,6 +25,7 @@ Future<bool> staffConfirm(
     await showDialog<bool>(
       context: context,
       builder: (ctx) => Dialog(
+        constraints: const BoxConstraints(maxWidth: 480),
         backgroundColor: Colors.transparent,
         child: CinemaPanel(
           child: Column(
@@ -106,6 +107,7 @@ class _StaffInputDialogState extends State<_StaffInputDialog> {
 
   @override
   Widget build(BuildContext context) => Dialog(
+    constraints: const BoxConstraints(maxWidth: 480),
     backgroundColor: Colors.transparent,
     child: CinemaPanel(
       child: Form(
@@ -134,25 +136,28 @@ class _StaffInputDialogState extends State<_StaffInputDialog> {
                     : null,
               ),
               const SizedBox(height: AppSpacing.lg),
-              Row(
+              OverflowBar(
+                alignment: MainAxisAlignment.end,
+                spacing: AppSpacing.sm,
+                overflowSpacing: AppSpacing.sm,
                 children: [
-                  Expanded(
-                    child: AppButton.secondary(
-                      label: 'Cancel',
-                      onPressed: () => Navigator.pop(context),
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      minimumSize: const Size(80, 48),
                     ),
+                    child: const Text('Cancel'),
+                    onPressed: () => Navigator.pop(context),
                   ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: AppButton(
-                      label: 'Continue',
-                      useGradient: true,
-                      onPressed: () {
-                        if (_form.currentState!.validate()) {
-                          Navigator.pop(context, _controller.text.trim());
-                        }
-                      },
+                  FilledButton(
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(100, 48),
                     ),
+                    child: const Text('Continue'),
+                    onPressed: () {
+                      if (_form.currentState!.validate()) {
+                        Navigator.pop(context, _controller.text.trim());
+                      }
+                    },
                   ),
                 ],
               ),
