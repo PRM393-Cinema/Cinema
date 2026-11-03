@@ -29,7 +29,8 @@ class AdminControls extends StatelessWidget {
 
 // Dashboard numbers: two per row in the app layout, one row on the website.
 class StatTiles extends StatelessWidget {
-  const StatTiles({required this.tiles, super.key});
+  const StatTiles({required this.tiles, this.compact = false, super.key});
+  final bool compact;
 
   // Label, value (a count or a formatted amount) and icon of each tile.
   final List<(String, Object, IconData)> tiles;
@@ -52,12 +53,19 @@ class StatTiles extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(icon, color: AppPalette.of(context).primary),
-                    const SizedBox(height: AppSpacing.md),
+                    if (!compact) ...[
+                      Icon(icon, color: AppPalette.of(context).primary),
+                      const SizedBox(height: AppSpacing.md),
+                    ],
                     FittedBox(
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
-                      child: Text('$value', style: AppTextStyles.display),
+                      child: Text(
+                        '$value',
+                        style: compact
+                            ? AppTextStyles.heading2
+                            : AppTextStyles.display,
+                      ),
                     ),
                     const SizedBox(height: AppSpacing.xs),
                     Text(label, style: AppTextStyles.bodySmall),

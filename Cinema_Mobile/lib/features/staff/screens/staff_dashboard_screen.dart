@@ -101,7 +101,7 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
               onRetry: _load,
             )
           else if (_counts != null) ...[
-            StatTiles(tiles: _counts!),
+            StatTiles(tiles: _counts!, compact: true),
             const SizedBox(height: AppSpacing.xl),
             const Text('Pending bookings', style: AppTextStyles.title),
             const SizedBox(height: AppSpacing.md),
@@ -117,12 +117,17 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
                   Padding(
                     padding: const EdgeInsets.only(bottom: AppSpacing.md),
                     child: CinemaPanel(
-                      surfaceOpacity: 0.8,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
                       child: ListTile(
                         contentPadding: EdgeInsets.zero,
                         title: Text(
                           booking.bookingCode,
-                          style: AppTextStyles.title,
+                          style: AppTextStyles.bodySmall.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                         subtitle: Text(
                           booking.movieTitle ?? 'Movie',

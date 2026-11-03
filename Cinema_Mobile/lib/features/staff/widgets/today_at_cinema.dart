@@ -19,6 +19,7 @@ import '../../../data/services/staff_service.dart';
 import '../../admin/widgets/admin_layout.dart';
 import 'staff_feedback.dart';
 import 'today_showtimes_dialog.dart';
+import 'shift_charts.dart';
 
 enum _Phase { playing, next, finished }
 
@@ -51,6 +52,7 @@ class _TodayData {
     required this.stats,
     required this.movies,
     required this.rooms,
+    required this.chart,
   });
 
   final DateTime at;
@@ -61,6 +63,7 @@ class _TodayData {
   final Map<int, ShowtimeBookingStats> stats;
   final Map<int, Movie> movies;
   final Map<int, Room> rooms;
+  final ShiftCharts chart;
 }
 
 class _TodayAtCinemaState extends State<TodayAtCinema> {
@@ -174,6 +177,13 @@ class _TodayAtCinemaState extends State<TodayAtCinema> {
           stats: {for (final s in stats) s.showtimeId: s},
           movies: {for (final movie in movies) movie.id: movie},
           rooms: {for (final room in rooms) room.id: room},
+          chart: ShiftCharts(
+            sold: sold,
+            held: todayStats.fold(0, (total, s) => total + s.heldSeats),
+            checkedIn: checkedIn,
+            withBookings: withTickets,
+            showtimes: todayShows.totalCount,
+          ),
         );
       });
     } on Object catch (error) {
@@ -192,9 +202,13 @@ class _TodayAtCinemaState extends State<TodayAtCinema> {
       key: const Key('todayAtCinema'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          spacing: 16,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            const Expanded(child: Text('Today', style: AppTextStyles.title)),
+            const Text('Today', style: AppTextStyles.title),
             if (data != null)
               Text(
                 'Updated ${formatTime(data.at)}',
@@ -204,9 +218,7 @@ class _TodayAtCinemaState extends State<TodayAtCinema> {
         ),
         const SizedBox(height: AppSpacing.sm),
         const Text(
-          'Bookings made today, today’s showtimes with tickets, and the '
-          'showtimes playing now, next and just finished. Open a showtime to '
-          'see where its customers sit.',
+          'Your shift at a glance · updated every minute. Open a showtime to view seats and customers.',
           style: AppTextStyles.bodySmall,
         ),
         const SizedBox(height: AppSpacing.md),
@@ -236,28 +248,40 @@ class _TodayAtCinemaState extends State<TodayAtCinema> {
             ),
           )
         else ...[
-          StatTiles(key: const Key('todayStats'), tiles: data.tiles),
-          const SizedBox(height: AppSpacing.xl),
-          _Group(
-            title: 'Now showing',
-            empty: 'No showtime is playing right now.',
-            phase: _Phase.playing,
-            showtimes: data.playing,
-            data: data,
+          StatTiles(
+            key: const Key('todayStats'),
+            tiles: data.tiles,
+            compact: true,
           ),
-          _Group(
-            title: 'Up next',
-            empty: 'No more showtimes in the next 12 hours.',
-            phase: _Phase.next,
-            showtimes: data.next,
-            data: data,
-          ),
-          _Group(
-            title: 'Just finished',
-            empty: 'No showtime finished in the last 12 hours.',
-            phase: _Phase.finished,
-            showtimes: data.finished,
-            data: data,
+          const SizedBox(height: AppSpacing.lg),
+          data.chart,
+          const SizedBox(height: AppSpacing.lg),
+          CardColumns(
+            minCardWidth: 320,
+            maxColumns: 3,
+            children: [
+              _Group(
+                title: 'Now showing',
+                empty: 'No showtime is playing right now.',
+                phase: _Phase.playing,
+                showtimes: data.playing,
+                data: data,
+              ),
+              _Group(
+                title: 'Up next',
+                empty: 'No more showtimes in the next 12 hours.',
+                phase: _Phase.next,
+                showtimes: data.next,
+                data: data,
+              ),
+              _Group(
+                title: 'Just finished',
+                empty: 'No showtime finished in the last 12 hours.',
+                phase: _Phase.finished,
+                showtimes: data.finished,
+                data: data,
+              ),
+            ],
           ),
         ],
       ],
@@ -283,34 +307,37 @@ class _Group extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: AppSpacing.xl),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          '$title (${showtimes.length})',
-          style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w700),
-        ),
-        const SizedBox(height: AppSpacing.md),
-        if (showtimes.isEmpty)
-          Text(empty, style: AppTextStyles.bodySmall)
-        else
-          CardColumns(
-            minCardWidth: 340,
-            children: [
-              for (final show in showtimes)
-                _ShowtimeCard(
-                  showtime: show,
-                  phase: phase,
-                  now: data.at,
-                  movie: data.movies[show.movieId],
-                  room: data.rooms[show.roomId],
-                  stats:
-                      data.stats[show.id] ??
-                      ShowtimeBookingStats(showtimeId: show.id),
-                ),
-            ],
+    child: CinemaPanel(
+      surfaceOpacity: 1,
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            '$title (${showtimes.length})',
+            style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w700),
           ),
-      ],
+          const SizedBox(height: AppSpacing.md),
+          if (showtimes.isEmpty)
+            Text(empty, style: AppTextStyles.bodySmall)
+          else
+            Column(
+              children: [
+                for (final show in showtimes)
+                  _ShowtimeCard(
+                    showtime: show,
+                    phase: phase,
+                    now: data.at,
+                    movie: data.movies[show.movieId],
+                    room: data.rooms[show.roomId],
+                    stats:
+                        data.stats[show.id] ??
+                        ShowtimeBookingStats(showtimeId: show.id),
+                  ),
+              ],
+            ),
+        ],
+      ),
     ),
   );
 }
@@ -347,7 +374,6 @@ class _ShowtimeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final start = showtime.startTime;
     final end = showtime.endTime;
-    final length = movie?.durationText ?? _minutes(end.difference(start));
     final capacity = room?.totalSeats;
     final running = end.difference(start);
     final (badge, variant) = switch (phase) {
@@ -391,31 +417,34 @@ class _ShowtimeCard extends StatelessWidget {
         context,
         AppRoutes.staffRecord('showtimes', showtime.id),
       ),
-      child: CinemaPanel(
-        surfaceOpacity: 0.8,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+        decoration: BoxDecoration(
+          border: Border(top: BorderSide(color: AppPalette.of(context).border)),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Text(
-                    movie?.title ?? 'Movie #${showtime.movieId}',
-                    style: AppTextStyles.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                StatusBadge(label: badge, variant: variant),
-              ],
+            Tooltip(
+              message: movie?.title ?? 'Movie #${showtime.movieId}',
+              child: Text(
+                movie?.title ?? 'Movie #${showtime.movieId}',
+                style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w700),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
             const SizedBox(height: AppSpacing.xs),
             Text(
-              '${room?.name ?? showtime.roomLabel} • ${_time(start)} – '
-              '${_time(end)} • $length',
-              style: AppTextStyles.bodySmall,
+              '${room?.name ?? showtime.roomLabel} · ${showtime.format}\n${_time(start)} – ${_time(end)}',
+              style: AppTextStyles.caption.copyWith(
+                color: AppPalette.of(context).textSecondary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: StatusBadge(label: badge, variant: variant),
             ),
             if (phase == _Phase.playing) ...[
               const SizedBox(height: AppSpacing.sm),
@@ -425,7 +454,8 @@ class _ShowtimeCard extends StatelessWidget {
                   minHeight: 4,
                   value: running.inSeconds <= 0
                       ? 0
-                      : now.difference(start).inSeconds / running.inSeconds,
+                      : (now.difference(start).inSeconds / running.inSeconds)
+                            .clamp(0.0, 1.0),
                 ),
               ),
               const SizedBox(height: AppSpacing.xs),
@@ -434,18 +464,20 @@ class _ShowtimeCard extends StatelessWidget {
                 style: AppTextStyles.caption,
               ),
             ],
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: AppSpacing.sm),
             Wrap(
               spacing: AppSpacing.xl,
               runSpacing: AppSpacing.sm,
               children: [
                 for (final (value, label) in counts)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 4,
                     children: [
                       Text(
                         value,
-                        style: AppTextStyles.heading2.copyWith(
+                        style: AppTextStyles.bodySmall.copyWith(
+                          fontWeight: FontWeight.w700,
                           color: AppPalette.of(context).primary,
                         ),
                       ),
