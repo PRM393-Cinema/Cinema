@@ -10,10 +10,10 @@ import '../../../core/utils/layout.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_state.dart';
+import '../../../core/widgets/status_badge.dart';
 import '../../../data/models/auth_response.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/services/staff_service.dart';
-import '../../../core/widgets/responsive_columns.dart';
 import '../../staff/widgets/today_at_cinema.dart';
 import '../widgets/admin_layout.dart';
 import '../widgets/admin_page.dart';
@@ -125,6 +125,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     }
   }
 
+  Future<void> _openUser(AuthUser user) async {
+    await Navigator.pushNamed(context, AppRoutes.adminUser(user.userId));
+    if (mounted) _load();
+  }
+
   @override
   Widget build(BuildContext context) => AdminPage(
     title: 'Dashboard',
@@ -144,20 +149,23 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             const Text('This month', style: AppTextStyles.title),
             const SizedBox(height: AppSpacing.sm),
             const Text(
-              'Bookings and ticket sales since the 1st, movies on show and '
-              'today’s showtimes.',
+              'Month-to-date bookings and revenue · current movies and today’s showtimes.',
               style: AppTextStyles.bodySmall,
             ),
-            const SizedBox(height: AppSpacing.xl),
+            const SizedBox(height: AppSpacing.md),
             if (_business case final business?)
-              StatTiles(key: const Key('businessStats'), tiles: business)
+              StatTiles(
+                key: const Key('businessStats'),
+                tiles: business,
+                compact: true,
+              )
             else
               const Text(
                 'Booking and sales figures could not be loaded. Pull to '
                 'refresh.',
                 style: AppTextStyles.bodySmall,
               ),
-            const SizedBox(height: AppSpacing.xxl),
+            const SizedBox(height: AppSpacing.xl),
           ],
           const Text('Account overview', style: AppTextStyles.title),
           const SizedBox(height: AppSpacing.sm),
@@ -165,7 +173,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             'Manage access and keep your cinema team organized.',
             style: AppTextStyles.bodySmall,
           ),
-          const SizedBox(height: AppSpacing.xl),
+          const SizedBox(height: AppSpacing.md),
           if (_loading)
             const LoadingState(message: 'Loading dashboard...')
           else if (_error != null)
@@ -175,54 +183,263 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               onRetry: _load,
             )
           else if (_counts != null) ...[
-            StatTiles(tiles: _counts!),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final chart = _AccountStatusChart(
+                  total: _counts![0].$2,
+                  active: _counts![1].$2,
+                  locked: _counts![2].$2,
+                );
+                if (constraints.maxWidth < desktopBreakpoint) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      StatTiles(tiles: _counts!, compact: true),
+                      const SizedBox(height: AppSpacing.md),
+                      chart,
+                    ],
+                  );
+                }
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        children: [
+                          StatTiles(
+                            tiles: _counts!.take(2).toList(),
+                            compact: true,
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          StatTiles(
+                            tiles: _counts!.skip(2).toList(),
+                            compact: true,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(child: chart),
+                  ],
+                );
+              },
+            ),
             const SizedBox(height: AppSpacing.xl),
-            const Text('Accounts at a glance', style: AppTextStyles.title),
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Accounts at a glance',
+                    style: AppTextStyles.title,
+                  ),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    await Navigator.pushNamed(context, AppRoutes.adminUsers);
+                    if (mounted) _load();
+                  },
+                  child: const Text('View all accounts'),
+                ),
+              ],
+            ),
+            Text(
+              'Preview of ${_users.length} accounts · open an account to manage access.',
+              style: AppTextStyles.caption,
+            ),
             const SizedBox(height: AppSpacing.md),
             if (_users.isEmpty)
               const Text('No accounts found.', style: AppTextStyles.bodySmall),
-            CardColumns(
-              runSpacing: 0,
-              children: [
-                for (final user in _users)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                    child: CinemaPanel(
-                      surfaceOpacity: 0.8,
-                      child: ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: Icon(
-                          user.enabled
-                              ? Icons.person_outline
-                              : Icons.person_off_outlined,
-                          color: user.enabled
-                              ? AppPalette.of(context).primary
-                              : AppPalette.of(context).error,
-                        ),
-                        title: Text(
-                          user.displayName,
-                          style: AppTextStyles.title,
-                        ),
-                        subtitle: Text(
-                          user.email,
-                          style: AppTextStyles.bodySmall,
-                        ),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () async {
-                          await Navigator.pushNamed(
-                            context,
-                            AppRoutes.adminUser(user.userId),
-                          );
-                          if (mounted) _load();
-                        },
+            if (_users.isNotEmpty && isDesktopLayout(context))
+              CinemaPanel(
+                key: const Key('dashboardAccountsTable'),
+                padding: EdgeInsets.zero,
+                child: LayoutBuilder(
+                  builder: (context, constraints) => SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minWidth: constraints.maxWidth,
+                      ),
+                      child: DataTable(
+                        headingRowHeight: 40,
+                        dataRowMinHeight: 56,
+                        dataRowMaxHeight: 72,
+                        columnSpacing: AppSpacing.lg,
+                        horizontalMargin: AppSpacing.lg,
+                        columns: const [
+                          DataColumn(label: Text('Account')),
+                          DataColumn(label: Text('Email')),
+                          DataColumn(label: Text('Roles')),
+                          DataColumn(label: Text('Status')),
+                          DataColumn(label: Text('Action')),
+                        ],
+                        rows: [
+                          for (final user in _users)
+                            DataRow(
+                              cells: [
+                                DataCell(Text(user.displayName)),
+                                DataCell(Text(user.email)),
+                                DataCell(
+                                  Text(
+                                    user.roles
+                                        .map(
+                                          (role) => role
+                                              .replaceFirst('ROLE_', '')
+                                              .toLowerCase(),
+                                        )
+                                        .join(', '),
+                                  ),
+                                ),
+                                DataCell(
+                                  StatusBadge(
+                                    label: user.enabled ? 'Active' : 'Locked',
+                                    variant: user.enabled
+                                        ? StatusBadgeVariant.success
+                                        : StatusBadgeVariant.error,
+                                  ),
+                                ),
+                                DataCell(
+                                  TextButton(
+                                    onPressed: () => _openUser(user),
+                                    child: const Text('View account'),
+                                  ),
+                                ),
+                              ],
+                            ),
+                        ],
                       ),
                     ),
                   ),
-              ],
-            ),
+                ),
+              )
+            else ...[
+              for (final user in _users)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                  child: CinemaPanel(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: AppSpacing.xs,
+                    ),
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(
+                        user.enabled
+                            ? Icons.person_outline
+                            : Icons.person_off_outlined,
+                        color: user.enabled
+                            ? AppPalette.of(context).primary
+                            : AppPalette.of(context).error,
+                      ),
+                      title: Text(
+                        user.displayName,
+                        style: AppTextStyles.bodySmall.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      subtitle: Text(
+                        user.email,
+                        style: AppTextStyles.bodySmall,
+                      ),
+                      trailing: StatusBadge(
+                        label: user.enabled ? 'Active' : 'Locked',
+                        variant: user.enabled
+                            ? StatusBadgeVariant.success
+                            : StatusBadgeVariant.error,
+                      ),
+                      onTap: () => _openUser(user),
+                    ),
+                  ),
+                ),
+            ],
           ],
         ],
       ),
     ),
   );
+}
+
+class _AccountStatusChart extends StatelessWidget {
+  const _AccountStatusChart({
+    required this.total,
+    required this.active,
+    required this.locked,
+  });
+  final int total;
+  final int active;
+  final int locked;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppPalette.of(context);
+    final ratio = total == 0 ? 0.0 : (active / total).clamp(0.0, 1.0);
+    return CinemaPanel(
+      key: const Key('accountStatusChart'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Account status', style: AppTextStyles.title),
+          const SizedBox(height: AppSpacing.md),
+          Wrap(
+            spacing: AppSpacing.xl,
+            runSpacing: AppSpacing.md,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Semantics(
+                container: true,
+                label: 'Active accounts: $active of $total',
+                child: ExcludeSemantics(
+                  child: SizedBox(
+                    width: 100,
+                    height: 100,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      fit: StackFit.expand,
+                      children: [
+                        CircularProgressIndicator(
+                          value: ratio,
+                          strokeWidth: 10,
+                          color: colors.success,
+                          backgroundColor: total == 0
+                              ? colors.border
+                              : colors.error.withValues(alpha: 0.3),
+                        ),
+                        Center(
+                          child: Text(
+                            total == 0 ? '—' : '${(ratio * 100).round()}%',
+                            style: AppTextStyles.heading2,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  StatusBadge(
+                    label: 'Active · $active',
+                    variant: StatusBadgeVariant.success,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  StatusBadge(
+                    label: 'Locked · $locked',
+                    variant: StatusBadgeVariant.error,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    total == 0
+                        ? 'No accounts yet.'
+                        : '$total accounts in total',
+                    style: AppTextStyles.caption,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
