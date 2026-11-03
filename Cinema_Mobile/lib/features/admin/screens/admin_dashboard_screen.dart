@@ -17,6 +17,7 @@ import '../../../data/services/staff_service.dart';
 import '../../staff/widgets/today_at_cinema.dart';
 import '../widgets/admin_layout.dart';
 import '../widgets/admin_page.dart';
+import '../widgets/revenue_chart.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({
@@ -36,6 +37,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   // Bookings, ticket sales, movies and showtimes; null when they could not be
   // loaded (the account figures still show).
   List<(String, Object, IconData)>? _business;
+  List<(DateTime, double)>? _dailyRevenue;
   int _refreshes = 0;
   List<AuthUser> _users = [];
   String? _error;
@@ -98,6 +100,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     try {
       final bookings = await widget.service.bookings(start: month, end: now);
       final sales = await widget.service.paymentSummary(month, now);
+      final daily = sales.dailyRevenue;
+      _dailyRevenue = daily == null
+          ? null
+          : [
+              for (var day = 1; day <= now.day; day++)
+                (
+                  DateTime(now.year, now.month, day),
+                  daily
+                      .where((row) => row.$1.day == day)
+                      .fold(0.0, (sum, row) => sum + row.$2),
+                ),
+            ];
       final movies = await widget.service.catalogMovies(
         status: 'ACTIVE',
         size: 1,
@@ -121,6 +135,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         ('Showtimes today', shows.totalCount, Icons.event_outlined),
       ];
     } on Object {
+      _dailyRevenue = null;
       return null;
     }
   }
@@ -166,6 +181,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 style: AppTextStyles.bodySmall,
               ),
             const SizedBox(height: AppSpacing.xl),
+            if (_business != null) ...[
+              if (_dailyRevenue case final daily?)
+                RevenueChart(days: daily)
+              else
+                const Text(
+                  'Daily revenue is unavailable. Refresh after updating the server.',
+                  style: AppTextStyles.caption,
+                ),
+              const SizedBox(height: AppSpacing.xl),
+            ],
           ],
           const Text('Account overview', style: AppTextStyles.title),
           const SizedBox(height: AppSpacing.sm),
@@ -200,27 +225,47 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     ],
                   );
                 }
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        children: [
-                          StatTiles(
-                            tiles: _counts!.take(2).toList(),
-                            compact: true,
-                          ),
-                          const SizedBox(height: AppSpacing.md),
-                          StatTiles(
-                            tiles: _counts!.skip(2).toList(),
-                            compact: true,
-                          ),
-                        ],
+                return IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        key: const Key('accountStatsGrid'),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            for (var row = 0; row < 2; row++) ...[
+                              if (row != 0)
+                                const SizedBox(height: AppSpacing.md),
+                              IntrinsicHeight(
+                                child: Row(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    Expanded(
+                                      child: StatTile(
+                                        tile: _counts![row * 2],
+                                        compact: true,
+                                      ),
+                                    ),
+                                    const SizedBox(width: AppSpacing.md),
+                                    Expanded(
+                                      child: StatTile(
+                                        tile: _counts![row * 2 + 1],
+                                        compact: true,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: AppSpacing.md),
-                    Expanded(child: chart),
-                  ],
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(child: chart),
+                    ],
+                  ),
                 );
               },
             ),

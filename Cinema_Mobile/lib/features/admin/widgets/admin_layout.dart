@@ -48,33 +48,43 @@ class StatTiles extends StatelessWidget {
           for (final (label, value, icon) in tiles)
             SizedBox(
               width: width,
-              child: CinemaPanel(
-                surfaceOpacity: 0.8,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (!compact) ...[
-                      Icon(icon, color: AppPalette.of(context).primary),
-                      const SizedBox(height: AppSpacing.md),
-                    ],
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        '$value',
-                        style: compact
-                            ? AppTextStyles.heading2
-                            : AppTextStyles.display,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(label, style: AppTextStyles.bodySmall),
-                  ],
-                ),
-              ),
+              child: StatTile(tile: (label, value, icon), compact: compact),
             ),
         ],
       );
     },
   );
+}
+
+class StatTile extends StatelessWidget {
+  const StatTile({required this.tile, this.compact = false, super.key});
+  final (String, Object, IconData) tile;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final (label, value, icon) = tile;
+    return CinemaPanel(
+      surfaceOpacity: 0.8,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (!compact) ...[
+            Icon(icon, color: AppPalette.of(context).primary),
+            const SizedBox(height: AppSpacing.md),
+          ],
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              '$value',
+              style: compact ? AppTextStyles.heading2 : AppTextStyles.display,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(label, style: AppTextStyles.bodySmall),
+        ],
+      ),
+    );
+  }
 }

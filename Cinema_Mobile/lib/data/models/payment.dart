@@ -26,18 +26,26 @@ class PaymentSummary {
     required this.paidCount,
     required this.revenue,
     required this.refundedAmount,
+    this.dailyRevenue,
   });
 
   factory PaymentSummary.fromJson(Map<String, Object?> json) => PaymentSummary(
     paidCount: readOptionalInt(json['paidCount']) ?? 0,
     revenue: readDouble(json['revenue']),
     refundedAmount: readDouble(json['refundedAmount']),
+    dailyRevenue: json['dailyRevenue'] == null
+        ? null
+        : [
+            for (final row in readMapList(json['dailyRevenue']))
+              (readRequiredDateTime(row['date']), readDouble(row['revenue'])),
+          ],
   );
 
   // Payments received (refunds not yet completed included).
   final int paidCount;
   final double revenue;
   final double refundedAmount;
+  final List<(DateTime, double)>? dailyRevenue;
 }
 
 class PaymentInfo {
