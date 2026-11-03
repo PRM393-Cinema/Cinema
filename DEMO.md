@@ -120,7 +120,34 @@ Vé chỉ check-in được từ 3 giờ trước đến 2 giờ sau giờ chi�
 - Chạy lại không nhân đôi tài khoản, vé hoặc review và không ghi đè dữ liệu đang có.
 - Trên trang phim, chọn **Rate this movie** để viết/sửa rating; khách chưa đăng nhập sẽ được chuyển đến đăng nhập. Khách chưa có vé đã check-in thấy hướng dẫn điều kiện đánh giá.
 
-## 5. Lưu ý
+## 5. Dữ liệu dashboard có vé thật trong DB local
+
+Khi Docker local và lịch chiếu hôm nay đã sẵn sàng, chạy từ thư mục Cinema (Node.js 18 trở lên):
+
+```powershell
+node Cinema_BE/scripts/seed-dashboard-demo.cjs
+```
+
+Script đăng nhập bằng ba tài khoản demo phía trên, dùng API staff/admin để tạo đơn cho `khachhang1@gmail.com`. Mở `http://localhost:5174/admin/`, đăng nhập staff hoặc admin để xem dashboard; tài khoản khách xem các đơn trong **My tickets**.
+
+- Tạo ba đơn CASH mô phỏng: tổng 8 vé đã bán, trong đó 2 vé đã check-in; thêm một đơn giữ 3 ghế trong 10 phút. Checked-in là một phần của Sold, không cộng hai số này với nhau.
+- Nếu có khoảng trống phòng phù hợp, thêm một suất hôm nay trong cửa sổ check-in bình thường; không sửa quy tắc giờ, giá vé hay trạng thái thanh toán trực tiếp trong DB.
+- Không gọi PayOS/ngân hàng. Không gắn email vào đơn nên không gửi email hoặc tạo thông báo từ các sự kiện này. Các khoản CASH vẫn tăng doanh thu và điểm thưởng local theo logic hiện có.
+- ID, mã đơn và hạn giữ ghế được lưu tại `Cinema_Mobile/build/dashboard-seed-YYYY-MM-DD.json`. Chạy lại trong ngày giữ nguyên đơn đã trả và suất demo; chỉ tạo lại đơn giữ ghế đã hết hạn. Giữ file này để tránh tạo trùng; không dùng `flutter clean` giữa các lần chạy nếu muốn tái sử dụng cùng bộ dữ liệu.
+- Dashboard cập nhật mỗi phút; F5 để tải ngay. Khi đơn giữ ghế hết hạn, Held và số suất có booking giảm là đúng. Sau nửa đêm phải chạy lại cho ngày mới; script báo lỗi nếu thiếu lịch chiếu hoặc không có khoảng trống phòng trong giờ check-in.
+
+Bộ dữ liệu đã tạo ngày **04/11/2026**:
+
+| Booking ID | Tình huống | Ghế | Số tiền | Payment ID |
+|---|---|---|---:|---|
+| 602 | Đã check-in, suất 756 — Ma Xó, 01:45 | A1, A2 | 160.000đ | 19 |
+| 603 | Đã thanh toán, suất 719, 06:30 | A1–A4 | 440.000đ | 20 |
+| 604 | Đã thanh toán, suất 720, 06:45 | A1, A2 | 170.000đ | 21 |
+| 605 | Đang giữ, suất 721, 07:00; hết hạn 00:52:48 | A1–A3 | 255.000đ chưa trả | — |
+
+Đã đối chiếu API và dashboard staff/admin ở cả hai theme, F5 và một chu kỳ tự cập nhật: **Sold 8, Held 3, Checked in 2; 4/25 suất có booking (16%)**, CASH tổng **770.000đ**. Số liệu thay đổi khi hết hạn giữ ghế hoặc có thêm giao dịch. Đã mở chi tiết vé khách để kiểm tra ghế, tiền, trạng thái và đồng hồ giữ ghế. Các fixture là dữ liệu trong DB local; Git chỉ lưu script và hướng dẫn.
+
+## 6. Lưu ý
 
 - Gateway giới hạn 100 request mỗi phút cho một IP. Gặp lỗi "quá nhiều yêu cầu" thì chờ một phút.
 - App chỉ hiện suất chưa bắt đầu trong 7 ngày tới. Không thấy suất nào thì chạy lại lệnh lịch chiếu demo.
