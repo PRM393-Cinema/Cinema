@@ -5,6 +5,7 @@ import 'package:cinema_fe/core/network/api_client.dart';
 import 'package:cinema_fe/core/utils/formatters.dart';
 import 'package:cinema_fe/data/models/auth_response.dart';
 import 'package:cinema_fe/data/services/staff_service.dart';
+import 'package:cinema_fe/features/admin/widgets/revenue_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -140,6 +141,21 @@ void main() {
       );
       final start = DateTime.parse(summary.queryParameters['start']!);
       expect((start.day, start.hour), (1, 0));
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('monthlyRevenueChart')),
+        250,
+        scrollable: find
+            .descendant(
+              of: find.byType(ListView).first,
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
+      await pumpRoute(tester);
+      final days = tester.widget<RevenueChart>(find.byType(RevenueChart)).days;
+      expect(days.length, DateTime.now().day);
+      expect(days.first.$2, api.revenue);
+      expect(days.skip(1).every((day) => day.$2 == 0), isTrue);
     });
 
     testWidgets('Narrow windows open the navigation from the menu', (
@@ -672,7 +688,18 @@ class _FakeApi {
       final id = int.tryParse(request.url.pathSegments.last);
       if (path.startsWith('/api/seats/room/')) return _json(seats[id] ?? []);
       if (path == '/api/v1/payments/summary') {
-        return _json({'paidCount': 1, 'revenue': revenue, 'refundedAmount': 0});
+        final now = DateTime.now();
+        return _json({
+          'paidCount': 1,
+          'revenue': revenue,
+          'refundedAmount': 0,
+          'dailyRevenue': [
+            {
+              'date': DateTime(now.year, now.month).toIso8601String(),
+              'revenue': revenue,
+            },
+          ],
+        });
       }
       if (path.startsWith('/api/v1/bookings')) {
         return _json({

@@ -92,6 +92,16 @@ void main() {
         expect(find.text('67%'), findsOneWidget);
         expect(find.text('Active · 2'), findsOneWidget);
         expect(find.text('Locked · 1'), findsOneWidget);
+        if (width == 1440) {
+          final grid = tester.getRect(
+            find.byKey(const Key('accountStatsGrid')),
+          );
+          final chart = tester.getRect(
+            find.byKey(const Key('accountStatusChart')),
+          );
+          expect(grid.top, chart.top);
+          expect(grid.bottom, chart.bottom);
+        }
         expect(
           find.bySemanticsLabel('Active accounts: 2 of 3'),
           findsOneWidget,
