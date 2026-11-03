@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../../app/routes/app_routes.dart';
@@ -6,6 +8,7 @@ import '../../../app/theme/app_radius.dart';
 import '../../../app/theme/app_spacing.dart';
 import '../../../app/theme/app_text_styles.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/utils/layout.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
 import '../../../core/widgets/status_badge.dart';
@@ -73,6 +76,10 @@ class TodayShowtimesDialog extends StatefulWidget {
 
 class _TodayShowtimesDialogState extends State<TodayShowtimesDialog> {
   final _search = TextEditingController();
+  final _scroll = ScrollController();
+  int _page = 1;
+  int _pageSize = 10;
+  bool _loading = false;
   late DateTime _now = DateTime.now();
   List<Showtime>? _shows;
   Map<int, ShowtimeBookingStats> _stats = const {};
@@ -93,15 +100,20 @@ class _TodayShowtimesDialogState extends State<TodayShowtimesDialog> {
   @override
   void dispose() {
     _search.dispose();
+    _scroll.dispose();
     super.dispose();
   }
 
   Future<void> _load() async {
+    if (_loading) return;
     final service = widget.service;
     final now = DateTime.now();
     final today = DateUtils.dateOnly(now);
     final tomorrow = today.add(const Duration(days: 1));
-    setState(() => _error = null);
+    setState(() {
+      _error = null;
+      _loading = true;
+    });
     try {
       final shows = await service.showtimesBetween(today, tomorrow);
       final stats = await service.showtimeStats(start: today, end: tomorrow);
@@ -124,11 +136,31 @@ class _TodayShowtimesDialogState extends State<TodayShowtimesDialog> {
         _stats = {for (final row in stats) row.showtimeId: row};
         _movies = movies;
         _rooms = rooms;
+        _page = 1;
+        if (!shows.any((show) => show.roomId == _roomId)) _roomId = null;
       });
     } on Object catch (error) {
       if (mounted) setState(() => _error = staffError(error));
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
   }
+
+  void _change(VoidCallback update) {
+    setState(() {
+      update();
+      _page = 1;
+    });
+    if (_scroll.hasClients) _scroll.jumpTo(0);
+  }
+
+  void _openPage(int page) {
+    setState(() => _page = page);
+    if (_scroll.hasClients) _scroll.jumpTo(0);
+  }
+
+  void _openShow(Showtime show) =>
+      Navigator.pushNamed(context, AppRoutes.staffRecord('showtimes', show.id));
 
   String _title(Showtime show) =>
       _movies[show.movieId]?.title ?? 'Movie #${show.movieId}';
@@ -164,7 +196,7 @@ class _TodayShowtimesDialogState extends State<TodayShowtimesDialog> {
       insetPadding: EdgeInsets.all(compact ? AppSpacing.sm : AppSpacing.xl),
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxWidth: 960,
+          maxWidth: 1200,
           maxHeight: size.height * 0.9,
         ),
         child: CinemaPanel(
@@ -183,7 +215,7 @@ class _TodayShowtimesDialogState extends State<TodayShowtimesDialog> {
                   ),
                   IconButton(
                     tooltip: 'Refresh',
-                    onPressed: shows == null && _error == null ? null : _load,
+                    onPressed: _loading ? null : _load,
                     icon: const Icon(Icons.refresh),
                   ),
                   IconButton(
@@ -195,6 +227,8 @@ class _TodayShowtimesDialogState extends State<TodayShowtimesDialog> {
               ),
               Text(formatLongDate(_now), style: AppTextStyles.bodySmall),
               const SizedBox(height: AppSpacing.md),
+              if (_loading && shows != null)
+                const LinearProgressIndicator(minHeight: 2),
               if (_error != null)
                 Text(
                   'Today’s showtimes could not be loaded: $_error',
@@ -230,109 +264,356 @@ class _TodayShowtimesDialogState extends State<TodayShowtimesDialog> {
       ..sort(
         (a, b) => (_rooms[a]?.name ?? '$a').compareTo(_rooms[b]?.name ?? '$b'),
       );
+    // shortcut: paginate the loaded day; use server filters/paging for much larger schedules.
+    final pages = math.max(1, (visible.length / _pageSize).ceil());
+    final page = _page.clamp(1, pages);
+    final start = (page - 1) * _pageSize;
+    final end = math.min(start + _pageSize, visible.length);
+    final rows = visible.sublist(start, end);
 
     return [
+      Flexible(
+        child: SingleChildScrollView(
+          key: const Key('todayShowtimesBody'),
+          controller: _scroll,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Wrap(
+                spacing: AppSpacing.md,
+                runSpacing: AppSpacing.sm,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  SizedBox(
+                    width: compact ? double.infinity : 280,
+                    child: AppTextField(
+                      key: const Key('todayShowtimesSearch'),
+                      label: 'Search movies',
+                      controller: _search,
+                      prefixIcon: const Icon(Icons.search),
+                      onChanged: (_) => _change(() {}),
+                    ),
+                  ),
+                  SizedBox(
+                    width: compact ? double.infinity : 240,
+                    child: InputDecorator(
+                      decoration: const InputDecoration(
+                        labelText: 'Room',
+                        isDense: true,
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<int?>(
+                          key: const Key('todayShowtimesRoom'),
+                          isExpanded: true,
+                          isDense: true,
+                          value: _roomId,
+                          hint: const Text('All rooms'),
+                          items: [
+                            const DropdownMenuItem<int?>(
+                              child: Text('All rooms'),
+                            ),
+                            for (final id in roomIds)
+                              DropdownMenuItem<int?>(
+                                value: id,
+                                child: Text(_rooms[id]?.name ?? 'Room #$id'),
+                              ),
+                          ],
+                          onChanged: (value) => _change(() => _roomId = value),
+                        ),
+                      ),
+                    ),
+                  ),
+                  FilterChip(
+                    key: const Key('todayShowtimesWithTickets'),
+                    label: const Text('With tickets'),
+                    selected: _withTickets,
+                    onSelected: (value) => _change(() => _withTickets = value),
+                  ),
+                  if (_search.text.isNotEmpty ||
+                      _roomId != null ||
+                      _phase != null ||
+                      _withTickets)
+                    TextButton(
+                      onPressed: () => _change(() {
+                        _search.clear();
+                        _roomId = null;
+                        _phase = null;
+                        _withTickets = false;
+                      }),
+                      child: const Text('Clear filters'),
+                    ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              // One scrolling line, so on phones the chips do not push the list down.
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Wrap(
+                  spacing: AppSpacing.sm,
+                  children: [
+                    ChoiceChip(
+                      key: const Key('todayShowtimesPhase-all'),
+                      label: Text('All (${matching.length})'),
+                      selected: _phase == null,
+                      onSelected: (_) => _change(() => _phase = null),
+                    ),
+                    for (final phase in ShowtimePhase.values)
+                      ChoiceChip(
+                        key: Key('todayShowtimesPhase-${phase.name}'),
+                        label: Text(
+                          '${_phaseLabels[phase]} (${counts[phase]})',
+                        ),
+                        selected: _phase == phase,
+                        onSelected: (_) => _change(
+                          () => _phase = _phase == phase ? null : phase,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                '${visible.length} of ${shows.length} showtimes',
+                key: const Key('todayShowtimesCount'),
+                style: AppTextStyles.caption,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              visible.isEmpty
+                  ? Padding(
+                      padding: const EdgeInsets.all(AppSpacing.xl),
+                      child: Text(
+                        shows.isEmpty
+                            ? 'There are no showtimes today.'
+                            : 'No showtimes match these filters.',
+                        textAlign: TextAlign.center,
+                        style: AppTextStyles.bodySmall,
+                      ),
+                    )
+                  : isDesktopLayout(context)
+                  ? _table(rows)
+                  : Column(
+                      children: [
+                        for (final show in rows) ...[
+                          _ShowtimeRow(
+                            showtime: show,
+                            phase: showtimePhase(show, _now),
+                            title: _title(show),
+                            room: _roomName(show),
+                            capacity: _rooms[show.roomId]?.totalSeats,
+                            stats:
+                                _stats[show.id] ??
+                                ShowtimeBookingStats(showtimeId: show.id),
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                        ],
+                      ],
+                    ),
+            ],
+          ),
+        ),
+      ),
+      Divider(height: AppSpacing.lg, color: AppPalette.of(context).border),
       Wrap(
+        key: const Key('todayShowtimesPagination'),
+        alignment: WrapAlignment.spaceBetween,
+        crossAxisAlignment: WrapCrossAlignment.center,
         spacing: AppSpacing.md,
         runSpacing: AppSpacing.sm,
-        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          SizedBox(
-            width: compact ? double.infinity : 280,
-            child: AppTextField(
-              key: const Key('todayShowtimesSearch'),
-              label: 'Search movies',
-              controller: _search,
-              prefixIcon: const Icon(Icons.search),
-              onChanged: (_) => setState(() {}),
-            ),
+          Text(
+            '${visible.isEmpty ? 0 : start + 1}–$end of ${visible.length}',
+            style: AppTextStyles.caption,
           ),
-          DropdownButton<int?>(
-            key: const Key('todayShowtimesRoom'),
-            value: _roomId,
-            hint: const Text('All rooms'),
-            items: [
-              const DropdownMenuItem<int?>(child: Text('All rooms')),
-              for (final id in roomIds)
-                DropdownMenuItem<int?>(
-                  value: id,
-                  child: Text(_rooms[id]?.name ?? 'Room #$id'),
-                ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Rows', style: AppTextStyles.caption),
+              const SizedBox(width: AppSpacing.sm),
+              DropdownButton<int>(
+                key: const Key('todayShowtimesPageSize'),
+                value: _pageSize,
+                items: [
+                  for (final size in [5, 10, 20])
+                    DropdownMenuItem(value: size, child: Text('$size')),
+                ],
+                onChanged: _loading
+                    ? null
+                    : (size) {
+                        if (size != null) _change(() => _pageSize = size);
+                      },
+              ),
             ],
-            onChanged: (value) => setState(() => _roomId = value),
           ),
-          FilterChip(
-            key: const Key('todayShowtimesWithTickets'),
-            label: const Text('With tickets'),
-            selected: _withTickets,
-            onSelected: (value) => setState(() => _withTickets = value),
+          Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 4,
+            children: [
+              IconButton(
+                key: const Key('todayShowtimesPrevious'),
+                tooltip: 'Previous page',
+                onPressed: page > 1 ? () => _openPage(page - 1) : null,
+                icon: const Icon(Icons.chevron_left),
+              ),
+              Semantics(
+                container: true,
+                liveRegion: true,
+                label: 'Page $page of $pages',
+                child: ExcludeSemantics(
+                  child: Text(
+                    'Page $page of $pages',
+                    style: AppTextStyles.bodySmall,
+                  ),
+                ),
+              ),
+              IconButton(
+                key: const Key('todayShowtimesNext'),
+                tooltip: 'Next page',
+                onPressed: page < pages ? () => _openPage(page + 1) : null,
+                icon: const Icon(Icons.chevron_right),
+              ),
+            ],
           ),
         ],
       ),
-      const SizedBox(height: AppSpacing.sm),
-      // One scrolling line, so on phones the chips do not push the list down.
-      SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Wrap(
-          spacing: AppSpacing.sm,
-          children: [
-            ChoiceChip(
-              key: const Key('todayShowtimesPhase-all'),
-              label: Text('All (${matching.length})'),
-              selected: _phase == null,
-              onSelected: (_) => setState(() => _phase = null),
-            ),
-            for (final phase in ShowtimePhase.values)
-              ChoiceChip(
-                key: Key('todayShowtimesPhase-${phase.name}'),
-                label: Text('${_phaseLabels[phase]} (${counts[phase]})'),
-                selected: _phase == phase,
-                onSelected: (_) =>
-                    setState(() => _phase = _phase == phase ? null : phase),
-              ),
+    ];
+  }
+
+  Widget _table(List<Showtime> rows) => LayoutBuilder(
+    builder: (context, constraints) => SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(minWidth: constraints.maxWidth),
+        child: DataTable(
+          key: const Key('todayShowtimesTable'),
+          showCheckboxColumn: false,
+          headingRowHeight: 40,
+          dataRowMinHeight: 64,
+          dataRowMaxHeight: double.infinity,
+          columnSpacing: AppSpacing.md,
+          horizontalMargin: AppSpacing.md,
+          columns: const [
+            DataColumn(label: Text('Time')),
+            DataColumn(label: Text('Movie / room')),
+            DataColumn(label: Text('Format')),
+            DataColumn(label: Text('Price'), numeric: true),
+            DataColumn(label: Text('Tickets')),
+            DataColumn(label: Text('Status')),
+            DataColumn(label: Text('Action')),
           ],
+          rows: [for (final show in rows) _dataRow(show)],
         ),
       ),
-      const SizedBox(height: AppSpacing.md),
-      Text(
-        '${visible.length} of ${shows.length} showtimes',
-        key: const Key('todayShowtimesCount'),
-        style: AppTextStyles.caption,
-      ),
-      const SizedBox(height: AppSpacing.sm),
-      Flexible(
-        child: visible.isEmpty
-            ? Padding(
-                padding: const EdgeInsets.all(AppSpacing.xl),
-                child: Text(
-                  shows.isEmpty
-                      ? 'There are no showtimes today.'
-                      : 'No showtimes match these filters.',
-                  textAlign: TextAlign.center,
+    ),
+  );
+
+  DataRow _dataRow(Showtime show) {
+    final phase = showtimePhase(show, _now);
+    final stats = _stats[show.id] ?? ShowtimeBookingStats(showtimeId: show.id);
+    final taken = stats.soldSeats + stats.heldSeats;
+    final capacity = _rooms[show.roomId]?.totalSeats;
+    return DataRow(
+      onSelectChanged: (_) => _openShow(show),
+      cells: [
+        DataCell(
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                formatTime(show.startTime),
+                style: AppTextStyles.bodySmall.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              Text(formatTime(show.endTime), style: AppTextStyles.caption),
+            ],
+          ),
+        ),
+        DataCell(
+          SizedBox(
+            width: 220,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Tooltip(
+                  message: _title(show),
+                  child: Text(
+                    _title(show),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                Tooltip(
+                  message: _roomName(show),
+                  child: Text(
+                    _roomName(show),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.caption,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        DataCell(
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(show.format),
+              if (show.status == 'CLOSED')
+                const Text('Sales closed', style: AppTextStyles.caption),
+            ],
+          ),
+        ),
+        DataCell(Text(formatVnd(show.price))),
+        DataCell(
+          Tooltip(
+            message:
+                '${stats.soldSeats} sold · ${stats.heldSeats} awaiting payment',
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  capacity == null
+                      ? '$taken seats taken'
+                      : '$taken/$capacity seats taken',
                   style: AppTextStyles.bodySmall,
                 ),
-              )
-            : ListView.separated(
-                shrinkWrap: true,
-                itemCount: visible.length,
-                separatorBuilder: (_, _) =>
-                    const SizedBox(height: AppSpacing.sm),
-                itemBuilder: (context, index) {
-                  final show = visible[index];
-                  return _ShowtimeRow(
-                    showtime: show,
-                    phase: showtimePhase(show, _now),
-                    title: _title(show),
-                    room: _roomName(show),
-                    capacity: _rooms[show.roomId]?.totalSeats,
-                    stats:
-                        _stats[show.id] ??
-                        ShowtimeBookingStats(showtimeId: show.id),
-                  );
-                },
-              ),
-      ),
-    ];
+                Text(
+                  '${stats.checkedInSeats} checked in',
+                  style: AppTextStyles.caption,
+                ),
+                if (stats.heldSeats > 0)
+                  Text(
+                    '${stats.heldSeats} awaiting payment',
+                    style: AppTextStyles.caption,
+                  ),
+              ],
+            ),
+          ),
+        ),
+        DataCell(
+          StatusBadge(
+            label: _phaseLabels[phase]!,
+            variant: _phaseBadges[phase]!,
+          ),
+        ),
+        DataCell(
+          TextButton(
+            key: ValueKey('todayShowtime-${show.id}'),
+            onPressed: () => _openShow(show),
+            child: const Text('View seats'),
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -405,23 +686,11 @@ class _ShowtimeRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          title,
-                          style: AppTextStyles.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                      StatusBadge(
-                        label: _phaseLabels[phase]!,
-                        variant: _phaseBadges[phase]!,
-                      ),
-                    ],
+                  Text(title, style: AppTextStyles.title),
+                  const SizedBox(height: AppSpacing.xs),
+                  StatusBadge(
+                    label: _phaseLabels[phase]!,
+                    variant: _phaseBadges[phase]!,
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(details, style: AppTextStyles.bodySmall),
