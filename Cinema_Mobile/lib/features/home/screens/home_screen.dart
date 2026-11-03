@@ -69,29 +69,6 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadGenres();
   }
 
-  bool _countedUnread = false;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_countedUnread) return;
-    _countedUnread = true;
-    _loadUnreadCount();
-  }
-
-  Future<void> _loadUnreadCount() async {
-    final session = SessionProvider.of(context);
-    final bookings = widget.bookingRepository;
-    if (bookings == null || !session.isAuthenticated) return;
-    try {
-      session.setUnreadNotifications(
-        await bookings.getUnreadNotificationCount(),
-      );
-    } on Object {
-      // The bell works without the badge.
-    }
-  }
-
   @override
   void dispose() {
     _searchTimer?.cancel();

@@ -20,6 +20,7 @@ import '../../../core/widgets/cinema_account_widgets.dart';
 import '../../../data/models/app_notification.dart';
 import '../../../data/repositories/booking_repository.dart';
 import '../widgets/notification_category.dart';
+import '../widgets/notification_updates.dart';
 
 class NotificationListScreen extends StatefulWidget {
   const NotificationListScreen({required this.bookingRepository, super.key});
@@ -37,6 +38,10 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
   bool _isRefreshing = false;
   String? _errorMessage;
   final _search = TextEditingController();
+  int _revision = -1;
+  int? _ownerId;
+  bool _markingAllRead = false;
+  int _request = 0;
 
   @override
   void dispose() {
@@ -47,31 +52,55 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (!_hasStarted) {
+    final revision = NotificationUpdates.revisionOf(context);
+    final owner = SessionProvider.of(context).user?.userId;
+    if (!_hasStarted || owner != _ownerId) {
+      _request++;
+      _isRefreshing = false;
+      _notifications = const [];
+      _ownerId = owner;
       _hasStarted = true;
+      _revision = revision;
       _loadNotifications();
+    } else if (_revision != revision) {
+      _revision = revision;
+      if (ModalRoute.of(context)?.isCurrent == true) {
+        _loadNotifications(silent: true);
+      }
     }
   }
 
-  Future<void> _loadNotifications() async {
-    if (_isRefreshing) return;
+  Future<void> _loadNotifications({bool silent = false}) async {
+    if (_isRefreshing || _markingAllRead) return;
     final userId = SessionProvider.of(context).user?.userId;
     if (userId == null) {
+      _notifications = const [];
       _showError('Please sign in to see your notifications.');
       return;
     }
+    final request = ++_request;
 
     setState(() {
       _isRefreshing = true;
-      _isLoading = _notifications.isEmpty;
-      _errorMessage = null;
+      if (_ownerId != userId) {
+        _notifications = const [];
+        _ownerId = userId;
+      }
+      if (!silent) {
+        _isLoading = _notifications.isEmpty;
+        _errorMessage = null;
+      }
     });
 
     try {
       final notifications = await widget.bookingRepository.getMyNotifications(
         userId,
       );
-      if (!mounted) return;
+      if (!mounted ||
+          request != _request ||
+          SessionProvider.of(context).user?.userId != userId) {
+        return;
+      }
       setState(() {
         _notifications = notifications;
         _isLoading = false;
@@ -80,18 +109,33 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
       SessionProvider.of(context)
           .setUnreadNotifications(notifications.where((n) => !n.isRead).length);
     } on ApiException catch (error) {
-      _showError(error.message);
+      if (!silent && request == _request) _showError(error.message);
     } on FormatException {
-      _showError('The server returned an invalid response.');
+      if (!silent && request == _request) {
+        _showError('The server returned an invalid response.');
+      }
     } on Object {
-      _showError('Something went wrong. Please try again.');
+      if (!silent && request == _request) {
+        _showError('Something went wrong. Please try again.');
+      }
+    } finally {
+      if (mounted && request == _request && _isRefreshing) {
+        setState(() => _isRefreshing = false);
+      }
     }
   }
 
   Future<void> _markAllRead() async {
+    if (_markingAllRead) return;
+    _markingAllRead = true;
+    final userId = SessionProvider.of(context).user?.userId;
+    _request++;
+    _isRefreshing = false;
     try {
       await widget.bookingRepository.markAllNotificationsRead();
-      if (!mounted) return;
+      if (!mounted || SessionProvider.of(context).user?.userId != userId) {
+        return;
+      }
       final now = DateTime.now();
       setState(() {
         _notifications = [
@@ -104,6 +148,9 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
       if (mounted) {
         setState(() => _errorMessage = 'Could not mark them as read.');
       }
+    } finally {
+      _markingAllRead = false;
+      if (mounted) _loadNotifications(silent: true);
     }
   }
 
@@ -113,13 +160,7 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
       AppRoutes.notificationDetail(notification.id),
     );
     // The detail page marks it read.
-    if (!mounted || notification.isRead) return;
-    setState(() {
-      _notifications = [
-        for (final item in _notifications)
-          item.id == notification.id ? item.markedRead(DateTime.now()) : item,
-      ];
-    });
+    if (mounted) await _loadNotifications(silent: true);
   }
 
   void _showError(String message) {

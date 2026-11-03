@@ -9,6 +9,7 @@ import '../data/services/chat_service.dart';
 import '../core/network/api_client.dart';
 import '../features/chat/widgets/chat_launcher.dart';
 import '../features/payment/payment_args.dart';
+import '../features/notification/widgets/notification_updates.dart';
 import 'customer_frame.dart';
 import 'routes/app_router.dart';
 import 'routes/app_routes.dart';
@@ -94,14 +95,17 @@ class _CinemaAppState extends State<CinemaApp> {
       title: 'CosmoQ Cinema',
       initialRoute: widget.initialRoute,
       navigatorObservers: [_routes],
-      builder: (context, child) => ChatLauncher(
-        routes: _routes,
-        service: _chatService,
-        catalogRepository: widget.catalogRepository,
-        child: CustomerFrame(
+      builder: (context, child) => NotificationUpdates(
+        repository: widget.bookingRepository,
+        child: ChatLauncher(
           routes: _routes,
-          onSignOut: _signOut,
-          child: child ?? const SizedBox(),
+          service: _chatService,
+          catalogRepository: widget.catalogRepository,
+          child: CustomerFrame(
+            routes: _routes,
+            onSignOut: _signOut,
+            child: child ?? const SizedBox(),
+          ),
         ),
       ),
       onGenerateRoute: router.onGenerateRoute,
