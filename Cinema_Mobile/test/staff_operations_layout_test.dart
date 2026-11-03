@@ -143,6 +143,34 @@ Future<void> _tab(WidgetTester tester, String label) async {
 
 void main() {
   for (final theme in ['dark', 'light']) {
+    for (final size in [
+      const Size(1920, 1080),
+      const Size(375, 844),
+      const Size(844, 390),
+    ]) {
+      testWidgets('Date popup stays compact in $theme at $size', (
+        tester,
+      ) async {
+        final calls = <Uri>[];
+        await _open(tester, _service(calls), size, theme);
+        await tester.ensureVisible(find.byKey(const Key('operationsDates')));
+        await tester.tap(find.byKey(const Key('operationsDates')));
+        await pumpRoute(tester);
+        final bounds = tester.getRect(find.byType(DateRangePickerDialog));
+        expect(bounds.width, lessThanOrEqualTo(480));
+        expect(bounds.height, lessThanOrEqualTo(640));
+        expect(bounds.left, greaterThanOrEqualTo(0));
+        expect(bounds.bottom, lessThanOrEqualTo(size.height));
+        final before = calls.length;
+        await tester.tap(find.byTooltip('Close'));
+        await pumpRoute(tester);
+        expect(calls.length, before);
+        expect(find.byType(DateRangePickerDialog), findsNothing);
+        expect(tester.takeException(), isNull);
+      });
+    }
+  }
+  for (final theme in ['dark', 'light']) {
     for (final (size, scale) in [
       (const Size(900, 1000), 1.0),
       (const Size(1440, 1000), 1.0),
