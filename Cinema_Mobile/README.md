@@ -190,6 +190,18 @@ Opening a row still shows seats/customers. Data and the one-minute refresh cycle
 use existing staff APIs; no revenue permission or new chart dependency is added.
 The shared Today widget also appears on the admin dashboard. Chart empty/data states,
 both themes, text scaling and existing dashboard flows have focused tests.
+Chart panels stretch to equal height on desktop. The three bars share one baseline;
+each number sits immediately above its bar, including zero-height bars.
+
+Demo verification (November 4, 2026): Staff and Admin signed in on the running local
+site, loaded/reloaded their dashboards and switched both themes without API/page errors.
+Chart values matched daily API aggregates. Staff's one-minute automatic refresh ran
+successfully. Admin could access account/revenue APIs; Staff received 403 for both,
+and Customer received 403 for account, revenue and showtime statistics APIs. The run
+was read-only apart from login: no bookings, payments or notifications were created.
+Current daily aggregates were zero; non-zero column heights, shared baseline and panel
+alignment were verified in widget tests (33 dashboard/admin/chart tests passed).
+This checks the exercised demo flows, not production load or real payment settlement.
 
 Customer notification badges refresh automatically every five seconds while the app
 is visible and the customer is signed in. The open Notifications list refreshes
