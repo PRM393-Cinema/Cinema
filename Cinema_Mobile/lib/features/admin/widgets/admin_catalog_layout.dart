@@ -15,16 +15,18 @@ class AdminCatalogToolbar extends StatelessWidget {
     required this.search,
     required this.action,
     this.filter,
+    this.filterWidth = 200,
     super.key,
   });
   final Widget search;
   final Widget action;
   final Widget? filter;
+  final double filterWidth;
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) {
-      if (constraints.maxWidth < 600) {
+      if (constraints.maxWidth < filterWidth + 400) {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -43,7 +45,7 @@ class AdminCatalogToolbar extends StatelessWidget {
           Expanded(child: search),
           if (filter != null) ...[
             const SizedBox(width: AppSpacing.md),
-            SizedBox(width: 200, child: filter),
+            SizedBox(width: filterWidth, child: filter),
           ],
           const SizedBox(width: AppSpacing.lg),
           action,

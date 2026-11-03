@@ -17,6 +17,17 @@ import '../../../data/models/promotion.dart';
 import '../../../data/services/staff_service.dart';
 import '../../staff/widgets/staff_feedback.dart';
 import '../widgets/admin_page.dart';
+import '../widgets/admin_catalog_layout.dart';
+
+(String, StatusBadgeVariant) _promotionStatus(Promotion promotion) {
+  final now = DateTime.now();
+  if (!promotion.active) return ('Stopped', StatusBadgeVariant.neutral);
+  if (promotion.isEnded(now)) return ('Ended', StatusBadgeVariant.neutral);
+  if (promotion.startsAt != null && promotion.startsAt!.isAfter(now)) {
+    return ('Scheduled', StatusBadgeVariant.warning);
+  }
+  return ('Running', StatusBadgeVariant.success);
+}
 
 // Admin: discounts on the ticket price. A promotion without a code applies by
 // itself to bookings that qualify; one with a code needs the customer to type
@@ -29,6 +40,8 @@ class AdminPromotionsScreen extends StatefulWidget {
 }
 
 class _AdminPromotionsScreenState extends State<AdminPromotionsScreen> {
+  final _search = TextEditingController();
+  String _status = 'All statuses';
   List<Promotion>? _promotions;
   String? _message;
   bool _loading = false;
@@ -38,6 +51,12 @@ class _AdminPromotionsScreenState extends State<AdminPromotionsScreen> {
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -94,6 +113,16 @@ class _AdminPromotionsScreenState extends State<AdminPromotionsScreen> {
   Widget build(BuildContext context) {
     final promotions = _promotions;
     final busy = _loading || _busyId != null;
+    final visible = promotions
+        ?.where(
+          (promotion) =>
+              (_status == 'All statuses' ||
+                  _promotionStatus(promotion).$1 == _status) &&
+              '${promotion.name} ${promotion.code ?? ''}'
+                  .toLowerCase()
+                  .contains(_search.text.trim().toLowerCase()),
+        )
+        .toList();
     return AdminPage(
       title: 'Promotions',
       section: AdminSection.promotions,
@@ -107,9 +136,42 @@ class _AdminPromotionsScreenState extends State<AdminPromotionsScreen> {
             style: AppTextStyles.bodySmall,
           ),
           const SizedBox(height: AppSpacing.md),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: AppButton(
+          AdminCatalogToolbar(
+            search: AppTextField(
+              key: const Key('promotionSearch'),
+              label: 'Search name or code',
+              controller: _search,
+              prefixIcon: const Icon(Icons.search),
+              onChanged: (_) => setState(() {}),
+            ),
+            filter: InputDecorator(
+              decoration: const InputDecoration(
+                labelText: 'Status',
+                isDense: true,
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  key: const Key('promotionStatusFilter'),
+                  isExpanded: true,
+                  value: _status,
+                  items: [
+                    for (final status in [
+                      'All statuses',
+                      'Running',
+                      'Scheduled',
+                      'Ended',
+                      'Stopped',
+                    ])
+                      DropdownMenuItem(value: status, child: Text(status)),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) setState(() => _status = value);
+                  },
+                ),
+              ),
+            ),
+            action: AppButton(
+              key: const Key('addPromotionButton'),
               label: 'Add promotion',
               leadingIcon: Icons.add_rounded,
               useGradient: true,
@@ -125,7 +187,12 @@ class _AdminPromotionsScreenState extends State<AdminPromotionsScreen> {
               message: _message!,
               onRetry: _load,
             )
-          else if (promotions != null) ...[
+          else if (promotions != null && visible != null) ...[
+            Text(
+              '${visible.length} of ${promotions.length} promotions',
+              style: AppTextStyles.caption,
+            ),
+            const SizedBox(height: AppSpacing.md),
             if (_message != null)
               Padding(
                 padding: const EdgeInsets.only(bottom: AppSpacing.md),
@@ -138,23 +205,128 @@ class _AdminPromotionsScreenState extends State<AdminPromotionsScreen> {
               ),
             if (promotions.isEmpty)
               const Text('No promotions yet.', style: AppTextStyles.bodySmall),
-            CardColumns(
-              runSpacing: 0,
-              children: [
-                for (final promotion in promotions)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                    child: _PromotionCard(
-                      promotion: promotion,
-                      busy: _busyId == promotion.id,
-                      onEdit: busy ? null : () => _edit(promotion),
-                      onSetActive: busy
-                          ? null
-                          : (active) => _setActive(promotion, active),
+            if (promotions.isNotEmpty && visible.isEmpty)
+              const Text(
+                'No matching promotions.',
+                style: AppTextStyles.bodySmall,
+              ),
+            if (visible.isNotEmpty && isCatalogDesktop(context))
+              AdminCatalogTable(
+                key: const Key('adminPromotionsTable'),
+                columns: const [
+                  DataColumn(label: Text('Promotion')),
+                  DataColumn(label: Text('Discount')),
+                  DataColumn(label: Text('Conditions / period')),
+                  DataColumn(label: Text('Usage')),
+                  DataColumn(label: Text('Status')),
+                  DataColumn(label: Text('Actions')),
+                ],
+                rows: [
+                  for (final promotion in visible)
+                    DataRow(
+                      cells: [
+                        DataCell(
+                          SizedBox(
+                            key: ValueKey('adminPromotion-${promotion.id}'),
+                            width: 180,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  promotion.name,
+                                  style: AppTextStyles.bodySmall.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                Text(
+                                  promotion.code == null
+                                      ? 'Automatic'
+                                      : 'Code ${promotion.code}',
+                                  style: AppTextStyles.caption,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        DataCell(
+                          SizedBox(
+                            width: 160,
+                            child: Text(promotion.discountText),
+                          ),
+                        ),
+                        DataCell(
+                          SizedBox(
+                            width: 230,
+                            child: Text(
+                              promotion.conditionsText,
+                              style: AppTextStyles.bodySmall,
+                            ),
+                          ),
+                        ),
+                        DataCell(
+                          Text(
+                            promotion.usageLimit == null
+                                ? 'Used ${promotion.usedCount} times'
+                                : 'Used ${promotion.usedCount} / ${promotion.usageLimit}',
+                          ),
+                        ),
+                        DataCell(
+                          StatusBadge(
+                            label: _promotionStatus(promotion).$1,
+                            variant: _promotionStatus(promotion).$2,
+                          ),
+                        ),
+                        DataCell(
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                key: ValueKey('editPromotion-${promotion.id}'),
+                                tooltip: 'Edit ${promotion.name}',
+                                onPressed: busy ? null : () => _edit(promotion),
+                                icon: const Icon(Icons.edit_outlined),
+                              ),
+                              Tooltip(
+                                message: promotion.active
+                                    ? 'Stop ${promotion.name}'
+                                    : 'Enable ${promotion.name}',
+                                child: Switch(
+                                  key: ValueKey(
+                                    'promotionActive-${promotion.id}',
+                                  ),
+                                  value: promotion.active,
+                                  onChanged: busy
+                                      ? null
+                                      : (active) =>
+                                            _setActive(promotion, active),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-              ],
-            ),
+                ],
+              )
+            else
+              CardColumns(
+                runSpacing: 0,
+                children: [
+                  for (final promotion in visible)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                      child: _PromotionCard(
+                        promotion: promotion,
+                        busy: _busyId == promotion.id,
+                        onEdit: busy ? null : () => _edit(promotion),
+                        onSetActive: busy
+                            ? null
+                            : (active) => _setActive(promotion, active),
+                      ),
+                    ),
+                ],
+              ),
           ],
         ],
       ),
@@ -198,14 +370,7 @@ class _PromotionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final now = DateTime.now();
-    final (label, variant) = !promotion.active
-        ? ('Stopped', StatusBadgeVariant.neutral)
-        : promotion.isEnded(now)
-        ? ('Ended', StatusBadgeVariant.neutral)
-        : promotion.startsAt != null && promotion.startsAt!.isAfter(now)
-        ? ('Scheduled', StatusBadgeVariant.warning)
-        : ('Running', StatusBadgeVariant.success);
+    final (label, variant) = _promotionStatus(promotion);
     final limit = promotion.usageLimit;
     return CinemaPanel(
       key: ValueKey('adminPromotion-${promotion.id}'),
