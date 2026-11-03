@@ -48,6 +48,34 @@ void main() {
           );
           expect(find.byTooltip('Sold: 40 tickets'), findsOneWidget);
           expect(find.byTooltip('Held: 5 tickets'), findsOneWidget);
+          final bottom = tester
+              .getRect(find.byKey(const ValueKey('chartBar-Sold')))
+              .bottom;
+          for (final label in ['Held', 'Checked in']) {
+            expect(
+              tester.getRect(find.byKey(ValueKey('chartBar-$label'))).bottom,
+              closeTo(bottom, 0.1),
+            );
+          }
+          expect(
+            tester.getRect(find.byKey(const ValueKey('chartBar-Held'))).height,
+            lessThan(
+              tester
+                  .getRect(find.byKey(const ValueKey('chartBar-Sold')))
+                  .height,
+            ),
+          );
+          if (width >= 844) {
+            expect(
+              tester.getSize(find.byKey(const Key('ticketChartPanel'))).height,
+              closeTo(
+                tester
+                    .getSize(find.byKey(const Key('coverageChartPanel')))
+                    .height,
+                0.1,
+              ),
+            );
+          }
           expect(tester.takeException(), isNull);
           semantics.dispose();
         });
@@ -75,6 +103,10 @@ void main() {
     expect(find.text('—'), findsOneWidget);
     expect(find.text('No ticket activity yet today.'), findsOneWidget);
     expect(find.text('100%'), findsNothing);
+    final bar = tester.getRect(find.byKey(const ValueKey('chartBar-Sold')));
+    final number = tester.getRect(find.text('0').first);
+    expect(bar.height, 0);
+    expect(bar.top - number.bottom, closeTo(8, 0.1));
     expect(tester.takeException(), isNull);
   });
 }
