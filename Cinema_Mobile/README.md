@@ -203,14 +203,14 @@ Current daily aggregates were zero; non-zero column heights, shared baseline and
 alignment were verified in widget tests (33 dashboard/admin/chart tests passed).
 This checks the exercised demo flows, not production load or real payment settlement.
 
-Customer notification badges refresh automatically every five seconds while the app
+Customer notification badges refresh automatically every 30 seconds while the app
 is visible and the customer is signed in. The open Notifications list refreshes
 silently on the same cycle, including notifications added, read or deleted in another
 tab. Background tabs pause checks; returning to the app refreshes immediately.
 Network failures keep the last known data and retry on the next cycle. Requests
 do not overlap, and responses from previous sessions are ignored. This uses the
 existing authenticated REST APIs (near-real-time polling, not server push).
-Each active customer tab makes up to 12 unread-count requests per minute, plus
+Each active customer tab makes up to 2 unread-count requests per minute, plus
 list requests while Notifications is open; replace polling with push for larger traffic.
 The refresh tests cover incoming/read/deleted items, offline recovery, background/resume,
 guest/login/logout, and rejection of delayed responses after logout. The full Flutter

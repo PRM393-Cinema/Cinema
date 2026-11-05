@@ -53,7 +53,8 @@ Tài khoản seed (mật khẩu `123456`): `admin@cinema.com`, `nhanvien1@cinema
 **Khi một service lỗi** (retry + circuit breaker, SRS §13.2):
 - BookingService gọi MovieService/PayOS: lỗi tạm thời thì **tự thử lại** tối đa 2 lần. Riêng lệnh tạo link PayOS không thử lại, để tránh tạo trùng.
 - Lỗi liên tục: **circuit breaker mở 15 giây**, API trả **503** ngay ("... temporarily unavailable. Please try again later.") thay vì để người dùng chờ timeout. Hết 15 giây thì thử lại một request, thành công thì hoạt động bình thường.
-- Gateway kiểm tra `/health/live` của từng service mỗi 10 giây. Service chết thì gateway trả 503 ngay, service sống lại thì tự định tuyến lại.
+- Gateway kiểm tra `/health/live` của từng service mỗi 5 phút. Mỗi cluster chỉ có một service nên request vẫn được chuyển tiếp kể cả khi lần kiểm tra trước báo lỗi (`HealthyOrPanic`): service chết thì gateway trả 503 ngay khi không kết nối được, service đang ngủ trên Render thì được request đánh thức. Trước đây kiểm tra mỗi 10 giây: trên Render, các lần kiểm tra này đi qua địa chỉ công khai (Cloudflare) và góp phần khiến Cloudflare chặn gateway gọi MovieService (429 "Just a moment...").
+- Giới hạn tần suất theo IP của khách: 100 request/phút cho mọi API, 10 request/phút cho API auth. Gateway sau proxy (Render) thấy IP của proxy, nên phải đặt `RateLimiting__ClientIpHeader=CF-Connecting-IP` cho gateway trên Render để đọc IP thật do Cloudflare ghi. Chạy Docker trên máy thì để trống, vì khi đó ai cũng tự đặt được header này.
 - Flutter: gặp **503** thì báo "Hệ thống đang bận, vui lòng thử lại sau", không cần xử lý gì thêm.
 
 Service db-migrate áp dụng schema cho volume cũ và mới trước khi service .NET khởi động. Sau pull, chạy git submodule update --init --recursive tại Cinema rồi docker compose up -d --build tại Cinema_BE. Xem lỗi bằng docker compose logs db-migrate; chạy lại thủ công bằng docker compose run --rm db-migrate. Không cần xoá volume.

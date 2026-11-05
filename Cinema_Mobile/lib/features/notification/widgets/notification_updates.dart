@@ -15,7 +15,8 @@ class NotificationUpdates extends StatefulWidget {
 
   final BookingRepository repository;
   final Widget child;
-  static const interval = Duration(seconds: 5);
+  // Every tab polls the gateway, whose per-IP limit is 100 requests a minute.
+  static const interval = Duration(seconds: 30);
 
   static int revisionOf(BuildContext context) =>
       context

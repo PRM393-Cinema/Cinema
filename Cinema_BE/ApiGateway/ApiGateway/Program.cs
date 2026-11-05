@@ -82,7 +82,7 @@ builder.Services.AddHttpClient(AccountStatusMiddleware.HttpClientName, client =>
     client.Timeout = TimeSpan.FromSeconds(5);
 });
 
-//====== RATE LIMITING (theo IP) ======
+//====== RATE LIMITING (theo IP của khách, sau proxy thì đọc từ RateLimiting:ClientIpHeader) ======
 var rateLimit = builder.Configuration.GetSection("RateLimiting").Get<GatewayRateLimitOptions>()
     ?? new GatewayRateLimitOptions();
 
@@ -91,7 +91,7 @@ builder.Services.AddRateLimiter(options =>
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
     options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
-        RateLimitPartition.GetFixedWindowLimiter(GetClientIp(context), _ => new FixedWindowRateLimiterOptions
+        RateLimitPartition.GetFixedWindowLimiter(ClientIp.Resolve(context, rateLimit.ClientIpHeader), _ => new FixedWindowRateLimiterOptions
         {
             PermitLimit = rateLimit.PermitLimit,
             Window = TimeSpan.FromSeconds(rateLimit.WindowSeconds),
@@ -99,7 +99,7 @@ builder.Services.AddRateLimiter(options =>
         }));
 
     options.AddPolicy(GatewayRateLimitOptions.AuthPolicy, context =>
-        RateLimitPartition.GetFixedWindowLimiter(GetClientIp(context), _ => new FixedWindowRateLimiterOptions
+        RateLimitPartition.GetFixedWindowLimiter(ClientIp.Resolve(context, rateLimit.ClientIpHeader), _ => new FixedWindowRateLimiterOptions
         {
             PermitLimit = rateLimit.AuthPermitLimit,
             Window = TimeSpan.FromSeconds(rateLimit.AuthWindowSeconds),
@@ -107,7 +107,7 @@ builder.Services.AddRateLimiter(options =>
         }));
 
     options.AddPolicy("chat", context =>
-        RateLimitPartition.GetFixedWindowLimiter(GetClientIp(context), _ => new FixedWindowRateLimiterOptions
+        RateLimitPartition.GetFixedWindowLimiter(ClientIp.Resolve(context, rateLimit.ClientIpHeader), _ => new FixedWindowRateLimiterOptions
         {
             PermitLimit = 10,
             Window = TimeSpan.FromMinutes(1),
@@ -229,8 +229,5 @@ app.MapReverseProxy(proxyPipeline =>
 });
 
 app.Run();
-
-static string GetClientIp(HttpContext context) =>
-    context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
 public partial class Program { }
