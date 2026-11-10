@@ -35,6 +35,7 @@ class MovieDetailScreen extends StatefulWidget {
     required this.catalogRepository,
     required this.bookingRepository,
     this.movieId,
+    this.openShowtimes = false,
     super.key,
   });
 
@@ -43,12 +44,15 @@ class MovieDetailScreen extends StatefulWidget {
 
   // Set when the screen is opened from its URL: the movie is loaded by id.
   final int? movieId;
+  final bool openShowtimes;
 
   @override
   State<MovieDetailScreen> createState() => _MovieDetailScreenState();
 }
 
 class _MovieDetailScreenState extends State<MovieDetailScreen> {
+  final _showtimesHeading = GlobalKey();
+  bool _positionedAtShowtimes = false;
   Movie? _movie;
 
   // The release date of a movie that is not out yet.
@@ -187,6 +191,14 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     }
 
     final selected = _selectedShowtime;
+    if (widget.openShowtimes && !_isLoading && !_positionedAtShowtimes) {
+      _positionedAtShowtimes = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final heading = _showtimesHeading.currentContext;
+        if (heading != null && heading.mounted)
+          Scrollable.ensureVisible(heading);
+      });
+    }
 
     return Scaffold(
       extendBody: true,
@@ -234,6 +246,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                             ),
                             const SizedBox(height: AppSpacing.xxl),
                             Row(
+                              key: _showtimesHeading,
                               children: [
                                 Icon(
                                   Icons.schedule_rounded,

@@ -23,8 +23,15 @@ import '../widgets/staff_feedback.dart';
 import '../widgets/operations_date_filter_dialog.dart';
 
 class StaffOperationsScreen extends StatefulWidget {
-  const StaffOperationsScreen({required this.service, super.key});
+  const StaffOperationsScreen({
+    required this.service,
+    this.initialSection,
+    this.initialDates,
+    super.key,
+  });
   final StaffService service;
+  final String? initialSection;
+  final DateTimeRange? initialDates;
   @override
   State<StaffOperationsScreen> createState() => _StaffOperationsScreenState();
 }
@@ -54,6 +61,10 @@ class _StaffOperationsScreenState extends State<StaffOperationsScreen> {
   @override
   void initState() {
     super.initState();
+    if (sections.contains(widget.initialSection)) {
+      _section = widget.initialSection!;
+      _dates = widget.initialDates;
+    }
     _load();
   }
 

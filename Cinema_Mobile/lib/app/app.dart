@@ -101,6 +101,7 @@ class _CinemaAppState extends State<CinemaApp> {
           routes: _routes,
           service: _chatService,
           catalogRepository: widget.catalogRepository,
+          bookingRepository: widget.bookingRepository,
           child: CustomerFrame(
             routes: _routes,
             onSignOut: _signOut,

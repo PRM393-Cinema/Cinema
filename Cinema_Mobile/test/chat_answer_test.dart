@@ -3,6 +3,72 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets('Movie and snack links appear in order inside the answer', (
+    tester,
+  ) async {
+    final opened = <String>[];
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ChatAnswer(
+            text:
+                '- [**Inception**](/movies/1) — Sci-fi\n'
+                '- **[Combo Couple](/snacks/2)** — 57.000đ',
+            onOpenLink: opened.add,
+          ),
+        ),
+      ),
+    );
+    expect(find.byType(TextButton), findsNWidgets(2));
+    final answer = tester.widget<Text>(
+      find
+          .descendant(
+            of: find.byType(ChatAnswer),
+            matching: find.byWidgetPredicate(
+              (widget) => widget is Text && widget.textSpan != null,
+            ),
+          )
+          .first,
+    );
+    expect(
+      answer.textSpan!.toPlainText(),
+      '•  \uFFFC — Sci-fi\n•  \uFFFC — 57.000đ',
+    );
+    await tester.tap(find.widgetWithText(TextButton, 'Inception'));
+    await tester.tap(find.widgetWithText(TextButton, 'Combo Couple'));
+    expect(opened, ['/movies/1', '/snacks/2']);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('External and malformed links never become navigation actions', (
+    tester,
+  ) async {
+    const text =
+        '[External](https://example.com/movies/1)\n'
+        '[Script](javascript:alert)\n[Account](/profile)\n'
+        '[Zero](/movies/0)\n[Negative](/movies/-1)\n'
+        '[Query](/movies/1?redirect=elsewhere)\n'
+        '[Overflow](/movies/99999999999999999999999999)';
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ChatAnswer(
+            text: text,
+            onOpenLink: (_) => fail('Invalid link opened'),
+          ),
+        ),
+      ),
+    );
+    expect(find.byType(TextButton), findsNothing);
+    expect(
+      tester
+          .widget<SelectableText>(find.byType(SelectableText))
+          .textSpan!
+          .toPlainText(),
+      text,
+    );
+  });
+
   testWidgets(
     'Legacy recommendation splits facts and emphasizes prices without rewriting history',
     (tester) async {

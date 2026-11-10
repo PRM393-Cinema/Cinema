@@ -15,6 +15,7 @@ import '../../features/auth/screens/verify_email_screen.dart';
 import '../../features/booking/screens/booking_detail_screen.dart';
 import '../../features/booking/screens/booking_summary_screen.dart';
 import '../../features/booking/screens/my_bookings_screen.dart';
+import '../../features/booking/screens/snack_detail_screen.dart';
 import '../../features/home/screens/home_screen.dart';
 import '../../features/movie/screens/movie_detail_screen.dart';
 import '../../features/notification/screens/notification_detail_screen.dart';
@@ -209,6 +210,11 @@ class AppRouter {
     final page = segments.length == 3 ? segments[2] : null;
 
     switch (segments.first) {
+      case 'snacks' when segments.length == 2 && id > 0:
+        return _RouteMatch(
+          settings,
+          (_) => SnackDetailScreen(repository: bookingRepository, itemId: id),
+        );
       case 'movies' when segments.length == 2:
         return _RouteMatch(
           settings,
@@ -216,6 +222,7 @@ class AppRouter {
             catalogRepository: catalogRepository,
             bookingRepository: bookingRepository,
             movieId: id,
+            openShowtimes: uri.queryParameters['section'] == 'showtimes',
           ),
         );
       case 'showtimes' when page == 'seats' || page == 'summary':

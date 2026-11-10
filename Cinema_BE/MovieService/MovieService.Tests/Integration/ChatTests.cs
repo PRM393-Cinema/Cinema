@@ -48,6 +48,8 @@ public sealed class ChatTests(ChatApiFactory factory) : IClassFixture<ChatApiFac
         Assert.Equal("openai/gpt-6.1-sol", root.GetProperty("model").GetString());
         var prompt = root.GetProperty("instructions").GetString()!;
         Assert.Contains("Phim", prompt);
+        Assert.Contains($"/movies/{factory.MovieId}", prompt);
+        Assert.Contains("Every recommended film must include its exact DetailUrl", prompt);
         Assert.Contains("120000", prompt); // NORMAL 3D: base 100,000 + format 20,000.
         Assert.DoesNotContain("Hidden movie", prompt);
         Assert.DoesNotContain("999999", prompt);

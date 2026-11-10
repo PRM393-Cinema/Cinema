@@ -7,16 +7,23 @@ import '../../../app/theme/app_text_styles.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/session/session_state.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
+import '../../../data/models/concession.dart';
+import '../../../data/repositories/booking_repository.dart';
+import '../../../data/repositories/catalog_repository.dart';
 import '../../../data/services/chat_service.dart';
 import '../../../data/storage/chat_history_storage.dart';
 import '../../../core/utils/formatters.dart';
 import 'chat_answer.dart';
+import 'chat_recommendation_card.dart';
 
 class ChatPanel extends StatefulWidget {
   const ChatPanel({
     required this.service,
     required this.onClose,
     required this.onReviewBooking,
+    required this.onOpenLink,
+    required this.catalogRepository,
+    required this.bookingRepository,
     this.userId,
     super.key,
   });
@@ -24,6 +31,9 @@ class ChatPanel extends StatefulWidget {
   final ChatService service;
   final VoidCallback onClose;
   final Future<bool> Function(ChatBookingProposal) onReviewBooking;
+  final ValueChanged<String> onOpenLink;
+  final CatalogRepository catalogRepository;
+  final BookingRepository bookingRepository;
   final int? userId;
 
   @override
@@ -34,6 +44,8 @@ class _ChatPanelState extends State<ChatPanel> {
   final _input = TextEditingController();
   final _scroll = ScrollController();
   final _messages = <ChatMessage>[];
+  final _recommendations = <String, Future<ChatRecommendation?>>{};
+  Future<List<ConcessionItem>>? _menu;
   bool _sending = false;
   String? _error;
   ChatBookingProposal? _proposal;
@@ -113,6 +125,8 @@ class _ChatPanelState extends State<ChatPanel> {
   void _newChat() {
     setState(() {
       _messages.clear();
+      _recommendations.clear();
+      _menu = null;
       _activeId = null;
       _error = null;
       _input.clear();
@@ -121,6 +135,46 @@ class _ChatPanelState extends State<ChatPanel> {
     });
     _saveHistory();
   }
+
+  Future<ChatRecommendation?> _loadRecommendation(String route) async {
+    final id = int.parse(route.substring(route.lastIndexOf('/') + 1));
+    try {
+      if (route.startsWith('/movies/')) {
+        final movie = await widget.catalogRepository.getMovie(id);
+        return (
+          title: movie.title,
+          imageUrl: movie.posterUrl,
+          price: '',
+          description: movie.genre,
+        );
+      }
+      final menu = await (_menu ??= widget.bookingRepository.getConcessions());
+      final item = menu
+          .where((item) => item.id == id && item.active)
+          .firstOrNull;
+      if (item == null) return null;
+      return (
+        title: item.name,
+        imageUrl: item.imageUrl,
+        price: formatVnd(item.price),
+        description: item.description,
+      );
+    } on Object {
+      return null; // The inline link still works if the preview cannot load.
+    }
+  }
+
+  Widget _recommendation(String route) => ChatRecommendationCard(
+    key: ValueKey(route),
+    details: _recommendations.putIfAbsent(
+      route,
+      () => _loadRecommendation(route),
+    ),
+    movie: route.startsWith('/movies/'),
+    onOpen: () => widget.onOpenLink(
+      route.startsWith('/movies/') ? '$route?section=showtimes' : route,
+    ),
+  );
 
   @override
   void dispose() {
@@ -293,7 +347,12 @@ class _ChatPanelState extends State<ChatPanel> {
                     children: [
                       if (_messages.isEmpty) _welcome(context),
                       for (var index = 0; index < _messages.length; index++)
-                        _MessageBubble(message: _messages[index], index: index),
+                        _MessageBubble(
+                          message: _messages[index],
+                          index: index,
+                          onOpenLink: widget.onOpenLink,
+                          recommendation: _recommendation,
+                        ),
                       if (_proposal != null)
                         OutlinedButton.icon(
                           key: const Key('reviewChatBooking'),
@@ -524,6 +583,8 @@ class _ChatPanelState extends State<ChatPanel> {
                                     if (_activeId == chat.id) {
                                       _activeId = null;
                                       _messages.clear();
+                                      _recommendations.clear();
+                                      _menu = null;
                                       _proposal = null;
                                       _error = null;
                                     }
@@ -585,10 +646,17 @@ class _ChatPanelState extends State<ChatPanel> {
 }
 
 class _MessageBubble extends StatelessWidget {
-  const _MessageBubble({required this.message, required this.index});
+  const _MessageBubble({
+    required this.message,
+    required this.index,
+    required this.onOpenLink,
+    required this.recommendation,
+  });
 
   final ChatMessage message;
   final int index;
+  final ValueChanged<String> onOpenLink;
+  final Widget Function(String route) recommendation;
 
   @override
   Widget build(BuildContext context) {
@@ -623,6 +691,8 @@ class _MessageBubble extends StatelessWidget {
               if (!user)
                 ChatAnswer(
                   text: message.content,
+                  onOpenLink: onOpenLink,
+                  recommendation: recommendation,
                   key: ValueKey('chatMessage-$index'),
                 )
               else

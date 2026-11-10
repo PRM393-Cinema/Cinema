@@ -15,6 +15,30 @@ namespace MovieService.Tests.Integration;
 public sealed class CinemaAgentTests(ChatApiFactory factory) : IClassFixture<ChatApiFactory>
 {
     [Fact]
+    public async Task SnackRecommendations_UsePublicMenuLinksWithoutSendingAccountToken()
+    {
+        using var scope = factory.Services.CreateScope();
+        var tools = scope.ServiceProvider.GetRequiredService<CinemaChatTools>();
+        factory.Accounts.Output = """
+            [
+              {"id":7,"name":"Combo Couple","description":"Bắp và hai nước","price":57000,"active":true},
+              {"id":8,"name":"Old combo","description":null,"price":62000,"active":false}
+            ]
+            """;
+        try
+        {
+            var result = await tools.ExecuteAsync("get_snack_menu", JsonSerializer.SerializeToElement(new { }), "unused-account-token", default);
+            var menu = JsonSerializer.SerializeToElement(result.Result).GetProperty("items");
+            Assert.Equal(1, menu.GetArrayLength());
+            Assert.Equal("/snacks/7", menu[0].GetProperty("DetailUrl").GetString());
+            Assert.Equal(57000m, menu[0].GetProperty("Price").GetDecimal());
+            Assert.Equal("/api/v1/concessions", factory.Accounts.LastPath);
+            Assert.Null(factory.Accounts.LastAuthorization);
+        }
+        finally { factory.Accounts.Output = "[]"; }
+    }
+
+    [Fact]
     public async Task AccountEndpoint_RequiresJwt_AndGuestToolsNeverForwardTokens()
     {
         using var client = factory.CreateClient();
@@ -82,6 +106,8 @@ public sealed class CinemaAgentTests(ChatApiFactory factory) : IClassFixture<Cha
         var json = JsonSerializer.SerializeToElement(result.Result);
         Assert.Equal(35, json.GetProperty("count").GetInt32());
         Assert.Equal(15, json.GetProperty("items").GetArrayLength());
+        foreach (var movie in json.GetProperty("items").EnumerateArray())
+            Assert.Equal($"/movies/{movie.GetProperty("Id").GetInt64()}", movie.GetProperty("DetailUrl").GetString());
         Assert.DoesNotContain("hidden", json.ToString());
         var session = await NewSession();
         var date = session.StartTime.ToString("yyyy-MM-dd");

@@ -17,6 +17,7 @@ public sealed class CinemaChatTools(MovieDbContext movies, ShowtimeDbContext sho
     public static readonly JsonElement Definitions = JsonSerializer.Deserialize<JsonElement>("""
         [
           {"type":"function","name":"search_movies","description":"Search ALL active movies by title, genre or description, paginated. Empty query browses all. Not restricted to the initial snapshot.","strict":true,"parameters":{"type":"object","properties":{"query":{"type":"string","maxLength":100},"page":{"type":"integer","minimum":1,"maximum":10000}},"required":["query","page"],"additionalProperties":false}},
+          {"type":"function","name":"get_snack_menu","description":"Read the public menu of active cinema snacks, drinks and combos with descriptions, prices in VND and detail links. Use before recommending any snack or combo.","strict":true,"parameters":{"type":"object","properties":{},"required":[],"additionalProperties":false}},
           {"type":"function","name":"find_showtimes","description":"Find live OPEN future showtimes for an active movie. Dates are inclusive Vietnam calendar days; null means now through the next 7 days. Follow pages when necessary.","strict":true,"parameters":{"type":"object","properties":{"movieId":{"type":"integer","minimum":1},"from":{"type":["string","null"]},"to":{"type":["string","null"]},"page":{"type":"integer","minimum":1,"maximum":10000}},"required":["movieId","from","to","page"],"additionalProperties":false}},
           {"type":"function","name":"get_seats","description":"Get live seat ids, labels, types, prices and availability. Sign-in required. Never guess seat ids. SWEETBOX seats must be selected with their adjacent pair.","strict":true,"parameters":{"type":"object","properties":{"showtimeId":{"type":"integer","minimum":1}},"required":["showtimeId"],"additionalProperties":false}},
           {"type":"function","name":"get_membership","description":"Read the signed-in customer's membership tier, points, benefits and recent points history. Requires sign-in; no userId parameter.","strict":true,"parameters":{"type":"object","properties":{},"required":[],"additionalProperties":false}},
@@ -39,6 +40,32 @@ public sealed class CinemaChatTools(MovieDbContext movies, ShowtimeDbContext sho
             return (new { error = "SIGN_IN_REQUIRED", message = "Sign in before accessing your account or seat availability." }, null);
         switch (name)
         {
+            case "get_snack_menu":
+                {
+                    try
+                    {
+                        var menu = await ReadCinemaAsync("api/v1/concessions", null, cancellationToken);
+                        if (menu.ValueKind != JsonValueKind.Array)
+                            throw new JsonException("Expected the public snack menu.");
+                        return (new
+                        {
+                            currency = "VND",
+                            items = menu.EnumerateArray()
+                                .Where(item => item.GetProperty("active").GetBoolean())
+                                .Select(item => new
+                                {
+                                    Name = item.GetProperty("name").GetString(),
+                                    Description = item.GetProperty("description"),
+                                    Price = item.GetProperty("price").GetDecimal(),
+                                    DetailUrl = "/snacks/" + item.GetProperty("id").GetInt64()
+                                }).ToArray()
+                        }, null);
+                    }
+                    catch (HttpRequestException)
+                    {
+                        return (new { error = "MENU_UNAVAILABLE", message = "The cinema menu is unavailable. Do not guess items or prices." }, null);
+                    }
+                }
             case "search_movies":
                 {
                     var term = Text(args, "query").ToLowerInvariant();
@@ -52,6 +79,7 @@ public sealed class CinemaChatTools(MovieDbContext movies, ShowtimeDbContext sho
                         {
                             m.Id,
                             m.Title,
+                            DetailUrl = "/movies/" + m.Id,
                             m.Genre,
                             m.Language,
                             m.DurationMinutes,
@@ -89,7 +117,7 @@ public sealed class CinemaChatTools(MovieDbContext movies, ShowtimeDbContext sho
                 }
             case "get_membership":
                 {
-                    var card = await ReadAccountAsync("api/v1/loyalty/me", accessToken!, cancellationToken);
+                    var card = await ReadCinemaAsync("api/v1/loyalty/me", accessToken, cancellationToken);
                     if (!card.TryGetProperty("tier", out _)) return (card, null);
                     // Exclude identity/email; send only the facts needed to answer membership questions.
                     var allowed = new[] { "tier", "points", "pointValue", "lifetimeSpend", "earnRatePercent", "nextTier", "nextTierSpend", "gifts", "transactions" };
@@ -107,7 +135,7 @@ public sealed class CinemaChatTools(MovieDbContext movies, ShowtimeDbContext sho
                     var path = $"api/v1/bookings/assistant-summary?page={Page(args)}&query={query}";
                     if (from.HasValue) path += $"&from={from:yyyy-MM-dd}";
                     if (to.HasValue) path += $"&to={to:yyyy-MM-dd}";
-                    return (await ReadAccountAsync(path, accessToken!, cancellationToken), null);
+                    return (await ReadCinemaAsync(path, accessToken, cancellationToken), null);
                 }
             default:
                 {
@@ -116,7 +144,7 @@ public sealed class CinemaChatTools(MovieDbContext movies, ShowtimeDbContext sho
                         ?? throw new ArgumentException("Showtime is no longer open for booking.");
                     var movie = await movies.Movies.AsNoTracking().SingleOrDefaultAsync(m => m.Id == session.MovieId && m.Status == "ACTIVE", cancellationToken)
                         ?? throw new ArgumentException("Movie is no longer active.");
-                    var occupied = await ReadAccountAsync($"api/v1/bookings/showtime/{id}/occupied-seats", accessToken!, cancellationToken);
+                    var occupied = await ReadCinemaAsync($"api/v1/bookings/showtime/{id}/occupied-seats", accessToken, cancellationToken);
                     if (occupied.ValueKind != JsonValueKind.Array) return (occupied, null);
                     var occupiedIds = occupied.EnumerateArray().Select(v => v.GetInt64()).ToHashSet();
                     var seats = await showtimes.Seats.AsNoTracking().Where(s => s.RoomId == session.RoomId)
@@ -155,12 +183,13 @@ public sealed class CinemaChatTools(MovieDbContext movies, ShowtimeDbContext sho
         }
     }
 
-    private async Task<JsonElement> ReadAccountAsync(string path, string accessToken, CancellationToken ct)
+    private async Task<JsonElement> ReadCinemaAsync(string path, string? accessToken, CancellationToken ct)
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, path);
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        if (accessToken is not null)
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
         using var response = await clients.CreateClient("cinema-account").SendAsync(request, ct);
-        if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+        if (accessToken is not null && response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
             return JsonSerializer.SerializeToElement(new { error = "SIGN_IN_REQUIRED", message = "Account access denied. Sign in again." });
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<JsonElement>(ct);

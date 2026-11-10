@@ -13,6 +13,7 @@ import '../../../core/utils/formatters.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../data/models/booking_draft.dart';
 import '../../../data/models/seat.dart';
+import '../../../data/repositories/booking_repository.dart';
 import '../../../data/repositories/catalog_repository.dart';
 import '../../../data/services/chat_service.dart';
 import 'chat_panel.dart';
@@ -23,6 +24,7 @@ class ChatLauncher extends StatefulWidget {
     required this.routes,
     required this.service,
     required this.catalogRepository,
+    required this.bookingRepository,
     required this.child,
     super.key,
   });
@@ -30,6 +32,7 @@ class ChatLauncher extends StatefulWidget {
   final RouteTracker routes;
   final ChatService service;
   final CatalogRepository catalogRepository;
+  final BookingRepository bookingRepository;
   final Widget child;
 
   @override
@@ -252,7 +255,15 @@ class _ChatLauncherState extends State<ChatLauncher> {
                                   key: ValueKey(session.user?.userId),
                                   userId: session.user?.userId,
                                   service: widget.service,
+                                  catalogRepository: widget.catalogRepository,
+                                  bookingRepository: widget.bookingRepository,
                                   onClose: _close,
+                                  onOpenLink: (route) {
+                                    final navigator = widget.routes.navigator;
+                                    if (navigator == null) return;
+                                    _close();
+                                    navigator.pushNamed(route);
+                                  },
                                   onReviewBooking: _reviewBooking,
                                 ),
                               ),

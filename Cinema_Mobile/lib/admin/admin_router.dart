@@ -169,7 +169,16 @@ class AdminRouter {
       case AppRoutes.staffDashboard:
         return staff((_) => StaffDashboardScreen(service: staffService));
       case AppRoutes.staffOperations:
-        return staff((_) => StaffOperationsScreen(service: staffService));
+        final filter = args is ({String section, DateTimeRange dates})
+            ? args
+            : null;
+        return staff(
+          (_) => StaffOperationsScreen(
+            service: staffService,
+            initialSection: filter?.section,
+            initialDates: filter?.dates,
+          ),
+        );
       case AppRoutes.staffCreateBooking:
         return staff(
           (_) => StaffCreateBookingScreen(

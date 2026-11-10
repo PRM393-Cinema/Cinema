@@ -4,7 +4,9 @@ import 'dart:convert';
 import 'package:cinema_fe/app/routes/app_routes.dart';
 import 'package:cinema_fe/core/network/api_client.dart';
 import 'package:cinema_fe/core/network/server_wake_up.dart';
+import 'package:cinema_fe/core/utils/formatters.dart';
 import 'package:cinema_fe/core/widgets/cinema_account_widgets.dart';
+import 'package:cinema_fe/data/models/concession.dart';
 import 'package:cinema_fe/data/services/chat_service.dart';
 import 'package:cinema_fe/features/chat/widgets/chat_panel.dart';
 import 'package:cinema_fe/features/home/screens/home_screen.dart';
@@ -17,6 +19,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
+import 'support/fakes.dart';
 import 'support/test_app.dart';
 
 Future<void> openChat(WidgetTester tester) async {
@@ -26,6 +29,80 @@ Future<void> openChat(WidgetTester tester) async {
 
 void main() {
   setUp(() => FlutterSecureStorage.setMockInitialValues({}));
+
+  for (final width in [390.0, 1440.0]) {
+    testWidgets(
+      'Movie recommendation opens details and preserves chat at $width',
+      (tester) async {
+        tester.view.physicalSize = Size(width, 900);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        final service = ChatService(
+          client: ApiClient(
+            httpClient: MockClient(
+              (_) async => http.Response(
+                jsonEncode({
+                  'message': '[Inception](/movies/1)\n[Interstellar](/movies/2)\n[Combo Couple](/snacks/7)',
+                }),
+                200,
+              ),
+            ),
+          ),
+        );
+        final bookings = FakeBookingRepository()
+          ..snacks = const [
+            ConcessionItem(
+              id: 7,
+              name: 'Combo Couple',
+              price: 57000,
+              description: 'Bắp và hai nước',
+            ),
+          ];
+        await tester.pumpWidget(
+          buildTestApp(chatService: service, bookingRepository: bookings),
+        );
+        await pumpRoute(tester);
+        await openChat(tester);
+        await tester.enterText(
+          find.byKey(const Key('cinemaChatInput')),
+          'Gợi ý phim',
+        );
+        await tester.testTextInput.receiveAction(TextInputAction.send);
+        await pumpRoute(tester);
+        final showtimes = find.descendant(
+          of: find.byKey(const ValueKey('/movies/2')),
+          matching: find.widgetWithText(TextButton, 'Xem lịch chiếu'),
+        );
+        await tester.ensureVisible(showtimes);
+        await tester.pump();
+        await tester.tap(showtimes);
+        await pumpRoute(tester);
+        expect(find.byType(ChatPanel), findsNothing);
+        expect(
+          ModalRoute.of(tester.element(find.text('Showtimes')))?.settings.name,
+          '${AppRoutes.movieDetail(2)}?section=showtimes',
+        );
+        expect(find.text('Showtimes').hitTestable(), findsOneWidget);
+        await openChat(tester);
+        expect(find.widgetWithText(TextButton, 'Inception'), findsOneWidget);
+        expect(find.widgetWithText(TextButton, 'Interstellar'), findsOneWidget);
+        final combo = find.widgetWithText(TextButton, 'Xem combo');
+        await tester.ensureVisible(combo);
+        await tester.pump();
+        expect(find.text(formatVnd(57000)), findsOneWidget);
+        await tester.tap(combo);
+        await pumpRoute(tester);
+        expect(find.text('Combo Couple'), findsOneWidget);
+        expect(
+          ModalRoute.of(tester.element(find.text('Bắp và hai nước')))
+              ?.settings
+              .name,
+          '/snacks/7',
+        );
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
 
   testWidgets(
     'Enter sends once; Shift Enter inserts a newline; mobile Send submits',

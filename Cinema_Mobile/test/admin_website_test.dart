@@ -5,6 +5,7 @@ import 'package:cinema_fe/core/network/api_client.dart';
 import 'package:cinema_fe/core/utils/formatters.dart';
 import 'package:cinema_fe/data/models/auth_response.dart';
 import 'package:cinema_fe/data/services/staff_service.dart';
+import 'package:cinema_fe/features/admin/widgets/admin_layout.dart';
 import 'package:cinema_fe/features/admin/widgets/revenue_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -124,7 +125,7 @@ void main() {
         ('Bookings this month', '12'),
         ('Revenue this month', formatVnd(1530000)),
         ('Movies showing', '1'),
-        ('Showtimes today', '0'),
+        ('Showtimes this month', '0'),
       ]) {
         final tile = find.ancestor(
           of: find.text(label),
@@ -156,6 +157,50 @@ void main() {
       expect(days.length, DateTime.now().day);
       expect(days.first.$2, api.revenue);
       expect(days.skip(1).every((day) => day.$2 == 0), isTrue);
+
+      final todayFilter = find.widgetWithText(ChoiceChip, 'Today');
+      await tester.scrollUntilVisible(
+        todayFilter,
+        -200,
+        scrollable: find
+            .descendant(
+              of: find.byType(ListView).first,
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
+      await tester.pump();
+      await tester.tap(todayFilter);
+      await pumpRoute(tester);
+      final today = DateUtils.dateOnly(DateTime.now());
+      final filtered = api.reads.lastWhere(
+        (uri) => uri.path == '/api/v1/payments/summary',
+      );
+      expect(DateTime.parse(filtered.queryParameters['start']!), today);
+      final bookingsTile = find.ancestor(
+        of: find.text('Bookings today'),
+        matching: find.byType(StatTile),
+      );
+      final details = find.descendant(
+        of: bookingsTile,
+        matching: find.widgetWithText(TextButton, 'View details'),
+      );
+      await tester.ensureVisible(details);
+      await tester.pump();
+      await tester.tap(details);
+      await pumpRoute(tester);
+      expect(
+        find.byKey(const ValueKey('operationsTab-Bookings')),
+        findsOneWidget,
+      );
+      final drillDown = api.reads.lastWhere(
+        (uri) => uri.path == '/api/v1/bookings/date-range',
+      );
+      expect(
+        drillDown.queryParameters['start'],
+        filtered.queryParameters['start'],
+      );
+      expect(drillDown.queryParameters['end'], filtered.queryParameters['end']);
     });
 
     testWidgets('Narrow windows open the navigation from the menu', (

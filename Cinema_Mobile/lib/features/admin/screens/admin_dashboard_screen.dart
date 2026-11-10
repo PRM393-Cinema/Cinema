@@ -33,6 +33,10 @@ class AdminDashboardScreen extends StatefulWidget {
 }
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
+  final _revenueChart = GlobalKey();
+  int _period = 0;
+  DateTimeRange? _reportDates;
+  bool _loadingBusiness = false;
   List<(String, int, IconData)>? _counts;
   // Bookings, ticket sales, movies and showtimes; null when they could not be
   // loaded (the account figures still show).
@@ -56,9 +60,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       _error = null;
       _refreshes++;
     });
-    // The two halves load on their own: one failing keeps the other.
-    final business = await _loadBusiness();
-    if (mounted) setState(() => _business = business);
+    final business = _loadBusiness();
     try {
       final pages = await Future.wait([
         widget.repository.users(),
@@ -87,57 +89,86 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+    await business;
   }
 
-  // This month so far, and today's showtimes.
-  Future<List<(String, Object, IconData)>?> _loadBusiness() async {
-    final now = DateTime.now();
-    final month = DateTime(now.year, now.month);
-    final today = DateUtils.dateOnly(now);
-    final endOfToday = today
-        .add(const Duration(days: 1))
-        .subtract(const Duration(microseconds: 1));
+  String get _periodLabel => switch (_period) {
+    1 => 'Today',
+    7 => 'Last 7 days',
+    _ => 'This month',
+  };
+
+  String get _bookingLabel => 'Bookings ${_periodLabel.toLowerCase()}';
+  String get _revenueLabel => 'Revenue ${_periodLabel.toLowerCase()}';
+  String get _showtimeLabel => 'Showtimes ${_periodLabel.toLowerCase()}';
+
+  Future<void> _loadBusiness() async {
+    if (_loadingBusiness) return;
+    final today = DateUtils.dateOnly(DateTime.now());
+    final start = _period == 0
+        ? DateTime(today.year, today.month)
+        : DateUtils.addDaysToDate(today, 1 - _period);
+    final dates = DateTimeRange(start: start, end: today);
+    final end = DateUtils.addDaysToDate(
+      today,
+      1,
+    ).subtract(const Duration(microseconds: 1));
+    setState(() => _loadingBusiness = true);
     try {
-      final bookings = await widget.service.bookings(start: month, end: now);
-      final sales = await widget.service.paymentSummary(month, now);
+      final bookings = await widget.service.bookings(start: start, end: end);
+      final sales = await widget.service.paymentSummary(start, end);
       final daily = sales.dailyRevenue;
-      _dailyRevenue = daily == null
-          ? null
-          : [
-              for (var day = 1; day <= now.day; day++)
-                (
-                  DateTime(now.year, now.month, day),
-                  daily
-                      .where((row) => row.$1.day == day)
-                      .fold(0.0, (sum, row) => sum + row.$2),
-                ),
-            ];
       final movies = await widget.service.catalogMovies(
         status: 'ACTIVE',
         size: 1,
       );
-      final shows = await widget.service.showtimes(
-        start: today,
-        end: endOfToday,
-      );
-      return [
-        (
-          'Bookings this month',
-          bookings.totalCount,
-          Icons.confirmation_number_outlined,
-        ),
-        (
-          'Revenue this month',
-          formatVnd(sales.revenue),
-          Icons.payments_outlined,
-        ),
-        ('Movies showing', movies.totalCount, Icons.movie_outlined),
-        ('Showtimes today', shows.totalCount, Icons.event_outlined),
-      ];
+      final shows = await widget.service.showtimes(start: start, end: end);
+      if (!mounted) return;
+      setState(() {
+        _reportDates = dates;
+        _business = [
+          (
+            _bookingLabel,
+            bookings.totalCount,
+            Icons.confirmation_number_outlined,
+          ),
+          (_revenueLabel, formatVnd(sales.revenue), Icons.payments_outlined),
+          ('Movies showing', movies.totalCount, Icons.movie_outlined),
+          (_showtimeLabel, shows.totalCount, Icons.event_outlined),
+        ];
+        _dailyRevenue = daily == null
+            ? null
+            : [
+                for (
+                  var date = start;
+                  !date.isAfter(today);
+                  date = DateUtils.addDaysToDate(date, 1)
+                )
+                  (
+                    date,
+                    daily
+                        .where((row) => DateUtils.isSameDay(row.$1, date))
+                        .fold(0.0, (sum, row) => sum + row.$2),
+                  ),
+              ];
+      });
     } on Object {
-      _dailyRevenue = null;
-      return null;
+      if (mounted)
+        setState(() {
+          _business = null;
+          _dailyRevenue = null;
+        });
+    } finally {
+      if (mounted) setState(() => _loadingBusiness = false);
     }
+  }
+
+  void _openOperations(String section) {
+    Navigator.pushNamed(
+      context,
+      AppRoutes.staffOperations,
+      arguments: (section: section, dates: _reportDates!),
+    );
   }
 
   Future<void> _openUser(AuthUser user) async {
@@ -160,11 +191,36 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         children: [
           TodayAtCinema(service: widget.service, refresh: _refreshes),
           const SizedBox(height: AppSpacing.xl),
-          if (!_loading) ...[
-            const Text('This month', style: AppTextStyles.title),
+          const Text('Cinema overview', style: AppTextStyles.title),
+          const SizedBox(height: AppSpacing.sm),
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.xs,
+            children: [
+              for (final (value, label) in [
+                (1, 'Today'),
+                (7, 'Last 7 days'),
+                (0, 'This month'),
+              ])
+                ChoiceChip(
+                  label: Text(label),
+                  selected: _period == value,
+                  onSelected: _loadingBusiness
+                      ? null
+                      : (selected) {
+                          if (!selected) return;
+                          setState(() => _period = value);
+                          _loadBusiness();
+                        },
+                ),
+            ],
+          ),
+          if (_loadingBusiness)
+            const LoadingState(message: 'Loading cinema figures...')
+          else ...[
             const SizedBox(height: AppSpacing.sm),
             const Text(
-              'Month-to-date bookings and revenue · current movies and today’s showtimes.',
+              'Bookings, revenue and showtimes for the selected period. Movies showing reflects the current catalogue.',
               style: AppTextStyles.bodySmall,
             ),
             const SizedBox(height: AppSpacing.md),
@@ -173,6 +229,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 key: const Key('businessStats'),
                 tiles: business,
                 compact: true,
+                actions: {
+                  _bookingLabel: () => _openOperations('Bookings'),
+                  _showtimeLabel: () => _openOperations('Showtimes'),
+                  'Movies showing': () =>
+                      Navigator.pushNamed(context, AppRoutes.adminMovies),
+                  if (_dailyRevenue != null)
+                    _revenueLabel: () {
+                      final chart = _revenueChart.currentContext;
+                      if (chart != null) Scrollable.ensureVisible(chart);
+                    },
+                },
               )
             else
               const Text(
@@ -183,7 +250,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             const SizedBox(height: AppSpacing.xl),
             if (_business != null) ...[
               if (_dailyRevenue case final daily?)
-                RevenueChart(days: daily)
+                RevenueChart(key: _revenueChart, days: daily)
               else
                 const Text(
                   'Daily revenue is unavailable. Refresh after updating the server.',

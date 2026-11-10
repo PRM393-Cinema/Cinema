@@ -29,8 +29,14 @@ class AdminControls extends StatelessWidget {
 
 // Dashboard numbers: two per row in the app layout, one row on the website.
 class StatTiles extends StatelessWidget {
-  const StatTiles({required this.tiles, this.compact = false, super.key});
+  const StatTiles({
+    required this.tiles,
+    this.compact = false,
+    this.actions = const {},
+    super.key,
+  });
   final bool compact;
+  final Map<String, VoidCallback> actions;
 
   // Label, value (a count or a formatted amount) and icon of each tile.
   final List<(String, Object, IconData)> tiles;
@@ -48,7 +54,11 @@ class StatTiles extends StatelessWidget {
           for (final (label, value, icon) in tiles)
             SizedBox(
               width: width,
-              child: StatTile(tile: (label, value, icon), compact: compact),
+              child: StatTile(
+                tile: (label, value, icon),
+                compact: compact,
+                onOpen: actions[label],
+              ),
             ),
         ],
       );
@@ -57,9 +67,15 @@ class StatTiles extends StatelessWidget {
 }
 
 class StatTile extends StatelessWidget {
-  const StatTile({required this.tile, this.compact = false, super.key});
+  const StatTile({
+    required this.tile,
+    this.compact = false,
+    this.onOpen,
+    super.key,
+  });
   final (String, Object, IconData) tile;
   final bool compact;
+  final VoidCallback? onOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -83,6 +99,20 @@ class StatTile extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(label, style: AppTextStyles.bodySmall),
+          if (onOpen != null)
+            TextButton(
+              style: TextButton.styleFrom(
+                minimumSize: const Size(0, 44),
+                padding: EdgeInsets.zero,
+                alignment: Alignment.centerLeft,
+              ),
+              onPressed: onOpen,
+              child: Semantics(
+                label: 'View details: $label',
+                excludeSemantics: true,
+                child: const Text('View details'),
+              ),
+            ),
         ],
       ),
     );
