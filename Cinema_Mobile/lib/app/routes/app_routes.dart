@@ -41,6 +41,10 @@ abstract final class AppRoutes {
 
   static String seatSelection(int showtimeId) => '/showtimes/$showtimeId/seats';
 
+  // A showtime under its movie (chat links): opens its seat map.
+  static String movieShowtime(int movieId, int showtimeId) =>
+      '/movies/$movieId/showtimes/$showtimeId';
+
   static String bookingSummary(int showtimeId) =>
       '/showtimes/$showtimeId/summary';
 

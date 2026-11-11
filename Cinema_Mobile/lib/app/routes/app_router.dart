@@ -225,6 +225,20 @@ class AppRouter {
             openShowtimes: uri.queryParameters['section'] == 'showtimes',
           ),
         );
+      case 'movies'
+          when segments.length == 4 &&
+              id > 0 &&
+              segments[2] == 'showtimes' &&
+              (int.tryParse(segments[3]) ?? 0) > 0:
+        final showtimeId = int.parse(segments[3]);
+        return _RouteMatch(
+          RouteSettings(name: AppRoutes.seatSelection(showtimeId)),
+          (_) => SeatSelectionScreen(
+            catalogRepository: catalogRepository,
+            showtimeId: showtimeId,
+          ),
+          signInRequired: true,
+        );
       case 'showtimes' when page == 'seats' || page == 'summary':
         // The chosen seats only live in memory, so a refreshed summary goes
         // back to the seat map.

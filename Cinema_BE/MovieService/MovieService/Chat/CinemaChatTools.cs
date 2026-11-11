@@ -112,7 +112,15 @@ public sealed class CinemaChatTools(MovieDbContext movies, ShowtimeDbContext sho
                         pageSize = 20,
                         timeZone = "Asia/Ho_Chi_Minh",
                         items = items.Select(s => new
-                        { s.Id, s.MovieId, s.StartTime, s.Format, s.Room, seatPrices = SeatPrices.Of(s.Price, s.Format) })
+                        {
+                            s.Id,
+                            s.MovieId,
+                            BookingUrl = $"/movies/{s.MovieId}/showtimes/{s.Id}",
+                            s.StartTime,
+                            s.Format,
+                            s.Room,
+                            seatPrices = SeatPrices.Of(s.Price, s.Format)
+                        })
                     }, null);
                 }
             case "get_membership":

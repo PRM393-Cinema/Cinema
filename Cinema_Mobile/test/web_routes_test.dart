@@ -52,6 +52,24 @@ void main() {
     expect(find.text(inception.title), findsOneWidget);
   });
 
+  testWidgets('A chat showtime link opens that showtime seat map', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      buildTestApp(
+        authenticated: true,
+        initialRoute: AppRoutes.movieShowtime(
+          inception.id,
+          showtimeFixture().id,
+        ),
+      ),
+    );
+    await pumpRoute(tester);
+
+    expect(find.text('Select Seats'), findsOneWidget);
+    expect(find.text(inception.title), findsOneWidget);
+  });
+
   testWidgets('A refreshed booking summary goes back to the seat map', (
     WidgetTester tester,
   ) async {

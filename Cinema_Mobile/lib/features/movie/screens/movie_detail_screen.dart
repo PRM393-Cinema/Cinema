@@ -195,8 +195,9 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
       _positionedAtShowtimes = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final heading = _showtimesHeading.currentContext;
-        if (heading != null && heading.mounted)
+        if (heading != null && heading.mounted) {
           Scrollable.ensureVisible(heading);
+        }
       });
     }
 

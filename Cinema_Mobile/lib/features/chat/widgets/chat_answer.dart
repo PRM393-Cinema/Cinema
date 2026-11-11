@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_text_styles.dart';
 
-// Only public movie and snack detail routes become actions.
+// Only public movie, showtime and snack routes become actions. A preview card
+// for each movie or snack follows the run of lines that link to it, so several
+// showtimes of one movie are listed first with one card below them.
 class ChatAnswer extends StatelessWidget {
   const ChatAnswer({
     required this.text,
@@ -21,7 +23,6 @@ class ChatAnswer extends StatelessWidget {
     final colors = AppPalette.of(context);
     final spans = <InlineSpan>[];
     final blocks = <Widget>[];
-    final shown = <String>{};
     final style = AppTextStyles.bodySmall.copyWith(
       fontSize: 16,
       color: colors.textPrimary,
@@ -30,9 +31,11 @@ class ChatAnswer extends StatelessWidget {
     final lines = text.replaceAll('\r\n', '\n').split('\n');
     var hasLinks = false;
     final emphasis = RegExp(
-      r'(?:\*\*)?\[([^\[\]\n]+)\]\((/(?:movies|snacks)/[1-9][0-9]{0,15})\)(?:\*\*)?|'
+      r'(?:\*\*)?\[([^\[\]\n]+)\]\((/(?:movies/[1-9][0-9]{0,15}(?:/showtimes/[1-9][0-9]{0,15})?|snacks/[1-9][0-9]{0,15}))\)(?:\*\*)?|'
       r'\*\*([^*\n]+)\*\*|\b\d+(?:[.,]\d+)*[ \t]?(?:đ|₫|VND)(?![A-Za-z0-9])',
     );
+    final parsed =
+        <({List<InlineSpan> children, bool heading, Set<String> cards})>[];
     for (var index = 0; index < lines.length; index++) {
       var line = lines[index];
       final heading = RegExp(r'^#{1,3}\s+').firstMatch(line);
@@ -54,7 +57,7 @@ class ChatAnswer extends StatelessWidget {
         }
       }
       final children = <InlineSpan>[];
-      final routes = <String>[];
+      final cards = <String>{};
       var offset = 0;
       for (final match in emphasis.allMatches(line)) {
         children.add(TextSpan(text: line.substring(offset, match.start)));
@@ -67,7 +70,10 @@ class ChatAnswer extends StatelessWidget {
             label.isNotEmpty &&
             open != null) {
           hasLinks = true;
-          if (recommendation != null && shown.add(route)) routes.add(route);
+          // A showtime previews its movie: /movies/1/showtimes/42 -> /movies/1
+          if (recommendation != null) {
+            cards.add(route.split('/').take(3).join('/'));
+          }
           children.add(
             WidgetSpan(
               alignment: PlaceholderAlignment.baseline,
@@ -98,9 +104,28 @@ class ChatAnswer extends StatelessWidget {
         }
       }
       children.add(TextSpan(text: line.substring(offset)));
+      parsed.add((children: children, heading: heading != null, cards: cards));
+    }
+    // Cards go after the last line of each run of lines about the same items.
+    final cardsAfter = <int, List<String>>{};
+    var run = <String>{};
+    var runEnd = -1;
+    for (var index = 0; index < parsed.length; index++) {
+      final cards = parsed[index].cards;
+      if (cards.isEmpty) continue;
+      if (run.isNotEmpty && !cards.any(run.contains)) {
+        cardsAfter[runEnd] = run.toList();
+        run = <String>{};
+      }
+      run.addAll(cards);
+      runEnd = index;
+    }
+    if (run.isNotEmpty) cardsAfter[runEnd] = run.toList();
+    for (var index = 0; index < parsed.length; index++) {
+      final line = parsed[index];
       spans.add(
         TextSpan(
-          style: heading == null
+          style: !line.heading
               ? null
               : TextStyle(
                   fontSize: 17,
@@ -108,13 +133,14 @@ class ChatAnswer extends StatelessWidget {
                   color: colors.textPrimary,
                   height: 1.7,
                 ),
-          children: children,
+          children: line.children,
         ),
       );
-      if (routes.isNotEmpty) {
+      final cards = cardsAfter[index];
+      if (cards != null) {
         blocks.add(Text.rich(TextSpan(children: List.of(spans)), style: style));
         spans.clear();
-        for (final route in routes) {
+        for (final route in cards) {
           blocks.add(recommendation!(route));
         }
         if (index + 1 < lines.length && lines[index + 1].isEmpty) index++;

@@ -112,7 +112,9 @@ public sealed class CinemaAgentTests(ChatApiFactory factory) : IClassFixture<Cha
         var session = await NewSession();
         var date = session.StartTime.ToString("yyyy-MM-dd");
         var schedule = await tools.ExecuteAsync("find_showtimes", JsonSerializer.SerializeToElement(new { movieId = factory.MovieId, from = date, to = date, page = 1 }), null, default);
-        Assert.Contains(session.Id.ToString(), JsonSerializer.Serialize(schedule.Result));
+        var listed = JsonSerializer.SerializeToElement(schedule.Result).GetProperty("items")
+            .EnumerateArray().Single(item => item.GetProperty("Id").GetInt64() == session.Id);
+        Assert.Equal($"/movies/{factory.MovieId}/showtimes/{session.Id}", listed.GetProperty("BookingUrl").GetString());
         await Assert.ThrowsAsync<ArgumentException>(() => tools.ExecuteAsync("find_showtimes",
             JsonSerializer.Deserialize<JsonElement>("{\"movieId\":1,\"from\":\"bad\",\"to\":null,\"page\":1}"), null, default));
     }

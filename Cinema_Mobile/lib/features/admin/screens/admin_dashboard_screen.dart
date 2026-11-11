@@ -153,11 +153,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               ];
       });
     } on Object {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _business = null;
           _dailyRevenue = null;
         });
+      }
     } finally {
       if (mounted) setState(() => _loadingBusiness = false);
     }

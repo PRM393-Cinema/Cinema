@@ -25,9 +25,10 @@ public sealed class ChatTests(ChatApiFactory factory) : IClassFixture<ChatApiFac
         movies.Movies.Add(new Movie { Title = "Hidden movie", Status = "INACTIVE", DurationMinutes = 90 });
         await movies.SaveChangesAsync();
         var now = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTimeOffset.UtcNow, "Asia/Ho_Chi_Minh").DateTime;
+        var upcoming = new Showtime { MovieId = factory.MovieId, RoomId = factory.RoomId, StartTime = now.AddHours(2),
+            EndTime = now.AddHours(4), Price = 100000, Format = "3D", Status = "OPEN" };
         showtimes.Showtimes.AddRange(
-            new Showtime { MovieId = factory.MovieId, RoomId = factory.RoomId, StartTime = now.AddHours(2),
-                EndTime = now.AddHours(4), Price = 100000, Format = "3D", Status = "OPEN" },
+            upcoming,
             new Showtime { MovieId = factory.MovieId, RoomId = factory.RoomId, StartTime = now.AddDays(-1),
                 EndTime = now.AddDays(-1).AddHours(2), Price = 999999, Status = "OPEN" },
             new Showtime { MovieId = factory.MovieId, RoomId = factory.RoomId, StartTime = now.AddDays(1),
@@ -51,6 +52,9 @@ public sealed class ChatTests(ChatApiFactory factory) : IClassFixture<ChatApiFac
         Assert.Contains($"/movies/{factory.MovieId}", prompt);
         Assert.Contains("Every recommended film must include its exact DetailUrl", prompt);
         Assert.Contains("120000", prompt); // NORMAL 3D: base 100,000 + format 20,000.
+        // Each listed showtime links straight to its seat map
+        Assert.Contains($"/movies/{factory.MovieId}/showtimes/{upcoming.Id}", prompt);
+        Assert.Contains("link each start time to that showtime's exact BookingUrl", prompt);
         Assert.DoesNotContain("Hidden movie", prompt);
         Assert.DoesNotContain("999999", prompt);
         Assert.DoesNotContain("888888", prompt);

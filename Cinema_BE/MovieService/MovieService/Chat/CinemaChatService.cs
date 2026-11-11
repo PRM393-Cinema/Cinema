@@ -60,6 +60,8 @@ public sealed class CinemaChatService(
             {
                 session.Id,
                 session.MovieId,
+                // Opens this showtime's seat map in the app
+                BookingUrl = $"/movies/{session.MovieId}/showtimes/{session.Id}",
                 session.StartTime,
                 session.Format,
                 session.Room,
@@ -87,6 +89,8 @@ public sealed class CinemaChatService(
                 Use short headings (###), **bold** for film titles, totals and key labels, and short bullet lists (-).
                 Separate sections or movie options with one blank line. Keep each bullet to one fact; avoid long prose bullets.
                 For recommendations, link each film title using [Film title](DetailUrl) and briefly say why it fits. For general movie suggestions such as "phim hot", use the catalogue below when it has suitable films. Look up showtimes, seats or ticket prices only if requested or needed to satisfy the user's constraints. When needed, put those details on separate lines.
+                When you list showtimes, link each start time to that showtime's exact BookingUrl, e.g. [08:00](BookingUrl), so the customer opens its seat map directly. Never invent a BookingUrl.
+                Group showtimes by film: link the film title once, then list its showtimes on consecutive lines, and finish one film before starting the next.
                 Every recommended film must include its exact DetailUrl from the catalogue or search_movies results. Never invent a movie id or URL.
                 For snacks, drinks or combo recommendations, call get_snack_menu in this turn. Recommend only items from that menu and put the exact item DetailUrl on its name using [Item name](DetailUrl), with the listed price in VND. Use the description to explain why it fits. If the menu is empty or unavailable, say so instead of guessing.
                 Put each link on the recommendation itself. Do not repeat the links in a separate list at the end.
