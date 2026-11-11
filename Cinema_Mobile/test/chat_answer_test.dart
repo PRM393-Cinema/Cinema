@@ -69,6 +69,29 @@ void main() {
     );
   });
 
+  testWidgets('An exact showtime link opens seats without a film card', (
+    tester,
+  ) async {
+    final opened = <String>[];
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ChatAnswer(
+            text:
+                '[Chọn ghế](/showtimes/42/seats)\n'
+                '[Summary](/showtimes/42/summary)\n'
+                '[Redirect](/showtimes/42/seats?next=/profile)',
+            onOpenLink: opened.add,
+            recommendation: (_) => throw StateError('Unexpected film card'),
+          ),
+        ),
+      ),
+    );
+    expect(find.byType(TextButton), findsOneWidget);
+    await tester.tap(find.widgetWithText(TextButton, 'Chọn ghế'));
+    expect(opened, ['/showtimes/42/seats']);
+  });
+
   testWidgets(
     'Legacy recommendation splits facts and emphasizes prices without rewriting history',
     (tester) async {

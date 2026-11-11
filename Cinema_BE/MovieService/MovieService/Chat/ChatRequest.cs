@@ -31,4 +31,5 @@ public sealed record ChatMessage(
     [Required, RegularExpression("^(user|assistant)$")] string Role,
     [Required, StringLength(4000, MinimumLength = 1)] string Content);
 
-public sealed record ChatReply(string Message, ChatBookingProposal? Booking = null);
+public sealed record ChatReply(string Message, ChatBookingProposal? Booking = null,
+    IReadOnlyDictionary<string, int>? ShowtimeTickets = null);

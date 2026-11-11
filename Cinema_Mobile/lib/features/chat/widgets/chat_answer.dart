@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_text_styles.dart';
 
-// Only public movie and snack detail routes become actions.
+// Only known cinema detail and seat selection routes become actions.
 class ChatAnswer extends StatelessWidget {
   const ChatAnswer({
     required this.text,
@@ -30,7 +30,7 @@ class ChatAnswer extends StatelessWidget {
     final lines = text.replaceAll('\r\n', '\n').split('\n');
     var hasLinks = false;
     final emphasis = RegExp(
-      r'(?:\*\*)?\[([^\[\]\n]+)\]\((/(?:movies|snacks)/[1-9][0-9]{0,15})\)(?:\*\*)?|'
+      r'(?:\*\*)?\[([^\[\]\n]+)\]\((/(?:movies|snacks)/[1-9][0-9]{0,15}|/showtimes/[1-9][0-9]{0,15}/seats)\)(?:\*\*)?|'
       r'\*\*([^*\n]+)\*\*|\b\d+(?:[.,]\d+)*[ \t]?(?:đ|₫|VND)(?![A-Za-z0-9])',
     );
     for (var index = 0; index < lines.length; index++) {
@@ -67,7 +67,11 @@ class ChatAnswer extends StatelessWidget {
             label.isNotEmpty &&
             open != null) {
           hasLinks = true;
-          if (recommendation != null && shown.add(route)) routes.add(route);
+          if (recommendation != null &&
+              !route.startsWith('/showtimes/') &&
+              shown.add(route)) {
+            routes.add(route);
+          }
           children.add(
             WidgetSpan(
               alignment: PlaceholderAlignment.baseline,

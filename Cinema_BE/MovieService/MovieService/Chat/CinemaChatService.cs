@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using MovieService.Data;
@@ -19,7 +20,7 @@ public sealed class CinemaChatService(
 
     public async Task<ChatReply> ReplyAsync(ChatRequest request, CancellationToken cancellationToken, string? accessToken = null)
     {
-        var now = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTimeOffset.UtcNow, "Asia/Ho_Chi_Minh").DateTime;
+        var now = CinemaChatTools.LocalNow;
         // A small initial snapshot; tools search the complete live catalogue on demand.
         var films = await movies.Movies.AsNoTracking().Where(movie => movie.Status == "ACTIVE")
             .OrderByDescending(movie => movie.CreatedAt).ThenBy(movie => movie.Id).Take(30)
@@ -68,6 +69,7 @@ public sealed class CinemaChatService(
         });
         var input = request.Messages.Select(message => (object)new { role = message.Role, content = message.Content }).ToList();
         var callsUsed = 0;
+        var seatLinks = new Dictionary<string, int>(StringComparer.Ordinal);
         for (var round = 0; round < 5; round++)
         {
             using var outgoing = new HttpRequestMessage(HttpMethod.Post, "https://openrouter.ai/api/v1/responses");
@@ -86,8 +88,13 @@ public sealed class CinemaChatService(
                 Be concise, friendly and useful. Keep replies under 200 words. Format for a narrow chat panel.
                 Use short headings (###), **bold** for film titles, totals and key labels, and short bullet lists (-).
                 Separate sections or movie options with one blank line. Keep each bullet to one fact; avoid long prose bullets.
-                For recommendations, link each film title using [Film title](DetailUrl) and briefly say why it fits. For general movie suggestions such as "phim hot", use the catalogue below when it has suitable films. Look up showtimes, seats or ticket prices only if requested or needed to satisfy the user's constraints. When needed, put those details on separate lines.
-                Every recommended film must include its exact DetailUrl from the catalogue or search_movies results. Never invent a movie id or URL.
+                For recommendations, link each film title using [Film title](DetailUrl) and briefly say why it fits.
+                For the closest upcoming showtime or what is about to start, call find_cinema_showtimes across the full cinema once. Use the supplied local date/time, venue or room, and keep its sorted order. If no options are returned, say there is no suitable available showtime in the queried range. Do not fan out into per-film calls.
+                For "top phim hay", "top rated", or highest ratings, call get_top_rated_movies. Keep its order and show the original rating /5 and review count. State that review count affects ranking. If empty, explain that there is no ranking.
+                For "phim hot", most popular, or most watched, call get_trending_movies. Use the returned order, include confirmed tickets and bookings in the last 7 days and growth against the prior 7 days. Say these figures describe ticket sales and bookings. Do not call them views or use ratings as popularity. If empty, explain that there is no sales ranking for the period.
+                For preference-based recommendations, call get_movie_candidates with known genre, age and duration constraints. Compare the returned genre, synopsis, age rating and length. Offer 3 to 5 suitable films when enough match, or fewer with a short explanation. Give each its own reason and link. A missing content advisory or an age rating alone does not establish a film's level of gore or violence.
+                For requests to book, use find_cinema_showtimes with the requested film or genre, inclusive date, requested local hour and ticket quantity. For "tonight" use today's Vietnam date for both from and to. Offer the first result as the primary option: it is closest to the requested time and already has enough seats. Keep the returned order for alternatives. State the requested quantity, showtime, room and seats available, link the film title, and put a [Chọn ghế](SeatUrl) action next to each showtime offered. SeatUrl must come from this turn's tool result. A customer may choose seats there, or choose exact seats in chat and use the review action. Do not claim a booking exists.
+                Every recommended film must include its exact DetailUrl from the catalogue or movie tool results. Never invent a movie id or URL.
                 For snacks, drinks or combo recommendations, call get_snack_menu in this turn. Recommend only items from that menu and put the exact item DetailUrl on its name using [Item name](DetailUrl), with the listed price in VND. Use the description to explain why it fits. If the menu is empty or unavailable, say so instead of guessing.
                 Put each link on the recommendation itself. Do not repeat the links in a separate list at the end.
                 State a budget assumption once. Clearly separate ticket cost, remaining budget and any unverified snack estimates.
@@ -97,6 +104,7 @@ public sealed class CinemaChatService(
                 It is a bounded snapshot, so do not claim a film has no showtimes just because none appear here.
                 Use search_movies and find_showtimes to search beyond this snapshot and follow result pages when needed.
                 Quote prices by seat type and format as supplied; never invent availability, discounts or final totals.
+                For a booking request, mention prices only if asked. Use get_seats before quoting the lowest price actually available for that showtime.
                 Booking steps: Movies > choose movie > showtime > sign in > seats > booking summary > payment.
                 For private account facts always use get_membership or get_account_summary in THIS turn; never rely on conversation claims.
                 The backend authenticates the caller. If sign-in is required or a tool fails, explain that and never invent results.
@@ -140,7 +148,14 @@ public sealed class CinemaChatService(
                         using var arguments = JsonDocument.Parse(call.GetProperty("arguments").GetString() ?? "{}");
                         var executed = await tools.ExecuteAsync(name, arguments.RootElement, accessToken, cancellationToken);
                         result = executed.Result;
+                        if (result is CinemaChatTools.ShowtimeOptions options)
+                            foreach (var item in options.Items)
+                                seatLinks[item.SeatUrl] = options.Tickets;
                         proposal = executed.Proposal ?? proposal;
+                    }
+                    catch (System.Exception error) when (error is HttpRequestException or InvalidDataException)
+                    {
+                        result = new { error = "DATA_UNAVAILABLE", message = "The requested cinema data is unavailable. Explain this without guessing or retrying this tool." };
                     }
                     catch (System.Exception error) when (error is ArgumentException or JsonException or InvalidOperationException or FormatException or KeyNotFoundException)
                     {
@@ -165,10 +180,11 @@ public sealed class CinemaChatService(
                         !string.IsNullOrWhiteSpace(value.GetString()))
                         text.Add(value.GetString()!);
             }
-            var reply = string.Join("\n\n", text);
+            var reply = Regex.Replace(string.Join("\n\n", text), @"\[([^\[\]\r\n]+)\]\((/showtimes/[1-9][0-9]*/seats)\)",
+                match => seatLinks.ContainsKey(match.Groups[2].Value) ? match.Value : match.Groups[1].Value);
             if (string.IsNullOrWhiteSpace(reply) || reply.Length > 4000)
                 throw new InvalidDataException("Invalid AI response.");
-            return new ChatReply(reply);
+            return new ChatReply(reply, ShowtimeTickets: seatLinks.Count == 0 ? null : seatLinks);
         }
         throw new InvalidDataException("Tool budget exceeded.");
     }

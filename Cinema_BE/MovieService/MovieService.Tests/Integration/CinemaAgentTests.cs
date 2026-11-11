@@ -118,6 +118,148 @@ public sealed class CinemaAgentTests(ChatApiFactory factory) : IClassFixture<Cha
     }
 
     [Fact]
+    public async Task CinemaShowtimes_SkipPastAndFullSessions_AndMatchTheBookingTimeAndRoom()
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ShowtimeDbContext>();
+        var now = CinemaChatToolsTestNow();
+        var day = now.Date.AddDays(1);
+        var past = Session(now.AddHours(-2));
+        var full = Session(day.AddHours(18));
+        var early = Session(day.AddHours(19));
+        var closest = Session(day.AddHours(20));
+        db.Showtimes.AddRange(past, full, early, closest);
+        await db.SaveChangesAsync();
+        var capacity = await db.Seats.CountAsync(seat => seat.RoomId == factory.RoomId);
+        var tools = scope.ServiceProvider.GetRequiredService<CinemaChatTools>();
+        factory.Accounts.Output = JsonSerializer.Serialize(new[]
+        {
+            new { ShowtimeId = full.Id, OccupiedSeats = capacity },
+            new { ShowtimeId = early.Id, OccupiedSeats = capacity - 3 },
+            new { ShowtimeId = closest.Id, OccupiedSeats = capacity - 2 }
+        });
+        try
+        {
+            var tomorrow = day.ToString("yyyy-MM-dd");
+            var date = now.ToString("yyyy-MM-dd");
+            var nearest = await Call("CosmoQ", "Phòng Test", date, tomorrow, null, 1);
+            Assert.Equal(new[] { early.Id, closest.Id }, nearest.EnumerateArray().Select(item => item.GetProperty("Id").GetInt64()));
+            var booking = await Call("CosmoQ", "Phòng Test", tomorrow, tomorrow, "20:00", 2);
+            Assert.Equal($"/showtimes/{closest.Id}/seats", booking[0].GetProperty("SeatUrl").GetString());
+            Assert.Equal(2, booking[0].GetProperty("AvailableSeats").GetInt32());
+            var beforeRequestedTime = await Call("CosmoQ", "Phòng Test", tomorrow, tomorrow, "19:10", 2);
+            Assert.Equal(early.Id, beforeRequestedTime[0].GetProperty("Id").GetInt64());
+            Assert.Empty((await Call("CosmoQ", "Phòng Test", tomorrow, tomorrow, "20:00", 4)).EnumerateArray());
+            Assert.Empty((await Call("Rạp khác", "Phòng Test", tomorrow, tomorrow, null, 1)).EnumerateArray());
+            Assert.Empty((await Call("CosmoQ", "Phòng không tồn tại", tomorrow, tomorrow, null, 1)).EnumerateArray());
+            Assert.Null(factory.Accounts.LastAuthorization);
+        }
+        finally { factory.Accounts.Output = "[]"; }
+
+        Showtime Session(DateTime start) => new()
+        {
+            MovieId = factory.MovieId, RoomId = factory.RoomId, StartTime = start,
+            EndTime = start.AddHours(1), Status = "OPEN", Price = 100000
+        };
+
+        async Task<JsonElement> Call(string cinema, string room, string from, string to, string? around, int tickets)
+        {
+            var result = await tools.ExecuteAsync("find_cinema_showtimes", JsonSerializer.SerializeToElement(new
+            {
+                movieIds = new[] { factory.MovieId }, genre = "", cinema, room, from, to, around, tickets
+            }), "unused-account-token", default);
+            return JsonSerializer.SerializeToElement(result.Result).GetProperty("Items");
+        }
+    }
+
+    [Fact]
+    public async Task TopRated_WeightsReviewVolume_AndExcludesUnreleasedFilms()
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<MovieDbContext>();
+        var wellReviewed = new Movie { Title = "Many reviews", DurationMinutes = 90, Status = "ACTIVE" };
+        var unreleased = new Movie
+        {
+            Title = "Future release", DurationMinutes = 90, Status = "ACTIVE",
+            ReleaseDate = DateOnly.FromDateTime(CinemaChatToolsTestNow().AddDays(2))
+        };
+        db.Movies.AddRange(wellReviewed, unreleased);
+        await db.SaveChangesAsync();
+        factory.Accounts.Output = JsonSerializer.Serialize(new[]
+        {
+            new { MovieId = factory.MovieId, Average = 5.0, Count = 1 },
+            new { MovieId = wellReviewed.Id, Average = 4.7, Count = 100 },
+            new { MovieId = unreleased.Id, Average = 5.0, Count = 1000 }
+        });
+        try
+        {
+            var tools = scope.ServiceProvider.GetRequiredService<CinemaChatTools>();
+            var result = await tools.ExecuteAsync("get_top_rated_movies", JsonSerializer.SerializeToElement(new { }), null, default);
+            var items = JsonSerializer.SerializeToElement(result.Result).GetProperty("items");
+            Assert.Equal(2, items.GetArrayLength());
+            Assert.Equal($"/movies/{wellReviewed.Id}", items[0].GetProperty("DetailUrl").GetString());
+            Assert.Equal(100, items[0].GetProperty("ReviewCount").GetInt32());
+        }
+        finally { factory.Accounts.Output = "[]"; }
+    }
+
+    [Fact]
+    public async Task Trending_AggregatesSessionsByFilm_AndComparesTicketWindows()
+    {
+        var first = await NewSession();
+        var second = await NewSession();
+        using var scope = factory.Services.CreateScope();
+        var tools = scope.ServiceProvider.GetRequiredService<CinemaChatTools>();
+        factory.Accounts.Output = JsonSerializer.Serialize(new[]
+        {
+            new { ShowtimeId = first.Id, RecentBookings = 3, RecentTickets = 5, PreviousBookings = 1, PreviousTickets = 2 },
+            new { ShowtimeId = second.Id, RecentBookings = 2, RecentTickets = 4, PreviousBookings = 1, PreviousTickets = 1 }
+        });
+        try
+        {
+            var result = await tools.ExecuteAsync("get_trending_movies", JsonSerializer.SerializeToElement(new { }), null, default);
+            var row = Assert.Single(JsonSerializer.SerializeToElement(result.Result).GetProperty("items").EnumerateArray());
+            Assert.Equal(9, row.GetProperty("Tickets").GetInt32());
+            Assert.Equal(5, row.GetProperty("Bookings").GetInt32());
+            Assert.Equal(200.0, row.GetProperty("TicketGrowthPercent").GetDouble());
+            Assert.Equal($"/movies/{factory.MovieId}", row.GetProperty("DetailUrl").GetString());
+        }
+        finally { factory.Accounts.Output = "[]"; }
+    }
+
+    [Fact]
+    public async Task MovieCandidates_FilterGenreAgeAndDuration_AndProvideSynopsisForPreferenceMatching()
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<MovieDbContext>();
+        Movie Film(string title, string genre, int minutes, string age) => new()
+        {
+            Title = title, Genre = genre, DurationMinutes = minutes, AgeRating = age,
+            Status = "ACTIVE", Description = "Suspense and a family mystery"
+        };
+        db.Movies.AddRange(Film("One", "Mystery QA", 90, "T13"), Film("Two", "Mystery QA", 95, "T16"),
+            Film("Three", "Mystery QA", 100, "P"), Film("Too long", "Mystery QA", 140, "T13"),
+            Film("Too old", "Mystery QA", 95, "T18"), Film("Other genre", "Comedy QA", 95, "T13"));
+        await db.SaveChangesAsync();
+        var tools = scope.ServiceProvider.GetRequiredService<CinemaChatTools>();
+        var result = await tools.ExecuteAsync("get_movie_candidates", JsonSerializer.SerializeToElement(new
+        {
+            genre = "Mystery QA", maxAgeRating = "T16", minMinutes = 90, maxMinutes = 100
+        }), null, default);
+        var payload = JsonSerializer.SerializeToElement(result.Result);
+        Assert.Equal(3, payload.GetProperty("count").GetInt32());
+        Assert.False(payload.GetProperty("contentAdvisoriesAvailable").GetBoolean());
+        Assert.All(payload.GetProperty("items").EnumerateArray(), item =>
+        {
+            Assert.Equal("Suspense and a family mystery", item.GetProperty("Description").GetString());
+            Assert.StartsWith("/movies/", item.GetProperty("DetailUrl").GetString());
+        });
+    }
+
+    private static DateTime CinemaChatToolsTestNow() =>
+        TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTimeOffset.UtcNow, "Asia/Ho_Chi_Minh").DateTime;
+
+    [Fact]
     public async Task PrepareBooking_RechecksSeatsAndComputesPrice_WithoutCreatingAnything()
     {
         var session = await NewSession();
@@ -180,6 +322,28 @@ public sealed class CinemaAgentTests(ChatApiFactory factory) : IClassFixture<Cha
             using var response = await client.PostAsJsonAsync("/api/v1/chat", new { messages = new[] { new ChatMessage("user", "Find movies") } });
             Assert.Equal(HttpStatusCode.BadGateway, response.StatusCode);
             Assert.Equal(5, factory.Handler.Calls - before);
+        }
+        finally { factory.Handler.Output = null; }
+    }
+
+    [Fact]
+    public async Task SeatLink_RequiresAvailabilityFromThisTurn()
+    {
+        using var client = factory.CreateClient();
+        factory.Handler.Output = JsonSerializer.Serialize(new
+        {
+            status = "completed",
+            output = new[] { new { type = "message", content = new[]
+                { new { type = "output_text", text = "[Chọn ghế](/showtimes/123/seats)" } } } }
+        });
+        try
+        {
+            using var response = await client.PostAsJsonAsync("/api/v1/chat", new
+            {
+                messages = new[] { new ChatMessage("user", "Cho tôi link đặt vé") }
+            });
+            response.EnsureSuccessStatusCode();
+            Assert.Equal("Chọn ghế", (await response.Content.ReadFromJsonAsync<ChatReply>())!.Message);
         }
         finally { factory.Handler.Output = null; }
     }
