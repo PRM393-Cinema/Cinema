@@ -24,6 +24,7 @@ public sealed partial class CinemaChatTools(MovieDbContext movies, ShowtimeDbCon
           {"type":"function","name":"get_trending_movies","description":"Rank active films by confirmed tickets, confirmed bookings and growth in the last 7 days versus the previous 7. These are booking metrics, not audience ratings or views.","strict":true,"parameters":{"type":"object","properties":{},"required":[],"additionalProperties":false}},
           {"type":"function","name":"get_movie_candidates","description":"Find currently released active movies for preference-based recommendations. Read genre, synopsis, age rating and duration to judge fit. Use the catalogue's genre, e.g. Kinh dị, or empty for all. Use null for an unspecified age or duration limit. Age ratings do not prove the presence or absence of gore.","strict":true,"parameters":{"type":"object","properties":{"genre":{"type":"string","maxLength":100},"maxAgeRating":{"type":["string","null"],"enum":["P","K","T13","T16","T18",null]},"minMinutes":{"type":["integer","null"],"minimum":1,"maximum":600},"maxMinutes":{"type":["integer","null"],"minimum":1,"maximum":600}},"required":["genre","maxAgeRating","minMinutes","maxMinutes"],"additionalProperties":false}},
           {"type":"function","name":"get_seats","description":"Get live seat ids, labels, types, prices and availability. Sign-in required. Never guess seat ids. SWEETBOX seats must be selected with their adjacent pair.","strict":true,"parameters":{"type":"object","properties":{"showtimeId":{"type":"integer","minimum":1}},"required":["showtimeId"],"additionalProperties":false}},
+          {"type":"function","name":"request_booking_details","description":"Show the in-chat booking form when the customer wants to book and any of movie or genre, date, time, or number of tickets is missing. Pass only details already supplied by the customer; unknown fields must be null. Use Vietnam YYYY-MM-DD and HH:mm.","strict":true,"parameters":{"type":"object","properties":{"movie":{"type":["string","null"],"maxLength":100},"date":{"type":["string","null"]},"time":{"type":["string","null"]},"tickets":{"type":["integer","null"],"minimum":1,"maximum":8}},"required":["movie","date","time","tickets"],"additionalProperties":false}},
           {"type":"function","name":"get_membership","description":"Read the signed-in customer's membership tier, points, benefits and recent points history. Requires sign-in; no userId parameter.","strict":true,"parameters":{"type":"object","properties":{},"required":[],"additionalProperties":false}},
           {"type":"function","name":"get_account_summary","description":"Read the signed-in customer's bookings, payments, highest paid bill and exact spending totals across ALL history in the date range. Dates inclusive YYYY-MM-DD Vietnam time; null means all time. Query filters booking code/movie title and payment code, not totals. Page rows in batches of 10. Requires sign-in.","strict":true,"parameters":{"type":"object","properties":{"from":{"type":["string","null"]},"to":{"type":["string","null"]},"query":{"type":"string","maxLength":100},"page":{"type":"integer","minimum":1,"maximum":10000}},"required":["from","to","query","page"],"additionalProperties":false}},
           {"type":"function","name":"prepare_booking","description":"Prepare ONE read-only ticket proposal using exact live seat ids after the customer chooses the movie, showtime and seats. Does NOT hold seats or create/pay a booking. UI shows a review button; customer must confirm there. No snacks, promotions or points applied yet; those are chosen in existing checkout. Sign-in required. Max 8 seats.","strict":true,"parameters":{"type":"object","properties":{"showtimeId":{"type":"integer","minimum":1},"seatIds":{"type":"array","items":{"type":"integer","minimum":1},"minItems":1,"maxItems":8}},"required":["showtimeId","seatIds"],"additionalProperties":false}}
@@ -121,6 +122,19 @@ public sealed partial class CinemaChatTools(MovieDbContext movies, ShowtimeDbCon
                 }
             case "find_cinema_showtimes":
                 return (await FindCinemaShowtimesAsync(args, now, cancellationToken), null);
+            case "request_booking_details":
+                {
+                    var movie = args.GetProperty("movie").GetString()?.Trim();
+                    var date = args.GetProperty("date").GetString();
+                    var time = args.GetProperty("time").GetString();
+                    var value = args.GetProperty("tickets");
+                    int? tickets = value.ValueKind == JsonValueKind.Null ? null : value.GetInt32();
+                    if (movie?.Length > 100 || tickets is < 1 or > 8 ||
+                        (date != null && !DateOnly.TryParseExact(date, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out _)) ||
+                        (time != null && !TimeOnly.TryParseExact(time, "HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out _)))
+                        throw new ArgumentException("Use valid booking details or null for unknown fields.");
+                    return (new ChatBookingForm(movie, date, time, tickets), null);
+                }
             case "get_top_rated_movies":
                 return (await GetTopRatedMoviesAsync(now, cancellationToken), null);
             case "get_trending_movies":

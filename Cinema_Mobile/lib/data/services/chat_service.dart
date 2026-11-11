@@ -43,14 +43,46 @@ class ChatService {
               response['booking'] as Map<String, dynamic>,
             )
           : null,
+      bookingForm: switch (response['bookingForm']) {
+        final Map<String, dynamic> json => ChatBookingForm(
+          movie: json['movie'] as String?,
+          date: json['date'] as String?,
+          time: json['time'] as String?,
+          tickets: json['tickets'] as int?,
+        ),
+        _ => null,
+      },
+      showtimeTickets: {
+        if (response['showtimeTickets'] case final Map<String, dynamic> values)
+          for (final entry in values.entries)
+            if (entry.value is int &&
+                (entry.value as int) >= 1 &&
+                (entry.value as int) <= 8)
+              entry.key: entry.value as int,
+      },
     );
   }
 }
 
 class ChatResponse {
-  const ChatResponse(this.message, this.booking);
+  const ChatResponse(
+    this.message,
+    this.booking, {
+    this.bookingForm,
+    this.showtimeTickets = const {},
+  });
   final String message;
   final ChatBookingProposal? booking;
+  final ChatBookingForm? bookingForm;
+  final Map<String, int> showtimeTickets;
+}
+
+class ChatBookingForm {
+  const ChatBookingForm({this.movie, this.date, this.time, this.tickets});
+  final String? movie;
+  final String? date;
+  final String? time;
+  final int? tickets;
 }
 
 class ChatBookingProposal {

@@ -348,6 +348,30 @@ public sealed class CinemaAgentTests(ChatApiFactory factory) : IClassFixture<Cha
         finally { factory.Handler.Output = null; }
     }
 
+    [Fact]
+    public async Task MissingBookingDetails_ReturnPrefilledFormWithoutBooking()
+    {
+        using var client = factory.CreateClient();
+        factory.Handler.Outputs.Enqueue(ToolCall("request_booking_details", new
+        {
+            movie = "Ma Xó", date = (string?)null, time = (string?)null, tickets = 2
+        }));
+        try
+        {
+            var before = factory.Accounts.Calls;
+            using var response = await client.PostAsJsonAsync("/api/v1/chat", new
+            {
+                messages = new[] { new ChatMessage("user", "Đặt giúp 2 vé Ma Xó") }
+            });
+            response.EnsureSuccessStatusCode();
+            var reply = await response.Content.ReadFromJsonAsync<ChatReply>();
+            Assert.Equal(new ChatBookingForm("Ma Xó", null, null, 2), reply!.BookingForm);
+            Assert.Null(reply.Booking);
+            Assert.Equal(before, factory.Accounts.Calls);
+        }
+        finally { factory.Handler.Outputs.Clear(); }
+    }
+
     private async Task<Showtime> NewSession()
     {
         using var scope = factory.Services.CreateScope();

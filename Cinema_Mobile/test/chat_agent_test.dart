@@ -1,9 +1,9 @@
 import 'dart:convert';
 
-import 'package:cinema_fe/app/routes/app_routes.dart';
 import 'package:cinema_fe/core/network/access_token_provider.dart';
 import 'package:cinema_fe/core/network/api_client.dart';
 import 'package:cinema_fe/core/session/session_state.dart';
+import 'package:cinema_fe/data/models/seat.dart';
 import 'package:cinema_fe/data/services/chat_service.dart';
 import 'package:cinema_fe/features/booking/screens/booking_summary_screen.dart';
 import 'package:flutter/material.dart';
@@ -102,34 +102,18 @@ void main() {
         await tester.ensureVisible(review);
         await tester.tap(review);
         await pumpRoute(tester);
-        expect(find.byKey(const Key('confirmChatBooking')), findsOneWidget);
-        expect(bookings.createCalls, isEmpty);
-        await tester.tap(find.text('Cancel'));
-        await pumpRoute(tester);
-        expect(bookings.createCalls, isEmpty);
-        await tester.tap(review);
-        await pumpRoute(tester);
         final confirm = find.byKey(const Key('confirmChatBooking'));
+        await tester.ensureVisible(confirm);
+        expect(bookings.createCalls, isEmpty);
         await tester.tap(confirm);
         await tester.tap(confirm, warnIfMissed: false);
         await pumpRoute(tester);
         expect(bookings.createCalls, hasLength(1));
         expect(bookings.createCalls.single.seatIds, [1]);
-        expect(catalog.seatMapLoads, 2);
-        final state = tester.state<NavigatorState>(
-          find.byType(Navigator).first,
-        );
-        final route = ModalRoute.of(
-          tester.element(find.byType(BookingSummaryScreen)),
-        );
-        expect(route?.settings.name, AppRoutes.bookingSummary(11));
-        expect(
-          find.byKey(const Key('cinemaChatPanel')).hitTestable(),
-          findsNothing,
-        );
-        // Dispose the existing hold timer; fake repository releases it, no external booking is made.
-        state.pop();
-        await pumpRoute(tester);
+        expect(catalog.seatMapLoads, 1);
+        expect(find.byType(BookingSummaryScreen), findsNothing);
+        expect(find.byKey(const Key('chatSeatBooking')), findsOneWidget);
+        await tester.pumpWidget(const SizedBox());
         expect(tester.takeException(), isNull);
       },
     );
@@ -179,13 +163,124 @@ void main() {
       await tester.ensureVisible(review);
       await tester.tap(review);
       await pumpRoute(tester);
-      expect(find.text('Unable to prepare booking'), findsOneWidget);
+      expect(
+        find.text(
+          scenario == 'expired'
+              ? 'Đề xuất đã hết hạn. Hãy chọn lại ghế.'
+              : 'Ghế hoặc giá đã thay đổi. Hãy chọn lại ghế.',
+        ),
+        findsOneWidget,
+      );
       expect(find.byKey(const Key('confirmChatBooking')), findsNothing);
       expect(bookings.createCalls, isEmpty);
-      await tester.tap(find.text('OK'));
-      await pumpRoute(tester);
     });
   }
+
+  testWidgets(
+    'Booking form leads to live adjacent seats and holds inside chat',
+    (tester) async {
+      final vietnam = DateTime.now().toUtc().add(const Duration(hours: 7));
+      final date = vietnam.toIso8601String().substring(0, 10);
+      final requests = <Map<String, dynamic>>[];
+      final service = ChatService(
+        client: ApiClient(
+          httpClient: MockClient((request) async {
+            requests.add(jsonDecode(request.body) as Map<String, dynamic>);
+            return http.Response(
+              jsonEncode(
+                requests.length == 1
+                    ? {
+                        'message': 'Bổ sung thông tin',
+                        'bookingForm': {
+                          'movie': 'Inception',
+                          'date': date,
+                          'tickets': 2,
+                        },
+                      }
+                    : {
+                        'message': '[Chọn ghế](/showtimes/11/seats)',
+                        'showtimeTickets': {'/showtimes/11/seats': 2},
+                      },
+              ),
+              200,
+              headers: {'content-type': 'application/json; charset=utf-8'},
+            );
+          }),
+        ),
+      );
+      final catalog = FakeCatalogRepository(
+        seatMap: ShowtimeSeatsData.fromOccupied(
+          seats: const [
+            Seat(id: 1, roomId: 1, row: 'A', number: 1, type: 'NORMAL'),
+            Seat(id: 2, roomId: 1, row: 'A', number: 2, type: 'NORMAL'),
+            Seat(id: 3, roomId: 1, row: 'A', number: 3, type: 'NORMAL'),
+          ],
+          occupiedSeatIds: [1],
+        ),
+      );
+      final bookings = FakeBookingRepository();
+      tester.view.physicalSize = const Size(390, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        buildTestApp(
+          authenticated: true,
+          catalogRepository: catalog,
+          bookingRepository: bookings,
+          chatService: service,
+        ),
+      );
+      await pumpRoute(tester);
+      await tester.tap(find.byKey(const Key('openCinemaChat')));
+      await pumpRoute(tester);
+      await tester.enterText(
+        find.byKey(const Key('cinemaChatInput')),
+        'Đặt giúp 2 vé Inception hôm nay',
+      );
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('sendCinemaChat')));
+      await pumpRoute(tester);
+      final time = find.byKey(const Key('chatBookingTime'));
+      await tester.ensureVisible(time);
+      await tester.enterText(time, '20:00');
+      final search = find.text('Tìm suất chiếu');
+      await tester.ensureVisible(search);
+      await tester.tap(search);
+      await pumpRoute(tester);
+      final request =
+          (requests.last['messages'] as List).last['content'] as String;
+      expect(request, contains('2 vé'));
+      expect(request, contains('Inception'));
+      expect(request, contains('20:00'));
+      await tester.tap(find.widgetWithText(TextButton, 'Chọn ghế'));
+      await pumpRoute(tester);
+      final suggested = find.text('Gợi ý A2, A3');
+      await tester.ensureVisible(suggested);
+      await tester.tap(suggested);
+      await pumpRoute(tester);
+      final review = find.text('Xem lại đặt vé');
+      await tester.ensureVisible(review);
+      await tester.tap(review);
+      await pumpRoute(tester);
+      expect(bookings.createCalls, isEmpty);
+      final confirm = find.byKey(const Key('confirmChatBooking'));
+      await tester.ensureVisible(confirm);
+      await tester.tap(confirm);
+      await pumpRoute(tester);
+      expect(bookings.createCalls.single.seatIds, [2, 3]);
+      expect(bookings.checkoutBookingIds, isEmpty);
+      expect(find.byType(BookingSummaryScreen), findsNothing);
+      expect(find.byKey(const Key('chatSeatBooking')), findsOneWidget);
+      final payment = find.text('Tạo link PayOS');
+      await tester.ensureVisible(payment);
+      await tester.tap(payment);
+      await pumpRoute(tester);
+      expect(bookings.checkoutBookingIds, hasLength(1));
+      expect(find.text('Mở PayOS'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets(
     'Changing identity clears account messages and pending proposals',

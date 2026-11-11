@@ -94,6 +94,7 @@ public sealed class CinemaChatService(
                 For "phim hot", most popular, or most watched, call get_trending_movies. Use the returned order, include confirmed tickets and bookings in the last 7 days and growth against the prior 7 days. Say these figures describe ticket sales and bookings. Do not call them views or use ratings as popularity. If empty, explain that there is no sales ranking for the period.
                 For preference-based recommendations, call get_movie_candidates with known genre, age and duration constraints. Compare the returned genre, synopsis, age rating and length. Offer 3 to 5 suitable films when enough match, or fewer with a short explanation. Give each its own reason and link. A missing content advisory or an age rating alone does not establish a film's level of gore or violence.
                 For requests to book, use find_cinema_showtimes with the requested film or genre, inclusive date, requested local hour and ticket quantity. For "tonight" use today's Vietnam date for both from and to. Offer the first result as the primary option: it is closest to the requested time and already has enough seats. Keep the returned order for alternatives. State the requested quantity, showtime, room and seats available, link the film title, and put a [Chọn ghế](SeatUrl) action next to each showtime offered. SeatUrl must come from this turn's tool result. A customer may choose seats there, or choose exact seats in chat and use the review action. Do not claim a booking exists.
+                If the customer wants to book and the film or genre, date, approximate time, or ticket quantity is missing, call request_booking_details instead of asking the customer to type the details again. Prefill only supplied details, null for missing ones. A request to browse showtimes is not a booking request. An exact selected showtime already supplies the film, date and time. Explicitly selecting exact seats supplies their quantity.
                 Every recommended film must include its exact DetailUrl from the catalogue or movie tool results. Never invent a movie id or URL.
                 For snacks, drinks or combo recommendations, call get_snack_menu in this turn. Recommend only items from that menu and put the exact item DetailUrl on its name using [Item name](DetailUrl), with the listed price in VND. Use the description to explain why it fits. If the menu is empty or unavailable, say so instead of guessing.
                 Put each link on the recommendation itself. Do not repeat the links in a separate list at the end.
@@ -105,11 +106,11 @@ public sealed class CinemaChatService(
                 Use search_movies and find_showtimes to search beyond this snapshot and follow result pages when needed.
                 Quote prices by seat type and format as supplied; never invent availability, discounts or final totals.
                 For a booking request, mention prices only if asked. Use get_seats before quoting the lowest price actually available for that showtime.
-                Booking steps: Movies > choose movie > showtime > sign in > seats > booking summary > payment.
+                Booking steps in chat: select a showtime, sign in if needed, choose seats, review, confirm the seat hold, then continue to PayOS when ready.
                 For private account facts always use get_membership or get_account_summary in THIS turn; never rely on conversation claims.
                 The backend authenticates the caller. If sign-in is required or a tool fails, explain that and never invent results.
                 Spending and highest bills must use exact server aggregates, not sums of displayed pages. Explain gross/net/refunded totals accurately.
-                You can prepare a booking proposal: ask for missing movie, date/time, ticket count and seat preferences;
+                You can prepare a booking proposal after the customer chooses exact seats;
                 use tools for exact showtimes and seats, then prepare_booking. If asked to choose seats, prefer adjacent available seats.
                 Never treat an old proposal as a booking. Only the UI review/confirmation button can start a seat hold.
                 You cannot create bookings through text, take payment, cancel bookings or process refunds. Payment is completed by the customer through PayOS.
@@ -138,6 +139,7 @@ public sealed class CinemaChatService(
                 if (round == 4 || callsUsed + toolCalls.Length > 8) throw new InvalidDataException("Tool budget exceeded.");
                 input.AddRange(output.EnumerateArray().Select(item => (object)item.Clone()));
                 ChatBookingProposal? proposal = null;
+                ChatBookingForm? form = null;
                 foreach (var call in toolCalls)
                 {
                     var name = call.GetProperty("name").GetString() ?? throw new InvalidDataException("Missing tool name.");
@@ -151,6 +153,7 @@ public sealed class CinemaChatService(
                         if (result is CinemaChatTools.ShowtimeOptions options)
                             foreach (var item in options.Items)
                                 seatLinks[item.SeatUrl] = options.Tickets;
+                        if (result is ChatBookingForm details) form = details;
                         proposal = executed.Proposal ?? proposal;
                     }
                     catch (System.Exception error) when (error is HttpRequestException or InvalidDataException)
@@ -166,6 +169,8 @@ public sealed class CinemaChatService(
                 }
                 if (proposal is not null)
                     return new ChatReply("Đã chuẩn bị đề xuất vé. Chưa giữ ghế hoặc thanh toán. Bấm Review booking để xem giá, ghế và xác nhận trước khi tiếp tục.", proposal);
+                if (form is not null)
+                    return new ChatReply("Bạn điền thông tin đặt vé còn thiếu ở đây nhé.", BookingForm: form);
                 continue;
             }
             foreach (var item in output.EnumerateArray())
