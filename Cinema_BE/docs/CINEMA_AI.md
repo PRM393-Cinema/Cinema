@@ -10,7 +10,8 @@ and confirmation in the UI, then uses the existing checkout and PayOS flow.
 Press Enter to send a message; Shift+Enter inserts a newline. The mobile keyboard's
 Send action also submits. Empty messages and duplicate sends while waiting are blocked.
 Assistant answers render short headings, bold labels and bullet lists as selectable
-text in both themes. HTML and links remain literal text. Recommendations separate
+text in both themes. HTML and external links remain literal text. Known movie,
+snack and verified showtime routes are interactive. Recommendations separate
 movie titles, showtimes and costs. Long old plain-text bullets gain a bold leading
 label and sentence breaks; currency amounts are emphasized even without Markdown.
 This only changes rendering: saved text and amounts stay unchanged and no AI call is needed.
@@ -20,20 +21,36 @@ This only changes rendering: saved text and amounts stay unchanged and no AI cal
 | Area | What works today | Example question |
 | --- | --- | --- |
 | Movie advice | Search all active movies by title, genre or description, following result pages beyond the initial snapshot. | “Gợi ý phim hành động dưới 2 tiếng.” |
-| Showtimes | Search live future OPEN showtimes by movie and inclusive Vietnam date range, with room, format and seat-type prices. | “Interstellar có suất nào ngày 10/11/2026, ghế VIP giá bao nhiêu?” |
+| Showtimes | Search future OPEN showtimes across the full cinema, by film/genre, Vietnam date/time, cinema and room. Skip full sessions and those with fewer seats than requested; offer verified seat links. | “Suất gần nhất còn 2 ghế ở CosmoQ?” |
+| Top rated | Rank released active movies by audience scores weighted by review count; include the original score /5 and count. | “Top phim đánh giá cao đang chiếu?” |
+| Trending | Rank confirmed tickets and bookings over the last 7 days, with growth against the previous 7 days. View/interest tracking is not implemented and is never presented as ticket sales. | “Phim nào đang hot tuần này?” |
+| Personal recommendations | Filter released active movies by genre, age rating and duration; provide synopsis and 3–5 options when enough films match. Missing content advisories do not prove a film has no gore. | “Gợi ý phim kinh dị dưới 2 tiếng, không quá máu me.” |
 | Membership | Read the signed-in customer's tier, points, earn rate, next tier, gifts and recent points transactions. | “Tôi đang hạng gì, còn bao nhiêu điểm và quyền lợi?” |
 | Bookings/payments | Search and paginate the customer's own booking/payment history. Compute highest paid payment and gross/refunded/net spending across the full selected period. | “Hóa đơn đã thanh toán cao nhất của tôi?” / “Tháng 10/2026 tôi chi bao nhiêu?” |
-| Booking assistant | Check live seat availability, suggest specific seats and prepare a five-minute ticket proposal. The Review booking dialog reloads the movie, showtime, seats and prices before allowing confirmation. | “Tìm 2 ghế thường cạnh nhau cho Inception tối mai, hỏi tôi trước khi đặt.” |
+| Booking assistant | Collect missing film/date/time in a form, preview a verified showtime's seat map, choose seats, review prices and explicitly confirm the hold inside chat. Sign-in resumes the selected showtime. | “Tìm 2 ghế thường cạnh nhau cho Inception tối mai, hỏi tôi trước khi đặt.” |
 | Conversation | Follow recent questions, reply in the user's language, and preserve the chat while minimized or changing customer pages. | “Trong hai phim vừa nêu, phim nào ngắn hơn?” |
 | Interface | Guest access, both themes, mobile/desktop popup, selectable answers, retry, New chat and keyboard controls. | Enter sends; Shift+Enter adds a newline. |
 
-All six model tools are read-only and allowlisted: `search_movies`, `find_showtimes`,
+Model tools are read-only and allowlisted: `search_movies`, `get_snack_menu`,
+`find_showtimes`, `find_cinema_showtimes`, `get_top_rated_movies`,
+`get_trending_movies`, `get_movie_candidates`, `request_booking_details`,
 `get_seats`, `get_membership`, `get_account_summary`, `prepare_booking`.
 The model cannot directly create/pay/cancel a booking or process a refund. A proposal
-does not hold any seats. Only **Confirm & hold seats** opens the existing summary,
-whose transactional booking API checks conflicts and recalculates prices. Checkout
-lets the customer add concessions, promotions, points and membership gifts before
-paying through PayOS. The AI never marks an order paid.
+does not hold any seats. Only the explicit confirmation button calls the transactional
+booking API, which checks conflicts and recalculates prices. The customer then
+opens PayOS and the app verifies the payment with the server. The separate checkout
+also supports concessions, promotions, points and membership gifts. The AI never
+marks an order paid.
+
+The public discovery tools need the gateway route `/api/v1/cinema-insights/{**catch-all}`
+and BookingService's `availability`, `ratings` and `trends` endpoints. Deploy the
+ApiGateway, BookingService and MovieService from the same GitHub revision before
+testing a new frontend. A 404 on these routes can indicate a missing route or an older
+backend deployment; check the hosting response and logs before concluding which.
+Rebuilding Flutter alone cannot supply these APIs. An individual
+data-tool timeout is returned to the model as `DATA_UNAVAILABLE`, so it can explain
+the failure without inventing results. Provider failures still return a safe 502;
+generation is never automatically retried because it may be billed.
 
 Proposals are limited to 1–8 distinct seats in one showtime. Sweetbox pairs must stay
 together. Expired proposals, changed prices, occupied seats and account changes block

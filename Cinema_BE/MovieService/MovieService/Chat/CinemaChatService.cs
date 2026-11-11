@@ -168,6 +168,12 @@ public sealed class CinemaChatService(
                     {
                         result = new { error = "DATA_UNAVAILABLE", message = "The requested cinema data is unavailable. Explain this without guessing or retrying this tool." };
                     }
+                    catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+                    {
+                        // A tool's HTTP timeout must not discard the entire conversation.
+                        // The overall chat deadline and client disconnects still cancel the request.
+                        result = new { error = "DATA_UNAVAILABLE", message = "The requested cinema data timed out. Explain this without guessing or retrying this tool." };
+                    }
                     catch (System.Exception error) when (error is ArgumentException or JsonException or InvalidOperationException or FormatException or KeyNotFoundException)
                     {
                         result = new { error = "INVALID_ARGUMENTS", message = error is ArgumentException ? error.Message : "Use valid declared tool arguments." };

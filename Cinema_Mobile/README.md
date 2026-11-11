@@ -105,6 +105,28 @@ backend CORS policy to allow the deployed web origin: set
 `Cors__AllowedOrigins__0=https://<web host>` on the gateway (an empty list
 allows every origin, which is only meant for local development).
 
+### Vercel package
+
+From `Cinema_Mobile`, build both websites with the Render URLs already used by the
+demo, then deploy the prebuilt package yourself:
+
+```powershell
+.\tool\build_vercel.ps1
+npx vercel deploy --prebuilt --prod --cwd build/vercel
+```
+
+The customer site is at `/`, the admin site at `/admin/`. The script creates
+`build/vercel/.vercel/output` using Vercel's Build Output API, includes the service
+wake-up URLs and reuses the local project link from `build/cosmoq/.vercel` when
+available. If no link exists, run `npx vercel link --cwd build/vercel` before deploying.
+Override public backend addresses with `-ApiBaseUrl` and `-WakeUpUrls` when needed.
+The script never deploys or changes a hosted service.
+
+For GitHub-connected Render services, deploy ApiGateway, BookingService and
+MovieService from the revision containing the Cinema AI discovery APIs before
+testing ratings, trending films or verified showtime links. The frontend package
+cannot update the hosted backend. See [Cinema AI setup](../Cinema_BE/docs/CINEMA_AI.md).
+
 ### Hosting where services sleep (Render free plan)
 
 Free Render services sleep after 15 minutes without requests and take up to a
