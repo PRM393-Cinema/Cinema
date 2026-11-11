@@ -48,23 +48,34 @@ int widestRowOf(List<(String, List<Seat>)> rows) =>
 // Sizes a seat map so the widest row fits the screen: seats shrink on
 // phones (down to [minSeat]) and grow up to [maxSeat] on larger screens.
 class SeatMapLayout {
-  const SeatMapLayout({required this.seatSize, required this.gap});
+  const SeatMapLayout({
+    required this.seatSize,
+    required this.gap,
+    this.horizontalPadding = padding,
+  });
 
   factory SeatMapLayout.fit({
     required double maxWidth,
     required int seatsPerRow,
+    bool compact = false,
   }) {
     final seats = math.max(seatsPerRow, 1);
-    final gap = maxWidth < 600 ? 6.0 : AppSpacing.md;
+    final gap = compact
+        ? AppSpacing.xs
+        : maxWidth < 600
+        ? 6.0
+        : AppSpacing.md;
+    final horizontalPadding = compact ? AppSpacing.sm : padding;
     final available =
         maxWidth -
-        padding * 2 -
+        horizontalPadding * 2 -
         (labelWidth + labelGap) * 2 -
         gap * (seats - 1);
 
     return SeatMapLayout(
       seatSize: (available / seats).clamp(minSeat, maxSeat).toDouble(),
       gap: gap,
+      horizontalPadding: horizontalPadding,
     );
   }
 
@@ -76,11 +87,14 @@ class SeatMapLayout {
 
   final double seatSize;
   final double gap;
+  final double horizontalPadding;
 
   double seatsWidth(int seats) => seats * seatSize + (seats - 1) * gap;
 
   double mapWidth(int seats) {
-    return seatsWidth(seats) + (labelWidth + labelGap) * 2 + padding * 2;
+    return seatsWidth(seats) +
+        (labelWidth + labelGap) * 2 +
+        horizontalPadding * 2;
   }
 }
 

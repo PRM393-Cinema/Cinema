@@ -24,9 +24,7 @@ import '../../../data/models/movie.dart';
 import '../../../data/models/seat.dart';
 import '../../../data/models/showtime.dart';
 import '../../../data/repositories/catalog_repository.dart';
-import '../widgets/seat_item.dart';
-import '../widgets/seat_legend.dart';
-import '../widgets/seat_map_rows.dart';
+import '../widgets/customer_seat_map.dart';
 import '../widgets/seat_type_style.dart';
 
 class SeatSelectionScreen extends StatefulWidget {
@@ -525,7 +523,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
       );
     }
 
-    return _SeatMap(
+    return CustomerSeatMap(
       data: data,
       showtime: showtime,
       selectedSeatIds: _selectedSeatIds,
@@ -646,135 +644,6 @@ class _ShowtimeSummary extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _SeatMap extends StatelessWidget {
-  const _SeatMap({
-    required this.data,
-    required this.showtime,
-    required this.selectedSeatIds,
-    required this.onSeatTap,
-  });
-
-  final ShowtimeSeatsData data;
-  final Showtime showtime;
-  final Set<int> selectedSeatIds;
-  final void Function(Seat seat, SeatReservationStatus status) onSeatTap;
-
-  SeatItemState _itemStateOf(Seat seat, SeatReservationStatus status) {
-    if (selectedSeatIds.contains(seat.id)) {
-      return SeatItemState.selected;
-    }
-    return switch (status) {
-      SeatReservationStatus.held => SeatItemState.held,
-      SeatReservationStatus.booked => SeatItemState.booked,
-      SeatReservationStatus.available => SeatItemState.available,
-    };
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final rows = seatRowsOf(data.seats);
-    final seatsPerRow = widestRowOf(rows);
-    final types = {for (final seat in data.seats) seat.type.toUpperCase()};
-    // Prices tell the seat types apart only when they differ.
-    final showPrices = seatPricesOf(showtime, types: types).length > 1;
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final layout = SeatMapLayout.fit(
-          maxWidth: constraints.maxWidth,
-          seatsPerRow: seatsPerRow,
-        );
-        final fitsScreen = layout.mapWidth(seatsPerRow) <= constraints.maxWidth;
-        final legend = ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: constraints.maxWidth - SeatMapLayout.padding * 2,
-          ),
-          child: SeatLegend(
-            types: types,
-            priceOf: showPrices ? showtime.priceOf : null,
-          ),
-        );
-
-        Widget viewer(
-          BoxConstraints box, {
-          Widget? legend,
-        }) => InteractiveViewer(
-          // Pinch to zoom in on small seats; very wide rooms can also be
-          // zoomed out and panned.
-          minScale: fitsScreen ? 1 : 0.5,
-          maxScale: 3,
-          constrained: false,
-          // Small rooms sit in the middle of the free space instead of
-          // leaving a gap below the seats.
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minWidth: box.maxWidth,
-              minHeight: box.maxHeight,
-            ),
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(SeatMapLayout.padding),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SeatScreenIndicator(width: layout.seatsWidth(seatsPerRow)),
-                    const SizedBox(height: AppSpacing.sm),
-                    // Wraps instead of widening the column: the map is
-                    // laid out unconstrained, so a long line would push
-                    // the seats off-centre (large text sizes, narrow
-                    // phones).
-                    ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxWidth: box.maxWidth - SeatMapLayout.padding * 2,
-                      ),
-                      child: Text(
-                        '${rows.length} rows • ${data.seats.length} seats • Pinch to zoom',
-                        style: AppTextStyles.caption,
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.xl),
-                    SeatMapRows(
-                      rows: rows,
-                      layout: layout,
-                      seatBuilder: (seat, size) => SeatItem(
-                        label: seat.number.toString(),
-                        state: _itemStateOf(seat, data.statusOf(seat)),
-                        type: seat.type,
-                        size: size,
-                        onTap: () => onSeatTap(seat, data.statusOf(seat)),
-                      ),
-                    ),
-                    if (legend != null) ...[
-                      const SizedBox(height: AppSpacing.lg),
-                      legend,
-                    ],
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-
-        if (fitsScreen) return viewer(constraints, legend: legend);
-        // A map wider than the screen is panned: its key stays in view below
-        // it instead of moving (and being cut off) with the seats.
-        return Column(
-          children: [
-            Expanded(child: LayoutBuilder(builder: (_, box) => viewer(box))),
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: SeatMapLayout.padding,
-              ),
-              child: legend,
-            ),
-          ],
-        );
-      },
     );
   }
 }
