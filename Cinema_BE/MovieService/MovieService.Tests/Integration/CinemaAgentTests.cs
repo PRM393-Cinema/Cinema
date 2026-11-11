@@ -326,15 +326,17 @@ public sealed class CinemaAgentTests(ChatApiFactory factory) : IClassFixture<Cha
         finally { factory.Handler.Output = null; }
     }
 
-    [Fact]
-    public async Task SeatLink_RequiresAvailabilityFromThisTurn()
+    [Theory]
+    [InlineData("/showtimes/123/seats")]
+    [InlineData(@"\/showtimes\/123\/seats")]
+    public async Task SeatLink_RequiresAvailabilityFromThisTurn(string route)
     {
         using var client = factory.CreateClient();
         factory.Handler.Output = JsonSerializer.Serialize(new
         {
             status = "completed",
             output = new[] { new { type = "message", content = new[]
-                { new { type = "output_text", text = "[Chọn ghế](/showtimes/123/seats)" } } } }
+                { new { type = "output_text", text = $"[Chọn ghế]({route})" } } } }
         });
         try
         {
@@ -346,6 +348,39 @@ public sealed class CinemaAgentTests(ChatApiFactory factory) : IClassFixture<Cha
             Assert.Equal("Chọn ghế", (await response.Content.ReadFromJsonAsync<ChatReply>())!.Message);
         }
         finally { factory.Handler.Output = null; }
+    }
+
+    [Fact]
+    public async Task SeatLink_NormalizesEscapedSlashesForAnAvailableShowtime()
+    {
+        var session = await NewSession(days: 21);
+        var date = session.StartTime.ToString("yyyy-MM-dd");
+        var route = $"/showtimes/{session.Id}/seats";
+        using var client = factory.CreateClient();
+        factory.Accounts.Output = JsonSerializer.Serialize(new[] { new { ShowtimeId = session.Id, OccupiedSeats = 0 } });
+        factory.Handler.Outputs.Enqueue(ToolCall("find_cinema_showtimes", new
+        {
+            movieIds = new[] { factory.MovieId }, genre = "", cinema = "", room = "",
+            from = date, to = date, around = (string?)null, tickets = 1
+        }));
+        factory.Handler.Outputs.Enqueue(JsonSerializer.Serialize(new
+        {
+            status = "completed",
+            output = new[] { new { type = "message", content = new[]
+                { new { type = "output_text", text = $@"[Chọn ghế](\/showtimes\/{session.Id}\/seats)" } } } }
+        }));
+        try
+        {
+            using var response = await client.PostAsJsonAsync("/api/v1/chat", new
+            {
+                messages = new[] { new ChatMessage("user", "Cho tôi link đặt vé") }
+            });
+            response.EnsureSuccessStatusCode();
+            var reply = (await response.Content.ReadFromJsonAsync<ChatReply>())!;
+            Assert.Equal($"[Chọn ghế]({route})", reply.Message);
+            Assert.Equal(1, reply.ShowtimeTickets![route]);
+        }
+        finally { factory.Accounts.Output = "[]"; factory.Handler.Outputs.Clear(); }
     }
 
     [Fact]
@@ -372,13 +407,13 @@ public sealed class CinemaAgentTests(ChatApiFactory factory) : IClassFixture<Cha
         finally { factory.Handler.Outputs.Clear(); }
     }
 
-    private async Task<Showtime> NewSession()
+    private async Task<Showtime> NewSession(int days = 20)
     {
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ShowtimeDbContext>();
         var now = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTimeOffset.UtcNow, "Asia/Ho_Chi_Minh").DateTime;
-        var session = new Showtime { MovieId = factory.MovieId, RoomId = factory.RoomId, StartTime = now.AddDays(20),
-            EndTime = now.AddDays(20).AddHours(2), Status = "OPEN", Price = 100000, Format = "3D" };
+        var session = new Showtime { MovieId = factory.MovieId, RoomId = factory.RoomId, StartTime = now.AddDays(days),
+            EndTime = now.AddDays(days).AddHours(2), Status = "OPEN", Price = 100000, Format = "3D" };
         db.Showtimes.Add(session);
         await db.SaveChangesAsync();
         return session;

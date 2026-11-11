@@ -60,6 +60,32 @@ public sealed class ChatTests(ChatApiFactory factory) : IClassFixture<ChatApiFac
     }
 
     [Theory]
+    [InlineData("2", "Bạn đang nhắc tới", false)]
+    [InlineData("2", "Bạn đang nhắc tới", true)]
+    [InlineData("Xin chào!", "Chào bạn!", true)]
+    [InlineData("Hello", "Chào bạn!", false)]
+    public async Task ShortMessages_DoNotStartABooking(string latest, string expected, bool hasHistory)
+    {
+        using var client = factory.CreateClient();
+        var messages = new List<ChatMessage>();
+        if (hasHistory)
+        {
+            messages.Add(new("user", "Tôi muốn đặt vé Ma Xó."));
+            messages.Add(new("assistant", "Bạn điền thông tin đặt vé còn thiếu ở đây nhé."));
+        }
+        messages.Add(new("user", latest));
+        var before = factory.Handler.Calls;
+
+        using var response = await client.PostAsJsonAsync("/api/v1/chat", new { messages });
+        response.EnsureSuccessStatusCode();
+        var reply = (await response.Content.ReadFromJsonAsync<ChatReply>())!;
+        Assert.StartsWith(expected, reply.Message);
+        Assert.Null(reply.BookingForm);
+        Assert.Null(reply.Booking);
+        Assert.Equal(before, factory.Handler.Calls);
+    }
+
+    [Theory]
     [InlineData("{\"messages\":null}")]
     [InlineData("{\"messages\":[]}")]
     [InlineData("{\"messages\":[null]}")]
