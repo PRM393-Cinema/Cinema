@@ -217,13 +217,16 @@ public sealed class ChatAccountHandler : HttpMessageHandler
     public string? LastAuthorization { get; private set; }
     public string? LastPath { get; private set; }
     public string Output { get; set; } = "[]";
+    public HttpStatusCode Status { get; set; } = HttpStatusCode.OK;
+    public bool TimedOut { get; set; }
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
     {
         Assert.Equal(HttpMethod.Get, request.Method);
         Calls++;
         LastPath = request.RequestUri!.PathAndQuery;
         LastAuthorization = request.Headers.Authorization?.ToString();
-        return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+        if (TimedOut) return Task.FromException<HttpResponseMessage>(new TaskCanceledException("Simulated tool timeout."));
+        return Task.FromResult(new HttpResponseMessage(Status)
             { Content = new StringContent(Output, System.Text.Encoding.UTF8, "application/json") });
     }
 }

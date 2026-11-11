@@ -204,6 +204,98 @@ public sealed class CinemaAgentTests(ChatApiFactory factory) : IClassFixture<Cha
     }
 
     [Fact]
+    public async Task NearestShowtime_BrowsesAllFilmsAndSkipsSessionsWithoutEnoughSeats()
+    {
+        using var scope = factory.Services.CreateScope();
+        var films = scope.ServiceProvider.GetRequiredService<MovieDbContext>();
+        var schedule = scope.ServiceProvider.GetRequiredService<ShowtimeDbContext>();
+        var tools = scope.ServiceProvider.GetRequiredService<CinemaChatTools>();
+        var secondFilm = new Movie { Title = "Nearest across films", DurationMinutes = 90, Status = "ACTIVE" };
+        films.Movies.Add(secondFilm);
+        await films.SaveChangesAsync();
+        var room = new Room { Name = "Nearest across films QA", TotalSeats = 3 };
+        schedule.Rooms.Add(room);
+        await schedule.SaveChangesAsync();
+        schedule.Seats.AddRange(Enumerable.Range(1, 3).Select(number => new Seat
+        {
+            RoomId = room.Id, SeatRow = "A", SeatNumber = number, SeatType = "NORMAL"
+        }));
+        var tomorrow = CinemaChatToolsTestNow().Date.AddDays(1);
+        Showtime Session(long film, int hour) => new()
+        {
+            MovieId = film, RoomId = room.Id, StartTime = tomorrow.AddHours(hour),
+            EndTime = tomorrow.AddHours(hour + 1), Status = "OPEN", Price = 85000
+        };
+        var full = Session(factory.MovieId, 9);
+        var nearest = Session(secondFilm.Id, 10);
+        var later = Session(factory.MovieId, 11);
+        schedule.Showtimes.AddRange(later, nearest, full);
+        await schedule.SaveChangesAsync();
+        factory.Accounts.Output = JsonSerializer.Serialize(new[]
+        {
+            new { ShowtimeId = full.Id, OccupiedSeats = 3 },
+            new { ShowtimeId = nearest.Id, OccupiedSeats = 1 },
+            new { ShowtimeId = later.Id, OccupiedSeats = 0 }
+        });
+        try
+        {
+            var date = tomorrow.ToString("yyyy-MM-dd");
+            var result = await tools.ExecuteAsync("find_cinema_showtimes", JsonSerializer.SerializeToElement(new
+            {
+                movieIds = Array.Empty<long>(), genre = "", cinema = "CosmoQ", room = room.Name,
+                from = date, to = date, around = (string?)null, tickets = 2
+            }), null, default);
+            var payload = JsonSerializer.SerializeToElement(result.Result);
+            Assert.Equal("Asia/Ho_Chi_Minh", payload.GetProperty("TimeZone").GetString());
+            var items = payload.GetProperty("Items");
+            Assert.Equal(new[] { nearest.Id, later.Id }, items.EnumerateArray().Select(item => item.GetProperty("Id").GetInt64()));
+            Assert.Equal(secondFilm.Title, items[0].GetProperty("Title").GetString());
+            Assert.Equal(2, items[0].GetProperty("AvailableSeats").GetInt32());
+            Assert.Equal($"/showtimes/{nearest.Id}/seats", items[0].GetProperty("SeatUrl").GetString());
+        }
+        finally { factory.Accounts.Output = "[]"; }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task DiscoveryDataFailure_ReturnsAnExplanationInsteadOfFailingTheChat(bool timedOut)
+    {
+        using var client = factory.CreateClient();
+        var before = factory.Handler.Calls;
+        const string explanation = "Chưa tải được dữ liệu đánh giá. Bạn thử lại sau nhé.";
+        factory.Accounts.Status = HttpStatusCode.BadGateway;
+        factory.Accounts.TimedOut = timedOut;
+        factory.Handler.Outputs.Enqueue(ToolCall("get_top_rated_movies", new { }));
+        factory.Handler.Outputs.Enqueue(JsonSerializer.Serialize(new
+        {
+            status = "completed",
+            output = new[] { new { type = "message", content = new[] { new { type = "output_text", text = explanation } } } }
+        }));
+        try
+        {
+            using var response = await client.PostAsJsonAsync("/api/v1/chat", new
+            {
+                messages = new[] { new ChatMessage("user", "Top phim có đánh giá cao?") }
+            });
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            var reply = await response.Content.ReadFromJsonAsync<ChatReply>();
+            Assert.Equal(explanation, reply!.Message);
+            Assert.Null(reply.Booking);
+            Assert.Null(reply.ShowtimeTickets);
+            Assert.Equal(before + 2, factory.Handler.Calls);
+            Assert.Contains("DATA_UNAVAILABLE", factory.Handler.LastBody);
+            Assert.DoesNotContain("Simulated tool timeout", factory.Handler.LastBody);
+        }
+        finally
+        {
+            factory.Accounts.Status = HttpStatusCode.OK;
+            factory.Accounts.TimedOut = false;
+            factory.Handler.Outputs.Clear();
+        }
+    }
+
+    [Fact]
     public async Task Trending_AggregatesSessionsByFilm_AndComparesTicketWindows()
     {
         var first = await NewSession();
