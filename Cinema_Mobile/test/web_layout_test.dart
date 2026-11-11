@@ -12,6 +12,7 @@ import 'package:cinema_fe/core/widgets/cinema_background.dart';
 import 'package:cinema_fe/data/models/auth_response.dart';
 import 'package:cinema_fe/data/models/booking.dart';
 import 'package:cinema_fe/data/services/staff_service.dart';
+import 'package:cinema_fe/features/admin/widgets/admin_catalog_layout.dart';
 import 'package:cinema_fe/features/auth/screens/login_screen.dart';
 import 'package:cinema_fe/features/booking/screens/my_bookings_screen.dart';
 import 'package:cinema_fe/features/booking/screens/booking_detail_screen.dart';
@@ -539,15 +540,21 @@ void main() {
       );
       await pumpRoute(tester);
 
-      final title = tester.getTopLeft(find.text('Rooms').last);
-      final add = tester.getTopLeft(find.byKey(const Key('addRoomButton')));
-      expect(add.dx, title.dx);
+      // Title, toolbar and table share the left edge next to the navigation;
+      // the add button ends the toolbar at the table's right edge.
+      final title = tester.getRect(find.text('Rooms').last);
+      final toolbar = tester.getRect(find.byType(AdminCatalogToolbar));
+      final table = tester.getRect(find.byKey(const Key('adminRoomsTable')));
+      final add = tester.getRect(find.byKey(const Key('addRoomButton')));
+      expect(toolbar.left, title.left);
+      expect(table.left, title.left);
+      expect(add.right, table.right);
 
-      // Room cards in two columns.
+      // Rooms are table rows on a computer.
       final first = tester.getTopLeft(find.text('Room 1'));
       final second = tester.getTopLeft(find.text('Room 2'));
-      expect(second.dy, first.dy);
-      expect(second.dx, greaterThan(first.dx + 400));
+      expect(second.dx, first.dx);
+      expect(second.dy, greaterThan(first.dy));
     });
   });
 }
