@@ -19,23 +19,23 @@ class ChatBookingFormCard extends StatefulWidget {
   State<ChatBookingFormCard> createState() => _ChatBookingFormCardState();
 }
 
-class _ChatBookingFormCardState extends State<ChatBookingFormCard> {
+class _ChatBookingFormCardState extends State<ChatBookingFormCard>
+    with AutomaticKeepAliveClientMixin<ChatBookingFormCard> {
   final _form = GlobalKey<FormState>();
   late final _movie = TextEditingController(text: widget.details.movie);
   late final _date = TextEditingController(
     text: widget.details.date?.split('-').reversed.join('/'),
   );
   late final _time = TextEditingController(text: widget.details.time);
-  late final _tickets = TextEditingController(
-    text: widget.details.tickets?.toString(),
-  );
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void dispose() {
     _movie.dispose();
     _date.dispose();
     _time.dispose();
-    _tickets.dispose();
     super.dispose();
   }
 
@@ -59,8 +59,10 @@ class _ChatBookingFormCardState extends State<ChatBookingFormCard> {
   void _submit() {
     if (!_form.currentState!.validate()) return;
     final date = _isoDate(_date.text);
+    final tickets = widget.details.tickets;
+    final quantity = tickets == null ? '' : ' cho $tickets vé';
     widget.onSearch(
-      'Tìm suất chiếu để đặt ${_tickets.text.trim()} vé. '
+      'Tìm suất chiếu$quantity để tôi chọn ghế trên sơ đồ. '
       'Phim hoặc thể loại: ${_movie.text.trim()}. '
       'Ngày: $date, giờ Việt Nam: ${_time.text.trim()}.',
     );
@@ -68,6 +70,7 @@ class _ChatBookingFormCardState extends State<ChatBookingFormCard> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return CinemaPanel(
       key: const Key('chatBookingForm'),
       child: Form(
@@ -127,17 +130,6 @@ class _ChatBookingFormCardState extends State<ChatBookingFormCard> {
                       .hasMatch(value?.trim() ?? '')
                   ? null
                   : 'Nhập giờ 24h, ví dụ 19:30.',
-            ),
-            const SizedBox(height: 8),
-            TextFormField(
-              key: const Key('chatBookingTickets'),
-              controller: _tickets,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Số vé'),
-              validator: (value) =>
-                  RegExp(r'^[1-8]$').hasMatch(value?.trim() ?? '')
-                  ? null
-                  : 'Nhập số vé từ 1 đến 8.',
             ),
             const SizedBox(height: 12),
             FilledButton(

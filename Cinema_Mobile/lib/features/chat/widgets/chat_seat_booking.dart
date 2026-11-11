@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/theme/app_colors.dart';
+import '../../../app/theme/app_spacing.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
@@ -14,7 +15,7 @@ import '../../../data/models/seat.dart';
 import '../../../data/repositories/booking_repository.dart';
 import '../../../data/repositories/catalog_repository.dart';
 import '../../../data/services/chat_service.dart';
-import '../../booking/widgets/seat_hold_timer.dart';
+import 'chat_seat_picker.dart';
 
 typedef ChatSeatSelection = ({
   int showtimeId,
@@ -28,8 +29,11 @@ class ChatSeatBooking extends StatefulWidget {
     required this.authenticated,
     required this.catalog,
     required this.bookings,
+    required this.showSeatPicker,
     required this.onSignIn,
     required this.onBack,
+    required this.onReview,
+    required this.onExpired,
     super.key,
   });
 
@@ -37,26 +41,39 @@ class ChatSeatBooking extends StatefulWidget {
   final bool authenticated;
   final CatalogRepository catalog;
   final BookingRepository bookings;
+  final Future<List<Seat>?> Function(WidgetBuilder) showSeatPicker;
   final VoidCallback onSignIn;
   final VoidCallback onBack;
+  final VoidCallback onReview;
+  final ValueChanged<String> onExpired;
 
   @override
   State<ChatSeatBooking> createState() => _ChatSeatBookingState();
 }
 
-class _ChatSeatBookingState extends State<ChatSeatBooking> {
+class _ChatSeatBookingState extends State<ChatSeatBooking>
+    with AutomaticKeepAliveClientMixin<ChatSeatBooking> {
   BookingDraft? _show;
   ShowtimeSeatsData? _map;
   Booking? _hold;
   Uri? _paymentUrl;
   Timer? _timer;
+  Timer? _expiryTimer;
+  DateTime? _deadline;
   String? _message;
   bool _busy = false;
   bool _review = false;
+  bool _picking = false;
   bool _paid = false;
-  late int _tickets = widget.selection.tickets;
-  String? _row;
+  bool _expired = false;
   final _selected = <int>{};
+
+  @override
+  bool get wantKeepAlive => true;
+
+  String get _expiryNotice => _hold == null
+      ? 'Đã hết thời gian xác nhận. Yêu cầu đặt vé đã được hủy.'
+      : 'Đã hết thời gian giữ ghế. Nếu đã thanh toán, hãy kiểm tra trạng thái.';
 
   @override
   void initState() {
@@ -66,44 +83,40 @@ class _ChatSeatBookingState extends State<ChatSeatBooking> {
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _stopCountdown();
     super.dispose();
   }
 
-  bool _free(Seat seat) =>
-      _map!.statusOf(seat) == SeatReservationStatus.available;
+  void _stopCountdown() {
+    _timer?.cancel();
+    _expiryTimer?.cancel();
+  }
 
-  bool _selectable(Seat seat) {
-    final partner = seat.sweetboxPartnerIn(_map!.seats);
-    return _free(seat) &&
-        (!seat.isSweetbox || (partner != null && _free(partner)));
+  void _expire() {
+    if (_expired) return;
+    _stopCountdown();
+    setState(() => _expired = true);
+    widget.onExpired(_expiryNotice);
+  }
+
+  void _startCountdown(DateTime? deadline) {
+    _stopCountdown();
+    _deadline = deadline;
+    _expired = false;
+    if (deadline == null) return;
+    _expiryTimer = Timer(deadline.difference(DateTime.now()), _expire);
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) => setState(() {}));
+  }
+
+  void _startReview() {
+    _review = true;
+    final deadline = DateTime.now().add(const Duration(minutes: 10));
+    final showtime = _show!.showtime.startTime;
+    _startCountdown(showtime.isBefore(deadline) ? showtime : deadline);
   }
 
   List<Seat> get _chosen =>
       _map!.seats.where((seat) => _selected.contains(seat.id)).toList();
-
-  List<Seat> get _suggestion {
-    final seats = _map!.seats;
-    final ordered = seats.where(_free).toList()
-      ..sort((a, b) {
-        final row = a.row.compareTo(b.row);
-        return row == 0 ? a.number.compareTo(b.number) : row;
-      });
-    for (final type in ['NORMAL', 'VIP', 'SWEETBOX']) {
-      final matching = ordered.where((seat) => seat.type == type).toList();
-      for (var i = 0; i + _tickets <= matching.length; i++) {
-        final group = matching.sublist(i, i + _tickets);
-        if (group.last.row == group.first.row &&
-            group.last.number - group.first.number == _tickets - 1 &&
-            group.every(
-              (s) => !s.isSweetbox || s.sweetboxPartnerIn(group) != null,
-            )) {
-          return group;
-        }
-      }
-    }
-    return const [];
-  }
 
   Future<void> _run(Future<void> Function() action) async {
     if (_busy) return;
@@ -126,93 +139,114 @@ class _ChatSeatBookingState extends State<ChatSeatBooking> {
     }
   }
 
-  Future<void> _load({bool prefill = true}) => _run(() async {
-    final proposal = prefill ? widget.selection.proposal : null;
-    if (proposal != null && !proposal.expiresAt.isAfter(DateTime.now())) {
-      throw const FormatException('Đề xuất đã hết hạn. Hãy chọn lại ghế.');
-    }
-    final showtime = await widget.catalog.getShowtime(
-      widget.selection.showtimeId,
-    );
-    if (!showtime.isOpen || !showtime.startTime.isAfter(DateTime.now())) {
-      throw const FormatException('Suất chiếu đã đóng hoặc đã bắt đầu.');
-    }
-    final movie = await widget.catalog.getMovie(showtime.movieId);
-    final map = await widget.catalog.getSeatMap(showtime);
-    if (!mounted) return;
-    final proposed = map.seats
-        .where((s) => proposal?.seatIds.contains(s.id) ?? false)
-        .toList();
-    final draft = BookingDraft(
-      movie: movie,
-      showtime: showtime,
-      seats: proposed,
-    );
-    final valid =
-        proposal != null &&
-        proposal.movieId == movie.id &&
-        proposed.length == proposal.seatIds.length &&
-        proposed.every(
-          (s) =>
-              map.statusOf(s) == SeatReservationStatus.available &&
-              (!s.isSweetbox || s.sweetboxPartnerIn(proposed) != null),
-        ) &&
-        (draft.totalPrice - proposal.total).abs() <= .01;
-    setState(() {
-      _show = draft;
-      _map = map;
-      _selected.clear();
-      _review = valid;
-      _row = null;
-      if (valid) _selected.addAll(proposed.map((seat) => seat.id));
-      if (proposal != null && !valid) {
-        _message = 'Ghế hoặc giá đã thay đổi. Hãy chọn lại ghế.';
+  Future<void> _load({bool prefill = true}) async {
+    await _run(() async {
+      final proposal = prefill ? widget.selection.proposal : null;
+      if (proposal != null && !proposal.expiresAt.isAfter(DateTime.now())) {
+        throw const FormatException('Đề xuất đã hết hạn. Hãy chọn lại ghế.');
       }
-    });
-  });
-
-  void _toggle(Seat seat) {
-    final partner = seat.sweetboxPartnerIn(_map!.seats);
-    if (seat.isSweetbox && (partner == null || !_free(partner))) return;
-    final ids = {seat.id, if (partner != null) partner.id};
-    setState(() {
-      _message = null;
-      if (_selected.contains(seat.id)) {
-        _selected.removeAll(ids);
-      } else if (_selected.length + ids.length <= _tickets) {
-        _selected.addAll(ids);
-      } else {
-        _message = 'Bạn đã chọn đủ $_tickets ghế. Bỏ chọn ghế để đổi.';
+      final showtime = await widget.catalog.getShowtime(
+        widget.selection.showtimeId,
+      );
+      if (!showtime.isOpen || !showtime.startTime.isAfter(DateTime.now())) {
+        throw const FormatException('Suất chiếu đã đóng hoặc đã bắt đầu.');
       }
+      final movie = await widget.catalog.getMovie(showtime.movieId);
+      final map = await widget.catalog.getSeatMap(showtime);
+      if (!mounted) return;
+      final proposed = map.seats
+          .where((s) => proposal?.seatIds.contains(s.id) ?? false)
+          .toList();
+      final draft = BookingDraft(
+        movie: movie,
+        showtime: showtime,
+        seats: proposed,
+      );
+      final valid =
+          proposal != null &&
+          proposal.movieId == movie.id &&
+          proposed.length == proposal.seatIds.length &&
+          proposed.every(
+            (s) =>
+                map.statusOf(s) == SeatReservationStatus.available &&
+                (!s.isSweetbox || s.sweetboxPartnerIn(proposed) != null),
+          ) &&
+          (draft.totalPrice - proposal.total).abs() <= .01;
+      setState(() {
+        _show = draft;
+        _map = map;
+        _selected.clear();
+        _review = false;
+        _startCountdown(null);
+        if (valid) {
+          _selected.addAll(proposed.map((seat) => seat.id));
+          _startReview();
+        }
+        if (proposal != null && !valid) {
+          _message = 'Ghế hoặc giá đã thay đổi. Hãy chọn lại ghế.';
+        }
+      });
+      if (valid) widget.onReview();
     });
+    if (mounted && _show != null && !_review && _message == null) {
+      await _pickSeats(
+        closeOnCancel: prefill && widget.selection.proposal == null,
+      );
+    }
   }
 
-  void _changeTickets(int count) => setState(() {
-    _tickets = count;
-    _selected.clear();
-    _message = null;
-  });
-
-  Future<void> _confirm() => _run(() async {
-    if (_hold != null || !_review || _selected.length != _tickets) return;
-    final showtime = _show!.showtime;
-    if (!showtime.startTime.isAfter(DateTime.now())) {
-      throw const FormatException('Suất chiếu đã bắt đầu.');
-    }
-    final booking = await widget.bookings.createBooking(
-      showtimeId: showtime.id,
-      seatIds: _selected.toList(),
-    );
-    if (!mounted) return;
-    setState(() => _hold = booking);
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted || _hold == null || _paid) {
-        timer.cancel();
+  Future<void> _pickSeats({bool closeOnCancel = false}) async {
+    if (_picking || _busy || _hold != null || _expired) return;
+    _picking = true;
+    try {
+      final seats = await widget.showSeatPicker(
+        (_) => ChatSeatPicker(
+          show: _show!,
+          data: _map!,
+          tickets: _selected.isEmpty
+              ? widget.selection.tickets
+              : _selected.length,
+          selected: _selected,
+        ),
+      );
+      if (!mounted || _expired) return;
+      if (seats == null) {
+        if (closeOnCancel) widget.onBack();
         return;
       }
-      setState(() {});
-      if (_hold!.isHoldExpired()) timer.cancel();
-    });
+      setState(() {
+        _selected
+          ..clear()
+          ..addAll(seats.map((seat) => seat.id));
+        _startReview();
+        _message = null;
+      });
+      widget.onReview();
+    } finally {
+      _picking = false;
+    }
+  }
+
+  Future<void> _confirm() => _run(() async {
+    if (_hold != null || !_review || _selected.isEmpty || _expired) return;
+    final deadline = _deadline!;
+    if (!deadline.isAfter(DateTime.now())) {
+      _expire();
+      return;
+    }
+    final showtime = _show!.showtime;
+    _stopCountdown();
+    try {
+      final booking = await widget.bookings.createBooking(
+        showtimeId: showtime.id,
+        seatIds: _selected.toList(),
+      );
+      if (mounted) setState(() => _hold = booking);
+    } finally {
+      if (mounted) {
+        _startCountdown(_hold == null ? deadline : _hold!.expiresAt);
+      }
+    }
   });
 
   Future<void> _startPayment(Booking booking) => _run(() async {
@@ -232,6 +266,7 @@ class _ChatSeatBookingState extends State<ChatSeatBooking> {
     if (!mounted) return;
     setState(() {
       _paid = payment.status == PaymentStatus.success;
+      if (_paid) _stopCountdown();
       if (!_paid) _message = 'PayOS chưa xác nhận thanh toán.';
     });
   });
@@ -243,192 +278,199 @@ class _ChatSeatBookingState extends State<ChatSeatBooking> {
 
   @override
   Widget build(BuildContext context) {
-    return CinemaPanel(
-      key: const Key('chatSeatBooking'),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Expanded(
+    super.build(context);
+    final activeHold = _hold != null && !_expired && !_paid;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+      child: CinemaPanel(
+        key: const Key('chatSeatBooking'),
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _hold != null
+                        ? 'Giữ ghế'
+                        : _review
+                        ? 'Confirm Booking'
+                        : 'Chọn ghế trong chat',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+                if (!activeHold)
+                  IconButton(
+                    onPressed: _busy ? null : widget.onBack,
+                    tooltip: 'Đóng thẻ đặt vé',
+                    icon: const Icon(Icons.close),
+                  ),
+              ],
+            ),
+            if (_message != null)
+              Semantics(
+                liveRegion: true,
                 child: Text(
-                  'Chọn ghế trong chat',
-                  style: Theme.of(context).textTheme.titleMedium,
+                  _message!,
+                  style: TextStyle(color: AppPalette.of(context).error),
                 ),
               ),
-              IconButton(
-                onPressed: _busy ? null : widget.onBack,
-                tooltip: 'Quay lại chat',
-                icon: const Icon(Icons.close),
+            if (_busy) const LinearProgressIndicator(),
+            if (!widget.authenticated) ...[
+              const Text('Đăng nhập để chọn ghế và đặt vé.'),
+              FilledButton(
+                onPressed: widget.onSignIn,
+                child: const Text('Đăng nhập'),
               ),
-            ],
-          ),
-          if (_message != null)
-            Semantics(
-              liveRegion: true,
-              child: Text(
-                _message!,
-                style: TextStyle(color: AppPalette.of(context).error),
+            ] else if (_hold case final booking?)
+              ..._holdWidgets(booking)
+            else if (_show case final draft?) ...[
+              Text(draft.movie.title),
+              Text(
+                '${formatDateTime(draft.showtime.startTime)} · ${draft.showtime.roomLabel}',
               ),
-            ),
-          if (_busy) const LinearProgressIndicator(),
-          if (!widget.authenticated) ...[
-            const Text('Đăng nhập để chọn ghế và đặt vé.'),
-            FilledButton(
-              onPressed: widget.onSignIn,
-              child: const Text('Đăng nhập'),
-            ),
-          ] else if (_hold case final booking?)
-            ..._holdWidgets(booking)
-          else if (_show case final draft?) ...[
-            Text(draft.movie.title),
-            Text(
-              '${formatDateTime(draft.showtime.startTime)} · ${draft.showtime.roomLabel}',
-            ),
-            const SizedBox(height: 10),
-            if (_review) ..._reviewWidgets(draft) else ..._seatWidgets(),
-          ] else if (!_busy)
-            OutlinedButton(
-              onPressed: () => _load(prefill: false),
-              child: const Text('Tải lại ghế'),
-            ),
-        ],
+              const SizedBox(height: 10),
+              if (_review)
+                ..._reviewWidgets(draft)
+              else
+                OutlinedButton(
+                  onPressed: _busy ? null : _pickSeats,
+                  child: const Text('Mở sơ đồ ghế'),
+                ),
+            ] else if (!_busy)
+              OutlinedButton(
+                onPressed: () => _load(prefill: false),
+                child: const Text('Tải lại ghế'),
+              ),
+          ],
+        ),
       ),
     );
   }
 
-  List<Widget> _seatWidgets() {
-    final suggestion = _suggestion;
-    final rows = _map!.seats.map((seat) => seat.row).toSet().toList()..sort();
-    final row = _row ?? (suggestion.firstOrNull?.row ?? rows.firstOrNull);
-    return [
-      Row(
-        children: [
-          const Expanded(child: Text('Số vé')),
-          IconButton(
-            tooltip: 'Giảm số vé',
-            onPressed: _busy || _tickets == 1
-                ? null
-                : () => _changeTickets(_tickets - 1),
-            icon: const Icon(Icons.remove),
-          ),
-          Text('$_tickets'),
-          IconButton(
-            tooltip: 'Tăng số vé',
-            onPressed: _busy || _tickets == 8
-                ? null
-                : () => _changeTickets(_tickets + 1),
-            icon: const Icon(Icons.add),
-          ),
-        ],
-      ),
-      if (suggestion.isNotEmpty)
-        OutlinedButton(
-          key: const Key('chatUseSuggestedSeats'),
-          onPressed: _busy
-              ? null
-              : () => setState(() {
-                  _selected
-                    ..clear()
-                    ..addAll(suggestion.map((seat) => seat.id));
-                  _row = suggestion.first.row;
-                  _message = null;
-                }),
-          child: Text(
-            'Gợi ý ${suggestion.map((seat) => seat.label).join(', ')}',
-          ),
-        )
-      else
-        const Text(
-          'Chưa có cụm ghế liền nhau phù hợp. Bạn có thể tự chọn ghế.',
-        ),
-      if (rows.length > 1)
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              for (final value in rows)
-                Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: ChoiceChip(
-                    label: Text('Hàng $value'),
-                    selected: row == value,
-                    onSelected: _busy
-                        ? null
-                        : (_) => setState(() => _row = value),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      const SizedBox(height: 8),
-      Wrap(
-        spacing: 6,
-        children: [
-          for (final seat in _map!.seats.where((seat) => seat.row == row))
-            FilterChip(
-              key: ValueKey('chat-seat-${seat.id}'),
-              label: Text(seat.label),
-              tooltip:
-                  '${seat.type} · ${formatVnd(_show!.showtime.priceOf(seat.type))}',
-              selected: _selected.contains(seat.id),
-              onSelected: !_busy && _selectable(seat)
-                  ? (_) => _toggle(seat)
-                  : null,
-            ),
-        ],
-      ),
-      Text(
-        '${_selected.length}/$_tickets ghế · ${_chosen.map((s) => s.label).join(', ')}',
-      ),
-      FilledButton(
-        onPressed: !_busy && _selected.length == _tickets
-            ? () => setState(() {
-                _review = true;
-                _message = null;
-              })
-            : null,
-        child: const Text('Xem lại đặt vé'),
-      ),
-    ];
-  }
+  Widget _expiredStatus() => Semantics(
+    liveRegion: true,
+    child: Text(
+      _expiryNotice,
+      style: TextStyle(color: AppPalette.of(context).error),
+    ),
+  );
 
   List<Widget> _reviewWidgets(BookingDraft draft) => [
     Text('Ghế ${_chosen.map((seat) => seat.label).join(', ')}'),
     Text(
       'Tiền vé dự kiến ${formatVnd(_chosen.fold<double>(0, (sum, seat) => sum + draft.showtime.priceOf(seat.type)))}',
     ),
-    FilledButton(
-      key: const Key('confirmChatBooking'),
-      onPressed: _busy ? null : _confirm,
-      child: const Text('Xác nhận giữ ghế'),
-    ),
-    TextButton(
-      onPressed: _busy ? null : () => setState(() => _review = false),
-      child: const Text('Đổi ghế'),
-    ),
-    if (_message != null)
-      TextButton(
-        onPressed: _busy ? null : () => _load(prefill: false),
-        child: const Text('Tải lại ghế'),
+    const SizedBox(height: AppSpacing.sm),
+    if (_expired)
+      _expiredStatus()
+    else ...[
+      Text(
+        'Chờ xác nhận · ${formatCountdown(_deadline!.difference(DateTime.now()))}',
+        style: TextStyle(color: AppPalette.of(context).textSecondary),
       ),
+      const SizedBox(height: AppSpacing.sm),
+      _reviewActions(),
+      if (_message != null)
+        TextButton(
+          onPressed: _busy ? null : () => _load(prefill: false),
+          child: const Text('Tải lại ghế'),
+        ),
+    ],
   ];
 
+  static const _actionStyle = ButtonStyle(
+    visualDensity: VisualDensity.standard,
+    minimumSize: WidgetStatePropertyAll(Size(0, 48)),
+    padding: WidgetStatePropertyAll(
+      EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+    ),
+  );
+
+  Widget _actionRow(Widget first, Widget second) => IntrinsicHeight(
+    child: Row(
+      spacing: AppSpacing.sm,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(child: first),
+        Expanded(child: second),
+      ],
+    ),
+  );
+
+  Widget _reviewActions() => _actionRow(
+    FilledButton(
+      key: const Key('confirmChatBooking'),
+      style: _actionStyle,
+      onPressed: _busy ? null : _confirm,
+      child: const Text('Xác nhận giữ ghế', textAlign: TextAlign.center),
+    ),
+    OutlinedButton(
+      style: _actionStyle,
+      onPressed: _busy ? null : _pickSeats,
+      child: const Text('Đổi ghế'),
+    ),
+  );
+
   List<Widget> _holdWidgets(Booking booking) {
-    final expired = booking.isHoldExpired();
+    final expired = _expired || booking.isHoldExpired();
+    final remaining = booking.expiresAt?.difference(DateTime.now());
+    final colors = AppPalette.of(context);
+    final theme = Theme.of(context).textTheme;
+    final total = formatVnd(booking.totalAmount);
+    final verifyButton = OutlinedButton(
+      style: _actionStyle,
+      onPressed: _busy ? null : () => _verifyPayment(booking),
+      child: const Text('Kiểm tra thanh toán', textAlign: TextAlign.center),
+    );
     return [
-      Text('Mã đơn ${booking.bookingCode}'),
-      Text('Ghế ${booking.seats.map((seat) => seat.seatLabel).join(', ')}'),
-      Text('Tổng tiền ${formatVnd(booking.totalAmount)}'),
+      const SizedBox(height: AppSpacing.xs),
+      Text(
+        'Mã đơn ${booking.bookingCode}',
+        style: theme.bodySmall?.copyWith(color: colors.textSecondary),
+      ),
+      const SizedBox(height: AppSpacing.sm),
+      Wrap(
+        alignment: WrapAlignment.spaceBetween,
+        spacing: AppSpacing.sm,
+        runSpacing: AppSpacing.xs,
+        children: [
+          Text('Ghế ${booking.seats.map((seat) => seat.seatLabel).join(', ')}'),
+          Text('Tổng $total', style: theme.titleSmall),
+        ],
+      ),
+      const SizedBox(height: AppSpacing.sm),
       if (_paid)
         const Text('Đã thanh toán')
       else ...[
-        SeatHoldTimer(
-          remaining: booking.expiresAt?.difference(DateTime.now()),
-          expired: expired,
-        ),
+        if (expired)
+          _expiredStatus()
+        else
+          Row(
+            spacing: AppSpacing.xs,
+            children: [
+              Icon(Icons.timer_outlined, size: 18, color: colors.primary),
+              Expanded(
+                child: Text(
+                  remaining == null
+                      ? 'Ghế đang được giữ để thanh toán'
+                      : 'Còn ${formatCountdown(remaining)} để thanh toán',
+                  style: theme.bodySmall?.copyWith(
+                    color:
+                        remaining != null &&
+                            remaining < const Duration(minutes: 2)
+                        ? colors.warning
+                        : colors.textSecondary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        const SizedBox(height: AppSpacing.sm),
         if (!expired)
           FilledButton(
+            style: _actionStyle,
             onPressed: _busy
                 ? null
                 : _paymentUrl == null
@@ -443,14 +485,23 @@ class _ChatSeatBookingState extends State<ChatSeatBooking> {
                   }),
             child: Text(_paymentUrl == null ? 'Tạo link PayOS' : 'Mở PayOS'),
           ),
-        TextButton(
-          onPressed: _busy ? null : () => _verifyPayment(booking),
-          child: const Text('Kiểm tra thanh toán'),
-        ),
-        if (!expired)
-          TextButton(
-            onPressed: _busy ? null : () => _cancel(booking),
-            child: const Text('Hủy giữ ghế'),
+        if (!expired) const SizedBox(height: AppSpacing.sm),
+        if (expired)
+          verifyButton
+        else
+          _actionRow(
+            verifyButton,
+            OutlinedButton(
+              style: _actionStyle.copyWith(
+                foregroundColor: WidgetStateProperty.resolveWith(
+                  (states) => states.contains(WidgetState.disabled)
+                      ? null
+                      : colors.error,
+                ),
+              ),
+              onPressed: _busy ? null : () => _cancel(booking),
+              child: const Text('Hủy giữ ghế', textAlign: TextAlign.center),
+            ),
           ),
       ],
     ];

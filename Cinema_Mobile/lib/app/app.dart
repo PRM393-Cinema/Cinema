@@ -102,9 +102,10 @@ class _CinemaAppState extends State<CinemaApp> {
           service: _chatService,
           catalogRepository: widget.catalogRepository,
           bookingRepository: widget.bookingRepository,
-          child: CustomerFrame(
+          builder: (_, seatPickerOpen) => CustomerFrame(
             routes: _routes,
             onSignOut: _signOut,
+            showHeader: !seatPickerOpen,
             child: child ?? const SizedBox(),
           ),
         ),

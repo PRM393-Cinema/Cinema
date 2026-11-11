@@ -30,7 +30,7 @@ class ChatAnswer extends StatelessWidget {
     final lines = text.replaceAll('\r\n', '\n').split('\n');
     var hasLinks = false;
     final emphasis = RegExp(
-      r'(?:\*\*)?\[([^\[\]\n]+)\]\((/(?:movies|snacks)/[1-9][0-9]{0,15}|/showtimes/[1-9][0-9]{0,15}/seats)\)(?:\*\*)?|'
+      r'(?:\*\*)?\[([^\[\]\n]+)\](?:\*\*)?\((\\?/(?:movies|snacks)\\?/[1-9][0-9]{0,15}|\\?/showtimes\\?/[1-9][0-9]{0,15}\\?/seats)\)(?:\*\*)?|'
       r'\*\*([^*\n]+)\*\*|\b\d+(?:[.,]\d+)*[ \t]?(?:đ|₫|VND)(?![A-Za-z0-9])',
     );
     for (var index = 0; index < lines.length; index++) {
@@ -54,22 +54,43 @@ class ChatAnswer extends StatelessWidget {
         }
       }
       final children = <InlineSpan>[];
-      final routes = <String>[];
+      final routes = <String>{};
+      final showtimes = <String>[];
       var offset = 0;
       for (final match in emphasis.allMatches(line)) {
-        children.add(TextSpan(text: line.substring(offset, match.start)));
+        final prefix = line.substring(offset, match.start);
         offset = match.end;
-        final route = match.group(2);
+        final route = match.group(2)?.replaceAll(r'\/', '/');
         final label = match.group(1)?.replaceAll('**', '').trim();
         final open = onOpenLink;
+        if (route != null &&
+            route.startsWith('/showtimes/') &&
+            recommendation != null &&
+            open != null) {
+          if (shown.add(route)) showtimes.add(route);
+          final tail = line.substring(offset).trim();
+          if (tail.isEmpty || tail == '.') {
+            final prose = prefix
+                .trimRight()
+                .replaceFirst(RegExp(r'[:—·]$'), '')
+                .trimRight();
+            if (prose.trim() != '•' &&
+                (prose.isNotEmpty || children.isNotEmpty)) {
+              children.add(TextSpan(text: '$prose$tail'));
+            }
+            offset = line.length;
+          } else {
+            children.add(TextSpan(text: prefix));
+          }
+          continue;
+        }
+        children.add(TextSpan(text: prefix));
         if (route != null &&
             label != null &&
             label.isNotEmpty &&
             open != null) {
           hasLinks = true;
-          if (recommendation != null &&
-              !route.startsWith('/showtimes/') &&
-              shown.add(route)) {
+          if (recommendation != null && !shown.contains(route)) {
             routes.add(route);
           }
           children.add(
@@ -101,7 +122,9 @@ class ChatAnswer extends StatelessWidget {
           );
         }
       }
-      children.add(TextSpan(text: line.substring(offset)));
+      if (offset < line.length) {
+        children.add(TextSpan(text: line.substring(offset)));
+      }
       spans.add(
         TextSpan(
           style: heading == null
@@ -115,10 +138,15 @@ class ChatAnswer extends StatelessWidget {
           children: children,
         ),
       );
-      if (routes.isNotEmpty) {
-        blocks.add(Text.rich(TextSpan(children: List.of(spans)), style: style));
+      if (showtimes.isNotEmpty || routes.isNotEmpty) {
+        if (spans.any((span) => span.toPlainText().trim().isNotEmpty)) {
+          blocks.add(
+            Text.rich(TextSpan(children: List.of(spans)), style: style),
+          );
+        }
         spans.clear();
-        for (final route in routes) {
+        for (final route in showtimes.isEmpty ? routes : showtimes) {
+          shown.add(route);
           blocks.add(recommendation!(route));
         }
         if (index + 1 < lines.length && lines[index + 1].isEmpty) index++;

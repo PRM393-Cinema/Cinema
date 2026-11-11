@@ -9,6 +9,7 @@ import '../../../app/theme/app_colors.dart';
 import '../../../core/session/roles.dart';
 import '../../../core/session/session_state.dart';
 import '../../../core/utils/layout.dart';
+import '../../../data/models/seat.dart';
 import '../../../data/repositories/booking_repository.dart';
 import '../../../data/repositories/catalog_repository.dart';
 import '../../../data/services/chat_service.dart';
@@ -22,7 +23,7 @@ class ChatLauncher extends StatefulWidget {
     required this.service,
     required this.catalogRepository,
     required this.bookingRepository,
-    required this.child,
+    required this.builder,
     super.key,
   });
 
@@ -30,7 +31,7 @@ class ChatLauncher extends StatefulWidget {
   final ChatService service;
   final CatalogRepository catalogRepository;
   final BookingRepository bookingRepository;
-  final Widget child;
+  final Widget Function(BuildContext context, bool seatPickerOpen) builder;
 
   @override
   State<ChatLauncher> createState() => _ChatLauncherState();
@@ -43,6 +44,7 @@ class _ChatLauncherState extends State<ChatLauncher> {
   bool _hasOpened = false;
   bool _hovered = false;
   bool _focused = false;
+  bool _showingSeatPicker = false;
   ChatSeatSelection? _resumeSelection;
 
   @override
@@ -62,23 +64,33 @@ class _ChatLauncherState extends State<ChatLauncher> {
     if (restoreFocus) _buttonFocus.requestFocus();
   }
 
+  Future<List<Seat>?> _showSeatPicker(WidgetBuilder builder) async {
+    final navigator = widget.routes.navigator;
+    if (navigator == null ||
+        _showingSeatPicker ||
+        (!_open && _resumeSelection == null)) {
+      return null;
+    }
+    setState(() => _showingSeatPicker = true);
+    try {
+      return await showDialog<List<Seat>>(
+        context: navigator.context,
+        builder: builder,
+      );
+    } finally {
+      if (mounted) setState(() => _showingSeatPicker = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final session = SessionProvider.of(context);
     final management = isManagementAccount(session.user?.roles);
-    final resume = session.isAuthenticated ? _resumeSelection : null;
-    if (resume != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted || _resumeSelection != resume || !session.isAuthenticated) {
-          return;
-        }
-        setState(() {
-          _resumeSelection = null;
-          if (!management) _open = true;
-        });
-      });
+    final child = widget.builder(context, _showingSeatPicker);
+    if (management) {
+      _resumeSelection = null;
+      return child;
     }
-    if (management) return widget.child;
     final colors = AppPalette.of(context);
     final media = MediaQuery.of(context);
     final desktop = isDesktopLayout(context);
@@ -86,6 +98,28 @@ class _ChatLauncherState extends State<ChatLauncher> {
     return ValueListenableBuilder<String?>(
       valueListenable: widget.routes.current,
       builder: (context, route, _) {
+        // Login replaces the route after its success dialog. Wait for that
+        // replacement so it can't remove the resumed seat picker.
+        final resume =
+            session.isAuthenticated &&
+                route != null &&
+                Uri.tryParse(route)?.path != AppRoutes.login
+            ? _resumeSelection
+            : null;
+        if (resume != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted ||
+                _resumeSelection != resume ||
+                !session.isAuthenticated) {
+              return;
+            }
+            setState(() {
+              _resumeSelection = null;
+              _open = true;
+            });
+          });
+        }
+        final chatVisible = (_open || resume != null) && !_showingSeatPicker;
         final hasBottomNav =
             !desktop &&
             const {
@@ -108,7 +142,7 @@ class _ChatLauncherState extends State<ChatLauncher> {
             return Stack(
               fit: StackFit.expand,
               children: [
-                widget.child,
+                child,
                 if (_hasOpened)
                   Positioned(
                     right: 12,
@@ -116,11 +150,11 @@ class _ChatLauncherState extends State<ChatLauncher> {
                     width: math.min(400, constraints.maxWidth - 24),
                     height: math.min(600, availableHeight),
                     child: Offstage(
-                      offstage: !_open,
+                      offstage: !chatVisible,
                       child: TickerMode(
-                        enabled: _open,
+                        enabled: chatVisible,
                         child: ExcludeFocus(
-                          excluding: !_open,
+                          excluding: !chatVisible,
                           child: CallbackShortcuts(
                             bindings: {
                               const SingleActivator(
@@ -140,6 +174,7 @@ class _ChatLauncherState extends State<ChatLauncher> {
                                   catalogRepository: widget.catalogRepository,
                                   bookingRepository: widget.bookingRepository,
                                   onClose: _close,
+                                  showSeatPicker: _showSeatPicker,
                                   onOpenLink: (route) {
                                     final navigator = widget.routes.navigator;
                                     if (navigator == null) return;
@@ -161,7 +196,7 @@ class _ChatLauncherState extends State<ChatLauncher> {
                       ),
                     ),
                   ),
-                if (!_open)
+                if (!chatVisible && !_showingSeatPicker)
                   Positioned(
                     right: 16,
                     bottom: bottom + (hasBottomNav ? 104 : 0),

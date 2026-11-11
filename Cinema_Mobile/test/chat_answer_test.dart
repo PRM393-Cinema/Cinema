@@ -69,7 +69,7 @@ void main() {
     );
   });
 
-  testWidgets('An exact showtime link opens seats without a film card', (
+  testWidgets('A showtime preview replaces the inline seat link', (
     tester,
   ) async {
     final opened = <String>[];
@@ -78,18 +78,25 @@ void main() {
         home: Scaffold(
           body: ChatAnswer(
             text:
-                '[Chọn ghế](/showtimes/42/seats)\n'
+                r'**[Inception]**(\/movies\/1) lúc 14:45: [Chọn ghế](/showtimes/42/seats).'
+                '\n[Chọn ghế](/showtimes/42/seats)\n'
                 '[Summary](/showtimes/42/summary)\n'
                 '[Redirect](/showtimes/42/seats?next=/profile)',
             onOpenLink: opened.add,
-            recommendation: (_) => throw StateError('Unexpected film card'),
+            recommendation: (route) => OutlinedButton(
+              onPressed: () => opened.add(route),
+              child: const Text('Suất 14:45'),
+            ),
           ),
         ),
       ),
     );
     expect(find.byType(TextButton), findsOneWidget);
-    await tester.tap(find.widgetWithText(TextButton, 'Chọn ghế'));
-    expect(opened, ['/showtimes/42/seats']);
+    expect(find.text('Chọn ghế'), findsNothing);
+    expect(find.text('Suất 14:45'), findsOneWidget);
+    await tester.tap(find.widgetWithText(TextButton, 'Inception'));
+    await tester.tap(find.text('Suất 14:45'));
+    expect(opened, ['/movies/1', '/showtimes/42/seats']);
   });
 
   testWidgets(
