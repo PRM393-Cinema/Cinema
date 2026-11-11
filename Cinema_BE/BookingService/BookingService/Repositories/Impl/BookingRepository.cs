@@ -146,22 +146,24 @@ namespace BookingService.Repositories.Impl
         // Booking PENDING đã quá hạn giữ ghế không còn chiếm ghế (job sẽ chuyển sang EXPIRED)
         public async Task<List<long>> GetOccupiedSeatIdsAsync(long showtimeId, DateTime now)
         {
-            return await _context.BookingSeats
-                .Where(bs =>
-                    bs.Booking.ShowtimeId == showtimeId &&
-                    (
-                        bs.Booking.Status == "CONFIRMED" ||
-                        bs.Booking.Status == "REFUND_PENDING" ||
-                        (
-                            bs.Booking.Status == "PENDING" &&
-                            (bs.Booking.ExpiresAt == null || bs.Booking.ExpiresAt > now)
-                        )
-                    ))
+            return await OccupiedSeats(now)
+                .Where(bs => bs.Booking.ShowtimeId == showtimeId)
                 .Select(bs => bs.SeatId)
                 .Distinct()
                 .OrderBy(seatId => seatId)
                 .ToListAsync();
         }
+
+        public Task<Dictionary<long, int>> CountOccupiedSeatsAsync(long[] showtimeIds, DateTime now, CancellationToken cancellationToken) =>
+            OccupiedSeats(now).Where(bs => showtimeIds.Contains(bs.Booking.ShowtimeId))
+                .Select(bs => new { bs.Booking.ShowtimeId, bs.SeatId }).Distinct()
+                .GroupBy(bs => bs.ShowtimeId)
+                .Select(group => new { ShowtimeId = group.Key, Count = group.Count() })
+                .ToDictionaryAsync(row => row.ShowtimeId, row => row.Count, cancellationToken);
+
+        private IQueryable<BookingSeat> OccupiedSeats(DateTime now) => _context.BookingSeats
+            .Where(bs => bs.Booking.Status == "CONFIRMED" || bs.Booking.Status == "REFUND_PENDING" ||
+                (bs.Booking.Status == "PENDING" && (bs.Booking.ExpiresAt == null || bs.Booking.ExpiresAt > now)));
 
         // Như GetOccupiedSeatIdsAsync, kèm vé đang giữ từng ghế (sơ đồ ghế đã đặt cho Staff)
         public Task<List<BookingSeat>> GetOccupiedSeatsWithBookingAsync(long showtimeId, DateTime now) =>
@@ -174,7 +176,7 @@ namespace BookingService.Repositories.Impl
             DateTime? showTo,
             DateTime now)
         {
-            var query = _context.BookingSeats
+            var query = OccupiedSeats(now)
                 .AsNoTracking()
                 .Include(bs => bs.Booking)
                 .AsQueryable();
@@ -195,15 +197,6 @@ namespace BookingService.Repositories.Impl
             }
 
             return await query
-                .Where(bs =>
-                    (
-                        bs.Booking.Status == "CONFIRMED" ||
-                        bs.Booking.Status == "REFUND_PENDING" ||
-                        (
-                            bs.Booking.Status == "PENDING" &&
-                            (bs.Booking.ExpiresAt == null || bs.Booking.ExpiresAt > now)
-                        )
-                    ))
                 .OrderBy(bs => bs.SeatId)
                 .ToListAsync();
         }
