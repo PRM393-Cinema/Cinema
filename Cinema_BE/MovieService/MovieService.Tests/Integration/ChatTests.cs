@@ -25,10 +25,9 @@ public sealed class ChatTests(ChatApiFactory factory) : IClassFixture<ChatApiFac
         movies.Movies.Add(new Movie { Title = "Hidden movie", Status = "INACTIVE", DurationMinutes = 90 });
         await movies.SaveChangesAsync();
         var now = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTimeOffset.UtcNow, "Asia/Ho_Chi_Minh").DateTime;
-        var upcoming = new Showtime { MovieId = factory.MovieId, RoomId = factory.RoomId, StartTime = now.AddHours(2),
-            EndTime = now.AddHours(4), Price = 100000, Format = "3D", Status = "OPEN" };
         showtimes.Showtimes.AddRange(
-            upcoming,
+            new Showtime { MovieId = factory.MovieId, RoomId = factory.RoomId, StartTime = now.AddHours(2),
+                EndTime = now.AddHours(4), Price = 100000, Format = "3D", Status = "OPEN" },
             new Showtime { MovieId = factory.MovieId, RoomId = factory.RoomId, StartTime = now.AddDays(-1),
                 EndTime = now.AddDays(-1).AddHours(2), Price = 999999, Status = "OPEN" },
             new Showtime { MovieId = factory.MovieId, RoomId = factory.RoomId, StartTime = now.AddDays(1),
@@ -52,15 +51,38 @@ public sealed class ChatTests(ChatApiFactory factory) : IClassFixture<ChatApiFac
         Assert.Contains($"/movies/{factory.MovieId}", prompt);
         Assert.Contains("Every recommended film must include its exact DetailUrl", prompt);
         Assert.Contains("120000", prompt); // NORMAL 3D: base 100,000 + format 20,000.
-        // Each listed showtime links straight to its seat map
-        Assert.Contains($"/movies/{factory.MovieId}/showtimes/{upcoming.Id}", prompt);
-        Assert.Contains("link each start time to that showtime's exact BookingUrl", prompt);
         Assert.DoesNotContain("Hidden movie", prompt);
         Assert.DoesNotContain("999999", prompt);
         Assert.DoesNotContain("888888", prompt);
         Assert.DoesNotContain("test-openai-key", prompt);
         Assert.Equal("Bearer test-openai-key", factory.Handler.LastAuthorization);
         Assert.Equal("https://openrouter.ai/api/v1/responses", factory.Handler.LastUri);
+    }
+
+    [Theory]
+    [InlineData("2", "Bạn đang nhắc tới", false)]
+    [InlineData("2", "Bạn đang nhắc tới", true)]
+    [InlineData("Xin chào!", "Chào bạn!", true)]
+    [InlineData("Hello", "Chào bạn!", false)]
+    public async Task ShortMessages_DoNotStartABooking(string latest, string expected, bool hasHistory)
+    {
+        using var client = factory.CreateClient();
+        var messages = new List<ChatMessage>();
+        if (hasHistory)
+        {
+            messages.Add(new("user", "Tôi muốn đặt vé Ma Xó."));
+            messages.Add(new("assistant", "Bạn điền thông tin đặt vé còn thiếu ở đây nhé."));
+        }
+        messages.Add(new("user", latest));
+        var before = factory.Handler.Calls;
+
+        using var response = await client.PostAsJsonAsync("/api/v1/chat", new { messages });
+        response.EnsureSuccessStatusCode();
+        var reply = (await response.Content.ReadFromJsonAsync<ChatReply>())!;
+        Assert.StartsWith(expected, reply.Message);
+        Assert.Null(reply.BookingForm);
+        Assert.Null(reply.Booking);
+        Assert.Equal(before, factory.Handler.Calls);
     }
 
     [Theory]

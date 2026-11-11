@@ -40,73 +40,6 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Showtimes of one movie link to their seat maps, then one card', (
-    tester,
-  ) async {
-    final opened = <String>[];
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: ChatAnswer(
-            text:
-                '### [Chuyến Tàu Sinh Tử](/movies/1)\n'
-                '- [08:00](/movies/1/showtimes/42) — 2D, 85.000đ\n'
-                '- [08:15](/movies/1/showtimes/43) — 2D, 85.000đ\n'
-                '\n'
-                'Bạn muốn đặt suất nào?',
-            onOpenLink: opened.add,
-            recommendation: (route) => Text('Card $route'),
-          ),
-        ),
-      ),
-    );
-
-    expect(find.text('Card /movies/1'), findsOneWidget);
-    double top(Finder finder) => tester.getTopLeft(finder).dy;
-    final card = top(find.text('Card /movies/1'));
-    expect(card, greaterThan(top(find.widgetWithText(TextButton, '08:15'))));
-    expect(
-      card,
-      lessThan(top(find.textContaining('Bạn muốn', findRichText: true))),
-    );
-
-    await tester.tap(find.widgetWithText(TextButton, '08:15'));
-    await tester.tap(find.widgetWithText(TextButton, 'Chuyến Tàu Sinh Tử'));
-    expect(opened, ['/movies/1/showtimes/43', '/movies/1']);
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('Every movie and snack gets a card after its own lines', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: SingleChildScrollView(
-            child: ChatAnswer(
-              text:
-                  '- [Inception](/movies/1) — [19:00](/movies/1/showtimes/42)\n'
-                  '- [Dune](/movies/2) — [20:00](/movies/2/showtimes/50)\n'
-                  '- [Combo](/snacks/3) — 57.000đ',
-              onOpenLink: (_) {},
-              recommendation: (route) => Text('Card $route'),
-            ),
-          ),
-        ),
-      ),
-    );
-
-    double top(Finder finder) => tester.getTopLeft(finder).dy;
-    final cards = [
-      for (final route in ['/movies/1', '/movies/2', '/snacks/3'])
-        top(find.text('Card $route')),
-    ];
-    expect(cards, orderedEquals([...cards]..sort()));
-    expect(cards[0], lessThan(top(find.widgetWithText(TextButton, 'Dune'))));
-    expect(cards[1], lessThan(top(find.widgetWithText(TextButton, 'Combo'))));
-    expect(tester.takeException(), isNull);
-  });
-
   testWidgets('External and malformed links never become navigation actions', (
     tester,
   ) async {
@@ -115,8 +48,6 @@ void main() {
         '[Script](javascript:alert)\n[Account](/profile)\n'
         '[Zero](/movies/0)\n[Negative](/movies/-1)\n'
         '[Query](/movies/1?redirect=elsewhere)\n'
-        '[No showtime](/movies/1/showtimes/0)\n'
-        '[Deeper](/movies/1/showtimes/2/seats)\n'
         '[Overflow](/movies/99999999999999999999999999)';
     await tester.pumpWidget(
       MaterialApp(
@@ -136,6 +67,36 @@ void main() {
           .toPlainText(),
       text,
     );
+  });
+
+  testWidgets('A showtime preview replaces the inline seat link', (
+    tester,
+  ) async {
+    final opened = <String>[];
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ChatAnswer(
+            text:
+                r'**[Inception]**(\/movies\/1) lúc 14:45: [Chọn ghế](/showtimes/42/seats).'
+                '\n[Chọn ghế](/showtimes/42/seats)\n'
+                '[Summary](/showtimes/42/summary)\n'
+                '[Redirect](/showtimes/42/seats?next=/profile)',
+            onOpenLink: opened.add,
+            recommendation: (route) => OutlinedButton(
+              onPressed: () => opened.add(route),
+              child: const Text('Suất 14:45'),
+            ),
+          ),
+        ),
+      ),
+    );
+    expect(find.byType(TextButton), findsOneWidget);
+    expect(find.text('Chọn ghế'), findsNothing);
+    expect(find.text('Suất 14:45'), findsOneWidget);
+    await tester.tap(find.widgetWithText(TextButton, 'Inception'));
+    await tester.tap(find.text('Suất 14:45'));
+    expect(opened, ['/movies/1', '/showtimes/42/seats']);
   });
 
   testWidgets(

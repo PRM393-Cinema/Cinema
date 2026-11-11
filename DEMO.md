@@ -147,6 +147,29 @@ Bộ dữ liệu đã tạo ngày **04/11/2026**:
 
 Đã đối chiếu API và dashboard staff/admin ở cả hai theme, F5 và một chu kỳ tự cập nhật: **Sold 8, Held 3, Checked in 2; 4/25 suất có booking (16%)**, CASH tổng **770.000đ**. Số liệu thay đổi khi hết hạn giữ ghế hoặc có thêm giao dịch. Đã mở chi tiết vé khách để kiểm tra ghế, tiền, trạng thái và đồng hồ giữ ghế. Các fixture là dữ liệu trong DB local; Git chỉ lưu script và hướng dẫn.
 
+### Dữ liệu 7 ngày cho Render demo
+
+Người quản lý host chạy `Cinema_BE/scripts/seed-dashboard-render.py` từ máy có Python 3 và `psql`. Chạy trên PostgreSQL dành cho demo đã có schema Cinema, danh mục phim hoạt động và sơ đồ ghế. Tài khoản PostgreSQL cần quyền đọc danh mục và lịch, lấy ID suất từ sequence, thêm suất, đơn, ghế và thanh toán mẫu.
+
+Lấy URL kết nối của từng database từ Render Dashboard. Từ máy cá nhân dùng **External Database URL**. Nếu các database ở cùng một instance, giữ nguyên host và đổi phần tên database trong URL. Đặt URL trong terminal hoặc công cụ lưu secret của đội quản lý host.
+
+```powershell
+$env:CINEMA_DEMO_MOVIE_URL = '<URL của database phim>'
+$env:CINEMA_DEMO_SHOWTIME_URL = '<URL của database lịch chiếu>'
+$env:CINEMA_DEMO_BOOKING_URL = '<URL của database đặt vé>'
+$env:CINEMA_DEMO_PAYMENT_URL = '<URL của database thanh toán>'
+
+python Cinema_BE/scripts/seed-dashboard-render.py
+python Cinema_BE/scripts/seed-dashboard-render.py --apply
+```
+
+- Lệnh đầu đọc dữ liệu và in số lượng dự kiến. Lệnh có `--apply` mới ghi dữ liệu. Dùng cùng bốn URL cho cả hai lệnh.
+- Script tính ngày theo giờ Việt Nam. Script thêm tối đa 21 suất mở trong 7 ngày tới tính cả hôm nay, 12 suất lịch sử, cùng đơn và doanh thu tiền mặt mô phỏng cho 7 ngày gần nhất tính cả hôm nay.
+- Mã đơn có tiền tố `DEMO-DASH7-`, mã thanh toán có tiền tố `PAY-DEMO-DASH7-`. Dữ liệu mô phỏng gồm ghế đã bán, check-in và 3 ghế giữ 10 phút nếu còn suất demo hôm nay. Script không gửi email hoặc gọi PayOS.
+- Backend demo nên chạy cùng múi giờ Việt Nam (`TZ=Asia/Ho_Chi_Minh`) để dashboard và hạn giữ ghế đọc đúng ngày giờ. Ghế đã hết hạn sẽ rời cột Held.
+- Giữ file kế hoạch mà script in ra trong thư mục `~/.cinema-demo` để chạy lại trong ngày hoặc tiếp tục nếu bị ngắt. Có thể chỉ định thư mục khác bằng `--state-dir`. Mỗi ngày chạy tạo một đợt dữ liệu mới.
+- Sau khi chạy, mở bản Admin đang dùng backend demo và chọn **Last 7 days**. Kiểm tra thêm lịch mở bán ở trang khách. Nếu thử Cinema AI, backend demo cần có phiên bản hỗ trợ tra suất và xếp hạng theo vé bán.
+
 ## 6. Lưu ý
 
 - Gateway giới hạn 100 request mỗi phút cho một IP. Gặp lỗi "quá nhiều yêu cầu" thì chờ một phút.

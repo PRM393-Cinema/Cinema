@@ -96,12 +96,14 @@ class CustomerFrame extends StatelessWidget {
     required this.routes,
     required this.child,
     required this.onSignOut,
+    this.showHeader = true,
     super.key,
   });
 
   final RouteTracker routes;
   final Widget child;
   final VoidCallback onSignOut;
+  final bool showHeader;
 
   @override
   Widget build(BuildContext context) {
@@ -137,31 +139,32 @@ class CustomerFrame extends StatelessWidget {
                 ),
               ),
             ),
-            Align(
-              alignment: Alignment.topCenter,
-              child: Overlay.wrap(
-                alwaysSizeToContent: true,
-                clipBehavior: Clip.none,
-                child: _WebHeader(
-                  onSignOut: onSignOut,
-                  menuContext: () => routes.navigator?.overlay?.context,
-                  selected: _sectionOf(path),
-                  signedIn: session.isAuthenticated,
-                  userName: session.user?.displayName,
-                  onOpen: (route) {
-                    final navigator = routes.navigator;
-                    if (navigator == null || route == name) return;
-                    // Like the tab bar: sections open on top of Home.
-                    navigator.pushNamedAndRemoveUntil(
-                      route,
-                      (page) =>
-                          route != AppRoutes.home &&
-                          page.settings.name == AppRoutes.home,
-                    );
-                  },
+            if (showHeader)
+              Align(
+                alignment: Alignment.topCenter,
+                child: Overlay.wrap(
+                  alwaysSizeToContent: true,
+                  clipBehavior: Clip.none,
+                  child: _WebHeader(
+                    onSignOut: onSignOut,
+                    menuContext: () => routes.navigator?.overlay?.context,
+                    selected: _sectionOf(path),
+                    signedIn: session.isAuthenticated,
+                    userName: session.user?.displayName,
+                    onOpen: (route) {
+                      final navigator = routes.navigator;
+                      if (navigator == null || route == name) return;
+                      // Like the tab bar: sections open on top of Home.
+                      navigator.pushNamedAndRemoveUntil(
+                        route,
+                        (page) =>
+                            route != AppRoutes.home &&
+                            page.settings.name == AppRoutes.home,
+                      );
+                    },
+                  ),
                 ),
               ),
-            ),
           ],
         );
         return ColoredBox(

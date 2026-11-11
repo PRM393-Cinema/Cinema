@@ -12,14 +12,19 @@ namespace MovieService.Chat;
 public sealed record ChatBookingProposal(long MovieId, long ShowtimeId, string MovieTitle, DateTime StartTime,
     long[] SeatIds, string[] SeatLabels, decimal Total, DateTimeOffset ExpiresAt);
 
-public sealed class CinemaChatTools(MovieDbContext movies, ShowtimeDbContext showtimes, IHttpClientFactory clients)
+public sealed partial class CinemaChatTools(MovieDbContext movies, ShowtimeDbContext showtimes, IHttpClientFactory clients)
 {
     public static readonly JsonElement Definitions = JsonSerializer.Deserialize<JsonElement>("""
         [
           {"type":"function","name":"search_movies","description":"Search ALL active movies by title, genre or description, paginated. Empty query browses all. Not restricted to the initial snapshot.","strict":true,"parameters":{"type":"object","properties":{"query":{"type":"string","maxLength":100},"page":{"type":"integer","minimum":1,"maximum":10000}},"required":["query","page"],"additionalProperties":false}},
           {"type":"function","name":"get_snack_menu","description":"Read the public menu of active cinema snacks, drinks and combos with descriptions, prices in VND and detail links. Use before recommending any snack or combo.","strict":true,"parameters":{"type":"object","properties":{},"required":[],"additionalProperties":false}},
           {"type":"function","name":"find_showtimes","description":"Find live OPEN future showtimes for an active movie. Dates are inclusive Vietnam calendar days; null means now through the next 7 days. Follow pages when necessary.","strict":true,"parameters":{"type":"object","properties":{"movieId":{"type":"integer","minimum":1},"from":{"type":["string","null"]},"to":{"type":["string","null"]},"page":{"type":"integer","minimum":1,"maximum":10000}},"required":["movieId","from","to","page"],"additionalProperties":false}},
+          {"type":"function","name":"find_cinema_showtimes","description":"Find the first five upcoming OPEN showtimes with enough available seats across all active movies at CosmoQ Cinema. Filters are optional: empty strings or an empty list mean all. Genre uses cinema catalogue labels, e.g. Kinh dị. Dates are inclusive Vietnam days, default next 7 days. around is HH:mm, null for chronological order; when set, returns only times within 90 minutes of it, closest first. Use for nearest-showtime questions and to offer exact booking links.","strict":true,"parameters":{"type":"object","properties":{"movieIds":{"type":"array","maxItems":30,"items":{"type":"integer","minimum":1}},"genre":{"type":"string","maxLength":100},"cinema":{"type":"string","maxLength":100},"room":{"type":"string","maxLength":100},"from":{"type":["string","null"]},"to":{"type":["string","null"]},"around":{"type":["string","null"]},"tickets":{"type":"integer","minimum":1,"maximum":8}},"required":["movieIds","genre","cinema","room","from","to","around","tickets"],"additionalProperties":false}},
+          {"type":"function","name":"get_top_rated_movies","description":"Rank currently released active films by audience ratings adjusted for rating count. Returns verified scores, review counts and detail links.","strict":true,"parameters":{"type":"object","properties":{},"required":[],"additionalProperties":false}},
+          {"type":"function","name":"get_trending_movies","description":"Rank active films by confirmed tickets, confirmed bookings and growth in the last 7 days versus the previous 7. These are booking metrics, not audience ratings or views.","strict":true,"parameters":{"type":"object","properties":{},"required":[],"additionalProperties":false}},
+          {"type":"function","name":"get_movie_candidates","description":"Find currently released active movies for preference-based recommendations. Read genre, synopsis, age rating and duration to judge fit. Use the catalogue's genre, e.g. Kinh dị, or empty for all. Use null for an unspecified age or duration limit. Age ratings do not prove the presence or absence of gore.","strict":true,"parameters":{"type":"object","properties":{"genre":{"type":"string","maxLength":100},"maxAgeRating":{"type":["string","null"],"enum":["P","K","T13","T16","T18",null]},"minMinutes":{"type":["integer","null"],"minimum":1,"maximum":600},"maxMinutes":{"type":["integer","null"],"minimum":1,"maximum":600}},"required":["genre","maxAgeRating","minMinutes","maxMinutes"],"additionalProperties":false}},
           {"type":"function","name":"get_seats","description":"Get live seat ids, labels, types, prices and availability. Sign-in required. Never guess seat ids. SWEETBOX seats must be selected with their adjacent pair.","strict":true,"parameters":{"type":"object","properties":{"showtimeId":{"type":"integer","minimum":1}},"required":["showtimeId"],"additionalProperties":false}},
+          {"type":"function","name":"request_booking_details","description":"Show the in-chat booking form when the customer wants to book and the movie or genre, date, or time is missing. The customer can choose the ticket quantity on the seat map. Pass only details already supplied by the customer; unknown fields must be null. Use Vietnam YYYY-MM-DD and HH:mm.","strict":true,"parameters":{"type":"object","properties":{"movie":{"type":["string","null"],"maxLength":100},"date":{"type":["string","null"]},"time":{"type":["string","null"]},"tickets":{"type":["integer","null"],"minimum":1,"maximum":8}},"required":["movie","date","time","tickets"],"additionalProperties":false}},
           {"type":"function","name":"get_membership","description":"Read the signed-in customer's membership tier, points, benefits and recent points history. Requires sign-in; no userId parameter.","strict":true,"parameters":{"type":"object","properties":{},"required":[],"additionalProperties":false}},
           {"type":"function","name":"get_account_summary","description":"Read the signed-in customer's bookings, payments, highest paid bill and exact spending totals across ALL history in the date range. Dates inclusive YYYY-MM-DD Vietnam time; null means all time. Query filters booking code/movie title and payment code, not totals. Page rows in batches of 10. Requires sign-in.","strict":true,"parameters":{"type":"object","properties":{"from":{"type":["string","null"]},"to":{"type":["string","null"]},"query":{"type":"string","maxLength":100},"page":{"type":"integer","minimum":1,"maximum":10000}},"required":["from","to","query","page"],"additionalProperties":false}},
           {"type":"function","name":"prepare_booking","description":"Prepare ONE read-only ticket proposal using exact live seat ids after the customer chooses the movie, showtime and seats. Does NOT hold seats or create/pay a booking. UI shows a review button; customer must confirm there. No snacks, promotions or points applied yet; those are chosen in existing checkout. Sign-in required. Max 8 seats.","strict":true,"parameters":{"type":"object","properties":{"showtimeId":{"type":"integer","minimum":1},"seatIds":{"type":"array","items":{"type":"integer","minimum":1},"minItems":1,"maxItems":8}},"required":["showtimeId","seatIds"],"additionalProperties":false}}
@@ -35,7 +40,7 @@ public sealed class CinemaChatTools(MovieDbContext movies, ShowtimeDbContext sho
         var keys = schema.GetProperty("parameters").GetProperty("required").EnumerateArray().Select(v => v.GetString()!).ToArray();
         if (args.EnumerateObject().Any(p => !keys.Contains(p.Name)) || keys.Any(k => !args.TryGetProperty(k, out _)))
             throw new ArgumentException("Use exactly the declared tool arguments.");
-        var now = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTimeOffset.UtcNow, "Asia/Ho_Chi_Minh").DateTime;
+        var now = LocalNow;
         if (name is "get_membership" or "get_account_summary" or "get_seats" or "prepare_booking" && accessToken is null)
             return (new { error = "SIGN_IN_REQUIRED", message = "Sign in before accessing your account or seat availability." }, null);
         switch (name)
@@ -112,17 +117,30 @@ public sealed class CinemaChatTools(MovieDbContext movies, ShowtimeDbContext sho
                         pageSize = 20,
                         timeZone = "Asia/Ho_Chi_Minh",
                         items = items.Select(s => new
-                        {
-                            s.Id,
-                            s.MovieId,
-                            BookingUrl = $"/movies/{s.MovieId}/showtimes/{s.Id}",
-                            s.StartTime,
-                            s.Format,
-                            s.Room,
-                            seatPrices = SeatPrices.Of(s.Price, s.Format)
-                        })
+                        { s.Id, s.MovieId, s.StartTime, s.Format, s.Room, seatPrices = SeatPrices.Of(s.Price, s.Format) })
                     }, null);
                 }
+            case "find_cinema_showtimes":
+                return (await FindCinemaShowtimesAsync(args, now, cancellationToken), null);
+            case "request_booking_details":
+                {
+                    var movie = args.GetProperty("movie").GetString()?.Trim();
+                    var date = args.GetProperty("date").GetString();
+                    var time = args.GetProperty("time").GetString();
+                    var value = args.GetProperty("tickets");
+                    int? tickets = value.ValueKind == JsonValueKind.Null ? null : value.GetInt32();
+                    if (movie?.Length > 100 || tickets is < 1 or > 8 ||
+                        (date != null && !DateOnly.TryParseExact(date, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out _)) ||
+                        (time != null && !TimeOnly.TryParseExact(time, "HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out _)))
+                        throw new ArgumentException("Use valid booking details or null for unknown fields.");
+                    return (new ChatBookingForm(movie, date, time, tickets), null);
+                }
+            case "get_top_rated_movies":
+                return (await GetTopRatedMoviesAsync(now, cancellationToken), null);
+            case "get_trending_movies":
+                return (await GetTrendingMoviesAsync(cancellationToken), null);
+            case "get_movie_candidates":
+                return (await GetMovieCandidatesAsync(args, now, cancellationToken), null);
             case "get_membership":
                 {
                     var card = await ReadCinemaAsync("api/v1/loyalty/me", accessToken, cancellationToken);

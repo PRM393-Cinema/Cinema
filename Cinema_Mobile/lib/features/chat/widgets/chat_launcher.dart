@@ -9,14 +9,12 @@ import '../../../app/theme/app_colors.dart';
 import '../../../core/session/roles.dart';
 import '../../../core/session/session_state.dart';
 import '../../../core/utils/layout.dart';
-import '../../../core/utils/formatters.dart';
-import '../../../core/network/api_exception.dart';
-import '../../../data/models/booking_draft.dart';
 import '../../../data/models/seat.dart';
 import '../../../data/repositories/booking_repository.dart';
 import '../../../data/repositories/catalog_repository.dart';
 import '../../../data/services/chat_service.dart';
 import 'chat_panel.dart';
+import 'chat_seat_booking.dart';
 
 // Above the navigator so the same chat survives customer page changes.
 class ChatLauncher extends StatefulWidget {
@@ -25,7 +23,7 @@ class ChatLauncher extends StatefulWidget {
     required this.service,
     required this.catalogRepository,
     required this.bookingRepository,
-    required this.child,
+    required this.builder,
     super.key,
   });
 
@@ -33,7 +31,7 @@ class ChatLauncher extends StatefulWidget {
   final ChatService service;
   final CatalogRepository catalogRepository;
   final BookingRepository bookingRepository;
-  final Widget child;
+  final Widget Function(BuildContext context, bool seatPickerOpen) builder;
 
   @override
   State<ChatLauncher> createState() => _ChatLauncherState();
@@ -46,7 +44,8 @@ class _ChatLauncherState extends State<ChatLauncher> {
   bool _hasOpened = false;
   bool _hovered = false;
   bool _focused = false;
-  bool _reviewingBooking = false;
+  bool _showingSeatPicker = false;
+  ChatSeatSelection? _resumeSelection;
 
   @override
   void dispose() {
@@ -65,139 +64,33 @@ class _ChatLauncherState extends State<ChatLauncher> {
     if (restoreFocus) _buttonFocus.requestFocus();
   }
 
-  Future<bool> _reviewBooking(ChatBookingProposal proposal) async {
-    final session = SessionProvider.of(context);
-    final userId = session.user?.userId;
+  Future<List<Seat>?> _showSeatPicker(WidgetBuilder builder) async {
     final navigator = widget.routes.navigator;
-    if (!session.isAuthenticated || navigator == null) return false;
-    FocusManager.instance.primaryFocus?.unfocus();
-    // The launcher sits above the navigator; hide it while its modal is open.
-    setState(() => _reviewingBooking = true);
+    if (navigator == null ||
+        _showingSeatPicker ||
+        (!_open && _resumeSelection == null)) {
+      return null;
+    }
+    setState(() => _showingSeatPicker = true);
     try {
-      if (!proposal.expiresAt.isAfter(DateTime.now())) {
-        throw const FormatException(
-          'This proposal expired. Ask Cinema AI for a fresh proposal.',
-        );
-      }
-      final movie = await widget.catalogRepository.getMovie(proposal.movieId);
-      final showtime = await widget.catalogRepository.getShowtime(
-        proposal.showtimeId,
-      );
-      final seatMap = await widget.catalogRepository.getSeatMap(showtime);
-      final seats = seatMap.seats
-          .where((seat) => proposal.seatIds.contains(seat.id))
-          .toList();
-      final draft = BookingDraft(
-        movie: movie,
-        showtime: showtime,
-        seats: seats,
-      );
-      if (showtime.movieId != movie.id ||
-          showtime.status != 'OPEN' ||
-          !showtime.startTime.isAfter(DateTime.now()) ||
-          seats.length != proposal.seatIds.length ||
-          seats.any(
-            (s) => seatMap.statusOf(s) != SeatReservationStatus.available,
-          ) ||
-          seats.any(
-            (s) => s.isSweetbox && s.sweetboxPartnerIn(seats) == null,
-          ) ||
-          (draft.totalPrice - proposal.total).abs() > 0.01) {
-        throw const FormatException(
-          'Seats, showtime or prices changed. Ask Cinema AI to refresh the proposal.',
-        );
-      }
-      if (!mounted ||
-          session.user?.userId != userId ||
-          !session.isAuthenticated) {
-        return false;
-      }
-      final confirmed = await showDialog<bool>(
+      return await showDialog<List<Seat>>(
         context: navigator.context,
-        builder: (context) => AlertDialog(
-          title: const Text('Review booking'),
-          scrollable: true,
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(movie.title, style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 12),
-              Text(
-                '${formatDateTime(showtime.startTime)} · ${showtime.format}',
-              ),
-              Text('Seats: ${seats.map((s) => s.label).join(', ')}'),
-              const SizedBox(height: 12),
-              Text('Tickets: ${formatVnd(draft.totalPrice)}'),
-              const SizedBox(height: 12),
-              const Text(
-                'Confirm to hold these seats and open checkout. Snacks, discounts and points can be reviewed there. No payment is taken here.',
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              key: const Key('confirmChatBooking'),
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Confirm & hold seats'),
-            ),
-          ],
-        ),
+        builder: builder,
       );
-      if (confirmed != true ||
-          !mounted ||
-          !session.isAuthenticated ||
-          session.user?.userId != userId) {
-        return false;
-      }
-      if (!proposal.expiresAt.isAfter(DateTime.now())) {
-        throw const FormatException(
-          'This proposal expired. Please refresh it.',
-        );
-      }
-      _close();
-      // The existing summary performs the real transaction, checks seat conflicts and recalculates prices.
-      navigator.pushNamed(
-        AppRoutes.bookingSummary(showtime.id),
-        arguments: draft,
-      );
-      return true;
-    } on Object catch (error) {
-      if (mounted && navigator.mounted) {
-        await showDialog<void>(
-          context: navigator.context,
-          builder: (context) => AlertDialog(
-            title: const Text('Unable to prepare booking'),
-            content: Text(
-              error is FormatException
-                  ? error.message
-                  : error is ApiException
-                  ? error.message
-                  : 'Unable to check seats. Please try again.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('OK'),
-              ),
-            ],
-          ),
-        );
-      }
-      return false;
     } finally {
-      if (mounted) setState(() => _reviewingBooking = false);
+      if (mounted) setState(() => _showingSeatPicker = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final session = SessionProvider.of(context);
-    if (isManagementAccount(session.user?.roles)) return widget.child;
+    final management = isManagementAccount(session.user?.roles);
+    final child = widget.builder(context, _showingSeatPicker);
+    if (management) {
+      _resumeSelection = null;
+      return child;
+    }
     final colors = AppPalette.of(context);
     final media = MediaQuery.of(context);
     final desktop = isDesktopLayout(context);
@@ -205,6 +98,28 @@ class _ChatLauncherState extends State<ChatLauncher> {
     return ValueListenableBuilder<String?>(
       valueListenable: widget.routes.current,
       builder: (context, route, _) {
+        // Login replaces the route after its success dialog. Wait for that
+        // replacement so it can't remove the resumed seat picker.
+        final resume =
+            session.isAuthenticated &&
+                route != null &&
+                Uri.tryParse(route)?.path != AppRoutes.login
+            ? _resumeSelection
+            : null;
+        if (resume != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted ||
+                _resumeSelection != resume ||
+                !session.isAuthenticated) {
+              return;
+            }
+            setState(() {
+              _resumeSelection = null;
+              _open = true;
+            });
+          });
+        }
+        final chatVisible = (_open || resume != null) && !_showingSeatPicker;
         final hasBottomNav =
             !desktop &&
             const {
@@ -227,7 +142,7 @@ class _ChatLauncherState extends State<ChatLauncher> {
             return Stack(
               fit: StackFit.expand,
               children: [
-                widget.child,
+                child,
                 if (_hasOpened)
                   Positioned(
                     right: 12,
@@ -235,11 +150,11 @@ class _ChatLauncherState extends State<ChatLauncher> {
                     width: math.min(400, constraints.maxWidth - 24),
                     height: math.min(600, availableHeight),
                     child: Offstage(
-                      offstage: !_open || _reviewingBooking,
+                      offstage: !chatVisible,
                       child: TickerMode(
-                        enabled: _open && !_reviewingBooking,
+                        enabled: chatVisible,
                         child: ExcludeFocus(
-                          excluding: !_open || _reviewingBooking,
+                          excluding: !chatVisible,
                           child: CallbackShortcuts(
                             bindings: {
                               const SingleActivator(
@@ -254,17 +169,25 @@ class _ChatLauncherState extends State<ChatLauncher> {
                                 child: ChatPanel(
                                   key: ValueKey(session.user?.userId),
                                   userId: session.user?.userId,
+                                  initialSelection: resume,
                                   service: widget.service,
                                   catalogRepository: widget.catalogRepository,
                                   bookingRepository: widget.bookingRepository,
                                   onClose: _close,
+                                  showSeatPicker: _showSeatPicker,
                                   onOpenLink: (route) {
                                     final navigator = widget.routes.navigator;
                                     if (navigator == null) return;
                                     _close();
                                     navigator.pushNamed(route);
                                   },
-                                  onReviewBooking: _reviewBooking,
+                                  onSignIn: (selection) {
+                                    final navigator = widget.routes.navigator;
+                                    if (navigator == null) return;
+                                    _resumeSelection = selection;
+                                    _close();
+                                    navigator.pushNamed(AppRoutes.login);
+                                  },
                                 ),
                               ),
                             ),
@@ -273,7 +196,7 @@ class _ChatLauncherState extends State<ChatLauncher> {
                       ),
                     ),
                   ),
-                if (!_open && !_reviewingBooking)
+                if (!chatVisible && !_showingSeatPicker)
                   Positioned(
                     right: 16,
                     bottom: bottom + (hasBottomNav ? 104 : 0),

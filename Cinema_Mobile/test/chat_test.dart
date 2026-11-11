@@ -429,11 +429,10 @@ void main() {
           );
           expect(find.byKey(const Key('loginTitle')), findsNothing);
           final send = find.byKey(const Key('sendCinemaChat'));
+          final input = find.byKey(const Key('cinemaChatInput'));
+          const draft = 'Tìm giúp tôi suất tối nay';
           expect(tester.widget<IconButton>(send).onPressed, isNull);
-          await tester.enterText(
-            find.byKey(const Key('cinemaChatInput')),
-            'Gợi ý phim hay',
-          );
+          await tester.enterText(input, 'Gợi ý phim hay');
           await tester.pump();
           await tester.tap(send);
           await tester.pump();
@@ -443,7 +442,13 @@ void main() {
             {'role': 'user', 'content': 'Gợi ý phim hay'},
           ]);
           expect(find.text('Cinema AI is thinking…'), findsOneWidget);
+          expect(tester.widget<TextField>(input).enabled, isTrue);
+          await tester.enterText(input, draft);
+          await tester.pump();
           expect(tester.widget<IconButton>(send).onPressed, isNull);
+          await tester.testTextInput.receiveAction(TextInputAction.send);
+          expect(requests, hasLength(1));
+          expect(tester.testTextInput.isVisible, isTrue);
           pending.complete(
             http.Response(
               jsonEncode({'message': 'Bạn có thể xem Phim Kiểm Thử.'}),
@@ -452,6 +457,8 @@ void main() {
             ),
           );
           await pumpRoute(tester);
+          expect(tester.widget<TextField>(input).controller!.text, draft);
+          expect(tester.widget<IconButton>(send).onPressed, isNotNull);
           expect(find.text('Bạn có thể xem Phim Kiểm Thử.'), findsOneWidget);
           await tester.drag(
             find.byKey(const Key('cinemaChatMessages')),
@@ -461,7 +468,10 @@ void main() {
           expect(find.text('Gợi ý phim hay'), findsOneWidget);
           await tester.tap(find.byKey(const Key('newCinemaChat')));
           await pumpRoute(tester);
-          expect(find.text('What would you like to watch?'), findsOneWidget);
+          expect(
+            find.text('Chào bạn! Hôm nay bạn muốn xem gì?'),
+            findsOneWidget,
+          );
           expect(find.byKey(const ValueKey('chatMessage-0')), findsNothing);
           expect(tester.takeException(), isNull);
         },

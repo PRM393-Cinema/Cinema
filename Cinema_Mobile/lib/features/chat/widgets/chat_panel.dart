@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -8,33 +10,41 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/session/session_state.dart';
 import '../../../core/widgets/cinema_account_widgets.dart';
 import '../../../data/models/concession.dart';
+import '../../../data/models/seat.dart';
 import '../../../data/repositories/booking_repository.dart';
 import '../../../data/repositories/catalog_repository.dart';
 import '../../../data/services/chat_service.dart';
 import '../../../data/storage/chat_history_storage.dart';
 import '../../../core/utils/formatters.dart';
 import 'chat_answer.dart';
+import 'chat_booking_form.dart';
 import 'chat_recommendation_card.dart';
+import 'chat_seat_booking.dart';
+import 'chat_seat_preview.dart';
 
 class ChatPanel extends StatefulWidget {
   const ChatPanel({
     required this.service,
     required this.onClose,
-    required this.onReviewBooking,
+    required this.onSignIn,
+    required this.showSeatPicker,
     required this.onOpenLink,
     required this.catalogRepository,
     required this.bookingRepository,
     this.userId,
+    this.initialSelection,
     super.key,
   });
 
   final ChatService service;
   final VoidCallback onClose;
-  final Future<bool> Function(ChatBookingProposal) onReviewBooking;
+  final ValueChanged<ChatSeatSelection> onSignIn;
+  final Future<List<Seat>?> Function(WidgetBuilder) showSeatPicker;
   final ValueChanged<String> onOpenLink;
   final CatalogRepository catalogRepository;
   final BookingRepository bookingRepository;
   final int? userId;
+  final ChatSeatSelection? initialSelection;
 
   @override
   State<ChatPanel> createState() => _ChatPanelState();
@@ -42,14 +52,21 @@ class ChatPanel extends StatefulWidget {
 
 class _ChatPanelState extends State<ChatPanel> {
   final _input = TextEditingController();
+  final _inputFocus = FocusNode();
   final _scroll = ScrollController();
   final _messages = <ChatMessage>[];
   final _recommendations = <String, Future<ChatRecommendation?>>{};
+  final _seatPreviews = <String, Future<ChatSeatPreviewData>>{};
   Future<List<ConcessionItem>>? _menu;
   bool _sending = false;
   String? _error;
   ChatBookingProposal? _proposal;
-  bool _reviewing = false;
+  ChatBookingForm? _bookingForm;
+  Map<String, int> _showtimeTickets = const {};
+  late ChatSeatSelection? _seatSelection = widget.initialSelection;
+  int? _bookingAfter;
+  ({int after, String text})? _bookingNotice;
+  bool get _reviewing => _seatSelection != null;
   late final _historyStorage = ChatHistoryStorage(userId: widget.userId);
   final _chats = <SavedChat>[];
   String? _activeId;
@@ -63,6 +80,18 @@ class _ChatPanelState extends State<ChatPanel> {
   void initState() {
     super.initState();
     _loadHistory();
+  }
+
+  @override
+  void didUpdateWidget(covariant ChatPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final selection = widget.initialSelection;
+    if (selection != null && selection != oldWidget.initialSelection) {
+      _seatSelection = selection;
+      _bookingAfter = null;
+      _bookingNotice = null;
+      _scrollToLatest();
+    }
   }
 
   Future<void> _loadHistory() async {
@@ -126,11 +155,14 @@ class _ChatPanelState extends State<ChatPanel> {
     setState(() {
       _messages.clear();
       _recommendations.clear();
+      _seatPreviews.clear();
       _menu = null;
       _activeId = null;
       _error = null;
       _input.clear();
       _proposal = null;
+      _bookingForm = null;
+      _showtimeTickets = const {};
       _showHistory = false;
     });
     _saveHistory();
@@ -164,21 +196,39 @@ class _ChatPanelState extends State<ChatPanel> {
     }
   }
 
-  Widget _recommendation(String route) => ChatRecommendationCard(
-    key: ValueKey(route),
-    details: _recommendations.putIfAbsent(
-      route,
-      () => _loadRecommendation(route),
-    ),
-    movie: route.startsWith('/movies/'),
-    onOpen: () => widget.onOpenLink(
-      route.startsWith('/movies/') ? '$route?section=showtimes' : route,
-    ),
-  );
+  Future<ChatSeatPreviewData> _loadSeatPreview(String route) async {
+    final catalog = widget.catalogRepository;
+    final showtime = await catalog.getShowtime(int.parse(route.split('/')[2]));
+    return (showtime: showtime, map: await catalog.getSeatMap(showtime));
+  }
+
+  Widget _recommendation(String route) {
+    if (route.startsWith('/showtimes/')) {
+      return ChatSeatPreview(
+        key: ValueKey(route),
+        details: widget.userId == null
+            ? null
+            : _seatPreviews.putIfAbsent(route, () => _loadSeatPreview(route)),
+        onOpen: () => _openLink(route),
+      );
+    }
+    return ChatRecommendationCard(
+      key: ValueKey(route),
+      details: _recommendations.putIfAbsent(
+        route,
+        () => _loadRecommendation(route),
+      ),
+      movie: route.startsWith('/movies/'),
+      onOpen: () => widget.onOpenLink(
+        route.startsWith('/movies/') ? '$route?section=showtimes' : route,
+      ),
+    );
+  }
 
   @override
   void dispose() {
     _input.dispose();
+    _inputFocus.dispose();
     _scroll.dispose();
     super.dispose();
   }
@@ -191,21 +241,58 @@ class _ChatPanelState extends State<ChatPanel> {
     });
   }
 
+  void _chooseSeats(ChatSeatSelection selection) {
+    if (_sending || _reviewing) return;
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() {
+      _seatSelection = selection;
+      _bookingAfter = _messages.length;
+      _bookingNotice = null;
+      _proposal = null;
+      _bookingForm = null;
+    });
+    _scrollToLatest();
+  }
+
+  void _openLink(String route) {
+    if (_sending) return;
+    final seatRoute = RegExp(r'^/showtimes/([1-9][0-9]{0,15})/seats$')
+        .firstMatch(route);
+    if (seatRoute == null) {
+      widget.onOpenLink(route);
+      return;
+    }
+    _chooseSeats((
+      showtimeId: int.parse(seatRoute[1]!),
+      tickets: _showtimeTickets[route] ?? 1,
+      proposal: null,
+    ));
+  }
+
   Future<void> _send(String text) async {
     final content = text.trim();
     if (_loadingHistory ||
         _sending ||
-        _reviewing ||
         content.isEmpty ||
         content.length > 1000) {
       return;
     }
     setState(() {
       if (_error != null) _messages.removeLast();
-      if (_messages.length >= 60) _messages.removeRange(0, 2);
+      final removed = _messages.length >= 60 ? 2 : 0;
+      int keptIndex(int index) =>
+          math.max(0, math.min(index, _messages.length) - removed);
+      if (_reviewing) {
+        _bookingAfter = keptIndex(_bookingAfter ?? _messages.length);
+      }
+      if (_bookingNotice case final notice?) {
+        _bookingNotice = (after: keptIndex(notice.after), text: notice.text);
+      }
+      if (removed > 0) _messages.removeRange(0, removed);
       _messages.add(ChatMessage(role: 'user', content: content));
-      _input.clear();
+      if (_input.text.trim() == content) _input.clear();
       _proposal = null;
+      _bookingForm = null;
     });
     await _request();
   }
@@ -218,7 +305,6 @@ class _ChatPanelState extends State<ChatPanel> {
   }
 
   void _insertNewline() {
-    if (_sending) return;
     final value = _input.value;
     if (value.composing.isValid && !value.composing.isCollapsed) return;
     final selection = value.selection.isValid
@@ -255,6 +341,8 @@ class _ChatPanelState extends State<ChatPanel> {
       setState(() {
         _messages.add(ChatMessage(role: 'assistant', content: reply.message));
         _proposal = reply.booking;
+        _bookingForm = reply.bookingForm;
+        _showtimeTickets = reply.showtimeTickets;
         _rememberChat();
       });
     } on ApiException catch (error) {
@@ -274,6 +362,10 @@ class _ChatPanelState extends State<ChatPanel> {
   @override
   Widget build(BuildContext context) {
     final colors = AppPalette.of(context);
+    final selection = _seatSelection;
+    final bookingAfter = _bookingAfter ?? _messages.length;
+    final bookingNotice = _bookingNotice;
+    final details = _bookingForm;
     return CinemaPanel(
       key: const Key('cinemaChatPanel'),
       padding: EdgeInsets.zero,
@@ -295,7 +387,11 @@ class _ChatPanelState extends State<ChatPanel> {
                 IconButton(
                   key: const Key('cinemaChatHistory'),
                   tooltip: _showHistory ? 'Back to chat' : 'Chat history',
-                  onPressed: _loadingHistory || _sending || _reviewing
+                  onPressed:
+                      _loadingHistory ||
+                          _sending ||
+                          _reviewing ||
+                          details != null
                       ? null
                       : () => setState(() => _showHistory = !_showHistory),
                   icon: Icon(
@@ -345,37 +441,94 @@ class _ChatPanelState extends State<ChatPanel> {
                     controller: _scroll,
                     padding: const EdgeInsets.all(AppSpacing.lg),
                     children: [
-                      if (_messages.isEmpty) _welcome(context),
-                      for (var index = 0; index < _messages.length; index++)
-                        _MessageBubble(
-                          message: _messages[index],
-                          index: index,
-                          onOpenLink: widget.onOpenLink,
-                          recommendation: _recommendation,
+                      if (_messages.isEmpty && selection == null)
+                        _welcome(context),
+                      for (
+                        var index = 0;
+                        index <= _messages.length;
+                        index++
+                      ) ...[
+                        if (selection != null && index == bookingAfter)
+                          ChatSeatBooking(
+                            key: ObjectKey(selection),
+                            selection: selection,
+                            authenticated: widget.userId != null,
+                            catalog: widget.catalogRepository,
+                            bookings: widget.bookingRepository,
+                            showSeatPicker: widget.showSeatPicker,
+                            onSignIn: () => widget.onSignIn(selection),
+                            onReview: () {
+                              if ((_bookingAfter ?? _messages.length) ==
+                                  _messages.length) {
+                                _scrollToLatest();
+                              }
+                            },
+                            onExpired: (notice) {
+                              if (_messages.length <=
+                                  (_bookingAfter ?? _messages.length)) {
+                                return;
+                              }
+                              final atBottom =
+                                  _scroll.hasClients &&
+                                  _scroll.position.extentAfter < AppSpacing.lg;
+                              setState(
+                                () => _bookingNotice = (
+                                  after: _messages.length,
+                                  text: notice,
+                                ),
+                              );
+                              if (atBottom) _scrollToLatest();
+                            },
+                            onBack: () {
+                              setState(() {
+                                _seatSelection = null;
+                                _bookingAfter = null;
+                                _bookingNotice = null;
+                              });
+                              _scrollToLatest();
+                            },
+                          ),
+                        if (bookingNotice != null &&
+                            index == bookingNotice.after)
+                          Semantics(
+                            liveRegion: true,
+                            child: _MessageBubble(
+                              message: ChatMessage(
+                                role: 'assistant',
+                                content: bookingNotice.text,
+                              ),
+                              index: index,
+                              onOpenLink: _openLink,
+                              recommendation: _recommendation,
+                            ),
+                          ),
+                        if (index < _messages.length)
+                          _MessageBubble(
+                            message: _messages[index],
+                            index: index,
+                            onOpenLink: _openLink,
+                            recommendation: _recommendation,
+                          ),
+                      ],
+                      if (details != null)
+                        ChatBookingFormCard(
+                          key: ObjectKey(details),
+                          details: details,
+                          onSearch: _send,
+                          onBack: () => setState(() => _bookingForm = null),
                         ),
-                      if (_proposal != null)
+                      if (_proposal case final proposal?)
                         OutlinedButton.icon(
                           key: const Key('reviewChatBooking'),
                           onPressed: _reviewing || _sending
                               ? null
-                              : () async {
-                                  setState(() => _reviewing = true);
-                                  try {
-                                    final consumed = await widget
-                                        .onReviewBooking(_proposal!);
-                                    if (mounted && consumed) {
-                                      setState(() => _proposal = null);
-                                    }
-                                  } finally {
-                                    if (mounted) {
-                                      setState(() => _reviewing = false);
-                                    }
-                                  }
-                                },
+                              : () => _chooseSeats((
+                                  showtimeId: proposal.showtimeId,
+                                  tickets: proposal.seatIds.length,
+                                  proposal: proposal,
+                                )),
                           icon: const Icon(Icons.confirmation_number_outlined),
-                          label: Text(
-                            _reviewing ? 'Checking seats…' : 'Review booking',
-                          ),
+                          label: const Text('Review booking'),
                         ),
                       if (_sending)
                         Semantics(
@@ -454,12 +607,14 @@ class _ChatPanelState extends State<ChatPanel> {
                     child: TextField(
                       key: const Key('cinemaChatInput'),
                       controller: _input,
-                      enabled: !_loadingHistory && !_sending && !_reviewing,
+                      focusNode: _inputFocus,
+                      enabled: !_loadingHistory,
                       minLines: 1,
                       maxLines: 3,
                       maxLength: 1000,
                       keyboardType: TextInputType.multiline,
                       textInputAction: TextInputAction.send,
+                      onEditingComplete: _input.clearComposing,
                       onSubmitted: _send,
                       textCapitalization: TextCapitalization.sentences,
                       decoration: InputDecoration(
@@ -473,11 +628,13 @@ class _ChatPanelState extends State<ChatPanel> {
                             onPressed:
                                 _loadingHistory ||
                                     _sending ||
-                                    _reviewing ||
                                     value.text.trim().isEmpty ||
                                     value.text.trim().length > 1000
                                 ? null
-                                : () => _send(value.text),
+                                : () {
+                                    _inputFocus.requestFocus();
+                                    _send(value.text);
+                                  },
                             icon: const Icon(Icons.arrow_upward_rounded),
                           ),
                         ),
@@ -541,6 +698,8 @@ class _ChatPanelState extends State<ChatPanel> {
                           ..addAll(chat.messages);
                         _activeId = chat.id;
                         _proposal = null;
+                        _bookingForm = null;
+                        _showtimeTickets = const {};
                         _error = null;
                         _input.clear();
                         _showHistory = false;
@@ -584,8 +743,11 @@ class _ChatPanelState extends State<ChatPanel> {
                                       _activeId = null;
                                       _messages.clear();
                                       _recommendations.clear();
+                                      _seatPreviews.clear();
                                       _menu = null;
                                       _proposal = null;
+                                      _bookingForm = null;
+                                      _showtimeTickets = const {};
                                       _error = null;
                                     }
                                   });
@@ -613,7 +775,7 @@ class _ChatPanelState extends State<ChatPanel> {
         ),
         const SizedBox(height: AppSpacing.lg),
         const Text(
-          'What would you like to watch?',
+          'Chào bạn! Hôm nay bạn muốn xem gì?',
           style: AppTextStyles.heading2,
         ),
         const SizedBox(height: AppSpacing.sm),
